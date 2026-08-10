@@ -1,0 +1,2170 @@
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=Great+Vibes&family=Hanken+Grotesk:wght@300;400;500;600;700;800;900&family=Manrope:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;650;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Newsreader:ital,opsz,wght@0,6..72,200..800;1,6..72,200..800&display=swap');
+@import url('https://api.fontshare.com/v2/css?f[]=satoshi@300,400,500,700,900&display=swap');
+@import url('https://fonts.cdnfonts.com/css/google-sans');
+
+body {
+    background-color: #FFFFFF;
+    color: #101D34;
+    font-family: 'Inter', sans-serif;
+    margin: 0;
+}
+
+/* ============================================
+   TYPOGRAPHY CLASSES (Google Sans & Satoshi/Data)
+   ============================================ */
+.font-title {
+    font-family: 'Google Sans', 'Plus Jakarta Sans', sans-serif !important;
+}
+
+.font-data {
+    font-family: 'Satoshi', 'Inter', system-ui, sans-serif !important;
+}
+
+/* ============================================
+   CUSTOM CURSOR STYLES
+   ============================================ */
+#cursor-dot,
+#cursor-ring {
+    pointer-events: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    transform: translate(-50%, -50%);
+    border-radius: 50%;
+    z-index: 999999;
+    will-change: transform, left, top;
+}
+
+#cursor-dot {
+    width: 8px;
+    height: 8px;
+    background-color: #101D34;
+    transition: background-color 0.3s ease, opacity 0.3s ease, transform 0.2s ease;
+}
+
+#cursor-ring {
+    width: 36px;
+    height: 36px;
+    border: 1.5px solid rgba(16, 29, 52, 0.4);
+    transition: width 0.3s ease, height 0.3s ease, border-color 0.3s ease, background-color 0.3s ease;
+}
+
+body.cursor-hover #cursor-ring {
+    width: 52px;
+    height: 52px;
+    background-color: rgba(160, 216, 239, 0.2);
+    border-color: rgba(160, 216, 239, 0.8);
+}
+
+body.cursor-hover #cursor-dot {
+    transform: translate(-50%, -50%) scale(1.4);
+    background-color: #0077B6;
+}
+
+@media (hover: none) and (pointer: coarse) {
+    #cursor-dot,
+    #cursor-ring {
+        display: none !important;
+    }
+}
+
+/* Dark mode overrides */
+html.dark body {
+    background-color: #121212;
+    color: #E0E0E0;
+}
+
+
+
+/* ============================================
+   GLASS PANELS - Enhanced with cyan tinting
+   ============================================ */
+.glass-panel {
+    background: rgba(255, 255, 255, 0.6);
+    border: 1px solid rgba(0, 31, 38, 0.08);
+}
+
+.liquid-glass {
+    background: linear-gradient(
+      195deg,
+      rgba(40, 250, 252, 0.03) 0%,
+      rgba(255, 255, 255, 0.65) 40%,
+      rgba(250, 249, 245, 0.5) 100%
+    );
+    border: 1px solid rgba(40, 250, 252, 0.08);
+    box-shadow: 0 1px 3px rgba(0, 31, 38, 0.03), 0 4px 24px rgba(0, 31, 38, 0.03);
+}
+
+.liquid-card {
+    background: linear-gradient(
+      135deg,
+      #ffffff 0%,
+      #FAF9F5 100%
+    );
+    border: 1px solid rgba(0, 31, 38, 0.08);
+    box-shadow: 
+      0 1px 3px rgba(0, 31, 38, 0.04),
+      0 8px 24px rgba(0, 31, 38, 0.05),
+      inset 0 1px 0 rgba(255, 255, 255, 0.7);
+    position: relative;
+    overflow: hidden;
+    transition: box-shadow 0.4s cubic-bezier(0.23, 1, 0.32, 1), 
+                transform 0.4s cubic-bezier(0.23, 1, 0.32, 1),
+                border-color 0.3s ease;
+}
+
+html.dark .liquid-card {
+    background: linear-gradient(
+      135deg,
+      #1a1d20 0%,
+      #0d0f11 100%
+    );
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 
+      0 1px 3px rgba(0, 0, 0, 0.2),
+      0 8px 24px rgba(0, 0, 0, 0.3),
+      inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.liquid-card:hover {
+    border-color: rgba(40, 250, 252, 0.15);
+    box-shadow: 
+      0 4px 12px rgba(0, 31, 38, 0.04),
+      0 20px 48px rgba(0, 31, 38, 0.07),
+      0 0 24px rgba(40, 250, 252, 0.06),
+      inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+/* ============================================
+   SPRING TRANSITION & FADE OUT
+   ============================================ */
+.spring-transition {
+    transition: all 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.1);
+}
+
+.executive-fade-out {
+    animation: fadeOut 600ms cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes fadeOut {
+    from { opacity: 1; transform: scale(1); }
+    to { opacity: 0; transform: scale(0.96); }
+}
+
+/* Marquee */
+.marquee-container {
+    overflow: hidden;
+    white-space: nowrap;
+    position: absolute;
+    width: 100%;
+}
+
+.marquee-content {
+    display: inline-block;
+    animation: marquee 30s linear infinite;
+}
+
+@keyframes marquee {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+}
+
+/* ============================================
+   ACCORDION HOVER REVEAL - Roster
+   ============================================ */
+.roster-row {
+    border-bottom: 1px solid rgba(40, 250, 252, 0.08);
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+.roster-row:hover {
+    background-color: rgba(40, 250, 252, 0.03);
+}
+.roster-row:last-child {
+    border-bottom: none;
+}
+.roster-image {
+    width: 0;
+    opacity: 0;
+    transition: width 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.1), opacity 0.4s ease;
+}
+.roster-row:hover .roster-image {
+    width: 120px;
+    opacity: 1;
+}
+
+.reveal-on-scroll {
+    opacity: 0;
+    transform: translateY(40px);
+    transition: opacity 1s cubic-bezier(0.2, 0.8, 0.2, 1), transform 1s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.reveal-on-scroll.is-visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Lenis Smooth Scroll Boilerplate */
+html.lenis, html.lenis body {
+  height: auto;
+}
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+.lenis.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+.lenis.lenis-stopped {
+  overflow: hidden;
+}
+.lenis.lenis-scrolling iframe {
+  pointer-events: none;
+}
+
+/* ============================================
+   CUSTOM CURSOR - Enhanced with cyan
+   ============================================ */
+/* Hide the native cursor only on the landing page. Inside the admin app
+   (body.app-active) the native cursor is restored so forms and tables work. */
+body:not(.app-active) * {
+    cursor: none !important;
+}
+/* When the React admin app is active, hide the landing custom cursor entirely. */
+body.app-active #cursor-dot,
+body.app-active #cursor-ring {
+    display: none !important;
+}
+#cursor-dot,
+#cursor-ring {
+    position: fixed;
+    top: 0;
+    left: 0;
+    pointer-events: none;
+    z-index: 10000;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+}
+#cursor-dot {
+    width: 8px;
+    height: 8px;
+    background-color: #101D34;
+    transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.1);
+}
+#cursor-ring {
+    width: 40px;
+    height: 40px;
+    border: 1px solid rgba(16, 29, 52, 0.4);
+    transition: width 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.1),
+                height 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.1);
+}
+
+body.cursor-hover #cursor-ring {
+    width: 60px;
+    height: 60px;
+    border-color: #A0D8EF;
+    background-color: rgba(160, 216, 239, 0.1);
+    backdrop-filter: blur(2px);
+}
+
+/* ============================================
+   EASING VARIABLES
+   ============================================ */
+:root {
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  --cyan-primary: #28FAFC;
+  --cyan-glow: rgba(40, 250, 252, 0.15);
+  --cyan-subtle: rgba(40, 250, 252, 0.06);
+  --depth-1: 0 1px 3px rgba(0,31,38,0.04);
+  --depth-2: 0 4px 16px rgba(0,31,38,0.06);
+  --depth-3: 0 8px 32px rgba(0,31,38,0.08);
+}
+
+/* ============================================
+   ios26-btn - Premium action button (Theme-Aware, Capsule)
+   ============================================ */
+.ios26-btn {
+    position: relative;
+    overflow: hidden;
+    transition: all 400ms cubic-bezier(0.175, 0.885, 0.32, 1.2);
+    transform-origin: center;
+    background: linear-gradient(135deg, rgba(0, 31, 38, 0.96) 0%, rgba(0, 31, 38, 0.88) 100%);
+    backdrop-filter: blur(16px);
+    border: 1px solid color-mix(in srgb, var(--theme-color, #28FAFC) 25%, transparent);
+    border-radius: 9999px; /* Pill shape */
+    padding-left: 2rem;
+    padding-right: 2rem;
+    box-shadow: 
+      0 6px 20px -4px rgba(0, 31, 38, 0.2), 
+      0 0 0 1px color-mix(in srgb, var(--theme-color, #28FAFC) 10%, transparent),
+      inset 0 1px 2px rgba(255, 255, 255, 0.15);
+    color: white;
+    z-index: 10;
+}
+.ios26-btn::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 50% 0%, color-mix(in srgb, var(--theme-color, #28FAFC) 50%, transparent), transparent 70%);
+    opacity: 0;
+    transition: opacity 400ms ease;
+    z-index: -1;
+}
+.ios26-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 
+      0 12px 30px -6px color-mix(in srgb, var(--theme-color, #28FAFC) 35%, transparent), 
+      0 0 0 1px color-mix(in srgb, var(--theme-color, #28FAFC) 30%, transparent),
+      inset 0 1px 2px rgba(255, 255, 255, 0.25);
+    border-color: color-mix(in srgb, var(--theme-color, #28FAFC) 60%, transparent);
+}
+.ios26-btn:hover::before {
+    opacity: 1;
+}
+.ios26-btn:active {
+    transform: scale(0.95) translateY(0);
+    box-shadow: 0 4px 12px -4px rgba(0, 31, 38, 0.4), inset 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+/* ============================================
+   EMIL BUTTON - Sweep reveal (Theme-Aware, Capsule)
+   ============================================ */
+.emil-btn {
+    position: relative;
+    overflow: hidden;
+    border-radius: 9999px; /* Pill shape */
+    padding-left: 2rem;
+    padding-right: 2rem;
+    transition: transform 160ms var(--ease-out), color 300ms ease, box-shadow 300ms ease, border-color 300ms ease;
+    transform-origin: center;
+}
+.emil-btn:active {
+    transform: scale(0.96);
+}
+.emil-btn-content {
+    position: relative;
+    z-index: 10;
+    transition: filter 200ms ease, opacity 200ms ease;
+}
+.emil-btn:active .emil-btn-content {
+    filter: blur(1px);
+    opacity: 0.9;
+}
+.emil-btn-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, var(--theme-color, #28FAFC) 0%, color-mix(in srgb, var(--theme-color, #28FAFC) 70%, white) 100%);
+    clip-path: inset(0 100% 0 0);
+    transition: clip-path 400ms var(--ease-out);
+    z-index: 0;
+}
+.emil-btn:hover .emil-btn-overlay {
+    clip-path: inset(0 0 0 0);
+}
+.emil-btn:hover {
+    color: #001f26;
+    border-color: transparent;
+    box-shadow: 0 8px 30px -10px color-mix(in srgb, var(--theme-color, #28FAFC) 60%, transparent);
+}
+
+/* ============================================
+   UI/UX PRO MAX - premium button classes
+   ============================================ */
+/* Pill-shaped capsule button - Primary (Dark Editorial) */
+.btn-stitch-primary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 0.05em;
+    padding: 0.75rem 2rem;
+    border-radius: 9999px;
+    background: #001f26;
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    transition: all 300ms cubic-bezier(0.25, 1, 0.5, 1);
+    position: relative;
+    overflow: hidden;
+    z-index: 1;
+}
+.btn-stitch-primary::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--theme-color, #28FAFC);
+    opacity: 0;
+    transition: opacity 300ms ease;
+    z-index: -1;
+}
+.btn-stitch-primary:hover {
+    color: #001f26;
+    border-color: var(--theme-color, #28FAFC);
+    box-shadow: 0 8px 25px -8px color-mix(in srgb, var(--theme-color, #28FAFC) 50%, transparent);
+    transform: translateY(-1.5px);
+}
+.btn-stitch-primary:hover::before {
+    opacity: 1;
+}
+.btn-stitch-primary:active {
+    transform: translateY(0) scale(0.95);
+    box-shadow: 0 4px 12px -8px color-mix(in srgb, var(--theme-color, #28FAFC) 50%, transparent);
+}
+
+/* Secondary Ghost style */
+.btn-stitch-secondary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 0.05em;
+    padding: 0.75rem 2rem;
+    border-radius: 9999px;
+    background: transparent;
+    color: #001f26;
+    border: 1.5px solid rgba(0, 31, 38, 0.2);
+    transition: all 300ms cubic-bezier(0.25, 1, 0.5, 1);
+}
+.btn-stitch-secondary:hover {
+    background: #001f26;
+    border-color: #001f26;
+    color: #ffffff;
+    transform: translateY(-1.5px);
+    box-shadow: 0 8px 20px -10px rgba(0, 31, 38, 0.25);
+}
+.btn-stitch-secondary:active {
+    transform: translateY(0) scale(0.95);
+}
+
+/* Theme accent pill button (Solid theme color background, dark text) */
+.btn-stitch-theme {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 0.05em;
+    padding: 0.75rem 2rem;
+    border-radius: 9999px;
+    background: var(--theme-color, #28FAFC);
+    color: #001f26;
+    border: 1px solid color-mix(in srgb, var(--theme-color, #28FAFC) 20%, #001f26);
+    transition: all 300ms cubic-bezier(0.25, 1, 0.5, 1);
+    box-shadow: 0 4px 14px -4px color-mix(in srgb, var(--theme-color, #28FAFC) 50%, transparent);
+}
+.btn-stitch-theme:hover {
+    transform: translateY(-1.5px);
+    box-shadow: 0 8px 25px -8px color-mix(in srgb, var(--theme-color, #28FAFC) 70%, transparent);
+    filter: brightness(1.05);
+}
+.btn-stitch-theme:active {
+    transform: translateY(0) scale(0.95);
+}
+
+/* Theme border ghost button */
+.btn-stitch-theme-ghost {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 0.05em;
+    padding: 0.725rem 1.875rem;
+    border-radius: 9999px;
+    background: transparent;
+    color: color-mix(in srgb, var(--theme-color, #28FAFC) 85%, #001f26);
+    border: 1.5px solid color-mix(in srgb, var(--theme-color, #28FAFC) 40%, transparent);
+    transition: all 300ms cubic-bezier(0.25, 1, 0.5, 1);
+}
+.btn-stitch-theme-ghost:hover {
+    background: color-mix(in srgb, var(--theme-color, #28FAFC) 8%, transparent);
+    border-color: var(--theme-color, #28FAFC);
+    transform: translateY(-1.5px);
+    box-shadow: 0 8px 25px -12px color-mix(in srgb, var(--theme-color, #28FAFC) 40%, transparent);
+}
+.btn-stitch-theme-ghost:active {
+    transform: translateY(0) scale(0.95);
+}
+
+/* Danger / Rose button */
+.btn-stitch-danger {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 0.05em;
+    padding: 0.75rem 2rem;
+    border-radius: 9999px;
+    background: #ef4444;
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transition: all 300ms cubic-bezier(0.25, 1, 0.5, 1);
+    box-shadow: 0 4px 14px -4px rgba(239, 68, 68, 0.4);
+}
+.btn-stitch-danger:hover {
+    transform: translateY(-1.5px);
+    box-shadow: 0 8px 25px -8px rgba(239, 68, 68, 0.6);
+    background: #f87171;
+}
+.btn-stitch-danger:active {
+    transform: translateY(0) scale(0.95);
+}
+
+/* ============================================
+   TACTILE MICRO-ANIMATION FOR STANDARD BUTTONS
+   ============================================ */
+button:not(.sidebar-nav-item):not(.close-btn):not([disabled]) {
+    transition: transform 150ms cubic-bezier(0.25, 1, 0.5, 1), background-color 200ms ease, box-shadow 200ms ease, border-color 200ms ease;
+}
+button:not(.sidebar-nav-item):not(.close-btn):not([disabled]):active {
+    transform: scale(0.95);
+}
+
+/* ============================================
+   MORPHING BLOB BACKGROUND (Dynamic Organic Mesh)
+   ============================================ */
+.blob-bg {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(130px); /* Slightly increased blur for ultra-smooth rendering */
+    z-index: -1;
+    pointer-events: none;
+    will-change: transform, border-radius;
+}
+
+.blob-bg-1 {
+    animation: morphBlob1 45s ease-in-out infinite alternate;
+}
+
+.blob-bg-2 {
+    animation: morphBlob2 55s ease-in-out infinite alternate;
+}
+
+.blob-bg-3 {
+    animation: morphBlob3 65s ease-in-out infinite alternate;
+}
+
+.blob-bg-4 {
+    animation: morphBlob4 75s ease-in-out infinite alternate;
+}
+
+@keyframes morphBlob1 {
+    0% { border-radius: 40% 60% 70% 30% / 40% 40% 60% 50%; transform: translate3d(0, 0, 0) rotate(0deg) scale(1); }
+    25% { border-radius: 60% 40% 50% 50% / 50% 30% 70% 50%; transform: translate3d(120px, -60px, 0) rotate(90deg) scale(1.1); }
+    50% { border-radius: 35% 65% 45% 55% / 55% 40% 60% 45%; transform: translate3d(60px, 120px, 0) rotate(180deg) scale(0.9); }
+    75% { border-radius: 50% 50% 65% 35% / 40% 60% 40% 60%; transform: translate3d(-100px, 40px, 0) rotate(270deg) scale(1.05); }
+    100% { border-radius: 40% 60% 70% 30% / 40% 40% 60% 50%; transform: translate3d(0, 0, 0) rotate(360deg) scale(1); }
+}
+
+@keyframes morphBlob2 {
+    0% { border-radius: 70% 30% 50% 50% / 30% 30% 70% 70%; transform: translate3d(0, 0, 0) rotate(0deg) scale(1.05); }
+    33% { border-radius: 50% 60% 40% 60% / 60% 40% 60% 40%; transform: translate3d(-150px, -80px, 0) rotate(-120deg) scale(1.15); }
+    66% { border-radius: 45% 55% 65% 35% / 50% 60% 40% 50%; transform: translate3d(-50px, -160px, 0) rotate(-240deg) scale(0.95); }
+    100% { border-radius: 70% 30% 50% 50% / 30% 30% 70% 70%; transform: translate3d(0, 0, 0) rotate(-360deg) scale(1.05); }
+}
+
+@keyframes morphBlob3 {
+    0% { border-radius: 50% 50% 50% 50% / 50% 50% 50% 50%; transform: translate3d(0, 0, 0) rotate(0deg) scale(0.95); }
+    25% { border-radius: 65% 35% 55% 45% / 45% 55% 35% 65%; transform: translate3d(-100px, 120px, 0) rotate(90deg) scale(1.1); }
+    50% { border-radius: 35% 65% 45% 55% / 55% 40% 60% 45%; transform: translate3d(-200px, -30px, 0) rotate(180deg) scale(1); }
+    75% { border-radius: 55% 45% 65% 35% / 40% 50% 50% 60%; transform: translate3d(-80px, -120px, 0) rotate(270deg) scale(0.9); }
+    100% { border-radius: 50% 50% 50% 50% / 50% 50% 50% 50%; transform: translate3d(0, 0, 0) rotate(360deg) scale(0.95); }
+}
+
+@keyframes morphBlob4 {
+    0% { border-radius: 60% 40% 60% 40% / 40% 60% 40% 60%; transform: translate3d(0, 0, 0) rotate(0deg) scale(1); }
+    33% { border-radius: 40% 60% 30% 70% / 50% 30% 70% 50%; transform: translate3d(160px, -100px, 0) rotate(120deg) scale(1.1); }
+    66% { border-radius: 55% 45% 70% 30% / 30% 70% 40% 60%; transform: translate3d(60px, 150px, 0) rotate(240deg) scale(0.95); }
+    100% { border-radius: 60% 40% 60% 40% / 40% 60% 40% 60%; transform: translate3d(0, 0, 0) rotate(360deg) scale(1); }
+}
+
+/* ============================================
+   SIDEBAR NAVIGATION - Enhanced depth & tint
+   ============================================ */
+.sidebar-nav {
+    background: #ffffff;
+    border-right: 1px solid rgba(0, 31, 38, 0.08);
+    box-shadow: 4px 0 32px rgba(0, 31, 38, 0.03);
+}
+
+html.dark .sidebar-nav {
+    background: #121212;
+    border-right: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 4px 0 32px rgba(0, 0, 0, 0.2);
+}
+
+.sidebar-nav-item {
+    position: relative;
+    transition: all 0.25s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.sidebar-nav-item::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 3px;
+    height: 0;
+    background: linear-gradient(180deg, #28FAFC, #89CFF0);
+    border-radius: 0 4px 4px 0;
+    transition: height 0.25s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.sidebar-nav-item.active::before {
+    height: 60%;
+}
+
+.sidebar-nav-item.active {
+    background: rgba(40, 250, 252, 0.08);
+    border-color: rgba(40, 250, 252, 0.12);
+}
+
+/* ============================================
+   HEADER - Glass header with depth
+   ============================================ */
+.glass-header {
+    background: linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.85) 0%,
+      rgba(250, 249, 245, 0.75) 100%
+    );
+    border-bottom: 1px solid rgba(40, 250, 252, 0.08);
+    box-shadow: 
+      0 1px 0 rgba(0, 31, 38, 0.03),
+      0 4px 16px rgba(0, 31, 38, 0.03);
+}
+
+/* ============================================
+   TABLE ENHANCEMENTS
+   ============================================ */
+.table-header-row {
+    background: linear-gradient(135deg, rgba(40, 250, 252, 0.04) 0%, rgba(250, 249, 245, 0.8) 100%);
+}
+
+.table-row-hover:hover {
+    background-color: rgba(40, 250, 252, 0.03);
+}
+
+/* ============================================
+   INPUT FOCUS RING - Cyan branded
+   ============================================ */
+input:focus, textarea:focus, select:focus {
+    --tw-ring-color: rgba(40, 250, 252, 0.25);
+}
+
+/* ============================================
+   SCROLLBAR STYLING
+   ============================================ */
+::-webkit-scrollbar {
+    width: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(0, 31, 38, 0.10);
+    border-radius: 100px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(40, 250, 252, 0.25);
+}
+
+/* ============================================
+   UTILITY: Cyan accent line (decorative)
+   ============================================ */
+.accent-line-top {
+    position: relative;
+}
+.accent-line-top::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 40px;
+    height: 3px;
+    background: linear-gradient(90deg, #28FAFC, #89CFF0);
+    border-radius: 999px;
+}
+
+/* ============================================
+   ANIMATE FADE IN (keyframe for Tailwind)
+   ============================================ */
+@keyframes animate-fade-in {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-in {
+    animation: animate-fade-in 0.5s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+}
+
+/* ============================================
+   TWISTED PALETTE & ADMIN UI/UX PRO MAX
+   ============================================ */
+:root {
+  --color-brand-primary: #89cff0;
+  --color-brand-secondary: #ffeacd;
+  --color-brand-accent: #0F172A;
+  --color-brand-muted: #475569;
+}
+
+.text-brand-primary { color: var(--color-brand-primary); }
+.text-brand-secondary { color: var(--color-brand-secondary); }
+.text-brand-accent { color: var(--color-brand-accent); }
+.text-brand-muted { color: var(--color-brand-muted); }
+
+.bg-brand-primary { background-color: var(--color-brand-primary); }
+.bg-brand-secondary { background-color: var(--color-brand-secondary); }
+.bg-brand-accent { background-color: var(--color-brand-accent); }
+.bg-brand-muted { background-color: var(--color-brand-muted); }
+
+.border-brand-primary { border-color: var(--color-brand-primary); }
+.border-brand-secondary { border-color: var(--color-brand-secondary); }
+.border-brand-accent { border-color: var(--color-brand-accent); }
+.border-brand-muted { border-color: var(--color-brand-muted); }
+
+/* Custom Admin Card */
+.admin-card {
+  background: linear-gradient(145deg, #ffffff, rgba(255, 234, 205, 0.4));
+  border: 1px solid rgba(71, 85, 105, 0.15);
+  border-radius: 2rem;
+  padding: 1.5rem;
+  box-shadow: 0 10px 40px -10px rgba(15, 23, 42, 0.08);
+}
+@media (min-width: 768px) {
+  .admin-card {
+    padding: 2rem;
+  }
+}
+
+/* Custom Admin Input */
+.admin-input {
+  width: 100%;
+  padding: 0.875rem 1.25rem;
+  background-color: #ffffff;
+  border: 1px solid rgba(71, 85, 105, 0.2);
+  border-radius: 1rem;
+  font-size: 0.875rem;
+  font-family: 'Google Sans', sans-serif;
+  color: #0F172A;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
+}
+.admin-input:focus {
+  outline: none;
+  border-color: rgba(137, 207, 240, 0.6);
+  box-shadow: 0 0 0 4px rgba(137, 207, 240, 0.2);
+}
+.admin-input::placeholder {
+  color: rgba(142, 114, 88, 0.5);
+}
+
+/* ============================================
+   GLOBAL GLASSMORPHISM REMOVAL OVERRIDES
+   ============================================ */
+*:not([class*="backdrop-blur"]) {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+}
+
+/* ============================================
+   TYPOGRAPHY & SHARP CORNERS THEME OVERRIDES
+   ============================================ */
+
+/* Theme: Sharp Serif (Classic Editorial) */
+.theme-sharp-serif {
+    font-family: 'Cormorant Garamond', serif !important;
+}
+.theme-sharp-serif * {
+    border-radius: 0px !important;
+}
+
+/* Theme: Sharp Tech (Modern Geometric Tech) */
+.theme-sharp-tech {
+    font-family: 'Space Grotesk', sans-serif !important;
+}
+.theme-sharp-tech * {
+    border-radius: 4px !important;
+}
+
+/* ============================================
+   DYNAMIC SHADER GRADIENT
+   ============================================ */
+.dynamic-gradient-bg {
+    background: linear-gradient(120deg, #ffffff 0%, #eef8fd 28%, #ffffff 55%, #fbf3e6 100%);
+    background-size: 300% 300%;
+    animation: gradientShader 28s ease infinite;
+}
+
+@keyframes gradientShader {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+/* ============================================
+   ADMINISTRATION AREA FONT OVERRIDES (33% ANTHROPIC SERIF, 33% ANTHROPIC SANS, 34% GOOGLE SANS)
+   ============================================ */
+/* 1. Default UI Elements, Controls, Inputs, and Tables use Google Sans */
+#root, 
+#root button, 
+#root input, 
+#root select, 
+#root textarea, 
+#root table, 
+#root td, 
+#root th, 
+#root .sidebar-nav-item {
+    font-family: 'Google Sans', 'Inter', sans-serif !important;
+}
+
+/* 2. Paragraphs, descriptions, list bodies, and content div text use Anthropic Sans (Satoshi) */
+#root p, 
+#root li,
+#root .font-sans,
+#root .text-sm,
+#root .text-base,
+#root .text-lg,
+#root .text-xs:not(button):not(label) {
+    font-family: 'Satoshi', 'Inter', sans-serif !important;
+}
+
+/* 3. Headings, card titles, display elements, and subheadings use Anthropic Serif (Newsreader) */
+#root h1,
+#root h2,
+#root h3,
+#root h4,
+#root h5,
+#root h6,
+#root [class*="font-display"],
+#root [class*="font-headings"],
+#root [class*="font-anthropicSerif"] {
+    font-family: 'Newsreader', 'Playfair Display', serif !important;
+}
+
+/* ============================================
+   LANDING PAGE — CINEMATIC SCROLL ENHANCEMENTS
+   ============================================ */
+
+/* Scroll progress indicator */
+#scroll-progress {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 3px;
+    width: 100%;
+    transform: scaleX(0);
+    transform-origin: 0 50%;
+    background: linear-gradient(90deg, #A0D8EF 0%, #28FAFC 45%, #101D34 100%);
+    box-shadow: 0 0 12px rgba(40, 250, 252, 0.5);
+    z-index: 10001;
+    pointer-events: none;
+    will-change: transform;
+}
+
+/* Fine film grain overlay for editorial texture */
+.grain-overlay {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 9998;
+    opacity: 0.045;
+    mix-blend-mode: multiply;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* Masked line reveal for split headings */
+.split-lines .line-mask {
+    display: block;
+    overflow: hidden;
+    padding-bottom: 0.08em; /* room for descenders */
+}
+.split-lines .line-inner {
+    display: block;
+    will-change: transform;
+}
+
+/* Pre-animation hidden states (prevents flash of content before GSAP entrance) */
+.gsap-anim .hero-title { opacity: 0; }
+.gsap-anim .hero-subtitle,
+.gsap-anim .hero-el,
+.gsap-anim .hero-panel { opacity: 0; }
+
+/* Portfolio 3D tilt cards */
+.tilt-card {
+    transform-style: preserve-3d;
+    perspective: 1000px;
+    will-change: transform;
+}
+
+/* Magnetic buttons */
+.magnetic {
+    will-change: transform;
+}
+.magnetic-inner {
+    display: inline-flex;
+    will-change: transform;
+}
+
+/* ============================================
+   PROJECT MARQUEE BAND
+   ============================================ */
+.marquee-band {
+    border-top: 1px solid rgba(16, 29, 52, 0.1);
+    border-bottom: 1px solid rgba(16, 29, 52, 0.1);
+}
+.marquee-track {
+    display: inline-flex;
+    flex-wrap: nowrap;
+    white-space: nowrap;
+    will-change: transform;
+}
+.marquee-seg {
+    display: inline-flex;
+    align-items: center;
+    flex-shrink: 0;
+}
+.marquee-seg > span {
+    padding: 0 0.35em;
+    color: #FFFFFF;
+}
+.marquee-seg .dot {
+    color: #A0D8EF;
+    padding: 0 0.25em;
+}
+/* Every other project name becomes an outlined ghost for editorial rhythm */
+.marquee-seg > span:nth-child(4n + 1) {
+    color: transparent;
+    -webkit-text-stroke: 1px rgba(255, 255, 255, 0.55);
+}
+
+/* Respect reduced motion */
+@media (prefers-reduced-motion: reduce) {
+    .grain-overlay { display: none; }
+    #scroll-progress { display: none; }
+    .reveal-on-scroll { opacity: 1 !important; transform: none !important; }
+    .aurora-blob { animation: none !important; }
+}
+
+/* ============================================
+   HERO AURORA / MESH GRADIENT
+   ============================================ */
+.hero-aurora {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    overflow: hidden;
+    pointer-events: none;
+}
+.aurora-blob {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(90px);
+    will-change: transform, border-radius;
+}
+.aurora-1 {
+    width: 48vw; height: 48vw;
+    top: -10%; left: -6%;
+    background: radial-gradient(circle at 35% 35%, rgba(160, 216, 239, 0.75), transparent 68%);
+    opacity: 0.6;
+    animation: morphBlob1 42s ease-in-out infinite alternate;
+}
+.aurora-2 {
+    width: 42vw; height: 42vw;
+    top: 12%; right: -10%;
+    background: radial-gradient(circle at 50% 50%, rgba(249, 235, 209, 0.9), transparent 66%);
+    opacity: 0.75;
+    animation: morphBlob2 54s ease-in-out infinite alternate;
+}
+.aurora-3 {
+    width: 36vw; height: 36vw;
+    bottom: -16%; left: 26%;
+    background: radial-gradient(circle at 50% 50%, rgba(137, 207, 240, 0.6), transparent 70%);
+    opacity: 0.5;
+    animation: morphBlob3 64s ease-in-out infinite alternate;
+}
+
+/* ============================================
+   PORTFOLIO CARDS (redesigned)
+   ============================================ */
+.port-card {
+    position: relative;
+    overflow: hidden;
+    padding: 2.75rem;
+    border: 1px solid rgba(16, 29, 52, 0.12);
+    display: flex;
+    transition: box-shadow 0.5s cubic-bezier(0.23, 1, 0.32, 1), border-color 0.35s ease;
+}
+.port-card:hover {
+    box-shadow: 0 34px 70px -40px rgba(16, 29, 52, 0.4);
+    border-color: rgba(160, 216, 239, 0.65);
+}
+.port-dark { border-color: rgba(255, 255, 255, 0.1); }
+.port-dark:hover {
+    border-color: rgba(160, 216, 239, 0.4);
+    box-shadow: 0 34px 80px -36px rgba(0, 0, 0, 0.55);
+}
+/* Hover sheen from the top */
+.port-card::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(120% 90% at 50% -10%, rgba(160, 216, 239, 0.35), transparent 55%);
+    opacity: 0;
+    transition: opacity 0.5s ease;
+    pointer-events: none;
+    z-index: 1;
+}
+.port-card:hover::after { opacity: 1; }
+
+/* Tilt cards fade in (no translate) so GSAP mouse-tilt stays smooth */
+.tilt-card.reveal-on-scroll {
+    transform: none;
+    transition: opacity 0.9s cubic-bezier(0.2, 0.8, 0.2, 1),
+                box-shadow 0.5s cubic-bezier(0.23, 1, 0.32, 1),
+                border-color 0.35s ease;
+}
+
+.port-inner {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    width: 100%;
+    height: 100%;
+    gap: 2rem;
+}
+.port-inner--split { justify-content: space-between; }
+@media (min-width: 768px) {
+    .port-inner--split { flex-direction: row; align-items: flex-end; gap: 2.5rem; }
+}
+
+.port-ghost {
+    position: absolute;
+    top: -2.25rem;
+    right: -0.5rem;
+    z-index: 0;
+    font-family: 'Playfair Display', serif;
+    font-style: italic;
+    font-weight: 900;
+    font-size: 11rem;
+    line-height: 1;
+    color: rgba(16, 29, 52, 0.05);
+    pointer-events: none;
+    transition: transform 0.6s cubic-bezier(0.23, 1, 0.32, 1), color 0.5s ease;
+}
+.port-card:hover .port-ghost { transform: translateY(-8px); color: rgba(16, 29, 52, 0.08); }
+.port-ghost-light { color: rgba(255, 255, 255, 0.06); }
+.port-card:hover .port-ghost-light { color: rgba(160, 216, 239, 0.16); }
+
+.port-icon {
+    width: 3rem;
+    height: 3rem;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(16, 29, 52, 0.15);
+    color: #101D34;
+    background: rgba(255, 255, 255, 0.55);
+    transition: background 0.4s ease, color 0.4s ease, transform 0.5s cubic-bezier(0.23, 1, 0.32, 1);
+}
+.port-card:hover .port-icon { background: #101D34; color: #fff; transform: rotate(-6deg) scale(1.05); }
+.port-icon-light { border-color: rgba(255, 255, 255, 0.2); color: #fff; background: rgba(255, 255, 255, 0.06); }
+.port-card:hover .port-icon-light { background: #A0D8EF; color: #101D34; }
+
+.port-tag {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: rgba(16, 29, 52, 0.6);
+    border: 1px solid rgba(16, 29, 52, 0.12);
+    background: rgba(255, 255, 255, 0.5);
+    padding: 0.45rem 0.85rem;
+    white-space: nowrap;
+}
+.port-tag-light { color: rgba(255, 255, 255, 0.75); border-color: rgba(255, 255, 255, 0.2); background: rgba(255, 255, 255, 0.05); }
+
+.port-pills { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.port-pills span {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    padding: 0.4rem 0.85rem;
+    border-radius: 9999px;
+    background: rgba(16, 29, 52, 0.06);
+    color: #101D34;
+    border: 1px solid rgba(16, 29, 52, 0.08);
+    transition: background 0.35s ease, transform 0.35s ease;
+}
+.port-card:hover .port-pills span { background: rgba(160, 216, 239, 0.4); }
+.port-pills-light span { background: rgba(255, 255, 255, 0.08); color: #fff; border-color: rgba(255, 255, 255, 0.14); }
+.port-card:hover .port-pills-light span { background: rgba(160, 216, 239, 0.28); color: #fff; }
+
+/* ============================================
+   GOVERNANCE CORPS CARDS (avatar monograms)
+   ============================================ */
+.gov-card {
+    position: relative;
+    overflow: hidden;
+    padding: 1.75rem;
+    background: #ffffff;
+    border: 1px solid rgba(16, 29, 52, 0.1);
+    transition: transform 0.45s cubic-bezier(0.23, 1, 0.32, 1), box-shadow 0.45s ease, border-color 0.3s ease;
+}
+.gov-card::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 3px;
+    background: linear-gradient(180deg, #A0D8EF, #101D34);
+    transform: scaleY(0);
+    transform-origin: top;
+    transition: transform 0.45s cubic-bezier(0.23, 1, 0.32, 1);
+}
+.gov-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 26px 46px -28px rgba(16, 29, 52, 0.38);
+    border-color: rgba(160, 216, 239, 0.6);
+}
+.gov-card:hover::before { transform: scaleY(1); }
+.gov-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; }
+.gov-avatar {
+    width: 3.5rem;
+    height: 3.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 9999px;
+    font-family: 'Inter', sans-serif;
+    font-weight: 800;
+    font-size: 1.05rem;
+    letter-spacing: 0.02em;
+    color: #fff;
+    background: linear-gradient(140deg, #101D34 0%, #2b3f63 55%, #A0D8EF 145%);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18), 0 8px 18px -8px rgba(16, 29, 52, 0.55);
+    transition: transform 0.45s cubic-bezier(0.23, 1, 0.32, 1);
+}
+.gov-card:hover .gov-avatar { transform: scale(1.07) rotate(-4deg); }
+.gov-index { font-family: 'Inter', sans-serif; font-size: 0.7rem; font-weight: 700; color: rgba(16, 29, 52, 0.3); letter-spacing: 0.1em; }
+.gov-name { font-family: 'Inter', sans-serif; font-weight: 800; font-size: 1.05rem; text-transform: uppercase; letter-spacing: -0.01em; color: #101D34; margin-bottom: 0.4rem; line-height: 1.15; }
+.gov-role { font-family: 'Inter', sans-serif; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.12em; color: rgba(16, 29, 52, 0.5); }
+.gov-card-lead { background: linear-gradient(160deg, #ffffff, #eef7fc); border-color: rgba(160, 216, 239, 0.5); }
+.gov-card-lead .gov-avatar { background: linear-gradient(140deg, #A0D8EF 0%, #101D34 135%); }
+.gov-role-lead { color: #101D34; }
+
+/* ============================================
+   IMPACT METRICS BAND
+   ============================================ */
+.impact-glow {
+    position: absolute;
+    width: 60vw;
+    height: 60vw;
+    max-width: 900px;
+    max-height: 900px;
+    top: -32%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: radial-gradient(circle, rgba(160, 216, 239, 0.22), transparent 62%);
+    filter: blur(30px);
+    pointer-events: none;
+    z-index: 0;
+}
+.stat-tile {
+    background: #101D34;
+    padding: 2.5rem 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    transition: background 0.4s ease;
+}
+.stat-tile:hover { background: #16233f; }
+.stat-icon {
+    width: 2.75rem;
+    height: 2.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 9999px;
+    color: #A0D8EF;
+    background: rgba(160, 216, 239, 0.1);
+    border: 1px solid rgba(160, 216, 239, 0.2);
+    margin-bottom: 0.75rem;
+}
+.stat-num { font-family: 'Inter', sans-serif; font-weight: 800; font-size: clamp(2.25rem, 4vw, 3rem); line-height: 1; color: #fff; display: flex; align-items: baseline; }
+.stat-plus { color: #A0D8EF; margin-left: 0.1rem; }
+.stat-label { font-family: 'Inter', sans-serif; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.14em; color: rgba(255, 255, 255, 0.5); }
+
+/* ============================================
+   STUNNING PASS — editorial typography & story
+   ============================================ */
+::selection { background: #A0D8EF; color: #101D34; }
+
+/* Outlined display text with baby-blue offset ghost */
+.text-outline {
+    color: transparent;
+    -webkit-text-stroke: 2.5px #101D34;
+    text-shadow: 0.045em 0.045em 0 rgba(160, 216, 239, 0.55);
+}
+@media (max-width: 1024px) {
+    .text-outline { -webkit-text-stroke-width: 1.5px; }
+}
+
+/* Serif italic accent inside bold uppercase headings */
+.em-accent {
+    font-family: 'Playfair Display', serif;
+    font-style: italic;
+    font-weight: 600;
+    text-transform: none;
+    letter-spacing: -0.01em;
+    color: #3E82B0;
+}
+
+/* ============================================
+   ROTATING EDITORIAL BADGE (hero scroll cue)
+   ============================================ */
+.rotating-badge {
+    position: absolute;
+    top: 8.5rem;
+    right: 4rem;
+    width: 150px;
+    height: 150px;
+    z-index: 30;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: 0;
+    padding: 0;
+}
+.badge-ring {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    animation: spin-slow 22s linear infinite;
+}
+.badge-ring text {
+    font-family: 'Inter', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    fill: rgba(16, 29, 52, 0.5);
+}
+.badge-core {
+    width: 3.25rem;
+    height: 3.25rem;
+    border-radius: 9999px;
+    background: #A0D8EF;
+    color: #101D34;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 10px 24px -6px rgba(120, 190, 225, 0.7);
+    transition: background 0.3s ease, color 0.3s ease, transform 0.3s ease;
+}
+.rotating-badge:hover .badge-core {
+    background: #101D34;
+    color: #fff;
+    transform: scale(1.08);
+}
+@keyframes spin-slow { to { transform: rotate(360deg); } }
+
+/* ============================================
+   STORY TIMELINE (Global → Local)
+   ============================================ */
+.story-line {
+    position: absolute;
+    left: 7px;
+    top: 8px;
+    bottom: 8px;
+    width: 2px;
+    background: rgba(16, 29, 52, 0.08);
+}
+.story-line-fill {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(180deg, #A0D8EF, #101D34);
+    transform: scaleY(0);
+    transform-origin: top;
+    will-change: transform;
+}
+.story-step {
+    position: relative;
+    padding-left: 3.5rem;
+    padding-bottom: 5.5rem;
+}
+.story-step:last-child { padding-bottom: 0; }
+.story-step::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 6px;
+    width: 16px;
+    height: 16px;
+    border-radius: 9999px;
+    background: #fff;
+    border: 2px solid rgba(16, 29, 52, 0.25);
+    transition: background 0.5s ease, border-color 0.5s ease, box-shadow 0.5s ease;
+}
+.story-step.is-visible::before {
+    background: #A0D8EF;
+    border-color: #101D34;
+    box-shadow: 0 0 0 6px rgba(160, 216, 239, 0.25);
+}
+.story-kicker {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: rgba(16, 29, 52, 0.45);
+    display: block;
+    margin-bottom: 0.9rem;
+}
+.story-title {
+    font-family: 'Inter', sans-serif;
+    font-weight: 900;
+    font-size: clamp(1.8rem, 3.2vw, 2.6rem);
+    text-transform: uppercase;
+    letter-spacing: -0.02em;
+    color: #101D34;
+    line-height: 1;
+    margin-bottom: 1.1rem;
+}
+.story-text {
+    font-family: 'Inter', sans-serif;
+    font-weight: 300;
+    font-size: 1.05rem;
+    line-height: 1.75;
+    color: rgba(16, 29, 52, 0.72);
+    max-width: 40rem;
+    margin-bottom: 1.6rem;
+}
+.story-stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2.5rem;
+}
+.story-stats > div {
+    font-family: 'Inter', sans-serif;
+    font-weight: 800;
+    font-size: 2rem;
+    color: #101D34;
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+}
+.story-stats .plus { color: #4FA8D8; margin-left: -0.35rem; }
+.story-stats em {
+    font-style: normal;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: rgba(16, 29, 52, 0.45);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .badge-ring { animation: none; }
+}
+
+/* ============================================
+   DASHBOARD SHELL POLISH (admin area)
+   ============================================ */
+/* Nav items nudge on hover for a tactile feel */
+.sidebar-nav-item:not(.active):hover {
+    transform: translateX(3px);
+}
+.sidebar-nav-item { border-radius: 0.75rem !important; }
+
+/* Slimmer, branded sidebar scrollbar */
+.sidebar-nav::-webkit-scrollbar { width: 5px; }
+.sidebar-nav::-webkit-scrollbar-thumb {
+    background: rgba(16, 29, 52, 0.1);
+    border-radius: 100px;
+}
+.sidebar-nav::-webkit-scrollbar-thumb:hover {
+    background: rgba(137, 207, 240, 0.5);
+}
+
+/* Header gains a hairline baby-blue sheen at the very top */
+.glass-header {
+    position: relative;
+}
+.glass-header::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, rgba(137, 207, 240, 0.6), transparent);
+    opacity: 0.7;
+}
+
+/* Liquid cards lift a touch more crisply in the admin area */
+#root .liquid-card:hover {
+    transform: translateY(-2px);
+}
+
+/* Unified dashboard stat cards */
+.stat-hero {
+    transition: transform 0.35s cubic-bezier(0.23, 1, 0.32, 1), box-shadow 0.35s ease, border-color 0.3s ease !important;
+}
+.stat-hero:hover {
+    transform: translateY(-4px) !important;
+    box-shadow: 0 22px 44px -24px rgba(16, 29, 52, 0.28) !important;
+}
+.stat-hero-bar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    transform: scaleX(0.35);
+    transform-origin: left;
+    transition: transform 0.45s cubic-bezier(0.23, 1, 0.32, 1);
+}
+.stat-hero:hover .stat-hero-bar {
+    transform: scaleX(1);
+}
+
+/* ============================================
+   ADMIN EDITORIAL SYSTEM — "Digital Command Center"
+   Scoped under .dashboard-shell so the public
+   landing page / login / onboarding are untouched.
+
+   Deliberately NOT generic-AI-dashboard: no floating
+   glow blobs, no glassmorphism-with-glow-on-hover, no
+   pill buttons everywhere. Instead: flat ink panels,
+   1px hairlines, serif editorial numerals, thin static
+   accent rules — the same structural/technical voice
+   as the public landing page (Newsreader serif, grid
+   lines, GPS-coordinate labeling, restrained palette).
+   ============================================ */
+.dashboard-shell {
+  /* Dark (default) */
+  --adm-bg: #0A0C10;
+  --adm-bg-2: #0D0F14;
+  --adm-panel: #10131A;
+  --adm-panel-2: #12151D;
+  --adm-surface: rgba(255, 255, 255, 0.035);
+  --adm-surface-strong: rgba(255, 255, 255, 0.07);
+  --adm-surface-hover: rgba(255, 255, 255, 0.055);
+  --adm-hover-tint: rgba(255, 255, 255, 0.06);
+  --adm-border: rgba(255, 255, 255, 0.1);
+  --adm-border-strong: rgba(255, 255, 255, 0.2);
+  --adm-ink: #F2F1ED;
+  --adm-ink-dim: rgba(242, 241, 237, 0.68);
+  --adm-ink-faint: rgba(242, 241, 237, 0.42);
+  --adm-blue: #89cff0;
+  --adm-cream: #ffeacd;
+  --adm-slate: #94a3b8;
+  --adm-navy: #0F172A;
+  /* Semantic accent colors: readable text-on-panel + a matching low-alpha
+     background tint, per color family. Same variable names are redefined
+     under html[data-theme="light"] .dashboard-shell below with darker,
+     AA-contrast-safe shades for a white/cream panel. */
+  --adm-acc-emerald: #6ee7b7; --adm-acc-emerald-bg: rgba(52,211,153,0.16);
+  --adm-acc-rose: #fca5a5;    --adm-acc-rose-bg: rgba(248,113,113,0.16);
+  --adm-acc-amber: #fcd34d;   --adm-acc-amber-bg: rgba(251,191,36,0.16);
+  --adm-acc-indigo: #c4b5fd;  --adm-acc-indigo-bg: rgba(167,139,250,0.16);
+  --adm-acc-blue: #7dd3fc;    --adm-acc-blue-bg: rgba(125,211,252,0.16);
+  --adm-acc-teal: #5eead4;
+  --adm-acc-pink: #f9a8d4;
+  --adm-danger-fill: #fca5a5; --adm-danger-fill-ink: #2a0a0a;
+  /* Technical backdrop */
+  --adm-grid-line: rgba(255,255,255,0.035);
+  --adm-vignette: radial-gradient(ellipse 130% 90% at 50% -10%, transparent 0%, rgba(10,12,16,0.5) 60%, rgba(10,12,16,0.94) 100%);
+  color: var(--adm-ink);
+  color-scheme: dark;
+}
+
+/* Light mode — same structural language (flat panels, hairlines, no glow),
+   just re-mapped to a warm off-white surface with dark-navy ink so every
+   rule that already reads from these variables adapts automatically. */
+html[data-theme="light"] .dashboard-shell {
+  --adm-bg: #F3EFE6;
+  --adm-bg-2: #FBF9F4;
+  --adm-panel: #FFFFFF;
+  --adm-panel-2: #FFFFFF;
+  --adm-surface: rgba(16, 29, 52, 0.035);
+  --adm-surface-strong: rgba(16, 29, 52, 0.065);
+  --adm-surface-hover: rgba(16, 29, 52, 0.05);
+  --adm-hover-tint: rgba(16, 29, 52, 0.045);
+  --adm-border: rgba(16, 29, 52, 0.13);
+  --adm-border-strong: rgba(16, 29, 52, 0.26);
+  --adm-ink: #101D34;
+  --adm-ink-dim: rgba(16, 29, 52, 0.68);
+  --adm-ink-faint: rgba(16, 29, 52, 0.44);
+
+  --adm-acc-emerald: #047857; --adm-acc-emerald-bg: rgba(16,185,129,0.13);
+  --adm-acc-rose: #b91c1c;    --adm-acc-rose-bg: rgba(239,68,68,0.12);
+  --adm-acc-amber: #92400e;   --adm-acc-amber-bg: rgba(217,119,6,0.14);
+  --adm-acc-indigo: #4338ca;  --adm-acc-indigo-bg: rgba(99,102,241,0.12);
+  --adm-acc-blue: #0369a1;    --adm-acc-blue-bg: rgba(14,165,233,0.12);
+  --adm-acc-teal: #0f766e;
+  --adm-acc-pink: #be185d;
+  --adm-danger-fill: #b91c1c; --adm-danger-fill-ink: #ffffff;
+
+  --adm-grid-line: rgba(16, 29, 52, 0.055);
+  --adm-vignette: radial-gradient(ellipse 130% 90% at 50% -10%, transparent 0%, rgba(243,239,230,0.4) 60%, rgba(243,239,230,0.85) 100%);
+  color-scheme: light;
+}
+
+/* --- Panels: flat ink rectangles with a hairline border, not glass --- */
+.adm-glass {
+  position: relative;
+  background: var(--adm-panel);
+  border: 1px solid var(--adm-border);
+  border-radius: 2px;
+  transition: border-color 0.25s ease;
+  overflow: hidden;
+}
+.adm-glass:hover {
+  border-color: var(--adm-border-strong);
+}
+.adm-glass-static {
+  background: var(--adm-panel);
+  border: 1px solid var(--adm-border);
+  border-radius: 2px;
+}
+.adm-glass-flat {
+  background: var(--adm-surface);
+  border: 1px solid var(--adm-border);
+  border-radius: 2px;
+}
+
+/* Left accent rule (replaces the old glowing top gradient bar) — a static,
+   editorial marker like a dossier tab, not a hover special-effect. */
+.adm-accent-bar {
+  position: absolute;
+  top: 0; left: 0; bottom: 0;
+  width: 3px;
+  background: var(--theme-color, #89cff0);
+  opacity: 0.85;
+  pointer-events: none;
+}
+
+/* --- Buttons: sharp, border-first, fill-invert on hover (matches the
+   landing page's "Acces Administrație" button language) --- */
+.adm-btn-primary,
+.adm-btn-ghost,
+.adm-btn-danger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 2px;
+  font-weight: 700;
+  font-size: 0.7rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 0.7rem 1.5rem;
+  transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+  cursor: pointer;
+  white-space: nowrap;
+  border: 1px solid;
+}
+.adm-btn-primary {
+  background: var(--theme-color, #89cff0);
+  color: #0A0C10;
+  border-color: var(--theme-color, #89cff0);
+}
+.adm-btn-primary:hover { background: transparent; color: var(--theme-color, #89cff0); }
+.adm-btn-primary:active { opacity: 0.8; }
+.adm-btn-primary:disabled { opacity: 0.3; cursor: not-allowed; }
+
+.adm-btn-ghost {
+  background: transparent;
+  color: var(--adm-ink);
+  border-color: var(--adm-border);
+}
+.adm-btn-ghost:hover { background: var(--adm-ink); color: var(--adm-bg); border-color: var(--adm-ink); }
+.adm-btn-ghost:active { opacity: 0.8; }
+.adm-btn-ghost:disabled { opacity: 0.3; cursor: not-allowed; }
+
+.adm-btn-danger {
+  background: transparent;
+  color: var(--adm-danger-fill);
+  border-color: color-mix(in srgb, var(--adm-danger-fill) 45%, transparent);
+}
+.adm-btn-danger:hover { background: var(--adm-danger-fill); color: var(--adm-danger-fill-ink); border-color: var(--adm-danger-fill); }
+.adm-btn-danger:active { opacity: 0.8; }
+
+/* Small icon-only action buttons used in tables/rows */
+.adm-icon-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 2.25rem; height: 2.25rem;
+  border-radius: 2px;
+  color: var(--adm-ink-dim);
+  background: transparent;
+  border: 1px solid transparent;
+  transition: all 0.2s ease;
+}
+.adm-icon-btn:hover { background: var(--adm-surface-hover); border-color: var(--adm-border); color: var(--adm-ink); }
+
+/* --- Form controls --- */
+.adm-input, .adm-select {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background: var(--adm-surface);
+  border: 1px solid var(--adm-border);
+  border-radius: 2px;
+  font-size: 0.875rem;
+  color: var(--adm-ink);
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+.adm-input::placeholder { color: var(--adm-ink-faint); }
+.adm-input:focus, .adm-select:focus {
+  outline: none;
+  border-color: var(--theme-color, #89cff0);
+  background: var(--adm-surface-strong);
+}
+.adm-select option { background: var(--adm-panel); color: var(--adm-ink); }
+
+/* Filter/toolbar chip */
+.adm-chip {
+  padding: 0.45rem 0.85rem;
+  border-radius: 2px;
+  background: transparent;
+  border: 1px solid var(--adm-border);
+  color: var(--adm-ink-dim);
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  transition: all 0.2s ease;
+}
+.adm-chip:hover { border-color: var(--adm-border-strong); color: var(--adm-ink); }
+
+/* --- Sidebar: flush structural panel, hairline right border only --- */
+.adm-sidebar {
+  background: var(--adm-bg-2);
+  border-right: 1px solid var(--adm-border);
+}
+.adm-nav-item {
+  position: relative;
+  border-radius: 0 !important;
+  border-left: 2px solid transparent;
+  transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+.adm-nav-item.active {
+  background: var(--adm-surface-strong);
+  border-left-color: var(--theme-color, #89cff0);
+}
+.adm-nav-item:not(.active):hover { background: var(--adm-surface-hover); }
+.adm-sidebar-scroll::-webkit-scrollbar { width: 4px; }
+.adm-sidebar-scroll::-webkit-scrollbar-thumb { background: var(--adm-border-strong); border-radius: 0; }
+.adm-sidebar-scroll::-webkit-scrollbar-thumb:hover { background: var(--theme-color, #89cff0); }
+
+/* --- Header: flat, hairline bottom border --- */
+.adm-header {
+  background: var(--adm-bg-2);
+  border-bottom: 1px solid var(--adm-border);
+  border-radius: 0 !important;
+}
+
+/* --- Command palette --- */
+.adm-command-overlay { background: rgba(4, 5, 8, 0.8); }
+.adm-command-panel {
+  background: var(--adm-panel);
+  border: 1px solid var(--adm-border-strong);
+  border-radius: 2px;
+}
+.adm-command-item { border-radius: 2px; transition: background 0.15s ease; }
+.adm-command-item.is-active, .adm-command-item:hover { background: var(--adm-surface-hover); }
+
+/* --- Static technical backdrop overlays (see AuroraBackground.tsx) --- */
+.adm-aurora-vignette {
+  background: var(--adm-vignette);
+}
+.adm-aurora-grain {
+  opacity: 0.03;
+  mix-blend-mode: overlay;
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120"><filter id="n"><feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="2" stitchTiles="stitch"/></filter><rect width="100%25" height="100%25" filter="url(%23n)"/></svg>');
+}
+/* Faint structural grid — echoes the landing page's 12-col hero grid */
+.adm-tech-grid {
+  background-image:
+    linear-gradient(var(--adm-grid-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--adm-grid-line) 1px, transparent 1px);
+  background-size: 64px 64px;
+}
+
+/* --- Table (dark) --- */
+.adm-table-wrap {
+  border-radius: 2px;
+  border: 1px solid var(--adm-border);
+  background: var(--adm-surface);
+  overflow: hidden;
+}
+.adm-table-head { background: var(--adm-surface); border-bottom: 1px solid var(--adm-border); }
+.adm-table-row { border-bottom: 1px solid var(--adm-border); transition: background 0.2s ease; }
+.adm-table-row:hover { background: var(--adm-surface-hover); }
+
+/* Flatten the old lift+glow hover on stat cards — calm hairline only */
+.dashboard-shell .stat-hero {
+  transition: border-color 0.2s ease !important;
+}
+.dashboard-shell .stat-hero:hover {
+  transform: none !important;
+  box-shadow: none !important;
+  border-color: var(--adm-border-strong) !important;
+}
+.dashboard-shell .stat-hero-bar { display: none; }
+
+/* Panel-depth utility classes (used by BudgetView instead of hardcoded hex,
+   so its layered dark cards actually re-theme in light mode) */
+.dashboard-shell .dashboard-panel-bg2 { background-color: var(--adm-bg-2) !important; }
+.dashboard-shell .dashboard-panel { background-color: var(--adm-panel) !important; }
+.dashboard-shell .dashboard-panel2 { background-color: var(--adm-panel-2) !important; }
+.dashboard-shell .dashboard-panel-strong { background-color: var(--adm-surface-strong) !important; }
+
+/* Utility: theme text (no glow filter — flat, precise color only) */
+.adm-theme-icon { color: var(--theme-color, #89cff0); }
+.adm-theme-ring { box-shadow: 0 0 0 1px color-mix(in srgb, var(--theme-color, #89cff0) 35%, transparent); }
+
+/* Editorial numeral treatment for stat figures — serif, not bold-sans */
+.adm-editorial-number {
+  font-family: 'Newsreader', 'Playfair Display', serif;
+  font-weight: 500;
+  font-style: italic;
+  letter-spacing: -0.01em;
+}
+/* Coordinate/meta-data label treatment — echoes the GPS-coordinate motif */
+.adm-meta-label {
+  font-family: 'Space Grotesk', 'Inter', monospace;
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--adm-ink-faint);
+}
+
+/* ============================================
+   SCOPED RE-THEME OF PRE-EXISTING SHARED CLASSES
+   Only inside .dashboard-shell — the public site,
+   login and onboarding keep their original light
+   definitions of these same class names untouched.
+   ============================================ */
+.dashboard-shell .liquid-card,
+.dashboard-shell .admin-card {
+  background: var(--adm-panel) !important;
+  border: 1px solid var(--adm-border) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.06), 0 24px 48px -24px rgba(0,0,0,0.6) !important;
+  color: var(--adm-ink);
+}
+.dashboard-shell .liquid-card:hover,
+.dashboard-shell .admin-card:hover {
+  border-color: var(--adm-border-strong) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.08),
+    0 32px 64px -24px rgba(0,0,0,0.7),
+    0 0 0 1px color-mix(in srgb, var(--theme-color, #89cff0) 28%, transparent),
+    0 0 44px -14px color-mix(in srgb, var(--theme-color, #89cff0) 45%, transparent) !important;
+}
+.dashboard-shell .admin-input {
+  background-color: var(--adm-surface) !important;
+  border: 1px solid var(--adm-border) !important;
+  color: var(--adm-ink) !important;
+}
+.dashboard-shell .admin-input::placeholder { color: var(--adm-ink-faint) !important; }
+.dashboard-shell .admin-input:focus {
+  border-color: color-mix(in srgb, var(--theme-color, #89cff0) 55%, transparent) !important;
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--theme-color, #89cff0) 16%, transparent) !important;
+}
+.dashboard-shell .glass-header,
+.dashboard-shell .glass-panel {
+  background: var(--adm-panel) !important;
+  border-color: var(--adm-border) !important;
+}
+.dashboard-shell .sidebar-nav {
+  background: transparent !important;
+  border-right: none !important;
+  box-shadow: none !important;
+}
+.dashboard-shell .table-header-row { background: var(--adm-surface) !important; }
+.dashboard-shell .table-row-hover:hover { background-color: var(--adm-surface-hover) !important; }
+.dashboard-shell ::-webkit-scrollbar-thumb { background: var(--adm-border-strong); }
+.dashboard-shell ::-webkit-scrollbar-thumb:hover { background: color-mix(in srgb, var(--theme-color, #89cff0) 55%, transparent); }
+
+/* ============================================
+   ROBUST DARK RE-THEME (attribute selectors)
+   Tailwind's CDN generates opacity variants as separate
+   classes (.bg-white\/70, .text-slate-800\/50 ...), so we
+   match on substrings to catch every variant at once. This
+   guarantees contrast without editing all 13 view files.
+   ============================================ */
+
+/* Surfaces: any white / near-white / light-slate card -> opaque dark panel */
+.dashboard-shell [class*="bg-white"],
+.dashboard-shell [class*="bg-[#FAF9F5]"],
+.dashboard-shell [class*="bg-[#faf9f5]"],
+.dashboard-shell [class*="bg-slate-50"],
+.dashboard-shell [class*="bg-slate-100"],
+.dashboard-shell [class*="bg-slate-200"],
+.dashboard-shell [class*="bg-gray-50"],
+.dashboard-shell [class*="bg-gray-100"],
+.dashboard-shell [class*="bg-neutral-50"],
+.dashboard-shell [class*="bg-neutral-100"],
+.dashboard-shell [class*="bg-neutral-200"],
+.dashboard-shell [class*="bg-zinc-50"],
+.dashboard-shell [class*="bg-zinc-100"],
+.dashboard-shell [class*="bg-stone-50"],
+.dashboard-shell [class*="bg-stone-100"] {
+  background-color: var(--adm-panel) !important;
+}
+
+/* Small translucent "highlight" chips should stay subtle, not become full panels */
+.dashboard-shell [class*="bg-white/5"],
+.dashboard-shell [class*="bg-white/10"],
+.dashboard-shell [class*="bg-white/[0.0"] {
+  background-color: var(--adm-hover-tint) !important;
+}
+
+/* Text: dark families -> light ink */
+.dashboard-shell [class*="text-slate-6"],
+.dashboard-shell [class*="text-slate-7"],
+.dashboard-shell [class*="text-slate-8"],
+.dashboard-shell [class*="text-slate-9"],
+.dashboard-shell [class*="text-gray-6"],
+.dashboard-shell [class*="text-gray-7"],
+.dashboard-shell [class*="text-gray-8"],
+.dashboard-shell [class*="text-gray-9"],
+.dashboard-shell [class*="text-neutral-6"],
+.dashboard-shell [class*="text-neutral-7"],
+.dashboard-shell [class*="text-neutral-8"],
+.dashboard-shell [class*="text-neutral-9"],
+.dashboard-shell [class*="text-zinc-6"],
+.dashboard-shell [class*="text-zinc-7"],
+.dashboard-shell [class*="text-zinc-8"],
+.dashboard-shell [class*="text-zinc-9"],
+.dashboard-shell [class*="text-stone-6"],
+.dashboard-shell [class*="text-stone-7"],
+.dashboard-shell [class*="text-stone-8"],
+.dashboard-shell [class*="text-stone-9"],
+.dashboard-shell [class*="text-brand-accent"],
+.dashboard-shell [class*="text-[#0F172A]"],
+.dashboard-shell [class*="text-[#101D34]"] {
+  color: var(--adm-ink) !important;
+}
+/* Text: mid grays -> dimmed light (labels, captions) */
+.dashboard-shell [class*="text-slate-2"],
+.dashboard-shell [class*="text-slate-4"],
+.dashboard-shell [class*="text-slate-5"],
+.dashboard-shell [class*="text-gray-2"],
+.dashboard-shell [class*="text-gray-4"],
+.dashboard-shell [class*="text-gray-5"],
+.dashboard-shell [class*="text-neutral-2"],
+.dashboard-shell [class*="text-neutral-4"],
+.dashboard-shell [class*="text-neutral-5"],
+.dashboard-shell [class*="text-zinc-2"],
+.dashboard-shell [class*="text-zinc-4"],
+.dashboard-shell [class*="text-zinc-5"],
+.dashboard-shell [class*="text-stone-2"],
+.dashboard-shell [class*="text-stone-4"],
+.dashboard-shell [class*="text-stone-5"],
+.dashboard-shell [class*="text-brand-muted"] {
+  color: var(--adm-ink-dim) !important;
+}
+/* Text: light grays -> faint light */
+.dashboard-shell [class*="text-slate-1"],
+.dashboard-shell [class*="text-slate-3"],
+.dashboard-shell [class*="text-slate-50"],
+.dashboard-shell [class*="text-gray-1"],
+.dashboard-shell [class*="text-gray-3"],
+.dashboard-shell [class*="text-gray-50"],
+.dashboard-shell [class*="text-neutral-1"],
+.dashboard-shell [class*="text-neutral-3"],
+.dashboard-shell [class*="text-zinc-1"],
+.dashboard-shell [class*="text-zinc-3"],
+.dashboard-shell [class*="text-stone-1"],
+.dashboard-shell [class*="text-stone-3"] {
+  color: var(--adm-ink-faint) !important;
+}
+
+/* Borders: slate/gray/neutral/muted -> soft light hairline */
+.dashboard-shell [class*="border-slate-"],
+.dashboard-shell [class*="border-gray-"],
+.dashboard-shell [class*="border-neutral-"],
+.dashboard-shell [class*="border-zinc-"],
+.dashboard-shell [class*="border-stone-"],
+.dashboard-shell [class*="border-brand-muted"],
+.dashboard-shell [class*="border-brand-primary"] {
+  border-color: var(--adm-border) !important;
+}
+
+/* Accent TEXT colors: collapse EVERY shade (300-900) of a color family onto
+   one theme-aware, always-readable var — so it doesn't matter whether a view
+   happened to use emerald-300 or emerald-800, light mode and dark mode both
+   stay AA-contrast-safe on their respective panel color. */
+.dashboard-shell [class*="text-emerald-"], .dashboard-shell [class*="text-green-"] { color: var(--adm-acc-emerald) !important; }
+.dashboard-shell [class*="text-rose-"], .dashboard-shell [class*="text-red-"] { color: var(--adm-acc-rose) !important; }
+.dashboard-shell [class*="text-amber-"], .dashboard-shell [class*="text-yellow-"], .dashboard-shell [class*="text-orange-"] { color: var(--adm-acc-amber) !important; }
+.dashboard-shell [class*="text-indigo-"], .dashboard-shell [class*="text-violet-"], .dashboard-shell [class*="text-purple-"] { color: var(--adm-acc-indigo) !important; }
+.dashboard-shell [class*="text-blue-"], .dashboard-shell [class*="text-sky-"], .dashboard-shell [class*="text-cyan-"] { color: var(--adm-acc-blue) !important; }
+.dashboard-shell [class*="text-teal-"] { color: var(--adm-acc-teal) !important; }
+.dashboard-shell [class*="text-pink-"], .dashboard-shell [class*="text-fuchsia-"] { color: var(--adm-acc-pink) !important; }
+
+/* Pale colored badge/pill backgrounds ONLY (50/100/200 — the "light chip"
+   shades) -> a matching low-alpha tint of the SAME theme-aware accent.
+   Deliberately excludes 400-900 solid shades: those are real functional
+   fills (status dots, solid buttons like bg-emerald-600) that already look
+   correct as vivid true color in both themes and must stay solid. */
+.dashboard-shell [class*="bg-emerald-50"], .dashboard-shell [class*="bg-emerald-100"], .dashboard-shell [class*="bg-emerald-200"],
+.dashboard-shell [class*="bg-green-50"], .dashboard-shell [class*="bg-green-100"], .dashboard-shell [class*="bg-green-200"] { background-color: var(--adm-acc-emerald-bg) !important; }
+.dashboard-shell [class*="bg-rose-50"], .dashboard-shell [class*="bg-rose-100"], .dashboard-shell [class*="bg-rose-200"],
+.dashboard-shell [class*="bg-red-50"], .dashboard-shell [class*="bg-red-100"], .dashboard-shell [class*="bg-red-200"] { background-color: var(--adm-acc-rose-bg) !important; }
+.dashboard-shell [class*="bg-amber-50"], .dashboard-shell [class*="bg-amber-100"], .dashboard-shell [class*="bg-amber-200"],
+.dashboard-shell [class*="bg-yellow-50"], .dashboard-shell [class*="bg-yellow-100"], .dashboard-shell [class*="bg-yellow-200"],
+.dashboard-shell [class*="bg-orange-50"], .dashboard-shell [class*="bg-orange-100"], .dashboard-shell [class*="bg-orange-200"] { background-color: var(--adm-acc-amber-bg) !important; }
+.dashboard-shell [class*="bg-indigo-50"], .dashboard-shell [class*="bg-indigo-100"], .dashboard-shell [class*="bg-indigo-200"],
+.dashboard-shell [class*="bg-purple-50"], .dashboard-shell [class*="bg-purple-100"], .dashboard-shell [class*="bg-purple-200"],
+.dashboard-shell [class*="bg-violet-50"], .dashboard-shell [class*="bg-violet-100"], .dashboard-shell [class*="bg-violet-200"] { background-color: var(--adm-acc-indigo-bg) !important; }
+.dashboard-shell [class*="bg-blue-50"], .dashboard-shell [class*="bg-blue-100"], .dashboard-shell [class*="bg-blue-200"],
+.dashboard-shell [class*="bg-sky-50"], .dashboard-shell [class*="bg-sky-100"], .dashboard-shell [class*="bg-sky-200"],
+.dashboard-shell [class*="bg-cyan-50"], .dashboard-shell [class*="bg-cyan-100"], .dashboard-shell [class*="bg-cyan-200"] { background-color: var(--adm-acc-blue-bg) !important; }
+.dashboard-shell [class*="border-emerald-"], .dashboard-shell [class*="border-green-"] { border-color: color-mix(in srgb, var(--adm-acc-emerald) 40%, transparent) !important; }
+.dashboard-shell [class*="border-rose-"], .dashboard-shell [class*="border-red-"] { border-color: color-mix(in srgb, var(--adm-acc-rose) 40%, transparent) !important; }
+.dashboard-shell [class*="border-amber-"], .dashboard-shell [class*="border-yellow-"], .dashboard-shell [class*="border-orange-"] { border-color: color-mix(in srgb, var(--adm-acc-amber) 40%, transparent) !important; }
+.dashboard-shell [class*="border-indigo-"], .dashboard-shell [class*="border-purple-"], .dashboard-shell [class*="border-violet-"] { border-color: color-mix(in srgb, var(--adm-acc-indigo) 40%, transparent) !important; }
+.dashboard-shell [class*="border-blue-"], .dashboard-shell [class*="border-sky-"], .dashboard-shell [class*="border-cyan-"] { border-color: color-mix(in srgb, var(--adm-acc-blue) 40%, transparent) !important; }
+
+/* Solid brand accents used as backgrounds -> translucent theme tint so the
+   now-light foreground text keeps good contrast (active tabs, pills, badges).
+   Attribute selectors catch the /10 /20 /30 opacity variants too. */
+.dashboard-shell [class*="bg-brand-primary"] {
+  background-color: color-mix(in srgb, var(--theme-color, #89cff0) 22%, transparent) !important;
+}
+.dashboard-shell [class*="bg-brand-secondary"] {
+  background-color: rgba(255, 234, 205, 0.16) !important;
+}
+/* bg-brand-accent (#0F172A) as a SOLID button -> nudged lighter than the panel
+   so dark CTAs read as distinct, with their white text intact. */
+.dashboard-shell .bg-brand-accent {
+  background-color: #1c2540 !important;
+}
+/* bg-brand-accent/40..60 are modal backdrops -> proper dim overlay */
+.dashboard-shell [class*="bg-brand-accent/40"],
+.dashboard-shell [class*="bg-brand-accent/50"],
+.dashboard-shell [class*="bg-brand-accent/60"],
+.dashboard-shell [class*="bg-brand-accent/70"] {
+  background-color: rgba(6, 9, 16, 0.7) !important;
+}
+/* keep true accent fills vivid where needed */
+.dashboard-shell .adm-btn-primary { background: var(--theme-color, #89cff0) !important; color: #05070D !important; }
+
+/* Legacy button family re-themed for dark (used across many views/modals) */
+.dashboard-shell .btn-stitch-primary {
+  background: var(--theme-color, #89cff0) !important;
+  color: #05070D !important;
+  border-color: transparent !important;
+}
+.dashboard-shell .btn-stitch-primary::before { display: none !important; }
+.dashboard-shell .btn-stitch-primary:hover { filter: brightness(1.08); }
+.dashboard-shell .btn-stitch-secondary {
+  background: var(--adm-surface) !important;
+  color: var(--adm-ink) !important;
+  border-color: var(--adm-border) !important;
+}
+.dashboard-shell .btn-stitch-secondary:hover { background: var(--adm-surface-hover) !important; color: var(--adm-ink) !important; }
+.dashboard-shell .btn-stitch-theme { background: var(--theme-color, #89cff0) !important; color: #05070D !important; }
+.dashboard-shell .btn-stitch-danger { background: color-mix(in srgb, var(--adm-danger-fill) 16%, transparent) !important; color: var(--adm-danger-fill) !important; border: 1px solid color-mix(in srgb, var(--adm-danger-fill) 40%, transparent) !important; }
+.dashboard-shell .btn-stitch-danger:hover { background: color-mix(in srgb, var(--adm-danger-fill) 26%, transparent) !important; }
+/* ios26 capsule keeps its dark elevated look (fixed dark-navy bg regardless
+   of theme) but ensure text stays light */
+.dashboard-shell .ios26-btn { color: #ffffff !important; }
+
+/* ============================================
+   "text-white" SAFETY NET
+   Most `text-white` in these views sits on a themed panel
+   (.adm-glass / header / sidebar / dropdown) that turns WHITE
+   in light mode — literal white text there would vanish. Remap
+   it to the theme-aware ink color by default...
+   ============================================ */
+.dashboard-shell [class*="text-white"] { color: var(--adm-ink) !important; }
+
+/* ...EXCEPT when text-white is paired with a real solid/vivid color fill
+   (alert banners, RSVP-active buttons, medal badges, avatar initials,
+   image-hover overlays) — those backgrounds don't change with the theme,
+   so the white text must stay white. Two attribute selectors on one element
+   outrank the single-attribute rule above regardless of source order. */
+.dashboard-shell [class*="bg-black"][class*="text-white"],
+.dashboard-shell [class*="bg-brand-accent"][class*="text-white"],
+.dashboard-shell [class*="bg-red-4"][class*="text-white"],
+.dashboard-shell [class*="bg-red-5"][class*="text-white"],
+.dashboard-shell [class*="bg-red-6"][class*="text-white"],
+.dashboard-shell [class*="bg-red-7"][class*="text-white"],
+.dashboard-shell [class*="bg-red-8"][class*="text-white"],
+.dashboard-shell [class*="bg-rose-4"][class*="text-white"],
+.dashboard-shell [class*="bg-rose-5"][class*="text-white"],
+.dashboard-shell [class*="bg-rose-6"][class*="text-white"],
+.dashboard-shell [class*="bg-rose-7"][class*="text-white"],
+.dashboard-shell [class*="bg-rose-8"][class*="text-white"],
+.dashboard-shell [class*="bg-emerald-4"][class*="text-white"],
+.dashboard-shell [class*="bg-emerald-5"][class*="text-white"],
+.dashboard-shell [class*="bg-emerald-6"][class*="text-white"],
+.dashboard-shell [class*="bg-emerald-7"][class*="text-white"],
+.dashboard-shell [class*="bg-emerald-8"][class*="text-white"],
+.dashboard-shell [class*="bg-green-4"][class*="text-white"],
+.dashboard-shell [class*="bg-green-5"][class*="text-white"],
+.dashboard-shell [class*="bg-green-6"][class*="text-white"],
+.dashboard-shell [class*="bg-green-7"][class*="text-white"],
+.dashboard-shell [class*="bg-green-8"][class*="text-white"],
+.dashboard-shell [class*="bg-amber-4"][class*="text-white"],
+.dashboard-shell [class*="bg-amber-5"][class*="text-white"],
+.dashboard-shell [class*="bg-amber-6"][class*="text-white"],
+.dashboard-shell [class*="bg-amber-7"][class*="text-white"],
+.dashboard-shell [class*="bg-amber-8"][class*="text-white"],
+.dashboard-shell [class*="bg-orange-4"][class*="text-white"],
+.dashboard-shell [class*="bg-orange-5"][class*="text-white"],
+.dashboard-shell [class*="bg-orange-6"][class*="text-white"],
+.dashboard-shell [class*="bg-orange-7"][class*="text-white"],
+.dashboard-shell [class*="bg-orange-8"][class*="text-white"],
+.dashboard-shell [class*="bg-yellow-4"][class*="text-white"],
+.dashboard-shell [class*="bg-yellow-5"][class*="text-white"],
+.dashboard-shell [class*="bg-yellow-6"][class*="text-white"],
+.dashboard-shell [class*="bg-yellow-7"][class*="text-white"],
+.dashboard-shell [class*="bg-yellow-8"][class*="text-white"],
+.dashboard-shell [class*="bg-indigo-4"][class*="text-white"],
+.dashboard-shell [class*="bg-indigo-5"][class*="text-white"],
+.dashboard-shell [class*="bg-indigo-6"][class*="text-white"],
+.dashboard-shell [class*="bg-indigo-7"][class*="text-white"],
+.dashboard-shell [class*="bg-indigo-8"][class*="text-white"],
+.dashboard-shell [class*="bg-purple-4"][class*="text-white"],
+.dashboard-shell [class*="bg-purple-5"][class*="text-white"],
+.dashboard-shell [class*="bg-purple-6"][class*="text-white"],
+.dashboard-shell [class*="bg-purple-7"][class*="text-white"],
+.dashboard-shell [class*="bg-purple-8"][class*="text-white"],
+.dashboard-shell [class*="bg-violet-4"][class*="text-white"],
+.dashboard-shell [class*="bg-violet-5"][class*="text-white"],
+.dashboard-shell [class*="bg-violet-6"][class*="text-white"],
+.dashboard-shell [class*="bg-violet-7"][class*="text-white"],
+.dashboard-shell [class*="bg-violet-8"][class*="text-white"],
+.dashboard-shell [class*="bg-sky-4"][class*="text-white"],
+.dashboard-shell [class*="bg-sky-5"][class*="text-white"],
+.dashboard-shell [class*="bg-sky-6"][class*="text-white"],
+.dashboard-shell [class*="bg-sky-7"][class*="text-white"],
+.dashboard-shell [class*="bg-sky-8"][class*="text-white"],
+.dashboard-shell [class*="bg-blue-4"][class*="text-white"],
+.dashboard-shell [class*="bg-blue-5"][class*="text-white"],
+.dashboard-shell [class*="bg-blue-6"][class*="text-white"],
+.dashboard-shell [class*="bg-blue-7"][class*="text-white"],
+.dashboard-shell [class*="bg-blue-8"][class*="text-white"],
+.dashboard-shell [class*="bg-cyan-4"][class*="text-white"],
+.dashboard-shell [class*="bg-cyan-5"][class*="text-white"],
+.dashboard-shell [class*="bg-cyan-6"][class*="text-white"],
+.dashboard-shell [class*="bg-cyan-7"][class*="text-white"],
+.dashboard-shell [class*="bg-cyan-8"][class*="text-white"],
+.dashboard-shell [class*="bg-teal-4"][class*="text-white"],
+.dashboard-shell [class*="bg-teal-5"][class*="text-white"],
+.dashboard-shell [class*="bg-teal-6"][class*="text-white"],
+.dashboard-shell [class*="bg-teal-7"][class*="text-white"],
+.dashboard-shell [class*="bg-teal-8"][class*="text-white"],
+.dashboard-shell [class*="bg-pink-4"][class*="text-white"],
+.dashboard-shell [class*="bg-pink-5"][class*="text-white"],
+.dashboard-shell [class*="bg-pink-6"][class*="text-white"],
+.dashboard-shell [class*="bg-pink-7"][class*="text-white"],
+.dashboard-shell [class*="bg-pink-8"][class*="text-white"],
+.dashboard-shell [class*="bg-fuchsia-4"][class*="text-white"],
+.dashboard-shell [class*="bg-fuchsia-5"][class*="text-white"],
+.dashboard-shell [class*="bg-fuchsia-6"][class*="text-white"],
+.dashboard-shell [class*="bg-fuchsia-7"][class*="text-white"],
+.dashboard-shell [class*="bg-fuchsia-8"][class*="text-white"]
+{ color: #ffffff !important; }
+
+
+/* ============================================
+   KILL THE GENERIC "AI DASHBOARD" RADIUS LANGUAGE
+   Every view still carries Tailwind rounded-2xl/3xl/full
+   classes from the old light design. Rather than hand-edit
+   every file, flatten radius everywhere inside the shell —
+   this alone removes most of the "template" signature.
+   Small pills (badges, dots, avatars) are explicitly exempt.
+   ============================================ */
+.dashboard-shell [class*="rounded-3xl"],
+.dashboard-shell [class*="rounded-2xl"],
+.dashboard-shell [class*="rounded-xl"],
+.dashboard-shell [class*="rounded-t-"],
+.dashboard-shell [class*="rounded-b-"],
+.dashboard-shell [class*="rounded-[2"],
+.dashboard-shell [class*="rounded-[3"],
+.dashboard-shell [class*="rounded-lg"] {
+  border-radius: 2px !important;
+}
+/* Full pills used for real chips/badges/avatars/status-dots keep a small,
+   deliberate radius instead of true 9999px capsule shape */
+.dashboard-shell [class*="rounded-full"] {
+  border-radius: 3px !important;
+}
+/* ...except tiny circular elements (dots, avatar initials, spinners) which
+   should stay round — anything explicitly sized small via w-1.5/w-2/w-2.5/w-6/w-7/w-8 */
+.dashboard-shell .w-1\.5.rounded-full, .dashboard-shell .w-2.rounded-full,
+.dashboard-shell .h-1\.5.rounded-full, .dashboard-shell .h-2.rounded-full,
+.dashboard-shell [class*="animate-spin"][class*="rounded-full"],
+.dashboard-shell [class*="animate-ping"] {
+  border-radius: 50% !important;
+}
+
+/* Drop the glow/blur theatrics that read as "generic AI glassmorphism" */
+.dashboard-shell [class*="shadow-glow"],
+.dashboard-shell [class*="backdrop-blur"] {
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+.dashboard-shell [class*="shadow-"] {
+  box-shadow: none !important;
+}
+
+/* Native form controls — give bare inputs a visible dark field by default */
+.dashboard-shell input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+.dashboard-shell select,
+.dashboard-shell textarea {
+  color: var(--adm-ink);
+  background-color: var(--adm-surface);
+}
+.dashboard-shell input::placeholder,
+.dashboard-shell textarea::placeholder { color: var(--adm-ink-faint) !important; }
+.dashboard-shell input:focus,
+.dashboard-shell select:focus,
+.dashboard-shell textarea:focus {
+  border-color: color-mix(in srgb, var(--theme-color, #89cff0) 55%, transparent) !important;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--theme-color, #89cff0) 15%, transparent) !important;
+  outline: none;
+}
+.dashboard-shell option { background: var(--adm-panel); color: var(--adm-ink); }
+
+/* Safety net: the public landing page's index.html loads the Tailwind CDN
+   Play script with its OWN light-theme config (brand_signature.*,
+   text.executive_dark, surface.background...). That script scans the whole
+   document — including the mounted React dashboard — and can inject a
+   competing (non-!important) light utility for any stray class that matches
+   its config. Anything from that vocabulary found inside .dashboard-shell is
+   almost certainly a leftover from the old light design, so force it dark. */
+.dashboard-shell [class*="brand_signature"] { background-color: var(--adm-panel) !important; color: var(--adm-ink) !important; }
+.dashboard-shell [class*="text-executive_dark"],
+.dashboard-shell [class*="text-surface-background"] { color: var(--adm-ink) !important; }
+.dashboard-shell [class*="bg-surface-background"],
+.dashboard-shell [class*="bg-surface-dark"] { background-color: var(--adm-panel) !important; }

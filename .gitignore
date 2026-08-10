@@ -1,0 +1,10 @@
+node_modules/
+dist/
+.agent/
+.agents/
+backup_savepoint/
+.env
+.env.local
+.DS_Store
+*.local
+.secrets/

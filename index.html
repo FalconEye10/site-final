@@ -1,0 +1,888 @@
+<!DOCTYPE html>
+<html lang="ro" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interact Camena Piatra Neamț - Digital Command Center</title>
+
+    <meta name="description" content="Interact Camena Piatra Neamț — club de tineret afiliat Rotary International, dedicat proiectelor de voluntariat și serviciu comunitar în Piatra Neamț, România.">
+    <link rel="icon" type="image/png" href="/logo.png">
+    <link rel="apple-touch-icon" href="/logo.png">
+
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Interact Camena Piatra Neamț">
+    <meta property="og:description" content="Club de tineret afiliat Rotary International, dedicat proiectelor de voluntariat și serviciu comunitar în Piatra Neamț, România.">
+    <meta property="og:image" content="/logo.png">
+    <meta property="og:locale" content="ro_RO">
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="Interact Camena Piatra Neamț">
+    <meta name="twitter:description" content="Club de tineret afiliat Rotary International, dedicat proiectelor de voluntariat și serviciu comunitar în Piatra Neamț, România.">
+    <meta name="twitter:image" content="/logo.png">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,900;1,400;1,600&display=swap" rel="stylesheet">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lenis@1.1.2/dist/lenis.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+    
+    <script type="module" src="https://unpkg.com/@splinetool/viewer@1.3.3/build/spline-viewer.js"></script>
+    
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand_signature: { 
+                            baby_blue: '#A0D8EF',
+                            taupe: '#475569',
+                            brown: '#101D34',
+                            cream: '#F9EBD1'
+                        },
+                        surface: { background: '#FFFFFF' },
+                        text: { executive_dark: '#101D34' }
+                    },
+                    fontFamily: {
+                        display: ['"Playfair Display"', 'serif'],
+                        headings: ['"Inter"', 'sans-serif'],
+                        data: ['"Inter"', 'monospace'],
+                    }
+                }
+            }
+        }
+        // Enable pre-animation hidden states (prevents flash before GSAP runs)
+        if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+            document.documentElement.classList.add('gsap-anim');
+            // Safety net: if the GSAP CDN script fails to load/run (blocked
+            // network, ad-blocker, slow connection), don't leave the page
+            // permanently hidden — drop the pre-hide class after a grace period.
+            setTimeout(function () {
+                document.documentElement.classList.remove('gsap-anim');
+            }, 2500);
+            // Last-resort reveal: this runs in a SEPARATE script from the main
+            // animation code, so even if that script ever fails (syntax error,
+            // missing CDN global), the content still becomes visible instead of
+            // showing only backgrounds. If the main reveal system is alive
+            // (window.lenis exists) we do nothing and let it animate normally.
+            setTimeout(function () {
+                if (window.location.hash === '#dashboard') return;
+                if (window.lenis) return; // main script ran — leave animations alone
+                document.querySelectorAll('.reveal-on-scroll').forEach(function (el) {
+                    el.classList.add('is-visible');
+                });
+                if (window.gsap) {
+                    gsap.set('.hero-title .line-inner', { yPercent: 0 });
+                    gsap.set('.hero-subtitle, .hero-el, .hero-panel', { opacity: 1, y: 0, x: 0 });
+                }
+            }, 3000);
+        }
+    </script>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body class="dynamic-gradient-bg text-text-executive_dark transition-colors duration-300 overflow-x-hidden font-headings" id="main-body">
+
+    <!-- Scroll progress indicator -->
+    <div id="scroll-progress" aria-hidden="true"></div>
+    <!-- Fine film grain for editorial texture -->
+    <div class="grain-overlay" aria-hidden="true"></div>
+
+    <div id="cursor-dot"></div>
+    <div id="cursor-ring"></div>
+
+    <!-- Top Navigation -->
+    <header class="fixed top-6 left-6 right-6 z-50 rounded-none border border-text-executive_dark/10 px-8 py-5 flex items-center justify-between transition-all hover:border-brand_signature-baby_blue/50 bg-white/80 backdrop-blur-md">
+        <div class="flex items-center gap-4">
+            <span class="font-headings text-sm md:text-base font-black tracking-widest uppercase text-text-executive_dark">Interact Camena</span>
+            <span class="font-display text-2xl text-brand_signature-baby_blue ml-2 hidden md:block italic">District 2241</span>
+        </div>
+        <button onclick="window.location.hash = '#dashboard'" class="px-6 py-2 rounded-none border border-text-executive_dark bg-text-executive_dark text-surface-background hover:bg-surface-background hover:text-text-executive_dark transition-colors">
+            <span class="font-headings text-xs font-bold tracking-widest uppercase">Acces Administrație</span>
+        </button>
+    </header>
+
+    <main class="relative z-10">
+        
+        <!-- SECTION 1: The Layered Hero -->
+        <section id="hero" class="relative min-h-screen flex flex-col justify-center px-6 lg:px-16 overflow-hidden pt-32">
+
+            <!-- Aurora / mesh gradient backdrop for chromatic depth -->
+            <div class="hero-aurora" aria-hidden="true">
+                <span class="aurora-blob aurora-1"></span>
+                <span class="aurora-blob aurora-2"></span>
+                <span class="aurora-blob aurora-3"></span>
+            </div>
+
+            <!-- Rotating editorial badge / scroll cue -->
+            <button type="button" class="rotating-badge hidden lg:flex" aria-label="Descoperă povestea clubului"
+                onclick="window.lenis ? window.lenis.scrollTo('#story', { offset: -60 }) : document.getElementById('story').scrollIntoView({ behavior: 'smooth' })">
+                <svg class="badge-ring" viewBox="0 0 200 200" aria-hidden="true">
+                    <defs><path id="badge-circle" d="M 100,100 m -80,0 a 80,80 0 1,1 160,0 a 80,80 0 1,1 -160,0"/></defs>
+                    <text><textPath href="#badge-circle">INTERACT CAMENA &bull; DISTRICT 2241 &bull; SERVICE ABOVE SELF &bull;</textPath></text>
+                </svg>
+                <span class="badge-core">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="m19 12-7 7-7-7"/></svg>
+                </span>
+            </button>
+
+            <!-- Redesigned Grid Background (12 columns for editorial structure) -->
+            <div class="absolute inset-0 z-0 grid grid-cols-12 gap-0 px-6 lg:px-16 pointer-events-none opacity-20 select-none">
+                <div class="border-l border-text-executive_dark/20 h-full"></div>
+                <div class="border-l border-text-executive_dark/20 h-full hidden md:block"></div>
+                <div class="border-l border-text-executive_dark/20 h-full hidden md:block"></div>
+                <div class="border-l border-text-executive_dark/20 h-full"></div>
+                <div class="border-l border-text-executive_dark/20 h-full hidden md:block"></div>
+                <div class="border-l border-text-executive_dark/20 h-full hidden md:block"></div>
+                <div class="border-l border-text-executive_dark/20 h-full"></div>
+                <div class="border-l border-text-executive_dark/20 h-full hidden md:block"></div>
+                <div class="border-l border-text-executive_dark/20 h-full hidden md:block"></div>
+                <div class="border-l border-text-executive_dark/20 h-full"></div>
+                <div class="border-l border-text-executive_dark/20 h-full hidden md:block"></div>
+                <div class="border-l border-text-executive_dark/20 h-full border-r"></div>
+            </div>
+
+            <!-- Horizontal Grid Lines -->
+            <div class="absolute inset-0 z-0 flex flex-col pointer-events-none opacity-20 select-none">
+                <div class="border-b border-text-executive_dark/20 w-full h-[33vh]"></div>
+                <div class="border-b border-text-executive_dark/20 w-full h-[33vh]"></div>
+                <div class="border-b border-text-executive_dark/20 w-full h-[33vh]"></div>
+            </div>
+
+            <!-- Optional: 3D Canvas - highly transparent to not clash with the grid -->
+            <div id="spline-3d-canvas-container" class="absolute inset-0 z-0 opacity-10 mix-blend-multiply pointer-events-none">
+                <spline-viewer url="https://prod.spline.design/qZ7K5w-1n9yP3WwJ/scene.splinecode"></spline-viewer>
+            </div>
+            
+            <!-- Redesigned Hero Grid Content -->
+            <div class="relative z-10 w-full max-w-[100rem] mx-auto flex flex-col justify-center h-full gap-16 px-0 lg:px-0 mt-12">
+                
+                <!-- Left Aligned Header -->
+                <div class="w-full flex flex-col items-start justify-center select-none text-left relative z-20" data-parallax-hero="-8">
+                    <h1 class="hero-title split-lines font-headings text-[14vw] lg:text-[10.5vw] font-black text-text-executive_dark tracking-tighter leading-[0.82] uppercase mb-6">
+                        Interact<br><span class="text-outline">Camena</span>
+                    </h1>
+                    <span class="hero-subtitle font-display text-4xl lg:text-5xl text-brand_signature-baby_blue block italic tracking-wide font-light">
+                        Service Above Self
+                    </span>
+                </div>
+
+                <!-- Split columns for details & panel -->
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-end w-full mt-10">
+                    <!-- Left: GPS coordinates & description (Columns 1-7) -->
+                    <div class="hero-el lg:col-span-7 flex flex-col gap-8 items-start bg-white/50 backdrop-blur-sm p-6 border border-text-executive_dark/10">
+                        <!-- Technical details -->
+                        <div class="flex flex-wrap items-center gap-x-6 gap-y-3 font-data text-sm md:text-base font-bold text-text-executive_dark tracking-widest uppercase bg-white/60 p-4 border border-text-executive_dark/10 shadow-sm w-full">
+                            <div class="flex items-center gap-3">
+                                <span class="w-2.5 h-2.5 bg-brand_signature-baby_blue shadow-[0_0_8px_rgba(160,216,239,0.8)] animate-pulse"></span>
+                                <span>DISTRICT 2241</span>
+                            </div>
+                            <div class="text-text-executive_dark/60 hidden sm:block">//</div>
+                            <div>[ 46.9279° N, 26.3705° E ]</div>
+                            <div class="text-text-executive_dark/60 hidden md:block">//</div>
+                            <div>PIATRA NEAMȚ</div>
+                        </div>
+                        <p class="font-headings text-lg lg:text-2xl text-text-executive_dark leading-relaxed font-light max-w-2xl border-l-2 border-brand_signature-baby_blue pl-6">
+                            Dezvoltăm viitorii lideri ai comunității prin voluntariat de impact, inițiative civice susținute și un portofoliu vast de proiecte dedicate locuitorilor din Piatra Neamț.
+                        </p>
+                        
+                        <button onclick="window.location.hash = '#dashboard'" class="magnetic mt-4 px-8 py-4 bg-text-executive_dark text-surface-background border border-text-executive_dark hover:bg-surface-background hover:text-text-executive_dark transition-all duration-300 font-headings text-xs font-bold tracking-widest uppercase flex items-center group">
+                            <span class="magnetic-inner flex items-center">ACCES ADMINISTRAȚIE
+                            <svg class="ml-4 w-4 h-4 transform group-hover:translate-x-2 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg></span>
+                        </button>
+                    </div>
+
+                    <!-- Right: Editorial Information Panel (Columns 8-12) -->
+                    <div class="hero-panel lg:col-span-5 flex flex-col gap-6 w-full relative z-20" data-parallax-hero="12">
+                        <div class="w-full bg-white/80 p-8 border border-text-executive_dark/10 backdrop-blur-md flex flex-col gap-8 shadow-sm">
+                            <div class="flex items-center justify-between border-b border-text-executive_dark/10 pb-4">
+                                <span class="font-data text-xs font-bold tracking-widest uppercase text-text-executive_dark">METRICI DE IMPACT</span>
+                                <div class="flex items-center gap-2">
+                                    <span class="w-2 h-2 bg-green-500 animate-pulse"></span>
+                                    <span class="font-data text-[10px] font-bold text-text-executive_dark uppercase">LIVE</span>
+                                </div>
+                            </div>
+                            
+                            <div class="grid grid-cols-2 gap-6">
+                                <div class="border-l-2 border-text-executive_dark/10 pl-4">
+                                    <div class="font-data text-[10px] uppercase text-text-executive_dark/60 tracking-widest font-bold">MEMBRI ACTIVI</div>
+                                    <div class="font-headings text-4xl font-black text-text-executive_dark mt-2"><span class="counter" data-count="30">0</span>+</div>
+                                </div>
+                                <div class="border-l-2 border-brand_signature-baby_blue pl-4">
+                                    <div class="font-data text-[10px] uppercase text-text-executive_dark/60 tracking-widest font-bold">PORTOFOLIU PROIECTE</div>
+                                    <div class="font-headings text-4xl font-black text-text-executive_dark mt-2"><span class="counter" data-count="9">0</span>+</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 1.5: Global → Local Storytelling -->
+        <section id="story" class="py-36 px-6 lg:px-16 bg-surface-background relative overflow-hidden">
+            <div class="absolute inset-0 opacity-[0.025] pointer-events-none" style="background-image: radial-gradient(#101D34 1px, transparent 1px); background-size: 26px 26px;"></div>
+            <div class="max-w-[100rem] mx-auto grid grid-cols-1 lg:grid-cols-12 gap-16 relative z-10">
+                <!-- Sticky intro column -->
+                <div class="lg:col-span-4">
+                    <div class="lg:sticky lg:top-36 reveal-on-scroll">
+                        <span class="font-data text-xs font-bold tracking-widest uppercase text-brand_signature-baby_blue block mb-4">// DE LA GLOBAL LA LOCAL</span>
+                        <h2 class="font-headings text-4xl lg:text-5xl font-black tracking-tight text-text-executive_dark uppercase leading-[1.02] mb-6">O mișcare globală.<br><em class="em-accent">O poveste locală.</em></h2>
+                        <p class="font-headings text-base text-text-executive_dark/60 font-light max-w-sm">Facem parte din cea mai mare rețea de cluburi de tineret din lume — și o traducem în fapte, aici, acasă.</p>
+                    </div>
+                </div>
+
+                <!-- Timeline rail -->
+                <div class="lg:col-span-8 story-rail relative">
+                    <div class="story-line" aria-hidden="true"><div class="story-line-fill"></div></div>
+
+                    <div class="story-step reveal-on-scroll">
+                        <span class="story-kicker">Rotary International</span>
+                        <h3 class="story-title">O rețea planetară</h3>
+                        <p class="story-text">Interact este programul global de tineret al Rotary International — adolescenți care transformă empatia în acțiune, pe fiecare continent.</p>
+                        <div class="story-stats">
+                            <div><span class="counter" data-count="15000">0</span><span class="plus">+</span><em>cluburi în lume</em></div>
+                            <div><span class="counter" data-count="145">0</span><span class="plus">+</span><em>țări</em></div>
+                        </div>
+                    </div>
+
+                    <div class="story-step reveal-on-scroll">
+                        <span class="story-kicker">România &amp; Rep. Moldova</span>
+                        <h3 class="story-title">District 2241</h3>
+                        <p class="story-text">Sub egida Districtului 2241, cluburile Interact din România și Republica Moldova formează o singură generație de lideri în devenire.</p>
+                        <div class="story-stats">
+                            <div><span class="counter" data-count="2">0</span><em>țări, o echipă</em></div>
+                        </div>
+                    </div>
+
+                    <div class="story-step reveal-on-scroll">
+                        <span class="story-kicker">Piatra Neamț</span>
+                        <h3 class="story-title">Interact Camena</h3>
+                        <p class="story-text">La poalele Pietricicăi scriem capitolul nostru: proiecte care pun orașul în mișcare, conduse integral de elevi. Motto-ul nostru — <em class="em-accent">Service Above Self</em>.</p>
+                        <div class="story-stats">
+                            <div><span class="counter" data-count="30">0</span><span class="plus">+</span><em>voluntari activi</em></div>
+                            <div><span class="counter" data-count="9">0</span><span class="plus">+</span><em>proiecte fanion</em></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 2: Philosophical Core -->
+        <section id="manifesto" class="py-40 px-6 lg:px-16 relative bg-brand_signature-cream border-y border-text-executive_dark/10 overflow-hidden">
+            <!-- Subtle Grid Pattern in Peach Background -->
+            <div class="absolute inset-0 opacity-[0.03]" style="background-image: radial-gradient(var(--text-executive_dark) 1px, transparent 1px); background-size: 20px 20px;"></div>
+            
+            <div class="max-w-[100rem] mx-auto grid grid-cols-1 lg:grid-cols-12 gap-16 items-center relative z-10">
+                <!-- Columns 1-3: Number -->
+                <div class="lg:col-span-3 reveal-on-scroll flex justify-start">
+                    <span class="font-display italic font-black text-[180px] leading-none text-text-executive_dark/10 tracking-tighter" data-parallax="-50">
+                        01
+                    </span>
+                </div>
+                <!-- Columns 4-12: Content -->
+                <div class="lg:col-span-9 flex flex-col gap-10 reveal-on-scroll relative">
+                    <div class="absolute left-0 top-0 bottom-0 w-px bg-brand_signature-baby_blue"></div>
+                    <div class="pl-12">
+                        <p class="font-data text-xs text-text-executive_dark/50 leading-relaxed uppercase tracking-widest font-bold mb-6">
+                            // ARHITECTURA SCHIMBĂRII LOCALE
+                        </p>
+                        <h2 class="split-lines font-headings text-3xl lg:text-5xl font-black text-text-executive_dark tracking-tight leading-[1.1] mb-8 uppercase">
+                            EFICIENȚĂ DIGITALĂ.<br><em class="em-accent">Leadership comunitar.</em>
+                        </h2>
+                        <p class="font-headings text-lg lg:text-xl text-text-executive_dark/80 leading-relaxed font-light max-w-4xl">
+                            Nu facem doar voluntariat. Construim un ecosistem dedicat intervenției comunitare în Piatra Neamț. Fiecare proiect este gândit, măsurat și executat cu pasiune și organizare impecabilă de către tineri dedicați.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 2.5: Impact Metrics Band -->
+        <section id="impact" class="impact-band relative overflow-hidden py-28 px-6 lg:px-16 bg-text-executive_dark">
+            <!-- Ambient glow -->
+            <div class="impact-glow" aria-hidden="true"></div>
+            <!-- Fine grid pattern -->
+            <div class="absolute inset-0 opacity-[0.06] pointer-events-none" style="background-image: linear-gradient(rgba(255,255,255,.4) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.4) 1px, transparent 1px); background-size: 56px 56px;"></div>
+
+            <div class="max-w-[100rem] mx-auto relative z-10">
+                <div class="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-6 reveal-on-scroll">
+                    <div>
+                        <span class="font-data text-xs font-bold tracking-widest uppercase text-brand_signature-baby_blue block mb-4">// IMPACT MĂSURAT</span>
+                        <h2 class="font-headings text-3xl lg:text-5xl font-black tracking-tight text-white uppercase leading-[1.05]">Cifre care<br>vorbesc singure</h2>
+                    </div>
+                    <p class="font-headings text-sm lg:text-base text-white/50 font-light max-w-sm">
+                        Fiecare oră investită, fiecare proiect livrat și fiecare voluntar activ construiesc un oraș mai bun.
+                    </p>
+                </div>
+
+                <div class="grid grid-cols-2 lg:grid-cols-4 gap-px bg-white/10 border border-white/10">
+                    <div class="stat-tile reveal-on-scroll">
+                        <div class="stat-icon">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                        </div>
+                        <div class="stat-num"><span class="counter" data-count="30">0</span><span class="stat-plus">+</span></div>
+                        <div class="stat-label">Membri Activi</div>
+                    </div>
+                    <div class="stat-tile reveal-on-scroll" style="transition-delay: 80ms;">
+                        <div class="stat-icon">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                        </div>
+                        <div class="stat-num"><span class="counter" data-count="9">0</span><span class="stat-plus">+</span></div>
+                        <div class="stat-label">Proiecte Fanion</div>
+                    </div>
+                    <div class="stat-tile reveal-on-scroll" style="transition-delay: 160ms;">
+                        <div class="stat-icon">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                        </div>
+                        <div class="stat-num"><span class="counter" data-count="40">0</span><span class="stat-plus">+</span></div>
+                        <div class="stat-label">Evenimente / An</div>
+                    </div>
+                    <div class="stat-tile reveal-on-scroll" style="transition-delay: 240ms;">
+                        <div class="stat-icon">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                        </div>
+                        <div class="stat-num"><span class="counter" data-count="1200">0</span><span class="stat-plus">+</span></div>
+                        <div class="stat-label">Ore Voluntariat</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 3: Strategic Initiatives (Dossiers) -->
+        <section id="initiatives" class="py-40 px-6 lg:px-16 relative overflow-hidden bg-surface-background">
+            <div class="max-w-[100rem] mx-auto relative z-10">
+                <div class="flex justify-between items-end mb-16 reveal-on-scroll border-b border-text-executive_dark/10 pb-8">
+                    <div>
+                        <span class="font-data text-xs font-bold tracking-widest uppercase text-brand_signature-baby_blue block mb-4">// PORTOFOLIU</span>
+                        <h2 class="split-lines font-headings text-4xl lg:text-6xl font-black tracking-tight text-text-executive_dark uppercase">Portofoliu de<br>Proiecte</h2>
+                    </div>
+                    <span class="font-display italic text-6xl text-text-executive_dark/10 hidden md:block" data-parallax="-40">02</span>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 md:auto-rows-[420px]">
+                    <!-- Card 1: Sport & Ecology -->
+                    <div class="port-card tilt-card md:col-span-2 bg-brand_signature-cream reveal-on-scroll" data-accent="#A0D8EF">
+                        <span class="port-ghost">01</span>
+                        <div class="port-inner">
+                            <div class="flex justify-between items-start">
+                                <div class="port-icon">
+                                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/><path d="M2 21c0-3 1.85-5.36 5.08-6"/></svg>
+                                </div>
+                                <span class="port-tag">Sport &amp; Ecologie</span>
+                            </div>
+                            <div>
+                                <h3 class="font-headings text-4xl lg:text-5xl font-black text-text-executive_dark leading-[0.95] tracking-tight mb-5 uppercase">Sport, Sănătate<br>&amp; Mediu</h3>
+                                <p class="font-headings text-base lg:text-lg text-text-executive_dark/70 font-light max-w-lg mb-7">
+                                    Inițiative care pun comunitatea în mișcare și protejează natura din inima Moldovei.
+                                </p>
+                                <div class="port-pills">
+                                    <span>Rocking the Court</span>
+                                    <span>FUTNET</span>
+                                    <span>ECOACT</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Card 2: Social & Development -->
+                    <div class="port-card tilt-card md:col-span-1 bg-brand_signature-baby_blue/15 reveal-on-scroll" data-accent="#89CFF0" style="transition-delay: 100ms;">
+                        <span class="port-ghost">02</span>
+                        <div class="port-inner">
+                            <div class="flex justify-between items-start">
+                                <div class="port-icon">
+                                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>
+                                </div>
+                                <span class="port-tag">Social &amp; Dezvoltare</span>
+                            </div>
+                            <div>
+                                <h3 class="font-headings text-3xl lg:text-4xl font-black text-text-executive_dark leading-[0.95] tracking-tight mb-5 uppercase">Impact Social &amp; Relații</h3>
+                                <p class="font-headings text-sm lg:text-base text-text-executive_dark/70 font-light mb-7">
+                                    Creăm punți de legătură și spargem barierele sociale prin empatie.
+                                </p>
+                                <div class="port-pills">
+                                    <span>Minte-mă Frumos</span>
+                                    <span>Date or Mate</span>
+                                    <span>La Familia</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Card 3: Tradition & Charity (full width) -->
+                    <div class="port-card tilt-card md:col-span-3 md:!row-auto bg-text-executive_dark port-dark reveal-on-scroll" data-accent="#A0D8EF" style="transition-delay: 200ms; min-height: 300px;">
+                        <span class="port-ghost port-ghost-light">03</span>
+                        <div class="port-inner port-inner--split">
+                            <div class="max-w-2xl">
+                                <div class="flex items-center gap-4 mb-8">
+                                    <div class="port-icon port-icon-light">
+                                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                                    </div>
+                                    <span class="port-tag port-tag-light">Tradiție &amp; Comunitate</span>
+                                </div>
+                                <h3 class="font-headings text-4xl lg:text-6xl font-black text-white leading-[0.95] tracking-tight uppercase">Tradiție, Caritate<br>&amp; Colaborare</h3>
+                            </div>
+                            <div class="md:text-right md:border-l border-white/10 md:pl-12">
+                                <p class="font-headings text-base text-white/60 font-light max-w-sm mb-6">
+                                    Aducem spiritul sărbătorilor și al unității în oraș, an de an.
+                                </p>
+                                <div class="port-pills port-pills-light md:justify-end">
+                                    <span>Camena Christmas Tree</span>
+                                    <span>Summer's Last Wish</span>
+                                    <span>Interact of Crime</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 4: Governance Corps (Dossier Profiles) -->
+        <section id="leadership" class="py-40 px-6 lg:px-16 bg-[#FFFFFF] border-y border-text-executive_dark/10 relative">
+            <div class="max-w-[100rem] mx-auto">
+                <div class="mb-20 reveal-on-scroll border-b border-text-executive_dark/10 pb-8 flex justify-between items-end">
+                    <div>
+                        <span class="font-data text-xs font-bold tracking-widest uppercase text-brand_signature-baby_blue block mb-4">// COMMAND STRUCTURE</span>
+                        <h2 class="split-lines font-headings text-4xl lg:text-6xl font-black tracking-tight text-text-executive_dark uppercase">Consiliul Director</h2>
+                    </div>
+                    <span class="font-display italic text-6xl text-text-executive_dark/10 hidden md:block" data-parallax="-40">03</span>
+                </div>
+
+                <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
+
+                    <div class="gov-card gov-card-lead reveal-on-scroll group">
+                        <div class="gov-top">
+                            <div class="gov-avatar">TT</div>
+                            <span class="gov-index">01</span>
+                        </div>
+                        <h3 class="gov-name">Timofte Teodora</h3>
+                        <span class="gov-role gov-role-lead">Președinte</span>
+                    </div>
+
+                    <div class="gov-card reveal-on-scroll group" style="transition-delay: 60ms;">
+                        <div class="gov-top">
+                            <div class="gov-avatar">PR</div>
+                            <span class="gov-index">02</span>
+                        </div>
+                        <h3 class="gov-name">Pascaru Rareș</h3>
+                        <span class="gov-role">Vicepreședinte</span>
+                    </div>
+
+                    <div class="gov-card reveal-on-scroll group" style="transition-delay: 120ms;">
+                        <div class="gov-top">
+                            <div class="gov-avatar">CA</div>
+                            <span class="gov-index">03</span>
+                        </div>
+                        <h3 class="gov-name">Cacciola Anastasia</h3>
+                        <span class="gov-role">Secretar</span>
+                    </div>
+
+                    <div class="gov-card reveal-on-scroll group" style="transition-delay: 180ms;">
+                        <div class="gov-top">
+                            <div class="gov-avatar">PM</div>
+                            <span class="gov-index">04</span>
+                        </div>
+                        <h3 class="gov-name">Popa Matei</h3>
+                        <span class="gov-role">Director PR</span>
+                    </div>
+
+                    <div class="gov-card reveal-on-scroll group" style="transition-delay: 60ms;">
+                        <div class="gov-top">
+                            <div class="gov-avatar">CR</div>
+                            <span class="gov-index">05</span>
+                        </div>
+                        <h3 class="gov-name">Căruntu Ruxandra</h3>
+                        <span class="gov-role">Agent PR</span>
+                    </div>
+
+                    <div class="gov-card reveal-on-scroll group" style="transition-delay: 120ms;">
+                        <div class="gov-top">
+                            <div class="gov-avatar">MS</div>
+                            <span class="gov-index">06</span>
+                        </div>
+                        <h3 class="gov-name">Mazăre Sofia</h3>
+                        <span class="gov-role">Project Manager</span>
+                    </div>
+
+                    <div class="gov-card reveal-on-scroll group" style="transition-delay: 180ms;">
+                        <div class="gov-top">
+                            <div class="gov-avatar">PI</div>
+                            <span class="gov-index">07</span>
+                        </div>
+                        <h3 class="gov-name">Popa Ioana</h3>
+                        <span class="gov-role">Past President</span>
+                    </div>
+
+                    <div class="gov-card reveal-on-scroll group" style="transition-delay: 240ms;">
+                        <div class="gov-top">
+                            <div class="gov-avatar">SR</div>
+                            <span class="gov-index">08</span>
+                        </div>
+                        <h3 class="gov-name">Stan Rareș Ștefan</h3>
+                        <span class="gov-role">Trezorier</span>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 4.5: Project Marquee Band -->
+        <section class="marquee-band bg-text-executive_dark py-8 relative overflow-hidden select-none" aria-hidden="true">
+            <div class="marquee-track font-headings text-4xl lg:text-6xl font-black uppercase tracking-tight">
+                <span class="marquee-seg">
+                    <span>ECOACT</span><span class="dot">&bull;</span>
+                    <span>Rocking the Court</span><span class="dot">&bull;</span>
+                    <span>La Familia</span><span class="dot">&bull;</span>
+                    <span>Date or Mate</span><span class="dot">&bull;</span>
+                    <span>FUTNET</span><span class="dot">&bull;</span>
+                    <span>Camena Christmas Tree</span><span class="dot">&bull;</span>
+                    <span>Summer's Last Wish</span><span class="dot">&bull;</span>
+                    <span>Minte-mă Frumos</span><span class="dot">&bull;</span>
+                    <span>Interact of Crime</span><span class="dot">&bull;</span>
+                </span>
+                <span class="marquee-seg" aria-hidden="true">
+                    <span>ECOACT</span><span class="dot">&bull;</span>
+                    <span>Rocking the Court</span><span class="dot">&bull;</span>
+                    <span>La Familia</span><span class="dot">&bull;</span>
+                    <span>Date or Mate</span><span class="dot">&bull;</span>
+                    <span>FUTNET</span><span class="dot">&bull;</span>
+                    <span>Camena Christmas Tree</span><span class="dot">&bull;</span>
+                    <span>Summer's Last Wish</span><span class="dot">&bull;</span>
+                    <span>Minte-mă Frumos</span><span class="dot">&bull;</span>
+                    <span>Interact of Crime</span><span class="dot">&bull;</span>
+                </span>
+            </div>
+        </section>
+
+        <!-- SECTION 5: Initiative Intake Portal -->
+        <section id="community-pitch" class="py-40 px-6 lg:px-16 bg-brand_signature-cream relative overflow-hidden">
+            <!-- Subtle Grid Pattern -->
+            <div class="absolute inset-0 opacity-[0.04]" style="background-image: linear-gradient(var(--text-executive_dark) 1px, transparent 1px), linear-gradient(90deg, var(--text-executive_dark) 1px, transparent 1px); background-size: 40px 40px;"></div>
+            
+            <div id="community-pitch-root" class="relative z-10 max-w-3xl mx-auto"></div>
+        </section>
+
+        <!-- SECTION 6: The Massive Footer -->
+        <footer class="bg-surface-background pt-40 pb-12 overflow-hidden relative border-t border-text-executive_dark/10">
+            <div class="max-w-[100rem] mx-auto px-6 lg:px-16 flex flex-col md:flex-row items-center justify-between gap-12 z-10 relative mb-32">
+                <div class="reveal-on-scroll w-full md:w-auto text-center md:text-left">
+                    <span class="font-data text-xs font-bold uppercase tracking-widest text-brand_signature-baby_blue block mb-4">// SECURE PROTOCOL</span>
+                    <h2 class="font-headings text-3xl lg:text-4xl font-black text-text-executive_dark mb-4 uppercase tracking-tight">Acces Administrație Internă</h2>
+                    <p class="font-headings text-sm lg:text-base text-text-executive_dark/80 max-w-md font-light mb-8">
+                        Portal dedicat exclusiv membrilor board-ului Interact Camena pentru gestionarea platformei.
+                    </p>
+                    <button id="system-access-btn" onclick="window.location.hash = '#dashboard'" class="magnetic bg-surface-background text-text-executive_dark border-2 border-text-executive_dark px-10 py-4 rounded-none hover:bg-text-executive_dark hover:text-surface-background transition-colors duration-300 group inline-flex items-center justify-center">
+                        <span class="magnetic-inner font-headings text-xs font-bold tracking-widest uppercase flex items-center">
+                            LOGIN SISTEM
+                            <svg class="ml-4 w-4 h-4 transform group-hover:translate-x-2 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                        </span>
+                    </button>
+                </div>
+                <div class="text-center md:text-right reveal-on-scroll">
+                    <p class="font-headings text-sm lg:text-base text-text-executive_dark font-medium leading-relaxed text-right">
+                        Piatra Neamț, România<br>Service Above Self
+                    </p>
+                    <p class="font-data text-[10px] text-text-executive_dark/50 font-bold uppercase tracking-widest mt-6 text-right">
+                        © 2026 INTERACT CAMENA
+                    </p>
+                    <p class="font-data text-[10px] text-text-executive_dark/50 font-bold uppercase tracking-widest mt-3 text-right flex gap-4 justify-center md:justify-end">
+                        <a href="/termeni-si-conditii.html" class="hover:text-text-executive_dark transition-colors">Termeni și Condiții</a>
+                        <a href="/politica-de-confidentialitate.html" class="hover:text-text-executive_dark transition-colors">Confidențialitate</a>
+                    </p>
+                </div>
+            </div>
+
+            <!-- Massive Footer Text -->
+            <div class="w-full relative flex justify-center items-end opacity-[0.03] pointer-events-none select-none -mb-8 lg:-mb-16">
+                <h1 class="footer-mega font-display italic font-black text-[25vw] leading-[0.7] text-text-executive_dark tracking-tighter m-0 p-0 text-center w-full">
+                    CAMENA
+                </h1>
+            </div>
+        </footer>
+
+    </main>
+
+    <script>
+        gsap.registerPlugin(ScrollTrigger);
+        const REDUCED_MOTION = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+        // Initialize Lenis for Smooth Scrolling
+        window.lenis = new Lenis({
+            duration: 1.2,
+            easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+            direction: 'vertical',
+            gestureDirection: 'vertical',
+            smooth: true,
+            mouseMultiplier: 1,
+            smoothTouch: false,
+            touchMultiplier: 2,
+            infinite: false,
+        });
+
+        // Get scroll value
+        window.lenis.on('scroll', ScrollTrigger.update);
+        gsap.ticker.add((time) => { if(window.lenis) window.lenis.raf(time * 1000); });
+        gsap.ticker.lagSmoothing(0);
+
+        /* ================================================================
+           SCROLL PROGRESS BAR
+           ================================================================ */
+        const progressBar = document.getElementById('scroll-progress');
+        window.lenis.on('scroll', ({ scroll, limit }) => {
+            const p = limit > 0 ? scroll / limit : 0;
+            if (progressBar) progressBar.style.transform = `scaleX(${p})`;
+        });
+
+        /* ================================================================
+           SPLIT HEADINGS INTO MASKED LINES (for rise-up reveal)
+           ================================================================ */
+        function splitIntoLines(el) {
+            // Split on <br> so each visual line becomes an independently masked row
+            const rawLines = el.innerHTML.split(/<br\s*\/?>/i);
+            el.innerHTML = rawLines.map(line =>
+                `<span class="line-mask"><span class="line-inner">${line.trim()}</span></span>`
+            ).join('');
+            return el.querySelectorAll('.line-inner');
+        }
+
+        document.querySelectorAll('.split-lines').forEach(el => {
+            const lines = splitIntoLines(el);
+            const isHero = el.classList.contains('hero-title');
+            if (REDUCED_MOTION) { gsap.set(lines, { yPercent: 0 }); gsap.set(el, { opacity: 1 }); return; }
+            gsap.set(lines, { yPercent: 115 });
+            if (!isHero) {
+                // Scroll-triggered reveal for section headings
+                gsap.set(el, { opacity: 1 });
+                gsap.to(lines, {
+                    yPercent: 0,
+                    duration: 1.1,
+                    ease: 'power4.out',
+                    stagger: 0.12,
+                    scrollTrigger: { trigger: el, start: 'top 85%' }
+                });
+            }
+        });
+
+        /* ================================================================
+           HERO CINEMATIC ENTRANCE
+           ================================================================ */
+        if (!REDUCED_MOTION) {
+            // fromTo is required: CSS hides these (opacity:0) to prevent flash,
+            // so a plain .from() would animate 0 -> 0 and leave them invisible.
+            const heroTl = gsap.timeline({ defaults: { ease: 'power4.out' }, delay: 0.15 });
+            heroTl
+                .to('.hero-title', { opacity: 1, duration: 0.01 })
+                .to('.hero-title .line-inner', { yPercent: 0, duration: 1.3, stagger: 0.1 }, 0.05)
+                .fromTo('.hero-subtitle', { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 1 }, 0.5)
+                .fromTo('.hero-el', { opacity: 0, y: 40 }, { opacity: 1, y: 0, duration: 1 }, 0.65)
+                .fromTo('.hero-panel', { opacity: 0, y: 40, x: 20 }, { opacity: 1, y: 0, x: 0, duration: 1.1 }, 0.75);
+        }
+
+        /* ================================================================
+           HERO SCROLL PARALLAX (layered depth on scroll)
+           ================================================================ */
+        if (!REDUCED_MOTION) {
+            document.querySelectorAll('[data-parallax-hero]').forEach(el => {
+                const amt = parseFloat(el.getAttribute('data-parallax-hero'));
+                gsap.to(el, {
+                    yPercent: amt,
+                    ease: 'none',
+                    scrollTrigger: { trigger: '#hero', start: 'top top', end: 'bottom top', scrub: true }
+                });
+            });
+            // Spline canvas drifts slower for depth + subtle fade
+            gsap.to('#spline-3d-canvas-container', {
+                yPercent: 20, ease: 'none',
+                scrollTrigger: { trigger: '#hero', start: 'top top', end: 'bottom top', scrub: true }
+            });
+        }
+
+        /* ================================================================
+           STORY TIMELINE — line draws itself as you scroll
+           ================================================================ */
+        if (document.querySelector('.story-line-fill')) {
+            if (REDUCED_MOTION) {
+                gsap.set('.story-line-fill', { scaleY: 1 });
+            } else {
+                gsap.to('.story-line-fill', {
+                    scaleY: 1, ease: 'none',
+                    scrollTrigger: { trigger: '.story-rail', start: 'top 75%', end: 'bottom 55%', scrub: 0.6 }
+                });
+            }
+        }
+
+        /* ================================================================
+           FOOTER MEGA TEXT — rises with parallax as footer enters
+           ================================================================ */
+        if (!REDUCED_MOTION) {
+            gsap.fromTo('.footer-mega', { yPercent: 45 }, {
+                yPercent: 0, ease: 'none',
+                scrollTrigger: { trigger: 'footer', start: 'top bottom', end: 'bottom bottom', scrub: true }
+            });
+
+            // Gentle float on the hero metrics panel (inner el — avoids clash with entrance tween)
+            gsap.to('.hero-panel > div', { y: -10, duration: 3.2, ease: 'sine.inOut', yoyo: true, repeat: -1, delay: 2.2 });
+        }
+
+        /* ================================================================
+           GENERIC PARALLAX (section numbers etc.)
+           ================================================================ */
+        document.querySelectorAll('[data-parallax]').forEach(el => {
+            const speed = el.getAttribute('data-parallax');
+            gsap.to(el, {
+                yPercent: speed,
+                ease: "none",
+                scrollTrigger: { trigger: el, start: "top bottom", end: "bottom top", scrub: true }
+            });
+        });
+
+        /* ================================================================
+           NUMBER COUNTERS (count up when in view)
+           ================================================================ */
+        document.querySelectorAll('.counter').forEach(el => {
+            const target = parseInt(el.getAttribute('data-count'), 10) || 0;
+            if (REDUCED_MOTION) { el.textContent = target.toLocaleString('ro-RO'); return; }
+            const obj = { val: 0 };
+            ScrollTrigger.create({
+                trigger: el, start: 'top 90%', once: true,
+                onEnter: () => gsap.to(obj, {
+                    val: target, duration: 1.8, ease: 'power2.out',
+                    onUpdate: () => { el.textContent = Math.round(obj.val).toLocaleString('ro-RO'); }
+                })
+            });
+        });
+
+        /* ================================================================
+           INTERSECTION OBSERVER for generic reveals (staggered fades)
+           ================================================================ */
+        const observerOptions = { threshold: 0.1, rootMargin: "0px 0px -50px 0px" };
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('is-visible');
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, observerOptions);
+        document.querySelectorAll('.reveal-on-scroll').forEach(el => observer.observe(el));
+
+        /* ================================================================
+           3D TILT ON PORTFOLIO CARDS (mouse-follow)
+           ================================================================ */
+        if (!REDUCED_MOTION && window.matchMedia('(hover: hover)').matches) {
+            document.querySelectorAll('.tilt-card').forEach(card => {
+                const rX = gsap.quickTo(card, 'rotationX', { duration: 0.5, ease: 'power3' });
+                const rY = gsap.quickTo(card, 'rotationY', { duration: 0.5, ease: 'power3' });
+                card.addEventListener('mousemove', (e) => {
+                    const r = card.getBoundingClientRect();
+                    const px = (e.clientX - r.left) / r.width - 0.5;
+                    const py = (e.clientY - r.top) / r.height - 0.5;
+                    rX(-py * 6);
+                    rY(px * 6);
+                });
+                card.addEventListener('mouseleave', () => { rX(0); rY(0); });
+            });
+        }
+
+        /* ================================================================
+           MAGNETIC BUTTONS (subtly pull toward cursor)
+           ================================================================ */
+        if (!REDUCED_MOTION && window.matchMedia('(hover: hover)').matches) {
+            document.querySelectorAll('.magnetic').forEach(btn => {
+                const inner = btn.querySelector('.magnetic-inner') || btn;
+                const mX = gsap.quickTo(btn, 'x', { duration: 0.5, ease: 'power3' });
+                const mY = gsap.quickTo(btn, 'y', { duration: 0.5, ease: 'power3' });
+                const iX = gsap.quickTo(inner, 'x', { duration: 0.5, ease: 'power3' });
+                const iY = gsap.quickTo(inner, 'y', { duration: 0.5, ease: 'power3' });
+                btn.addEventListener('mousemove', (e) => {
+                    const r = btn.getBoundingClientRect();
+                    const x = e.clientX - r.left - r.width / 2;
+                    const y = e.clientY - r.top - r.height / 2;
+                    mX(x * 0.25); mY(y * 0.35);
+                    iX(x * 0.12); iY(y * 0.18);
+                });
+                btn.addEventListener('mouseleave', () => { mX(0); mY(0); iX(0); iY(0); });
+            });
+        }
+
+        /* ================================================================
+           PROJECT MARQUEE (seamless infinite loop, direction on scroll)
+           ================================================================ */
+        (function () {
+            const track = document.querySelector('.marquee-track');
+            if (!track || REDUCED_MOTION) return;
+            const seg = track.querySelector('.marquee-seg');
+            const loop = gsap.to(track, {
+                x: () => -seg.offsetWidth,
+                duration: 24, ease: 'none', repeat: -1
+            });
+            // Scroll velocity nudges the marquee speed for a lively feel
+            let lastScroll = 0;
+            window.lenis.on('scroll', ({ scroll }) => {
+                const v = scroll - lastScroll;
+                lastScroll = scroll;
+                loop.timeScale(1 + Math.min(Math.abs(v) * 0.06, 5));
+                gsap.to(loop, { timeScale: 1, duration: 0.8, overwrite: true, ease: 'power2.out' });
+            });
+        })();
+
+        /* ================================================================
+           CUSTOM CURSOR
+           ================================================================ */
+        const cursorDot = document.getElementById('cursor-dot');
+        const cursorRing = document.getElementById('cursor-ring');
+        if (cursorDot && cursorRing) {
+            const xTo = gsap.quickTo(cursorRing, "left", {duration: 0.15, ease: "power2.out"});
+            const yTo = gsap.quickTo(cursorRing, "top", {duration: 0.15, ease: "power2.out"});
+
+            window.addEventListener('mousemove', (e) => {
+                const posX = e.clientX;
+                const posY = e.clientY;
+                cursorDot.style.left = `${posX}px`;
+                cursorDot.style.top = `${posY}px`;
+                xTo(posX);
+                yTo(posY);
+            });
+
+            window.addEventListener('mouseover', (e) => {
+                const target = e.target;
+                if (target && target.closest && target.closest('button, a, .group, .roster-row, .tilt-card, [role="button"], input, textarea, select, .cursor-pointer')) {
+                    document.body.classList.add('cursor-hover');
+                } else {
+                    document.body.classList.remove('cursor-hover');
+                }
+            });
+        }
+
+        // Watch for theme changes and update cursor colors
+        function updateCursorColors() {
+            const cursorDot = document.getElementById('cursor-dot');
+            const cursorRing = document.getElementById('cursor-ring');
+            const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+
+            if (cursorDot && cursorRing) {
+                if (isDark) {
+                    cursorDot.style.setProperty('background-color', '#E0E0E0', 'important');
+                    cursorRing.style.setProperty('border-color', 'rgba(224, 224, 224, 0.4)', 'important');
+                } else {
+                    cursorDot.style.setProperty('background-color', '#101D34', 'important');
+                    cursorRing.style.setProperty('border-color', 'rgba(16, 29, 52, 0.4)', 'important');
+                }
+            }
+        }
+        updateCursorColors(); // Initial call
+
+        // Listen for data-theme attribute changes
+        const themeObserver = new MutationObserver(updateCursorColors);
+        themeObserver.observe(document.documentElement, {attributes: true, attributeFilter: ['data-theme']});
+
+        // Recalculate triggers once fonts/layout settle
+        window.addEventListener('load', () => ScrollTrigger.refresh());
+    </script>
+    <div id="root" class="hidden"></div>
+    <script type="module" src="/src/main.tsx"></script>
+</body>
+</html>
