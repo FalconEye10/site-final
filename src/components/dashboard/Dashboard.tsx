@@ -8,8 +8,9 @@ import {
   Wallet, RotateCcw, MessageSquare, Megaphone, Trophy,
   Upload, Eye, EyeOff, Star, Clock, MapPin, Send,
   Menu, X, ChevronsLeft, ChevronsRight, ChevronDown, Settings, Sun, Moon,
-  Heart, MessageSquarePlus
+  Heart, MessageSquarePlus, Compass
 } from 'lucide-react';
+
 
 import { MembersView } from './views/MembersView';
 import { AuroraBackground } from '../ui/AuroraBackground';
@@ -31,6 +32,7 @@ import { LeaderboardView } from './views/LeaderboardView';
 import { BudgetView } from './views/BudgetView';
 import { KudosView } from './views/KudosView';
 import { SuggestionsView } from './views/SuggestionsView';
+import { PlatformTutorialModal } from './PlatformTutorialModal';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
 
 interface DashboardProps {
@@ -2012,6 +2014,10 @@ export function Dashboard({ username, onLogout }: DashboardProps) {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const [isTutorialOpen, setIsTutorialOpen] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return !localStorage.getItem('tutorial_completed_v1');
+  });
   const [membersViewSeed, setMembersViewSeed] = useState<{ search?: string; memberId?: string }>({});
   const [themeMode, setThemeMode] = useState<'dark' | 'light'>(() => {
     if (typeof window === 'undefined') return 'dark';
@@ -2327,6 +2333,30 @@ export function Dashboard({ username, onLogout }: DashboardProps) {
 
   const currentTheme = SECTION_THEMES[activeSection] || SECTION_THEMES.dashboard;
   const themeColor = currentTheme.colors[0];
+
+  // Returns white or dark text based on background luminance
+  const getContrastColor = (hex: string) => {
+    const c = hex.replace('#', '');
+    const r = parseInt(c.substring(0, 2), 16);
+    const g = parseInt(c.substring(2, 4), 16);
+    const b = parseInt(c.substring(4, 6), 16);
+    const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+    return luminance > 0.5 ? '#0A0C10' : '#FFFFFF';
+  };
+  const themeTextColor = getContrastColor(themeColor);
+
+  // For elements on dark backgrounds (sidebar, header), pick a visible accent color
+  const visibleThemeColor = (() => {
+    const c = themeColor.replace('#', '');
+    const r = parseInt(c.substring(0, 2), 16);
+    const g = parseInt(c.substring(2, 4), 16);
+    const b = parseInt(c.substring(4, 6), 16);
+    const lum = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+    if (lum > 0.25) return themeColor;
+    // Fallback to second color in palette if primary is too dark
+    return currentTheme.colors[1] || themeColor;
+  })();
+
   const commandPaletteNavItems: CommandNavItem[] = MENU_CATEGORIES.flatMap(cat =>
     cat.items.map(item => ({ ...item, category: cat.title }))
   );
@@ -2414,7 +2444,7 @@ export function Dashboard({ username, onLogout }: DashboardProps) {
                       <Icon
                         size={17}
                         className="shrink-0 transition-colors duration-300"
-                        style={isActive ? { color: themeColor } : {}}
+                        style={isActive ? { color: visibleThemeColor } : {}}
                       />
                       {!isSidebarCollapsed && <span className="text-[13.5px] font-medium flex-1 text-left">{item.label}</span>}
                       {!isSidebarCollapsed && item.id === 'comunitate' && unreadPitchesCount > 0 && (
@@ -2470,7 +2500,7 @@ export function Dashboard({ username, onLogout }: DashboardProps) {
 
             <div
               className="w-2 h-2 shrink-0"
-              style={{ backgroundColor: themeColor, transition: 'background-color 0.8s ease' }}
+              style={{ backgroundColor: visibleThemeColor, transition: 'background-color 0.8s ease' }}
             />
             <h1 className="text-xl md:text-2xl font-anthropicSerif italic font-medium text-white truncate">
               {activeTitle}
@@ -2507,7 +2537,7 @@ export function Dashboard({ username, onLogout }: DashboardProps) {
               >
                  <div
                   className="w-7 h-7 flex items-center justify-center font-bold text-sm shrink-0"
-                  style={{ background: themeColor, color: '#0A0C10' }}
+                  style={{ background: themeColor, color: themeTextColor }}
                  >
                    {username.charAt(0).toUpperCase()}
                  </div>
@@ -2536,6 +2566,12 @@ export function Dashboard({ username, onLogout }: DashboardProps) {
                         className="adm-command-item w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-white/80 text-left"
                       >
                         <Settings size={15} className="text-white/50" /> Profilul Meu
+                      </button>
+                      <button
+                        onClick={() => { setIsTutorialOpen(true); setIsUserMenuOpen(false); }}
+                        className="adm-command-item w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-white/80 text-left"
+                      >
+                        <Compass size={15} className="text-white/50" /> Redeschide Turul
                       </button>
                       <button
                         onClick={onLogout}
@@ -2589,6 +2625,12 @@ export function Dashboard({ username, onLogout }: DashboardProps) {
         onAddMember={(newMember) => {
           setMembers(prev => [...prev, newMember]);
         }}
+      />
+
+      {/* Platform Tutorial Modal */}
+      <PlatformTutorialModal
+        isOpen={isTutorialOpen}
+        onClose={() => setIsTutorialOpen(false)}
       />
     </div>
   );
