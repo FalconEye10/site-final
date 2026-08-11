@@ -10,6 +10,7 @@ import { toast } from '../ui/Toast';
 import { calculateDebt, calculateQualification, generateMemberLedger, COTIZATIE_LUNARA } from '../../utils/finance';
 import { updateMemberFields, applyMemberScoreAdjustment, revertLatestTreasuryPayment, TreasuryPayment } from '../../utils/supabaseService';
 import { PaymentModal } from '../finance/PaymentModal';
+import { ScoringReferenceGuide, ScoringPreset } from '../dashboard/views/ScoringReferenceGuide';
 import { supabase } from '../../supabase';
 
 interface MemberDrawerProps {
@@ -1220,7 +1221,7 @@ export function MemberDrawer({ member, onClose, onUpdateMember, isAdmin }: Membe
               initial={{ opacity: 0, scale: 0.97 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.97 }}
-              className="relative w-full max-w-sm bg-white border border-slate-300 rounded-md shadow-2xl p-6 z-[201] text-slate-900 space-y-4"
+              className="relative w-full max-w-xl max-h-[90vh] overflow-y-auto bg-white border border-slate-300 rounded-2xl shadow-2xl p-6 z-[201] text-slate-900 space-y-4"
             >
               <div>
                 <h3 className="font-bold text-base text-slate-900 font-title">Ajustare Scor Voluntar</h3>
@@ -1236,7 +1237,7 @@ export function MemberDrawer({ member, onClose, onUpdateMember, isAdmin }: Membe
                     onChange={e => setScoreAdjustValue(e.target.value)}
                     required
                     placeholder="0"
-                    className="w-full px-3 py-2 border border-slate-300 rounded-md text-sm text-slate-900 focus:border-slate-900 focus:outline-none font-data"
+                    className="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm text-slate-900 focus:border-slate-900 focus:outline-none font-data"
                   />
                 </div>
                 <div>
@@ -1246,22 +1247,31 @@ export function MemberDrawer({ member, onClose, onUpdateMember, isAdmin }: Membe
                     value={scoreAdjustReason}
                     onChange={e => setScoreAdjustReason(e.target.value)}
                     required
-                    placeholder="Ex: Implicare proiect"
-                    className="w-full px-3 py-2 border border-slate-300 rounded-md text-sm text-slate-900 focus:border-slate-900 focus:outline-none font-data"
+                    placeholder="Ex: Implicare proiect / Lider activitate"
+                    className="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm text-slate-900 focus:border-slate-900 focus:outline-none font-data"
                   />
                 </div>
+
+                {/* Interactive Scoring Reference Guide */}
+                <ScoringReferenceGuide
+                  selectedAction={scoreAdjustReason}
+                  onSelectPreset={(preset: ScoringPreset) => {
+                    setScoreAdjustValue(String(preset.points));
+                    setScoreAdjustReason(preset.action);
+                  }}
+                />
 
                 <div className="pt-2 flex gap-3 font-title">
                   <button
                     type="button"
                     onClick={() => setIsScoreModalOpen(false)}
-                    className="flex-1 py-2 rounded-md bg-slate-100 hover:bg-slate-200 border border-slate-300 text-xs font-semibold text-slate-700"
+                    className="flex-1 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 border border-slate-300 text-xs font-semibold text-slate-700"
                   >
                     Anulează
                   </button>
                   <button
                     type="submit"
-                    className="flex-1 py-2 rounded-md bg-slate-900 hover:bg-slate-800 text-xs font-semibold text-white"
+                    className="flex-1 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-xs font-semibold text-white"
                   >
                     Salvează
                   </button>

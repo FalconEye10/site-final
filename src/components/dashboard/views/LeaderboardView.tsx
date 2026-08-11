@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Trophy, Medal, Star, TrendingUp, Search, ChevronLeft, ChevronRight, Plus, Minus, History, X } from 'lucide-react';
+import { ScoringReferenceGuide, ScoringPreset } from './ScoringReferenceGuide';
 import { Badge } from '../../ui/Badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../ui/table';
 import { applyMemberScoreAdjustment } from '../../../utils/supabaseService';
@@ -500,7 +501,7 @@ export function LeaderboardView({ members, isAdmin = false, onUpdateMember }: Le
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="relative w-full max-w-sm rounded-[2rem] shadow-[0_40px_100px_rgba(0,0,0,0.6)] p-8 z-[121] border border-brand-muted/10"
+              className="relative w-full max-w-xl max-h-[90vh] overflow-y-auto rounded-[2rem] shadow-[0_40px_100px_rgba(0,0,0,0.6)] p-6 md:p-8 z-[121] border border-brand-muted/10"
               style={{ background: 'var(--adm-panel)' }}
             >
               <div className="mb-6 flex items-center gap-3">
@@ -557,7 +558,16 @@ export function LeaderboardView({ members, isAdmin = false, onUpdateMember }: Le
                   />
                 </div>
 
-                <div className="pt-4 flex gap-3">
+                {/* Interactive Scoring Reference Guide */}
+                <ScoringReferenceGuide
+                  selectedAction={scoreAdjustReason}
+                  onSelectPreset={(preset: ScoringPreset) => {
+                    setScoreAdjustValue(String(preset.points));
+                    setScoreAdjustReason(preset.action);
+                  }}
+                />
+
+                <div className="pt-2 flex gap-3">
                   <button
                     type="button"
                     onClick={() => setScoreModalMember(null)}
