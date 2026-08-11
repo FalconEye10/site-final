@@ -1,3 +1,4 @@
+
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   darkMode: 'class',
@@ -24,7 +25,7 @@ module.exports = {
         darkBase: '#0A0A0A',
         // Extended cyan palette for subtle tinting
         cyan: {
-          50:  '#f0fdfe',
+          50: '#f0fdfe',
           100: '#ccfbfd',
           200: '#99f6fb',
           300: '#5ceef7',
@@ -37,10 +38,10 @@ module.exports = {
         },
         // Sidebar & panel tints
         panel: {
-          soft:     'rgba(40, 250, 252, 0.03)',
-          hover:    'rgba(40, 250, 252, 0.06)',
-          active:   'rgba(40, 250, 252, 0.10)',
-          border:   'rgba(40, 250, 252, 0.12)',
+          soft: 'rgba(40, 250, 252, 0.03)',
+          hover: 'rgba(40, 250, 252, 0.06)',
+          active: 'rgba(40, 250, 252, 0.10)',
+          border: 'rgba(40, 250, 252, 0.12)',
         },
       },
       fontFamily: {
@@ -51,20 +52,20 @@ module.exports = {
         anthropicSerif: ['"Newsreader"', 'serif'],
       },
       boxShadow: {
-        'card':     '0 1px 3px rgba(0,31,38,0.04), 0 8px 24px rgba(0,31,38,0.06)',
-        'card-lg':  '0 4px 12px rgba(0,31,38,0.04), 0 20px 48px rgba(0,31,38,0.08)',
+        'card': '0 1px 3px rgba(0,31,38,0.04), 0 8px 24px rgba(0,31,38,0.06)',
+        'card-lg': '0 4px 12px rgba(0,31,38,0.04), 0 20px 48px rgba(0,31,38,0.08)',
         'card-hover': '0 8px 32px rgba(40,250,252,0.10), 0 24px 64px -12px rgba(0,31,38,0.10)',
-        'sidebar':  '4px 0 32px rgba(0,31,38,0.04), 1px 0 0 rgba(40,250,252,0.06)',
-        'header':   '0 1px 0 rgba(0,31,38,0.04), 0 4px 16px rgba(0,31,38,0.03)',
-        'glow-sm':  '0 0 12px rgba(40,250,252,0.15)',
-        'glow':     '0 0 24px rgba(40,250,252,0.20)',
-        'glow-lg':  '0 4px 40px rgba(40,250,252,0.25)',
+        'sidebar': '4px 0 32px rgba(0,31,38,0.04), 1px 0 0 rgba(40,250,252,0.06)',
+        'header': '0 1px 0 rgba(0,31,38,0.04), 0 4px 16px rgba(0,31,38,0.03)',
+        'glow-sm': '0 0 12px rgba(40,250,252,0.15)',
+        'glow': '0 0 24px rgba(40,250,252,0.20)',
+        'glow-lg': '0 4px 40px rgba(40,250,252,0.25)',
         'inner-glow': 'inset 0 1px 0 rgba(255,255,255,0.6)',
       },
       backgroundImage: {
         'gradient-sidebar': 'linear-gradient(195deg, rgba(40,250,252,0.04) 0%, rgba(250,249,245,0.98) 50%, rgba(137,207,240,0.03) 100%)',
-        'gradient-header':  'linear-gradient(180deg, rgba(255,255,255,0.85) 0%, rgba(250,249,245,0.75) 100%)',
-        'gradient-card':    'linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(250,249,245,0.7) 100%)',
+        'gradient-header': 'linear-gradient(180deg, rgba(255,255,255,0.85) 0%, rgba(250,249,245,0.75) 100%)',
+        'gradient-card': 'linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(250,249,245,0.7) 100%)',
       },
       animation: {
         'shimmer': 'shimmer 2.5s infinite linear',
@@ -73,11 +74,11 @@ module.exports = {
       },
       keyframes: {
         shimmer: {
-          '0%':   { backgroundPosition: '-200% 0' },
+          '0%': { backgroundPosition: '-200% 0' },
           '100%': { backgroundPosition: '200% 0' },
         },
         fadeIn: {
-          '0%':   { opacity: '0', transform: 'translateY(8px)' },
+          '0%': { opacity: '0', transform: 'translateY(8px)' },
           '100%': { opacity: '1', transform: 'translateY(0)' },
         },
       },
