@@ -29,32 +29,35 @@ const MONTH_NAMES = [
 ];
 const SHORT_MONTHS = ["Ian", "Feb", "Mar", "Apr", "Mai", "Iun", "Iul", "Aug", "Sep", "Oct", "Noi", "Dec"];
 
-const REFERENCE_DATE = "2026-05-01"; // Data de referință a clubului pentru membrii fără joinDate
+export const INITIAL_COLLECTION_START = "2026-08-01"; // Start colectare cotizații pe site din August 2026
 
 /**
- * Parsează joinDate în siguranță. O dată lipsă SAU una malformată (dar truthy —
- * ex. dintr-un import greșit sau o editare manuală în Firestore) cade pe data de
- * referință, în loc să producă `Invalid Date` → NaN care ar corupe tot calculul
- * de datorie (un membru dator ar fi marcat greșit ca fiind la zi).
+ * Returnează data de la care se calculează datoriile pentru un membru.
+ * Pentru mandatul curent inițial, colectarea pe site începe din August 2026 (2026-08-01).
+ * Pentru membrii înscriși ulterior (după August 2026), se calculează de la luna efectivă de joinDate.
  */
-function parseJoinDate(joinDateStr: string | undefined | null): Date {
-  const parsed = new Date(joinDateStr || REFERENCE_DATE);
-  return Number.isNaN(parsed.getTime()) ? new Date(REFERENCE_DATE) : parsed;
+export function getEffectiveStartDate(joinDateStr: string | undefined | null): Date {
+  const collectionStart = new Date(INITIAL_COLLECTION_START);
+  if (!joinDateStr) return collectionStart;
+  const parsed = new Date(joinDateStr);
+  if (Number.isNaN(parsed.getTime())) return collectionStart;
+  // Dacă s-a alăturat înainte de startul colectării pe site, startul este August 2026
+  return parsed < collectionStart ? collectionStart : parsed;
 }
 
 /**
- * Generează istoricul calendaristic al membrului de la joinDate până în prezent.
+ * Generează istoricul calendaristic al membrului de la startul colectării până în prezent.
  * Aplică automat plățile (totalPaid) peste cele mai vechi luni.
  */
-export function generateMemberLedger(joinDateStr: string | undefined | null, totalPaid: number): MemberMonth[] {
-  const joinDate = parseJoinDate(joinDateStr);
+export function generateMemberLedger(joinDateStr: string | undefined | null, totalPaid: number = 0): MemberMonth[] {
+  const startDate = getEffectiveStartDate(joinDateStr);
   const currentDate = new Date();
   const months: MemberMonth[] = [];
   
-  let currentY = joinDate.getFullYear();
-  let currentM = joinDate.getMonth();
+  let currentY = startDate.getFullYear();
+  let currentM = startDate.getMonth();
   
-  let remainingPaid = totalPaid;
+  let remainingPaid = Math.max(0, totalPaid || 0);
 
   while (currentY < currentDate.getFullYear() || (currentY === currentDate.getFullYear() && currentM <= currentDate.getMonth())) {
     let status: 'Achitat' | 'Neachitat' = 'Neachitat';
@@ -88,34 +91,36 @@ export function generateMemberLedger(joinDateStr: string | undefined | null, tot
 /**
  * Calculează datoria totală (conform formulei stricte)
  */
-export function calculateDebt(joinDateStr: string | undefined | null, totalPaid: number): number {
-  const joinDate = parseJoinDate(joinDateStr);
+export function calculateDebt(joinDateStr: string | undefined | null, totalPaid: number = 0): number {
+  const startDate = getEffectiveStartDate(joinDateStr);
   const currentDate = new Date();
   
+  if (currentDate < startDate) return 0;
+  
   const currentY = currentDate.getFullYear();
-  const currentM = currentDate.getMonth() + 1; // 1-indexed (Ian=1, Feb=2...)
+  const currentM = currentDate.getMonth() + 1; // 1-indexed (Ian=1, Aug=8...)
   
-  const joinY = joinDate.getFullYear();
-  const joinM = joinDate.getMonth() + 1; // 1-indexed
+  const startY = startDate.getFullYear();
+  const startM = startDate.getMonth() + 1; // 1-indexed
   
-  const totalMonths = (currentY - joinY) * 12 + (currentM - joinM) + 1;
+  const totalMonths = (currentY - startY) * 12 + (currentM - startM) + 1;
   if (totalMonths <= 0) return 0;
   
   const totalExpected = totalMonths * COTIZATIE_LUNARA;
-  const debt = totalExpected - totalPaid;
+  const debt = totalExpected - (totalPaid || 0);
   return Math.max(0, debt);
 }
 
 export const calculateDynamicDebt = calculateDebt;
 
 /**
- * Determină următoarea lună calendaristică restantă (ex: "Iunie 2026")
+ * Determină următoarea lună calendaristică restantă (ex: "August 2026")
  */
-export function getTargetMonthForPayment(joinDateStr: string | undefined | null, totalPaid: number): string {
-  const joinDate = parseJoinDate(joinDateStr);
-  const monthsPaid = Math.floor(totalPaid / COTIZATIE_LUNARA);
+export function getTargetMonthForPayment(joinDateStr: string | undefined | null, totalPaid: number = 0): string {
+  const startDate = getEffectiveStartDate(joinDateStr);
+  const monthsPaid = Math.floor((totalPaid || 0) / COTIZATIE_LUNARA);
   
-  const targetDate = new Date(joinDate.getFullYear(), joinDate.getMonth() + monthsPaid, 1);
+  const targetDate = new Date(startDate.getFullYear(), startDate.getMonth() + monthsPaid, 1);
   return `${MONTH_NAMES[targetDate.getMonth()]} ${targetDate.getFullYear()}`;
 }
 

@@ -87,16 +87,16 @@ export function categoriesFor(type: TxType): string[] {
   return type === 'venit' ? [...INCOME_CATEGORIES] : [...EXPENSE_CATEGORIES];
 }
 
-/** The club mandate runs July → June, so month 0 of the ledger is July. */
+/** The club mandate runs June → May (12 months), so month 0 of the ledger is June. */
 export const MANDATE_MONTHS = [
-  'Iul', 'Aug', 'Sep', 'Oct', 'Noi', 'Dec', 'Ian', 'Feb', 'Mar', 'Apr', 'Mai', 'Iun',
+  'Iun', 'Iul', 'Aug', 'Sep', 'Oct', 'Noi', 'Dec', 'Ian', 'Feb', 'Mar', 'Apr', 'Mai',
 ] as const;
 
 export const QUARTERS = [
-  { label: 'Q1', span: 'Iul–Sep', months: [0, 1, 2] },
-  { label: 'Q2', span: 'Oct–Dec', months: [3, 4, 5] },
-  { label: 'Q3', span: 'Ian–Mar', months: [6, 7, 8] },
-  { label: 'Q4', span: 'Apr–Iun', months: [9, 10, 11] },
+  { label: 'Q1', span: 'Iun–Aug', months: [0, 1, 2] },
+  { label: 'Q2', span: 'Sep–Nov', months: [3, 4, 5] },
+  { label: 'Q3', span: 'Dec–Feb', months: [6, 7, 8] },
+  { label: 'Q4', span: 'Mar–Mai', months: [9, 10, 11] },
 ] as const;
 
 /** Monthly dues rate; a full mandate is 12 × this. Mirrors utils/finance.ts. */
@@ -122,20 +122,20 @@ export const TX_TYPE_LABELS: Record<TxType, string> = {
 };
 
 /**
- * Maps a calendar month (0 = January) onto its mandate index (0 = July),
+ * Maps a calendar month (0 = January, 5 = June) onto its mandate index (0 = June, 11 = May),
  * so a transaction date lands in the right quarter of the club year.
  */
 export function mandateMonthIndex(calendarMonth: number): number {
-  return (calendarMonth + 6) % 12;
+  return (calendarMonth + 7) % 12;
 }
 
 export function formatRON(value: number): string {
   return new Intl.NumberFormat('ro-RO', { maximumFractionDigits: 2 }).format(value);
 }
 
-/** Label for the current mandate, e.g. "2025 / 2026". Mandate flips in July. */
+/** Label for the current mandate, e.g. "2026 / 2027". Mandate flips in June. */
 export function currentMandateLabel(reference: Date = new Date()): string {
   const year = reference.getFullYear();
-  const startYear = reference.getMonth() >= 6 ? year : year - 1;
+  const startYear = reference.getMonth() >= 5 ? year : year - 1;
   return `${startYear} / ${startYear + 1}`;
 }

@@ -68,7 +68,7 @@ export const DuesTab: React.FC<Props> = ({ dues, onSaveMonth }) => {
   return (
     <Panel
       title="Urmărire Cotizații"
-      subtitle={`Mandat Iulie → Iunie · ${MONTHLY_DUE} RON/lună · prag "Complet" ${FULL_MANDATE_DUE} RON`}
+      subtitle={`Mandat Iunie → Mai (Start Colectare: August 2026) · ${MONTHLY_DUE} RON/lună · prag "Complet" ${FULL_MANDATE_DUE} RON`}
       bodyClassName="p-0"
       actions={
         <div className="flex items-center gap-3">
