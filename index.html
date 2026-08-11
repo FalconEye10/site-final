@@ -94,12 +94,28 @@
     <div id="cursor-ring"></div>
 
     <!-- Top Navigation -->
-    <header class="fixed top-6 left-6 right-6 z-50 rounded-none border border-text-executive_dark/10 px-8 py-5 flex items-center justify-between transition-all hover:border-brand_signature-baby_blue/50 bg-white/80 backdrop-blur-md">
-        <div class="flex items-center gap-4">
-            <span class="font-headings text-sm md:text-base font-black tracking-widest uppercase text-text-executive_dark">Interact Camena</span>
-            <span class="font-display text-2xl text-brand_signature-baby_blue ml-2 hidden md:block italic">District 2241</span>
+    <header class="fixed top-4 md:top-6 left-4 md:left-6 right-4 md:right-6 z-50 rounded-none border border-text-executive_dark/10 px-4 md:px-8 py-3 flex items-center justify-between transition-all hover:border-brand_signature-baby_blue/50 bg-white/90 backdrop-blur-md shadow-sm">
+        <div class="flex items-center gap-3 md:gap-4">
+            <!-- Interact Logo (Prominent) -->
+            <img 
+                src="/images/interact-logo.png" 
+                alt="Interact Camena" 
+                class="h-9 md:h-12 w-auto object-contain" 
+                onerror="if(!this.dataset.tried){this.dataset.tried='true';this.src='/logo.png';}"
+            />
+            <!-- Rotary International Logo (Discrete & Secondary) -->
+            <img 
+                src="/images/rotary-logo.png" 
+                alt="Rotary International" 
+                class="h-7 md:h-9 w-auto object-contain opacity-75 hover:opacity-100 transition-opacity border-l border-text-executive_dark/15 pl-3 md:pl-4" 
+                onerror="this.style.display='none'"
+            />
+            <div class="hidden sm:flex flex-col">
+                <span class="font-headings text-xs md:text-sm font-black tracking-widest uppercase text-text-executive_dark">Interact Camena</span>
+                <span class="font-display text-xs text-brand_signature-baby_blue italic">District 2241 &bull; Piatra Neamț</span>
+            </div>
         </div>
-        <button onclick="window.location.hash = '#dashboard'" class="px-6 py-2 rounded-none border border-text-executive_dark bg-text-executive_dark text-surface-background hover:bg-surface-background hover:text-text-executive_dark transition-colors">
+        <button onclick="window.location.hash = '#dashboard'" class="px-5 md:px-6 py-2 md:py-2.5 rounded-none border border-text-executive_dark bg-text-executive_dark text-surface-background hover:bg-surface-background hover:text-text-executive_dark transition-colors shrink-0">
             <span class="font-headings text-xs font-bold tracking-widest uppercase">Acces Administrație</span>
         </button>
     </header>
