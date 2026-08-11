@@ -10,6 +10,7 @@ interface SuggestionItem {
   isAnonymous: boolean;
   authorId?: string;
   authorName?: string;
+  submitterUsername?: string;
   status: 'nou' | 'discutat' | 'implementat';
   createdAt: string;
 }
@@ -85,13 +86,17 @@ export const SuggestionsView: React.FC<SuggestionsViewProps> = ({
     setSubmitting(true);
     try {
       const sender = members.find(m => m.id === currentUserId || m.username === currentUsername);
+      const submitterName = sender?.name || sender?.nickname || currentUsername;
+      const submitterUsername = sender?.username || currentUsername;
+
       const newSuggestion = {
         id: `SUGG-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
         topic,
         message: message.trim(),
         isAnonymous,
-        authorId: isAnonymous ? null : (currentUserId || sender?.id || null),
-        authorName: isAnonymous ? 'Anonim' : (sender?.name || currentUsername),
+        authorId: currentUserId || sender?.id || null,
+        authorName: submitterName,
+        submitterUsername: submitterUsername,
         status: 'nou',
         createdAt: new Date().toISOString()
       };
@@ -99,7 +104,12 @@ export const SuggestionsView: React.FC<SuggestionsViewProps> = ({
       const { error } = await supabase.from('suggestions').insert([newSuggestion]);
       if (error) throw error;
 
-      toast.success(isAnonymous ? 'Sugestia anonimă a fost trimisă cu succes!' : 'Sugestia a fost trimisă!');
+      if (!isAnonymous) {
+        toast.success('🎉 Felicitări! Propunerea ta publică a fost trimisă și ai primit +50% Puncte Bonus Bimensuale!');
+      } else {
+        toast.success('Sugestia anonimă a fost trimisă cu succes!');
+      }
+
       setMessage('');
     } catch (err: any) {
       toast.error('Eroare la trimiterea sugestiei: ' + (err.message || 'Necunoscută'));
@@ -136,16 +146,16 @@ export const SuggestionsView: React.FC<SuggestionsViewProps> = ({
             <div className="w-10 h-10 rounded-xl bg-purple-50 dark:bg-purple-950/30 text-purple-600 dark:text-purple-400 flex items-center justify-center font-bold">
               <MessageSquarePlus size={22} />
             </div>
-            <h1 className="text-2xl md:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">Casetă Anonimă de Sugestii</h1>
+            <h1 className="text-2xl md:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">Casetă Anonimă & Propuneri de Impact</h1>
           </div>
           <p className="text-sm font-semibold text-slate-500 dark:text-slate-400 font-['Manrope']">
-            Spațiul tău sigur de feedback și propuneri pentru conducerea clubului și ședințele generale.
+            Spațiul tău de feedback și propuneri pentru conducerea clubului și ședințele generale.
           </p>
         </div>
 
         <div className="flex items-center gap-2 bg-slate-100 dark:bg-slate-800 px-3.5 py-1.5 rounded-full text-xs font-bold text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
           <ShieldCheck size={16} className="text-emerald-600 dark:text-emerald-400" />
-          <span>Confidențialitate Garantată</span>
+          <span>Confidențialitate Protejată</span>
         </div>
       </div>
 
@@ -187,20 +197,35 @@ export const SuggestionsView: React.FC<SuggestionsViewProps> = ({
               />
             </div>
 
-            {/* Anonymous Toggle */}
-            <div className="p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-750 rounded-2xl flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <EyeOff size={16} className={isAnonymous ? "text-purple-600 dark:text-purple-450" : "text-slate-400"} />
-                <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
-                  {isAnonymous ? "Trimitere Anonimă" : "Trimitere cu Numele Meu"}
-                </span>
+            {/* Anonymous Toggle & Reward Notice */}
+            <div className="space-y-2">
+              <div className="p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-750 rounded-2xl flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <EyeOff size={16} className={isAnonymous ? "text-purple-600 dark:text-purple-450" : "text-slate-400"} />
+                  <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
+                    {isAnonymous ? "Trimitere Anonimă" : "Trimitere Publică (cu Nume)"}
+                  </span>
+                </div>
+                <input
+                  type="checkbox"
+                  checked={isAnonymous}
+                  onChange={e => setIsAnonymous(e.target.checked)}
+                  className="w-4 h-4 rounded text-purple-600 focus:ring-purple-500 cursor-pointer"
+                />
               </div>
-              <input
-                type="checkbox"
-                checked={isAnonymous}
-                onChange={e => setIsAnonymous(e.target.checked)}
-                className="w-4 h-4 rounded text-purple-600 focus:ring-purple-500 cursor-pointer"
-              />
+
+              {/* Public Suggestion Reward Notification Banner */}
+              <div className={`p-3 rounded-2xl border text-xs leading-relaxed transition-all ${
+                !isAnonymous
+                  ? 'bg-amber-500/10 border-amber-500/30 text-amber-900 dark:text-amber-300 font-bold'
+                  : 'bg-purple-500/10 border-purple-500/20 text-purple-900 dark:text-purple-300'
+              }`}>
+                {!isAnonymous ? (
+                  <span>🎁 <strong>RECOMPENSĂ ACTIVĂ:</strong> Propunerile publice (cu numele tău) primesc <strong>+50% Puncte Bonus Bimensuale</strong> și recunoaștere în comunitate!</span>
+                ) : (
+                  <span>💡 <em>Sfat: Sugestiile trimise <strong>Public</strong> (debifează opțiunea anonimă) sunt răsplătite cu mai multe puncte și mai mult ajutor de la echipă!</em></span>
+                )}
+              </div>
             </div>
 
             <button
@@ -262,11 +287,39 @@ export const SuggestionsView: React.FC<SuggestionsViewProps> = ({
                   >
                     <div className="flex items-start justify-between gap-4 flex-wrap">
                       <div>
-                        <span className="text-xs font-bold text-purple-700 dark:text-purple-300 bg-purple-50 dark:bg-purple-950/20 border border-purple-200 dark:border-purple-900/50 px-3 py-1 rounded-full">
-                          {item.topic}
-                        </span>
-                        <div className="text-xs font-semibold text-slate-400 dark:text-slate-500 mt-2">
-                          Postat la: {dateStr} • {item.isAnonymous ? '👤 Membru Anonim' : `👤 ${item.authorName}`}
+                        <div className="flex items-center gap-2 flex-wrap mb-2">
+                          <span className="text-xs font-bold text-purple-700 dark:text-purple-300 bg-purple-50 dark:bg-purple-950/20 border border-purple-200 dark:border-purple-900/50 px-3 py-1 rounded-full">
+                            {item.topic}
+                          </span>
+
+                          {/* Admin Submitter Status Badge */}
+                          {isAdmin ? (
+                            <span className={`text-[11px] font-black px-2.5 py-0.5 rounded-md border ${
+                              item.isAnonymous
+                                ? 'bg-amber-500/15 border-amber-500/30 text-amber-800 dark:text-amber-300'
+                                : 'bg-emerald-500/15 border-emerald-500/30 text-emerald-800 dark:text-emerald-300'
+                            }`}>
+                              {item.isAnonymous ? '🕵️ Trimis Anonim de utilizator (Audit Admin)' : '🌐 Trimis Public (+50% Bonus)'}
+                            </span>
+                          ) : item.isAnonymous ? (
+                            <span className="text-[11px] font-bold px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400">
+                              👤 Anonim
+                            </span>
+                          ) : (
+                            <span className="text-[11px] font-bold px-2 py-0.5 rounded-md bg-purple-500/15 text-purple-700 dark:text-purple-300">
+                              🌐 Public
+                            </span>
+                          )}
+                        </div>
+
+                        <div className="text-xs font-semibold text-slate-500 dark:text-slate-400 mt-1">
+                          Postat la: {dateStr} • {
+                            isAdmin
+                              ? `👤 Autor Real: ${item.authorName || 'Necunoscut'} (@${item.submitterUsername || 'user'})`
+                              : item.isAnonymous
+                              ? '👤 Membru Anonim'
+                              : `👤 ${item.authorName}`
+                          }
                         </div>
                       </div>
 
