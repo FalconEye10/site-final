@@ -2023,15 +2023,54 @@ export function Dashboard({ username, onLogout }: DashboardProps) {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
-  const [isTutorialOpen, setIsTutorialOpen] = useState(() => {
-    if (typeof window === 'undefined') return false;
-    return !localStorage.getItem('tutorial_completed_v1');
-  });
+  const [isTutorialOpen, setIsTutorialOpen] = useState(false);
   const [membersViewSeed, setMembersViewSeed] = useState<{ search?: string; memberId?: string }>({});
   const [themeMode, setThemeMode] = useState<'dark' | 'light'>(() => {
     if (typeof window === 'undefined') return 'dark';
     return (localStorage.getItem('adminThemeMode') as 'dark' | 'light') || 'dark';
   });
+
+  // First Login Ever Check: Automatically trigger tutorial if user has 0 logins or unseen tutorial
+  useEffect(() => {
+    if (!members || members.length === 0) return;
+    const currentMember = members.find(m => m.username?.toLowerCase() === username.toLowerCase());
+    const localKey = `tutorial_seen_v2_${username.toLowerCase()}`;
+    const alreadySeenLocally = localStorage.getItem(localKey);
+
+    if (currentMember) {
+      if ((currentMember.login_count === 0 || !currentMember.has_seen_tutorial) && !alreadySeenLocally) {
+        setIsTutorialOpen(true);
+      }
+    }
+  }, [members, username]);
+
+  const handleCloseTutorial = async () => {
+    setIsTutorialOpen(false);
+    const localKey = `tutorial_seen_v2_${username.toLowerCase()}`;
+    localStorage.setItem(localKey, 'true');
+
+    // Update in Supabase so login count is saved and has_seen_tutorial is marked true
+    try {
+      const currentMember = members.find(m => m.username?.toLowerCase() === username.toLowerCase());
+      const nextCount = (currentMember?.login_count || 0) + 1;
+      await supabase
+        .from('members')
+        .update({
+          login_count: nextCount,
+          has_seen_tutorial: true
+        })
+        .eq('username', username.toLowerCase());
+      
+      // Update local members state
+      setMembers(prev => prev.map(m => 
+        m.username?.toLowerCase() === username.toLowerCase()
+          ? { ...m, login_count: nextCount, has_seen_tutorial: true }
+          : m
+      ));
+    } catch (e) {
+      console.warn("Could not sync tutorial completion:", e);
+    }
+  };
 
   // Applied on <html> (not just the local shell div) so it also reaches
   // MemberDrawer, which renders its own separate .dashboard-shell via a
@@ -2646,7 +2685,7 @@ export function Dashboard({ username, onLogout }: DashboardProps) {
       {/* Platform Tutorial Modal */}
       <PlatformTutorialModal
         isOpen={isTutorialOpen}
-        onClose={() => setIsTutorialOpen(false)}
+        onClose={handleCloseTutorial}
       />
     </div>
   );
