@@ -14,6 +14,7 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({ curren
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [budget, setBudget] = useState('');
+  const [recommendedCommittee, setRecommendedCommittee] = useState('Servicii Comunitare & Proiecte');
   const [pdfFile, setPdfFile] = useState<File | null>(null);
   const [includeUsername, setIncludeUsername] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -62,6 +63,7 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({ curren
         title: title.trim(),
         description: description.trim(),
         budget: budget.trim() || null,
+        committee: recommendedCommittee,
         pdfUrl,
         isAnonymous,
         authorId: isAnonymous ? null : currentUserId,
@@ -154,6 +156,21 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({ curren
               rows={5}
               className="w-full rounded-xl border border-slate-200 shadow-sm px-4 py-2.5 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all resize-none"
             />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1.5">Comitet Recomandat</label>
+            <select
+              value={recommendedCommittee}
+              onChange={e => setRecommendedCommittee(e.target.value)}
+              className="w-full rounded-xl border border-slate-200 shadow-sm px-4 py-2.5 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all bg-white text-slate-800"
+            >
+              <option value="Servicii Comunitare & Proiecte">🤝 Servicii Comunitare & Proiecte</option>
+              <option value="Imagine Publică & PR">🎨 Imagine Publică & PR</option>
+              <option value="Finanțe & Fundraising">💼 Finanțe & Fundraising</option>
+              <option value="Leadership & Dezvoltare">🎯 Leadership & Dezvoltare</option>
+              <option value="Organizare & Logistică">⚙️ Organizare & Logistică</option>
+            </select>
           </div>
 
           <div>

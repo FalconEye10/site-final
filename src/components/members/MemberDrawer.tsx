@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
   X, CheckCircle2, AlertCircle, Calendar as CalendarIcon, FileText, 
   Phone, MapPin, Mail, RotateCcw, TrendingUp, Award, User, 
-  Edit3, PlusCircle, CreditCard, Sparkles
+  Edit3, PlusCircle, CreditCard, Sparkles, Users2, Target, Check
 } from 'lucide-react';
 import { toast } from '../ui/Toast';
 import { calculateDebt, calculateQualification, generateMemberLedger, COTIZATIE_LUNARA } from '../../utils/finance';
@@ -20,10 +20,15 @@ interface MemberDrawerProps {
 }
 
 export function MemberDrawer({ member, onClose, onUpdateMember, isAdmin }: MemberDrawerProps) {
-  const [activeTab, setActiveTab] = useState<'finance' | 'activity' | 'profile' | 'achievements'>('finance');
+  const [activeTab, setActiveTab] = useState<'finance' | 'activity' | 'profile' | 'achievements' | 'committees'>('finance');
   const [isEditing, setIsEditing] = useState(false);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [selectedReceipt, setSelectedReceipt] = useState<TreasuryPayment | null>(null);
+
+  // Committee preferences state
+  const [userCommittees, setUserCommittees] = useState<string[]>(member.committeePreferences || []);
+  const [userSkills, setUserSkills] = useState<string[]>(member.skills || []);
+  const [isSavingCommittees, setIsSavingCommittees] = useState(false);
 
   // Score Adjustment Modal states
   const [isScoreModalOpen, setIsScoreModalOpen] = useState(false);
@@ -208,6 +213,27 @@ export function MemberDrawer({ member, onClose, onUpdateMember, isAdmin }: Membe
     }
   };
 
+  const handleSaveCommittees = async () => {
+    setIsSavingCommittees(true);
+    try {
+      await updateMemberFields(member.id, {
+        committeePreferences: userCommittees,
+        skills: userSkills
+      });
+      onUpdateMember({
+        ...member,
+        committeePreferences: userCommittees,
+        skills: userSkills
+      });
+      toast.success('Preferințele de comitete și competențe au fost salvate! ✓');
+    } catch (err) {
+      console.error(err);
+      toast.error('Eroare la salvarea preferințelor.');
+    } finally {
+      setIsSavingCommittees(false);
+    }
+  };
+
   const dynamicMonths = generateMemberLedger(member.joinDate, member.totalPaid || 0);
   const debt = calculateDebt(member.joinDate, member.totalPaid || 0);
   const isClear = debt === 0;
@@ -358,6 +384,18 @@ export function MemberDrawer({ member, onClose, onUpdateMember, isAdmin }: Membe
             >
               <User size={14} />
               Date Contact & Profil
+            </button>
+
+            <button
+              onClick={() => setActiveTab('committees')}
+              className={`py-3 border-b-2 transition-colors flex items-center gap-1.5 ${
+                activeTab === 'committees'
+                  ? 'border-slate-900 text-slate-900 font-bold'
+                  : 'border-transparent hover:text-slate-900'
+              }`}
+            >
+              <Users2 size={14} className="text-indigo-600" />
+              Comitet & Abilități
             </button>
           </div>
         )}
@@ -948,6 +986,134 @@ export function MemberDrawer({ member, onClose, onUpdateMember, isAdmin }: Membe
                 );
               })()}
             </>
+          )}
+
+          {/* TAB 5: COMMITTEES & SKILLS PREFERENCES */}
+          {activeTab === 'committees' && (
+            <div className="space-y-6 max-w-3xl mx-auto font-['Hanken_Grotesk']">
+              {/* Informative Banner */}
+              <div className="p-4 rounded-2xl bg-indigo-50 border border-indigo-200 text-indigo-900 flex items-start gap-3">
+                <Users2 className="shrink-0 mt-0.5 text-indigo-600" size={18} />
+                <div className="text-xs font-['Manrope']">
+                  <strong>Preferințe de Comitet & Roluri</strong>: Selectarea comitetelor reprezintă o declarație de interes pentru coordonatori și board, facilitând distribuirea optimă a sarcinilor la proiecte fără a garanta sau bloca automat o poziție.
+                </div>
+              </div>
+
+              {/* Committee Options */}
+              <div>
+                <h4 className="text-xs font-black uppercase tracking-wider text-slate-500 mb-3 flex items-center gap-1.5">
+                  <Target size={14} className="text-indigo-600" />
+                  <span>Comitete de Interes (Alege 1-2 comitete)</span>
+                </h4>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {[
+                    { id: 'Imagine Publică & PR', title: 'Imagine Publică & PR', icon: '🎨', desc: 'Design grafic, Social Media & Reels, Foto/Video, comunicare externă' },
+                    { id: 'Servicii Comunitare & Proiecte', title: 'Servicii Comunitare & Proiecte', icon: '🤝', desc: 'Organizare acțiuni caritabile, voluntariat direct, proiecte sociale' },
+                    { id: 'Finanțe & Fundraising', title: 'Finanțe & Fundraising', icon: '💼', desc: 'Atragere sponsori, bugetare, campanii de strângere de fonduri' },
+                    { id: 'Leadership & Dezvoltare', title: 'Leadership & Dezvoltare', icon: '🎯', desc: 'Workshop-uri, teambuilding, formare și dezvoltare personală' },
+                    { id: 'Organizare & Logistică', title: 'Organizare & Logistică', icon: '⚙️', desc: 'Planificare tehnică, achiziții materiale, transport și amenajare locații' },
+                  ].map(comm => {
+                    const isSelected = userCommittees.includes(comm.id);
+                    return (
+                      <div
+                        key={comm.id}
+                        onClick={() => {
+                          if (isSelected) {
+                            setUserCommittees(prev => prev.filter(c => c !== comm.id));
+                          } else {
+                            if (userCommittees.length >= 2) {
+                              setUserCommittees([userCommittees[1], comm.id]);
+                            } else {
+                              setUserCommittees(prev => [...prev, comm.id]);
+                            }
+                          }
+                        }}
+                        className={`p-4 rounded-2xl border-2 cursor-pointer transition-all ${
+                          isSelected
+                            ? 'bg-indigo-50/70 border-indigo-600 shadow-sm'
+                            : 'bg-white border-slate-200 hover:border-slate-300'
+                        }`}
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex items-center gap-2.5">
+                            <span className="text-2xl">{comm.icon}</span>
+                            <div>
+                              <h5 className="text-sm font-bold text-slate-900">{comm.title}</h5>
+                              <p className="text-[11px] text-slate-500 font-['Manrope'] mt-0.5 leading-snug">{comm.desc}</p>
+                            </div>
+                          </div>
+                          <div className={`w-5 h-5 rounded-full border flex items-center justify-center shrink-0 ${
+                            isSelected ? 'bg-indigo-600 border-indigo-600 text-white' : 'border-slate-300'
+                          }`}>
+                            {isSelected && <Check size={12} />}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Skills & Talents */}
+              <div>
+                <h4 className="text-xs font-black uppercase tracking-wider text-slate-500 mb-3 flex items-center gap-1.5">
+                  <Sparkles size={14} className="text-amber-500" />
+                  <span>Abilități & Pasiuni Practice</span>
+                </h4>
+
+                <div className="flex flex-wrap gap-2">
+                  {[
+                    'Design Canva / Adobe',
+                    'Foto & Editare Video',
+                    'Social Media & Reels',
+                    'Public Speaking & Prezentare',
+                    'Copywriting & Redactare',
+                    'Atragere Sponsori & Pitching',
+                    'Management Evenimente',
+                    'Logistică & Transport (Permis)',
+                    'Muzică / DJ / Artă',
+                    'Programare & Web'
+                  ].map(skill => {
+                    const isSelected = userSkills.includes(skill);
+                    return (
+                      <button
+                        type="button"
+                        key={skill}
+                        onClick={() => {
+                          if (isSelected) {
+                            setUserSkills(prev => prev.filter(s => s !== skill));
+                          } else {
+                            setUserSkills(prev => [...prev, skill]);
+                          }
+                        }}
+                        className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 border ${
+                          isSelected
+                            ? 'bg-slate-900 text-white border-slate-900 shadow-sm'
+                            : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+                        }`}
+                      >
+                        {isSelected && <Check size={12} className="text-emerald-400" />}
+                        <span>{skill}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Save Button */}
+              <div className="pt-4 border-t border-slate-200 flex justify-end">
+                <button
+                  type="button"
+                  disabled={isSavingCommittees}
+                  onClick={handleSaveCommittees}
+                  className="px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition-all shadow-md shadow-indigo-600/20 flex items-center gap-2"
+                >
+                  <Check size={14} />
+                  <span>{isSavingCommittees ? 'Se salvează...' : 'Salvează Preferințele'}</span>
+                </button>
+              </div>
+            </div>
           )}
         </div>
       </motion.div>

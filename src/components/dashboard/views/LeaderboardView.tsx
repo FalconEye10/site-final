@@ -5,6 +5,7 @@ import { Badge } from '../../ui/Badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../ui/table';
 import { applyMemberScoreAdjustment } from '../../../utils/supabaseService';
 import { toast } from '../../ui/Toast';
+import { VolunteerSpotlightCard } from '../VolunteerSpotlightCard';
 
 interface LeaderboardViewProps {
   members: any[];
@@ -244,6 +245,11 @@ export function LeaderboardView({ members, isAdmin = false, onUpdateMember }: Le
 
   return (
     <div className="space-y-8">
+      {/* 👑 Spotlight: Voluntarul Lunii */}
+      <VolunteerSpotlightCard
+        members={members}
+      />
+
       {/* BENTO GRID */}
       <motion.div 
         variants={containerVariants}

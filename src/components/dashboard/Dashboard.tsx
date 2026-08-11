@@ -33,6 +33,8 @@ import { BudgetView } from './views/BudgetView';
 import { KudosView } from './views/KudosView';
 import { SuggestionsView } from './views/SuggestionsView';
 import { PlatformTutorialModal } from './PlatformTutorialModal';
+import { NotificationsDropdown } from './NotificationsDropdown';
+import { VolunteerSpotlightCard } from './VolunteerSpotlightCard';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
 
 interface DashboardProps {
@@ -471,6 +473,13 @@ const ViewDashboard = ({ members, currentUserObj, isAdmin, onNavigateToSection, 
           </>
         )}
       </div>
+
+      {/* Spotlight: Voluntarul Lunii */}
+      <VolunteerSpotlightCard
+        members={members}
+        currentUserId={currentUserObj?.id}
+        onNavigateToLeaderboard={() => onNavigateToSection('clasament')}
+      />
 
       {/* 2. News Banner / Alert Area */}
       {latestNews && (
@@ -2507,8 +2516,15 @@ export function Dashboard({ username, onLogout }: DashboardProps) {
             </h1>
           </div>
 
-          <div className="flex items-center gap-3 md:gap-5 shrink-0">
+          <div className="flex items-center gap-3 md:gap-4 shrink-0">
             <ClockWidget events={events} />
+
+            {/* Smart Notifications Bell Dropdown */}
+            <NotificationsDropdown
+              currentUserId={currentUserObj?.id}
+              currentUsername={currentUserObj?.username || username}
+              onNavigateToSection={setActiveSection}
+            />
 
             {/* Light / Dark toggle */}
             <button
