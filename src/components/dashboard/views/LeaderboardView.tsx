@@ -42,7 +42,9 @@ export function LeaderboardView({ members, isAdmin = false, onUpdateMember }: Le
     };
   }, []);
 
-  // 1. Sort all members by quarterly score descending
+  const [scoreMode, setScoreMode] = useState<'quarter' | 'total'>('quarter');
+
+  // 1. Sort all members by selected score mode (quarterly or total all-time) descending
   const sortedMembers = useMemo(() => {
     return [...members]
       .filter(m => m.role?.toLowerCase() !== 'admin') // exclude admins from leaderboard
@@ -60,10 +62,17 @@ export function LeaderboardView({ members, isAdmin = false, onUpdateMember }: Le
           }
           return sum;
         }, 0);
-        return { ...m, quarterScore };
+
+        const totalScore = typeof m.score === 'number'
+          ? m.score
+          : adjustments.reduce((sum: number, adj: any) => sum + (adj.points || 0), m.presences || 0);
+
+        const displayScore = scoreMode === 'total' ? totalScore : quarterScore;
+
+        return { ...m, quarterScore, totalScore, displayScore };
       })
-      .sort((a, b) => b.quarterScore - a.quarterScore);
-  }, [members, currentYear, startMonth, endMonth]);
+      .sort((a, b) => b.displayScore - a.displayScore);
+  }, [members, currentYear, startMonth, endMonth, scoreMode]);
 
   const top3 = sortedMembers.slice(0, 3);
   
@@ -386,7 +395,36 @@ export function LeaderboardView({ members, isAdmin = false, onUpdateMember }: Le
         className="admin-card rounded-none border border-slate-200 bg-white p-8 shadow-xl font-anthropic"
       >
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-          <h2 className="text-xl font-anthropicSerif font-semibold text-slate-800">Clasament Trimestrial (Q{quarter} {currentYear})</h2>
+          <div className="flex items-center gap-3 flex-wrap">
+            <h2 className="text-xl font-anthropicSerif font-semibold text-slate-800">
+              {scoreMode === 'quarter' ? `Clasament Trimestrial (Q${quarter} ${currentYear})` : 'Clasament General (Total Istoric)'}
+            </h2>
+            <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl border border-slate-200 dark:border-slate-700">
+              <button
+                type="button"
+                onClick={() => setScoreMode('quarter')}
+                className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${
+                  scoreMode === 'quarter'
+                    ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs'
+                    : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
+                }`}
+              >
+                Trimestru (Q{quarter})
+              </button>
+              <button
+                type="button"
+                onClick={() => setScoreMode('total')}
+                className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${
+                  scoreMode === 'total'
+                    ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs'
+                    : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
+                }`}
+              >
+                Total Istoric (Toate Punctele)
+              </button>
+            </div>
+          </div>
+
           <div className="relative group w-full sm:w-64">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-brand-accent/40 group-focus-within:text-brand-primary transition-colors" size={16} />
             <input 
@@ -406,14 +444,18 @@ export function LeaderboardView({ members, isAdmin = false, onUpdateMember }: Le
                 <TableHead className="w-16 text-center">Rang</TableHead>
                 <TableHead>Membru</TableHead>
                 <TableHead>Rol</TableHead>
-                <TableHead className="text-right">Punctaj Trimestrial</TableHead>
+                <TableHead className="text-right">
+                  {scoreMode === 'quarter' ? 'Punctaj Trimestru' : 'Punctaj Total (Incl. Negativ)'}
+                </TableHead>
                 <TableHead className="text-right">Acțiuni</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {paginatedMembers.map((m, idx) => {
                 const globalRank = (currentPage - 1) * itemsPerPage + idx + 1;
-                const scoreValue = m.quarterScore || 0;
+                const scoreValue = scoreMode === 'total' ? (m.totalScore || 0) : (m.quarterScore || 0);
+                const isNegative = scoreValue < 0;
+
                 return (
                   <TableRow key={m.id} className="group">
                     <TableCell className="text-center font-bold text-slate-400">#{globalRank}</TableCell>
@@ -428,8 +470,17 @@ export function LeaderboardView({ members, isAdmin = false, onUpdateMember }: Le
                       </div>
                     </TableCell>
                     <TableCell><Badge variant="neutral">{m.role}</Badge></TableCell>
-                    <TableCell className={`text-right font-black font-['Manrope'] text-lg ${scoreValue < 0 ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-600 dark:text-emerald-400'}`}>
-                      {scoreValue}
+                    <TableCell className="text-right font-black font-['Manrope'] text-lg">
+                      <div className="flex items-center justify-end gap-2">
+                        {isNegative && (
+                          <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-md bg-rose-500/15 text-rose-700 dark:text-rose-300 border border-rose-500/30">
+                            Scor Negativ
+                          </span>
+                        )}
+                        <span className={isNegative ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-600 dark:text-emerald-400'}>
+                          {scoreValue > 0 ? `+${scoreValue}` : scoreValue}
+                        </span>
+                      </div>
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-2">
