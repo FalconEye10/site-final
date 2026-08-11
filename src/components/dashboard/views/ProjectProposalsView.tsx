@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../../supabase';
-import { FileText, Clock, CheckCircle2, XCircle, ExternalLink, EyeOff, UserCheck, Users, HandMetal, Sparkles } from 'lucide-react';
+import { FileText, Clock, CheckCircle2, XCircle, ExternalLink, Users, HandMetal, Sparkles } from 'lucide-react';
 import { ProjectProposalForm } from './ProjectProposalForm';
 import { toast } from '../../ui/Toast';
 

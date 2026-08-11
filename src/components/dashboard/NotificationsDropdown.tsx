@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Bell, CheckCheck, Heart, Calendar, Megaphone, CheckCircle2, XCircle, PieChart, Sparkles, X, ChevronRight } from 'lucide-react';
+import { Bell, CheckCheck, Heart, Megaphone, CheckCircle2, XCircle, PieChart, Sparkles, ChevronRight } from 'lucide-react';
 import { supabase } from '../../supabase';
 
 export interface NotificationItem {

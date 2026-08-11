@@ -1,20 +1,18 @@
 import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Trophy, Sparkles, Star, Award, Heart, Crown, ChevronRight, History, PartyPopper } from 'lucide-react';
+import { Trophy, Sparkles, Award, Crown, ChevronRight, History, PartyPopper } from 'lucide-react';
 import { toast } from '../ui/Toast';
 
 interface VolunteerSpotlightCardProps {
   members: any[];
   currentUserId?: string;
   onNavigateToLeaderboard?: () => void;
-  onSendKudos?: (targetMemberId: string) => void;
 }
 
 export const VolunteerSpotlightCard: React.FC<VolunteerSpotlightCardProps> = ({
   members,
   currentUserId,
   onNavigateToLeaderboard,
-  onSendKudos,
 }) => {
   const [showHistory, setShowHistory] = useState(false);
   const [congratsSent, setCongratsSent] = useState<Record<string, boolean>>({});
