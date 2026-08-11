@@ -6,7 +6,6 @@ import { Badge } from '../../ui/Badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../ui/table';
 import { applyMemberScoreAdjustment } from '../../../utils/supabaseService';
 import { toast } from '../../ui/Toast';
-import { VolunteerSpotlightCard } from '../VolunteerSpotlightCard';
 
 interface LeaderboardViewProps {
   members: any[];
@@ -28,35 +27,60 @@ export function LeaderboardView({ members, isAdmin = false, onUpdateMember }: Le
   // History Modal state
   const [historyModalMember, setHistoryModalMember] = useState<any | null>(null);
 
-  // Calculate the current quarter dynamically
-  const { quarter, startMonth, endMonth, currentYear } = useMemo(() => {
+  // 1. Bi-monthly period calculation (2 months: Jan-Feb, Mar-Apr, May-Jun, Jul-Aug, Sep-Oct, Nov-Dec)
+  const biMonthlyInfo = useMemo(() => {
     const now = new Date();
     const curYear = now.getFullYear();
     const curMonth = now.getMonth(); // 0-11
-    const q = Math.floor(curMonth / 3) + 1; // 1, 2, 3, 4
+    const biMonthIndex = Math.floor(curMonth / 2); // 0..5
+
+    const periods = [
+      'Ianuarie – Februarie',
+      'Martie – Aprilie',
+      'Mai – Iunie',
+      'Iulie – August',
+      'Septembrie – Octombrie',
+      'Noiembrie – Decembrie'
+    ];
+
+    const startMonth = biMonthIndex * 2;
+    const endMonth = biMonthIndex * 2 + 1;
+
+    let prevIndex = biMonthIndex - 1;
+    let prevYear = curYear;
+    if (prevIndex < 0) {
+      prevIndex = 5;
+      prevYear = curYear - 1;
+    }
+
     return {
-      quarter: q,
-      startMonth: (q - 1) * 3,
-      endMonth: (q - 1) * 3 + 2,
-      currentYear: curYear
+      periodIndex: biMonthIndex + 1,
+      periodLabel: `${periods[biMonthIndex]} ${curYear}`,
+      prevPeriodLabel: `${periods[prevIndex]} ${prevYear}`,
+      startMonth,
+      endMonth,
+      prevStartMonth: prevIndex * 2,
+      prevEndMonth: prevIndex * 2 + 1,
+      currentYear: curYear,
+      prevYear
     };
   }, []);
 
-  const [scoreMode, setScoreMode] = useState<'quarter' | 'total'>('quarter');
+  const [scoreMode, setScoreMode] = useState<'bimonthly' | 'total'>('bimonthly');
 
-  // 1. Sort all members by selected score mode (quarterly or total all-time) descending
+  // 2. Sort all members by selected score mode (bimonthly or total all-time) descending
   const sortedMembers = useMemo(() => {
     return [...members]
       .filter(m => m.role?.toLowerCase() !== 'admin') // exclude admins from leaderboard
       .map(m => {
         const adjustments = m.scoreAdjustments || [];
-        const quarterScore = adjustments.reduce((sum: number, adj: any) => {
+        const biMonthlyScore = adjustments.reduce((sum: number, adj: any) => {
           if (!adj.date) return sum;
           const d = new Date(adj.date);
           if (
-            d.getFullYear() === currentYear &&
-            d.getMonth() >= startMonth &&
-            d.getMonth() <= endMonth
+            d.getFullYear() === biMonthlyInfo.currentYear &&
+            d.getMonth() >= biMonthlyInfo.startMonth &&
+            d.getMonth() <= biMonthlyInfo.endMonth
           ) {
             return sum + (adj.points || 0);
           }
@@ -67,16 +91,19 @@ export function LeaderboardView({ members, isAdmin = false, onUpdateMember }: Le
           ? m.score
           : adjustments.reduce((sum: number, adj: any) => sum + (adj.points || 0), m.presences || 0);
 
-        const displayScore = scoreMode === 'total' ? totalScore : quarterScore;
+        const displayScore = scoreMode === 'total' ? totalScore : biMonthlyScore;
 
-        return { ...m, quarterScore, totalScore, displayScore };
+        return { ...m, biMonthlyScore, totalScore, displayScore };
       })
       .sort((a, b) => b.displayScore - a.displayScore);
-  }, [members, currentYear, startMonth, endMonth, scoreMode]);
+  }, [members, biMonthlyInfo, scoreMode]);
 
-  const top3 = sortedMembers.slice(0, 3);
-  
-  // 2. Voluntarul Lunii (based on current month)
+  const locul1 = sortedMembers[0];
+  const locul2 = sortedMembers[1];
+  const locul3 = sortedMembers[2];
+  const locul4 = sortedMembers[3];
+
+  // 3. Voluntarul Lunii (based on current month)
   const voluntarulLunii = useMemo(() => {
     const now = new Date();
     const currentMonth = now.getMonth();
@@ -105,63 +132,47 @@ export function LeaderboardView({ members, isAdmin = false, onUpdateMember }: Le
     return winner;
   }, [members]);
 
-  // 3. Cea Mai Mare Evoluție (Diferența dintre trimestrul curent și trimestrul anterior, exclude top 3)
-  const { prevQuarter, prevStartMonth, prevEndMonth, prevYear } = useMemo(() => {
-    let pq = quarter - 1;
-    let py = currentYear;
-    if (pq === 0) {
-      pq = 4;
-      py = currentYear - 1;
-    }
-    return {
-      prevQuarter: pq,
-      prevStartMonth: (pq - 1) * 3,
-      prevEndMonth: (pq - 1) * 3 + 2,
-      prevYear: py
-    };
-  }, [quarter, currentYear]);
-
+  // 4. Cea Mai Mare Evoluție (Diferența între perioada bimensuală curentă și cea anterioară)
   const ceaMaiMareEvolutie = useMemo(() => {
     let maxDiff = -999999;
     let winner: any = null;
 
-    const top3Ids = top3.map(m => m.id);
+    const top4Ids = [locul1?.id, locul2?.id, locul3?.id, locul4?.id].filter(Boolean);
 
     members.forEach(m => {
-      if (m.role?.toLowerCase() === 'admin' || top3Ids.includes(m.id)) return;
+      if (m.role?.toLowerCase() === 'admin' || top4Ids.includes(m.id)) return;
       const adjustments = m.scoreAdjustments || [];
 
-      // Current Quarter Score
-      const quarterScore = adjustments.reduce((sum: number, adj: any) => {
+      // Current Bi-Monthly Score
+      const currentScore = adjustments.reduce((sum: number, adj: any) => {
         if (!adj.date) return sum;
         const d = new Date(adj.date);
         if (
-          d.getFullYear() === currentYear &&
-          d.getMonth() >= startMonth &&
-          d.getMonth() <= endMonth
+          d.getFullYear() === biMonthlyInfo.currentYear &&
+          d.getMonth() >= biMonthlyInfo.startMonth &&
+          d.getMonth() <= biMonthlyInfo.endMonth
         ) {
           return sum + (adj.points || 0);
         }
         return sum;
       }, 0);
 
-      // Previous Quarter Score
-      const prevQuarterScore = adjustments.reduce((sum: number, adj: any) => {
+      // Previous Bi-Monthly Score
+      const prevScore = adjustments.reduce((sum: number, adj: any) => {
         if (!adj.date) return sum;
         const d = new Date(adj.date);
         if (
-          d.getFullYear() === prevYear &&
-          d.getMonth() >= prevStartMonth &&
-          d.getMonth() <= prevEndMonth
+          d.getFullYear() === biMonthlyInfo.prevYear &&
+          d.getMonth() >= biMonthlyInfo.prevStartMonth &&
+          d.getMonth() <= biMonthlyInfo.prevEndMonth
         ) {
           return sum + (adj.points || 0);
         }
         return sum;
       }, 0);
 
-      const evolution = quarterScore - prevQuarterScore;
+      const evolution = currentScore - prevScore;
 
-      // We only spotlight positive evolution (growth)
       if (evolution > maxDiff && evolution > 0) {
         maxDiff = evolution;
         winner = { ...m, evolution };
@@ -169,18 +180,22 @@ export function LeaderboardView({ members, isAdmin = false, onUpdateMember }: Le
     });
 
     return winner;
-  }, [members, top3, currentYear, startMonth, endMonth, prevYear, prevStartMonth, prevEndMonth]);
+  }, [members, biMonthlyInfo, locul1, locul2, locul3, locul4]);
 
-  // 4. Pagination & Search
-  const filteredList = sortedMembers.filter(m => {
+  // 5. Pagination & Search for members starting from Rank #5 (Locul 5+)
+  const filteredList = useMemo(() => {
+    const list = sortedMembers.slice(4); // Exclude Locul 1, 2, 3, 4 from main table
     const query = searchQuery.toLowerCase();
-    const nameMatch = (m.name || '').toLowerCase().includes(query);
-    const nicknameMatch = (m.nickname || '').toLowerCase().includes(query);
-    const roleMatch = (m.role || '').toLowerCase().includes(query);
-    return nameMatch || nicknameMatch || roleMatch;
-  });
+    if (!query) return list;
+    return list.filter(m => {
+      const nameMatch = (m.name || '').toLowerCase().includes(query);
+      const nicknameMatch = (m.nickname || '').toLowerCase().includes(query);
+      const roleMatch = (m.role || '').toLowerCase().includes(query);
+      return nameMatch || nicknameMatch || roleMatch;
+    });
+  }, [sortedMembers, searchQuery]);
 
-  const totalPages = Math.ceil(filteredList.length / itemsPerPage);
+  const totalPages = Math.max(1, Math.ceil(filteredList.length / itemsPerPage));
   const paginatedMembers = filteredList.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   const handleAdjustScore = async (e: React.FormEvent) => {
@@ -255,10 +270,60 @@ export function LeaderboardView({ members, isAdmin = false, onUpdateMember }: Le
 
   return (
     <div className="space-y-8">
-      {/* 👑 Spotlight: Voluntarul Lunii */}
-      <VolunteerSpotlightCard
-        members={members}
-      />
+      {/* 👑 Spotlight: Voluntarul Bimensual - Locul 1 (Ediția Curentă) */}
+      {locul1 && (
+        <motion.div
+          variants={itemVariants}
+          initial="hidden"
+          animate="show"
+          className="relative overflow-hidden rounded-[2.5rem] bg-gradient-to-br from-amber-500/20 via-amber-400/10 to-amber-600/20 border-2 border-amber-400/40 p-6 md:p-8 shadow-2xl font-anthropic"
+        >
+          <div className="flex flex-col md:flex-row items-center justify-between gap-6 relative z-10">
+            <div className="flex items-center gap-5">
+              <div className="relative">
+                <div className="absolute -top-6 left-1/2 -translate-x-1/2 bg-amber-400 text-slate-950 p-1.5 rounded-full shadow-lg border border-amber-200 animate-bounce">
+                  <Trophy size={20} />
+                </div>
+                <img
+                  src={locul1.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(locul1.nickname || locul1.name)}&background=fbbf24&color=0F172A`}
+                  className="w-20 h-20 md:w-24 md:h-24 rounded-full border-4 border-amber-400 object-cover shadow-[0_0_25px_rgba(251,191,36,0.6)]"
+                  alt=""
+                />
+              </div>
+              <div>
+                <div className="flex items-center gap-2 mb-1 flex-wrap">
+                  <span className="px-3 py-1 rounded-full bg-amber-500 text-slate-950 font-black text-xs uppercase tracking-widest shadow-xs">
+                    👑 LOCUL 1 — VOLUNTARUL BIMENSUAL
+                  </span>
+                  <span className="text-xs text-amber-800 dark:text-amber-300 font-bold">{biMonthlyInfo.periodLabel}</span>
+                </div>
+                <h2 className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white leading-tight">
+                  {locul1.nickname || locul1.name}
+                </h2>
+                <p className="text-xs text-slate-600 dark:text-slate-300 font-bold mt-0.5">
+                  Rol: {locul1.role} · Comisie: {locul1.committee || 'Membru General'}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-4 bg-white/80 dark:bg-slate-900/80 px-6 py-4 rounded-2xl border border-amber-400/30 shadow-md">
+              <div className="text-center">
+                <div className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Scor Bilunar</div>
+                <div className="text-2xl md:text-3xl font-black text-amber-500">
+                  {locul1.biMonthlyScore > 0 ? `+${locul1.biMonthlyScore}` : locul1.biMonthlyScore} pct
+                </div>
+              </div>
+              <div className="w-px h-10 bg-slate-200 dark:bg-slate-800" />
+              <div className="text-center">
+                <div className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Total Istoric</div>
+                <div className="text-xl font-bold text-slate-800 dark:text-slate-200">
+                  {locul1.totalScore} pct
+                </div>
+              </div>
+            </div>
+          </div>
+        </motion.div>
+      )}
 
       {/* BENTO GRID */}
       <motion.div 
@@ -267,72 +332,76 @@ export function LeaderboardView({ members, isAdmin = false, onUpdateMember }: Le
         animate="show"
         className="grid grid-cols-1 md:grid-cols-3 gap-6"
       >
-        {/* PODIUM TRIMESTRIAL (col-span-2) */}
+        {/* PODIUM BIMENSUAL - LOCUL 2, 3, 4 (col-span-2) */}
         <motion.div variants={itemVariants} className="md:col-span-2 admin-card bg-white border border-brand-muted/10 rounded-t-[3.5rem] rounded-b-xl shadow-xl font-anthropic">
           <div className="absolute top-[-30%] right-[-10%] w-64 h-64 bg-brand-primary/10 blur-[60px] rounded-full pointer-events-none" />
           <div className="absolute bottom-[-20%] left-[-10%] w-48 h-48 bg-brand-muted/10 blur-[50px] rounded-full pointer-events-none" />
           
           <div className="flex items-center gap-3 mb-8 relative z-10">
-            <Trophy className="text-amber-400" size={28} />
-            <h2 className="text-xl font-anthropicSerif font-semibold text-slate-800">Podium Trimestrial (Q{quarter} {currentYear})</h2>
+            <Trophy className="text-slate-400" size={26} />
+            <h2 className="text-xl font-anthropicSerif font-semibold text-slate-800">
+              Podium Bimensual (Locul 2 · 3 · 4) — {biMonthlyInfo.periodLabel}
+            </h2>
           </div>
 
           <div className="flex items-end justify-center gap-4 sm:gap-8 h-56 relative z-10">
-            {/* Rank 2 - Silver */}
-            {top3[1] && (
+            {/* Locul 3 - Bronz (Stânga) */}
+            {locul3 && (
               <div className="flex flex-col items-center w-1/3">
                 <div className="relative mb-2 flex flex-col items-center">
                   <img
-                    src={top3[1].avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(top3[1].nickname || top3[1].name)}&background=94a3b8&color=0F172A`}
-                    className="w-12 h-12 rounded-full border-2 border-slate-400 object-cover shadow-[0_0_10px_rgba(148,163,184,0.3)]"
-                    alt={top3[1].nickname || top3[1].name}
-                  />
-                </div>
-                <div className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-2 truncate w-full text-center">
-                  {top3[1].nickname || top3[1].name}
-                </div>
-                <div className="w-16 h-24 bg-slate-100 rounded-t-2xl border-t-2 border-slate-400 flex flex-col items-center justify-start pt-3 shadow-sm">
-                  <span className="text-2xl font-black text-slate-400">2</span>
-                  <span className="text-[10px] font-bold text-slate-500 mt-1">{top3[1].quarterScore || 0} pts</span>
-                </div>
-              </div>
-            )}
-            {/* Rank 1 - Gold */}
-            {top3[0] && (
-              <div className="flex flex-col items-center w-1/3 z-10">
-                <div className="relative mb-2 flex flex-col items-center">
-                  <Medal className="text-amber-400 absolute -top-5 z-20 animate-bounce" size={24} />
-                  <img
-                    src={top3[0].avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(top3[0].nickname || top3[0].name)}&background=fbbf24&color=0F172A`}
-                    className="w-14 h-14 rounded-full border-2 border-amber-400 object-cover shadow-[0_0_15px_rgba(251,191,36,0.5)] z-10"
-                    alt={top3[0].nickname || top3[0].name}
-                  />
-                </div>
-                <div className="text-sm font-bold uppercase tracking-widest text-amber-500 mb-2 truncate w-full text-center">
-                  {top3[0].nickname || top3[0].name}
-                </div>
-                <div className="w-20 h-32 bg-amber-50 rounded-t-2xl border-t-4 border-amber-400 flex flex-col items-center justify-start pt-4 shadow-md">
-                  <span className="text-3xl font-black text-amber-500">1</span>
-                  <span className="text-xs font-bold text-amber-600 mt-1">{top3[0].quarterScore || 0} pts</span>
-                </div>
-              </div>
-            )}
-            {/* Rank 3 - Bronze */}
-            {top3[2] && (
-              <div className="flex flex-col items-center w-1/3">
-                <div className="relative mb-2 flex flex-col items-center">
-                  <img
-                    src={top3[2].avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(top3[2].nickname || top3[2].name)}&background=b45309&color=0F172A`}
+                    src={locul3.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(locul3.nickname || locul3.name)}&background=b45309&color=0F172A`}
                     className="w-12 h-12 rounded-full border-2 border-amber-700 object-cover shadow-[0_0_10px_rgba(180,83,9,0.3)]"
-                    alt={top3[2].nickname || top3[2].name}
+                    alt=""
                   />
                 </div>
                 <div className="text-xs font-bold uppercase tracking-widest text-amber-700 mb-2 truncate w-full text-center">
-                  {top3[2].nickname || top3[2].name}
+                  {locul3.nickname || locul3.name}
                 </div>
                 <div className="w-16 h-20 bg-amber-900/10 rounded-t-2xl border-t-2 border-amber-700 flex flex-col items-center justify-start pt-2 shadow-sm">
                   <span className="text-2xl font-black text-amber-700">3</span>
-                  <span className="text-[10px] font-bold text-amber-800 mt-1">{top3[2].quarterScore || 0} pts</span>
+                  <span className="text-[10px] font-bold text-amber-800 mt-1">{scoreMode === 'total' ? locul3.totalScore : locul3.biMonthlyScore} pts</span>
+                </div>
+              </div>
+            )}
+
+            {/* Locul 2 - Argint (Centru) */}
+            {locul2 && (
+              <div className="flex flex-col items-center w-1/3 z-10">
+                <div className="relative mb-2 flex flex-col items-center">
+                  <Medal className="text-slate-400 absolute -top-5 z-20" size={24} />
+                  <img
+                    src={locul2.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(locul2.nickname || locul2.name)}&background=94a3b8&color=0F172A`}
+                    className="w-14 h-14 rounded-full border-2 border-slate-400 object-cover shadow-[0_0_15px_rgba(148,163,184,0.4)] z-10"
+                    alt=""
+                  />
+                </div>
+                <div className="text-sm font-bold uppercase tracking-widest text-slate-500 mb-2 truncate w-full text-center">
+                  {locul2.nickname || locul2.name}
+                </div>
+                <div className="w-20 h-28 bg-slate-100 rounded-t-2xl border-t-4 border-slate-400 flex flex-col items-center justify-start pt-4 shadow-md">
+                  <span className="text-3xl font-black text-slate-500">2</span>
+                  <span className="text-xs font-bold text-slate-600 mt-1">{scoreMode === 'total' ? locul2.totalScore : locul2.biMonthlyScore} pts</span>
+                </div>
+              </div>
+            )}
+
+            {/* Locul 4 - Top Contribuitor (Dreapta) */}
+            {locul4 && (
+              <div className="flex flex-col items-center w-1/3">
+                <div className="relative mb-2 flex flex-col items-center">
+                  <img
+                    src={locul4.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(locul4.nickname || locul4.name)}&background=334155&color=0F172A`}
+                    className="w-11 h-11 rounded-full border-2 border-indigo-400 object-cover shadow-[0_0_10px_rgba(99,102,241,0.3)]"
+                    alt=""
+                  />
+                </div>
+                <div className="text-xs font-bold uppercase tracking-widest text-indigo-600 dark:text-indigo-400 mb-2 truncate w-full text-center">
+                  {locul4.nickname || locul4.name}
+                </div>
+                <div className="w-16 h-16 bg-indigo-50 dark:bg-indigo-950/20 rounded-t-2xl border-t-2 border-indigo-400 flex flex-col items-center justify-start pt-1.5 shadow-sm">
+                  <span className="text-xl font-black text-indigo-500">4</span>
+                  <span className="text-[10px] font-bold text-indigo-600 mt-0.5">{scoreMode === 'total' ? locul4.totalScore : locul4.biMonthlyScore} pts</span>
                 </div>
               </div>
             )}
@@ -377,7 +446,7 @@ export function LeaderboardView({ members, isAdmin = false, onUpdateMember }: Le
                 />
                 <div>
                   <div className="text-lg font-bold text-brand-accent leading-tight mb-1">{ceaMaiMareEvolutie.nickname || ceaMaiMareEvolutie.name}</div>
-                  <div className="text-indigo-600 font-bold text-xs uppercase tracking-wider">+{ceaMaiMareEvolutie.evolution} puncte (vs. Q{prevQuarter})</div>
+                  <div className="text-indigo-600 font-bold text-xs uppercase tracking-wider">+{ceaMaiMareEvolutie.evolution} puncte (vs. perioada anterioară)</div>
                 </div>
               </div>
             ) : (
@@ -387,7 +456,7 @@ export function LeaderboardView({ members, isAdmin = false, onUpdateMember }: Le
         </div>
       </motion.div>
 
-      {/* FULL LEADERBOARD TABLE */}
+      {/* FULL LEADERBOARD TABLE — LOCUL 5+ */}
       <motion.div 
         variants={itemVariants}
         initial="hidden"
@@ -397,19 +466,19 @@ export function LeaderboardView({ members, isAdmin = false, onUpdateMember }: Le
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
           <div className="flex items-center gap-3 flex-wrap">
             <h2 className="text-xl font-anthropicSerif font-semibold text-slate-800">
-              {scoreMode === 'quarter' ? `Clasament Trimestrial (Q${quarter} ${currentYear})` : 'Clasament General (Total Istoric)'}
+              {scoreMode === 'bimonthly' ? `Clasament Bimensual (Locul 5+) — ${biMonthlyInfo.periodLabel}` : 'Clasament General (Total Istoric)'}
             </h2>
             <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl border border-slate-200 dark:border-slate-700">
               <button
                 type="button"
-                onClick={() => setScoreMode('quarter')}
+                onClick={() => setScoreMode('bimonthly')}
                 className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${
-                  scoreMode === 'quarter'
+                  scoreMode === 'bimonthly'
                     ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs'
                     : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
                 }`}
               >
-                Trimestru (Q{quarter})
+                Ediția Bilunară (2 Luni)
               </button>
               <button
                 type="button"
@@ -429,7 +498,7 @@ export function LeaderboardView({ members, isAdmin = false, onUpdateMember }: Le
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-brand-accent/40 group-focus-within:text-brand-primary transition-colors" size={16} />
             <input 
               type="text" 
-              placeholder="Caută voluntar..." 
+              placeholder="Caută voluntar de la locul 5+..." 
               value={searchQuery}
               onChange={e => { setSearchQuery(e.target.value); setCurrentPage(1); }}
               className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-brand-primary/40 focus:ring-2 focus:ring-brand-primary/15 focus:bg-white transition-all font-['Manrope']"
@@ -445,15 +514,15 @@ export function LeaderboardView({ members, isAdmin = false, onUpdateMember }: Le
                 <TableHead>Membru</TableHead>
                 <TableHead>Rol</TableHead>
                 <TableHead className="text-right">
-                  {scoreMode === 'quarter' ? 'Punctaj Trimestru' : 'Punctaj Total (Incl. Negativ)'}
+                  {scoreMode === 'bimonthly' ? `Punctaj Bilunar (${biMonthlyInfo.periodLabel})` : 'Punctaj Total (Incl. Negativ)'}
                 </TableHead>
                 <TableHead className="text-right">Acțiuni</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {paginatedMembers.map((m, idx) => {
-                const globalRank = (currentPage - 1) * itemsPerPage + idx + 1;
-                const scoreValue = scoreMode === 'total' ? (m.totalScore || 0) : (m.quarterScore || 0);
+                const globalRank = 5 + (currentPage - 1) * itemsPerPage + idx;
+                const scoreValue = scoreMode === 'total' ? (m.totalScore || 0) : (m.biMonthlyScore || 0);
                 const isNegative = scoreValue < 0;
 
                 return (
