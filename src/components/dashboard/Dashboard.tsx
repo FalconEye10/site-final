@@ -2518,7 +2518,7 @@ export function Dashboard({ username, onLogout }: DashboardProps) {
                  </span>
                  <span className="adm-meta-label !text-emerald-300/80">Sistem Operațional</span>
                </div>
-               <span className="adm-meta-label !text-emerald-400/50">v6.26.9</span>
+               <span className="adm-meta-label !text-emerald-400/50">v6.34.8</span>
              </div>
            )}
            <button
