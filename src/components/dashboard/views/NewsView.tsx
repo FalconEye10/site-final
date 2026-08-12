@@ -203,7 +203,7 @@ export const NewsView: React.FC<NewsViewProps> = ({ isAdmin, currentUserId, curr
                 {/* Image */}
                 {item.imageUrl && (
                   <div className="w-full h-56 bg-slate-100 overflow-hidden">
-                    <img src={item.imageUrl} alt={item.title} className="w-full h-full object-cover" />
+                    <img src={item.imageUrl} alt={item.title} loading="lazy" className="w-full h-full object-cover" />
                   </div>
                 )}
 

@@ -550,6 +550,7 @@ export function MembersView({
                         <img
                           src={m.avatar || m.photo_url || m.photoUrl}
                           alt={m.name}
+                          loading="lazy"
                           className="w-12 h-12 rounded-xl object-cover border border-slate-200 shadow-sm"
                         />
                       ) : (
@@ -693,6 +694,7 @@ export function MembersView({
                               <img
                                 src={m.avatar || m.photo_url || m.photoUrl}
                                 alt={m.name}
+                                loading="lazy"
                                 className="w-9 h-9 sm:w-10 sm:h-10 rounded-full object-cover border border-slate-200 shadow-sm group-hover:scale-105 transition-transform"
                               />
                             ) : (
@@ -832,7 +834,10 @@ export function MembersView({
               </div>
 
               <p className="text-xs text-slate-600 leading-relaxed font-data">
-                Ești sigur că dorești să ștergi definitiv membrul <strong className="text-slate-900 font-bold">{memberToDelete.name}</strong>? Această acțiune va elimina contul din sistem și este ireversibilă.
+                Ești sigur că dorești să ștergi definitiv membrul <strong className="text-slate-900 font-bold">{memberToDelete.name}</strong>
+                {memberToDelete.email && <> (<span className="text-slate-500">{memberToDelete.email}</span>)</>}
+                {memberToDelete.role === 'admin' && <span className="ml-1 text-indigo-600 font-bold">[BOARD]</span>}
+                ? Această acțiune va elimina contul din sistem și este ireversibilă.
               </p>
 
               <div className="flex gap-3 pt-2 font-title">

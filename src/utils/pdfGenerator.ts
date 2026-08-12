@@ -70,10 +70,18 @@ async function signatureToPng(base64Str: string): Promise<string> {
         const ctx = canvas.getContext('2d');
         if (!ctx) { resolve(''); return; }
 
+        // 1. Desenăm fundalul alb explicit (acoperă canvasuri transparente)
+        // Astfel, algoritmul de eliminare fundal funcționează identic
+        // indiferent dacă sursa era JPEG (fundal alb implicit) sau PNG transparent
+        ctx.fillStyle = '#FFFFFF';
+        ctx.fillRect(0, 0, W, H);
+
+        // 2. Desenăm semnătura peste fundalul alb
         ctx.drawImage(img, 0, 0, W, H);
         const imgData = ctx.getImageData(0, 0, W, H);
         const d = imgData.data;
 
+        // 3. Eliminăm pixelii albi/foarte deschisi → transparent
         for (let i = 0; i < d.length; i += 4) {
           const r = d[i];
           const g = d[i + 1];

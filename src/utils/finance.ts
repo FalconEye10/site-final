@@ -48,11 +48,15 @@ export function getEffectiveStartDate(joinDateStr: string | undefined | null): D
 /**
  * Generează istoricul calendaristic al membrului de la startul colectării până în prezent.
  * Aplică automat plățile (totalPaid) peste cele mai vechi luni.
+ * OPȚIUNEA B: Se plătește luna întreagă (15 RON) indiferent de ziua înscrierii în acea lună.
  */
 export function generateMemberLedger(joinDateStr: string | undefined | null, totalPaid: number = 0): MemberMonth[] {
   const startDate = getEffectiveStartDate(joinDateStr);
   const currentDate = new Date();
   const months: MemberMonth[] = [];
+
+  // Guard: dacă joinDate este în viitor (eroare de introducere), returnăm array gol
+  if (startDate > currentDate) return months;
   
   let currentY = startDate.getFullYear();
   let currentM = startDate.getMonth();
@@ -89,7 +93,8 @@ export function generateMemberLedger(joinDateStr: string | undefined | null, tot
 }
 
 /**
- * Calculează datoria totală (conform formulei stricte)
+ * Calculează datoria totală (conform formulei stricte).
+ * OPȚIUNEA B: Se plătește luna întreagă (15 RON) indiferent de ziua înscrierii.
  */
 export function calculateDebt(joinDateStr: string | undefined | null, totalPaid: number = 0): number {
   const startDate = getEffectiveStartDate(joinDateStr);
@@ -103,7 +108,8 @@ export function calculateDebt(joinDateStr: string | undefined | null, totalPaid:
   const startY = startDate.getFullYear();
   const startM = startDate.getMonth() + 1; // 1-indexed
   
-  const totalMonths = (currentY - startY) * 12 + (currentM - startM) + 1;
+  // Math.max(0, ...) — guard defensiv contra joinDate eronate care ar putea produce valori negative
+  const totalMonths = Math.max(0, (currentY - startY) * 12 + (currentM - startM) + 1);
   if (totalMonths <= 0) return 0;
   
   const totalExpected = totalMonths * COTIZATIE_LUNARA;
@@ -138,8 +144,8 @@ export function generateSmartTransactionId(memberName: string, dateObj: Date): s
   
   const day = dateObj.getDate().toString().padStart(2, '0');
   
-  // Adăugăm și un mic sufix random (2 char) pentru unicitate garantată
-  const randomSuffix = Math.random().toString(36).substr(2, 2).toUpperCase();
+  // Sufix random de 4 caractere alfanumerice pentru unicitate garantată (reduce coliziuni ~1.7M combinații)
+  const randomSuffix = Math.random().toString(36).substr(2, 4).toUpperCase();
   return `TX-${month}${year}-${initials}-${day}-${randomSuffix}`;
 }
 

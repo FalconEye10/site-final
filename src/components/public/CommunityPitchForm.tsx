@@ -14,14 +14,24 @@ export const CommunityPitchForm: React.FC = () => {
   const [error, setError] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const MAX_FILE_SIZE = 500 * 1024; // 500KB
+  const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+  const COOLDOWN_MS = 5 * 60 * 1000; // 5 minute între trimiteri (anti-spam)
+  const COOLDOWN_KEY = 'pitch_last_submit';
+
+  // Validare email sau telefon românesc
+  const isValidContact = (val: string): boolean => {
+    const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+    const phoneRe = /^(\+?4?0|0)7\d{8}$/;
+    const cleaned = val.replace(/[\s-]/g, '');
+    return emailRe.test(val.trim()) || phoneRe.test(cleaned);
+  };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     if (file.size > MAX_FILE_SIZE) {
-      setError('Fișierul depășește limita de 500KB.');
+      setError('Fișierul depășește limita de 5MB.');
       setPdfFile(null);
       return;
     }
@@ -42,8 +52,21 @@ export const CommunityPitchForm: React.FC = () => {
       setError('Toate câmpurile (Titlu, Nume, Descriere, Contact) sunt obligatorii.');
       return;
     }
+    if (!isValidContact(contact)) {
+      setError('Te rog introdu o adresă de email validă sau un număr de telefon românesc (07xx...).');
+      return;
+    }
     if (!pdfFile) {
       setError('Te rog atașează propunerea în format PDF.');
+      return;
+    }
+
+    // Anti-spam: verifică cooldown
+    const lastSubmit = Number(localStorage.getItem(COOLDOWN_KEY) || '0');
+    const elapsed = Date.now() - lastSubmit;
+    if (elapsed < COOLDOWN_MS) {
+      const remainMin = Math.ceil((COOLDOWN_MS - elapsed) / 60000);
+      setError(`Te rog așteaptă încă ${remainMin} minut${remainMin === 1 ? '' : 'e'} înainte de a trimite o nouă propunere.`);
       return;
     }
 
@@ -66,6 +89,8 @@ export const CommunityPitchForm: React.FC = () => {
 
       if (insertErr) throw insertErr;
 
+      // Setăm timestamp cooldown anti-spam
+      localStorage.setItem(COOLDOWN_KEY, Date.now().toString());
       setSubmitted(true);
     } catch (err) {
       console.error('Error submitting community pitch:', err);
@@ -195,7 +220,7 @@ export const CommunityPitchForm: React.FC = () => {
 
         {/* PDF Upload */}
         <div className="space-y-2">
-          <label className="block font-headings text-sm font-bold text-text-executive_dark/75 tracking-wider uppercase">Atașament Propunere PDF * (Max 500KB)</label>
+          <label className="block font-headings text-sm font-bold text-text-executive_dark/75 tracking-wider uppercase">Atașament Propunere PDF * (Max 5MB)</label>
           <div className="relative">
             <label className="flex flex-col items-center justify-center gap-3 cursor-pointer w-full p-8 border-2 border-dashed border-text-executive_dark/10 hover:border-brand_signature-baby_blue rounded-xl transition-all bg-surface-background hover:bg-brand_signature-baby_blue/5 group">
               <Upload className="w-8 h-8 text-text-executive_dark/40 group-hover:text-brand_signature-baby_blue transition-colors" />
@@ -224,7 +249,7 @@ export const CommunityPitchForm: React.FC = () => {
                 Sterge
               </button>
             )}
-            <p className="text-xs text-text-executive_dark/50 mt-2">Dimensiune maximă: 500KB. PDFs cu poze sau imagini mari pot depăși limita.</p>
+            <p className="text-xs text-text-executive_dark/50 mt-2">Dimensiune maximă: 5MB. PDFs cu poze sau imagini mari pot depăși limita.</p>
           </div>
         </div>
 
