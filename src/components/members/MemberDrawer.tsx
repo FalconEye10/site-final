@@ -848,11 +848,16 @@ export function MemberDrawer({ member, onClose, onUpdateMember, isAdmin }: Membe
                   ? { title: 'Voluntar Activ', icon: '⚡', desc: 'Participare activă și dedicare constantă', color: 'bg-emerald-50 text-emerald-900 border-emerald-300' }
                   : { title: 'Recrut Nou', icon: '🌱', desc: 'La început de drum în călătoria Interact', color: 'bg-blue-50 text-blue-900 border-blue-300' };
 
+                const scoreNum = Number(member.score || member.totalScore || 0);
+                const hasLogisticOrTechnical = userCommittees.includes('Organizare & Logistică') || userSkills.some(s => s.toLowerCase().includes('logistic') || s.toLowerCase().includes('tehnic'));
+                const hasPROrCreative = userCommittees.includes('Imagine Publică & PR') || userSkills.some(s => s.toLowerCase().includes('foto') || s.toLowerCase().includes('video') || s.toLowerCase().includes('design'));
+                const hasFundraising = userCommittees.includes('Finanțe & Fundraising') || userSkills.some(s => s.toLowerCase().includes('sponsor') || s.toLowerCase().includes('vanzari'));
+
                 const milestones = [
                   {
                     id: 'm1',
                     title: 'Primii Pași',
-                    desc: 'Participă la 3 ședințe sau acțiuni',
+                    desc: 'Participă la minim 3 ședințe sau acțiuni',
                     current: Math.min(p, 3),
                     target: 3,
                     icon: '🎯',
@@ -861,7 +866,7 @@ export function MemberDrawer({ member, onClose, onUpdateMember, isAdmin }: Membe
                   {
                     id: 'm2',
                     title: 'Pilonul Echipei',
-                    desc: 'Atinge 10 prezențe validate',
+                    desc: 'Atinge 10 prezențe validate în club',
                     current: Math.min(p, 10),
                     target: 10,
                     icon: '🏛️',
@@ -870,7 +875,7 @@ export function MemberDrawer({ member, onClose, onUpdateMember, isAdmin }: Membe
                   {
                     id: 'm3',
                     title: 'Legendă Activă',
-                    desc: 'Peste 25 de participări în club',
+                    desc: 'Peste 25 de participări și devotament de lungă durată',
                     current: Math.min(p, 25),
                     target: 25,
                     icon: '🔥',
@@ -879,7 +884,7 @@ export function MemberDrawer({ member, onClose, onUpdateMember, isAdmin }: Membe
                   {
                     id: 'm4',
                     title: 'Disciplină Financiară',
-                    desc: 'Balanță la zi (fără datorii la cotizație)',
+                    desc: 'Balanță la zi (fără restanțe la cotizație)',
                     current: isDebtFree ? 1 : 0,
                     target: 1,
                     icon: '💎',
@@ -903,6 +908,62 @@ export function MemberDrawer({ member, onClose, onUpdateMember, isAdmin }: Membe
                     target: 1,
                     icon: '⭐',
                     unlocked: (rate === '100%' || qualification === 'Excelent' || qualification === 'Maxim')
+                  },
+                  {
+                    id: 'm7',
+                    title: '🏗️ Salahor Desăvârșit',
+                    desc: 'Manipulare greutăți, cărat echipamente & forță brută pe teren',
+                    current: Math.min(scoreNum, 12),
+                    target: 12,
+                    unit: 'pct',
+                    icon: '🏗️',
+                    unlocked: scoreNum >= 12 || hasLogisticOrTechnical
+                  },
+                  {
+                    id: 'm8',
+                    title: '🔨 Inginer Constructor',
+                    desc: 'Montat standuri, structuri decor, bormașină & meșterit tehnic',
+                    current: hasLogisticOrTechnical ? 1 : 0,
+                    target: 1,
+                    icon: '🔨',
+                    unlocked: hasLogisticOrTechnical || p >= 5
+                  },
+                  {
+                    id: 'm9',
+                    title: '🎤 Vocea & Imaginea',
+                    desc: 'Prezentare pe scenă, MC, social media, foto sau video de impact',
+                    current: hasPROrCreative ? 1 : 0,
+                    target: 1,
+                    icon: '🎤',
+                    unlocked: hasPROrCreative || scoreNum >= 15
+                  },
+                  {
+                    id: 'm10',
+                    title: '🏆 Centurion Camena',
+                    desc: 'Peste 30 de ore de voluntariat validate pe teren',
+                    current: Math.min(hours, 30),
+                    target: 30,
+                    unit: 'ore',
+                    icon: '🏆',
+                    unlocked: hours >= 30
+                  },
+                  {
+                    id: 'm11',
+                    title: '💰 Rechin Financiar',
+                    desc: 'Atragere fonduri, vânzări bilete & sponsorizări obținute',
+                    current: hasFundraising ? 1 : 0,
+                    target: 1,
+                    icon: '💰',
+                    unlocked: hasFundraising || scoreNum >= 20
+                  },
+                  {
+                    id: 'm12',
+                    title: '❤️ Inima Echipei',
+                    desc: 'Energie pozitivă, spirit colegial și implicare constantă',
+                    current: p >= 4 ? 1 : 0,
+                    target: 1,
+                    icon: '❤️',
+                    unlocked: p >= 4
                   }
                 ];
 

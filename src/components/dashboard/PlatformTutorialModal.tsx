@@ -5,7 +5,7 @@ import {
   MessageSquarePlus, ChevronRight, ChevronLeft, X,
   CheckCircle2, Compass, ShieldCheck, Trophy,
   FileText, MessageSquare, Users, TrendingUp,
-  AlertTriangle, Megaphone, User
+  AlertTriangle, Megaphone, User, Users2
 } from 'lucide-react';
 
 interface PlatformTutorialModalProps {
@@ -374,6 +374,52 @@ const MockForumThreads = () => (
   </div>
 );
 
+const MockCommitteesOverview = () => (
+  <div className="space-y-3">
+    <div className="grid grid-cols-2 gap-2.5">
+      {[
+        { name: 'PR & Social Media', icon: '🎨', members: 6, coordinator: 'Elena M.', color: 'bg-pink-50 dark:bg-pink-950/20 border-pink-200 dark:border-pink-800/40 text-pink-700 dark:text-pink-300' },
+        { name: 'Logistică & Tehnic', icon: '🏗️', members: 8, coordinator: 'Iustin B.', color: 'bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800/40 text-amber-700 dark:text-amber-300' },
+        { name: 'Finanțe & Sponsori', icon: '💼', members: 4, coordinator: 'Radu S.', color: 'bg-emerald-50 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-800/40 text-emerald-700 dark:text-emerald-300' },
+        { name: 'Servicii Comunitare', icon: '🤝', members: 10, coordinator: 'Ana D.', color: 'bg-blue-50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-800/40 text-blue-700 dark:text-blue-300' },
+      ].map((c, i) => (
+        <motion.div
+          key={c.name}
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.15 + i * 0.1 }}
+          className={`p-3 rounded-2xl border ${c.color} flex flex-col justify-between`}
+        >
+          <div className="flex items-center justify-between mb-1">
+            <span className="text-xl">{c.icon}</span>
+            <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-md bg-white/60 dark:bg-black/30">
+              {c.members} membri
+            </span>
+          </div>
+          <div>
+            <div className="text-xs font-black truncate">{c.name}</div>
+            <div className="text-[10px] opacity-75 truncate">Șef: <strong>{c.coordinator}</strong></div>
+          </div>
+        </motion.div>
+      ))}
+    </div>
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.55 }}
+      className="p-2.5 rounded-xl bg-indigo-50/80 dark:bg-indigo-950/30 border border-indigo-200 dark:border-indigo-800/40 flex items-center justify-between text-xs text-indigo-900 dark:text-indigo-200"
+    >
+      <div className="flex items-center gap-2">
+        <Users2 size={16} className="text-indigo-600 dark:text-indigo-400" />
+        <span className="font-bold text-[11px]">Comitetul Tău Repartizat:</span>
+      </div>
+      <span className="font-black px-2 py-0.5 rounded bg-indigo-600 text-white text-[10px]">
+        🏗️ Logistică & Tehnic
+      </span>
+    </motion.div>
+  </div>
+);
+
 const MockProfileOverview = () => (
   <div className="space-y-3">
     <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}
@@ -617,6 +663,27 @@ const TUTORIAL_STEPS = [
     tip: null,
     mockup: MockProjectProposal,
     sidebarHighlight: 'Idei Proiecte',
+  },
+  // ── COMMITTEES & TEAMS ──
+  {
+    id: 'committees',
+    section: 'Organizare',
+    title: 'Comitete & Repartizare pe Echipe',
+    subtitle: 'Departamente operative, roluri specializate și ore diferențiate',
+    icon: Users2,
+    gradient: 'from-indigo-600 via-blue-600 to-cyan-500',
+    accentLight: 'bg-indigo-50', accentDark: 'dark:bg-indigo-950/30',
+    iconColor: 'text-indigo-600 dark:text-indigo-400',
+    description: 'Proiectele și acțiunile clubului funcționează pe bază de comitete de lucru specializate: PR & Social Media, Logistică & Tehnic (Salahori & Meșteri), Finanțe & Sponsori, Servicii Comunitare. Fiecare membru este repartizat eficient.',
+    bullets: [
+      '🎯 Departamente Specializate — PR, Logistică, Sponsori, IT, Social',
+      '👑 Coordonatori de Comitet — conduc echipa și validează taskurile pe teren',
+      '⚙️ Preferințe din Profil — îți alegi domeniile în care vrei să activezi (1-2 comitete)',
+      '⏱️ Ore de Voluntariat Diferențiate — calculate automat conform volumului de muncă',
+    ],
+    tip: 'Setează-ți preferințele de comitet direct din Profil (tab-ul „Comitete & Abilități") pentru ca liderii de proiect să știe unde excelezi!',
+    mockup: MockCommitteesOverview,
+    sidebarHighlight: 'Repartizare Comitete',
   },
   // ── COMMUNICATION ──
   {
