@@ -1346,70 +1346,81 @@ input:focus, textarea:focus, select:focus {
 .board-hero-wrap {
     width: 100%;
     display: flex;
-    justify-content: center;
+    flex-direction: column;
     align-items: center;
+    justify-content: center;
 }
 
 /* Eyebrow row above the photo */
 .board-hero-eyebrow {
+    width: 100%;
+    max-width: 1100px;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 1.25rem;
-    padding-bottom: 1rem;
-    border-bottom: 1px solid rgba(16, 29, 52, 0.08);
+    gap: 1rem;
+    margin: 0 auto 1.25rem auto;
+    padding-bottom: 0.85rem;
+    border-bottom: 1px solid rgba(16, 29, 52, 0.1);
 }
 .board-hero-kicker {
     font-family: 'Inter', sans-serif;
-    font-size: 0.7rem;
+    font-size: 0.72rem;
     font-weight: 700;
-    letter-spacing: 0.18em;
+    letter-spacing: 0.16em;
     text-transform: uppercase;
     color: #A0D8EF;
 }
 
-/* The outer frame — preserves the real photo's natural proportions */
+/* The outer frame — centered, proportional, sleek rounded corners */
 .board-hero-frame {
     position: relative;
-    display: inline-block; /* shrink to fit image */
-    max-width: 100%;
-    margin: 0 auto; /* center horizontally */
+    display: block;
+    width: 100%;
+    max-width: 1100px;
+    margin: 0 auto;
+    border-radius: 1.5rem;
     overflow: hidden;
-    border: 1px solid rgba(16, 29, 52, 0.1);
-    background: #f5f0e8;
-    /* Entrance: starts clipped from the bottom, reveals upward */
+    border: 1px solid rgba(16, 29, 52, 0.12);
+    background: #0B132B;
+    box-shadow: 0 25px 60px -15px rgba(16, 29, 52, 0.14);
     clip-path: inset(0 0 100% 0);
     transition: clip-path 1.1s cubic-bezier(0.16, 1, 0.3, 1);
 }
-/* Remove height restriction for mobile – let image dictate size */
 .board-hero-frame.is-revealed {
     clip-path: inset(0 0 0% 0);
 }
 
-/* The actual photo — constrained height, sharp quality */
+/* The actual photo — constrained height, sharp quality, centered */
 .board-hero-img {
     display: block;
-    width: auto;
+    width: 100%;
     height: auto;
-    max-width: 100%;
-    max-height: none; /* allow natural height */
-    object-fit: contain; /* keep full image without cropping */
-    object-position: center top;
-    transform: scale(1.04);
+    max-height: 620px;
+    object-fit: cover;
+    object-position: center 25%;
+    transform: scale(1.03);
     transform-origin: center center;
-    transition: transform 8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    transition: transform 6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
     will-change: transform;
 }
 @media (max-width: 767px) {
-    .board-hero-img { height: 340px; }
+    .board-hero-frame {
+        border-radius: 1.25rem;
+    }
+    .board-hero-img {
+        height: 360px;
+        object-fit: cover;
+        object-position: center 20%;
+    }
 }
 .board-hero-frame.is-revealed .board-hero-img {
-    transform: scale(1);    /* Ken Burns subtle zoom-out on reveal */
+    transform: scale(1);
 }
 
 /* Hover: subtle zoom in */
 .board-hero-frame:hover .board-hero-img {
-    transform: scale(1.03);
+    transform: scale(1.025);
     transition-duration: 1.2s;
 }
 
@@ -1446,18 +1457,22 @@ input:focus, textarea:focus, select:focus {
     inset: 0;
     display: flex;
     align-items: flex-end;
-    /* Gradient: transparent top → dark bottom */
     background: linear-gradient(
         to top,
-        rgba(16, 29, 52, 0.88) 0%,
-        rgba(16, 29, 52, 0.5)  35%,
-        rgba(16, 29, 52, 0.08) 65%,
-        transparent            100%
+        rgba(15, 23, 42, 0.92) 0%,
+        rgba(15, 23, 42, 0.55) 30%,
+        rgba(15, 23, 42, 0.08) 60%,
+        transparent 100%
     );
-    padding: 3rem 3.5rem;
+    padding: 2.75rem 3.25rem;
     opacity: 0;
     transform: translateY(12px);
     transition: opacity 0.7s ease, transform 0.7s ease;
+}
+@media (max-width: 767px) {
+    .board-hero-overlay {
+        padding: 1.5rem 1.5rem;
+    }
 }
 .board-hero-frame.is-revealed .board-hero-overlay {
     opacity: 1;
@@ -1472,13 +1487,13 @@ input:focus, textarea:focus, select:focus {
 }
 .board-hero-title {
     font-family: 'Inter', sans-serif;
-    font-size: clamp(2.4rem, 5vw, 5rem);
+    font-size: clamp(2.2rem, 4.5vw, 4.5rem);
     font-weight: 900;
     text-transform: uppercase;
     letter-spacing: -0.03em;
     line-height: 0.92;
     color: #ffffff;
-    margin-bottom: 1.1rem;
+    margin-bottom: 1rem;
 }
 .board-hero-title em {
     font-style: italic;
@@ -1488,10 +1503,10 @@ input:focus, textarea:focus, select:focus {
 }
 .board-hero-subtitle {
     font-family: 'Inter', sans-serif;
-    font-size: clamp(0.8rem, 1.2vw, 1rem);
+    font-size: clamp(0.8rem, 1.1vw, 0.95rem);
     font-weight: 300;
-    color: rgba(255, 255, 255, 0.65);
-    line-height: 1.65;
+    color: rgba(255, 255, 255, 0.75);
+    line-height: 1.6;
     max-width: 480px;
 }
 

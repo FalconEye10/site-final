@@ -486,36 +486,40 @@
                 </div>
 
                 <!-- Cinematic group-photo hero -->
-                <div id="board-hero" class="board-hero-wrap reveal-on-scroll">
+                <div id="board-hero" class="board-hero-wrap reveal-on-scroll w-full flex flex-col items-center">
 
-                    <!-- Eyebrow row -->
-                    <div class="board-hero-eyebrow">
-                        <span class="board-hero-kicker">// NEW CHAPTER</span>
+                    <!-- Eyebrow row (Clean independent top bar before photo) -->
+                    <div class="board-hero-eyebrow w-full max-w-5xl flex items-center justify-between gap-4">
+                        <div class="flex items-center gap-3">
+                            <span class="board-hero-kicker font-data text-xs font-bold tracking-widest text-brand_signature-baby_blue uppercase">// NEW CHAPTER</span>
+                            <span class="text-text-executive_dark/30 hidden sm:inline">&bull;</span>
+                            <span class="font-data text-[11px] font-semibold tracking-wider text-text-executive_dark/60 uppercase hidden sm:inline">[ 46.9279° N, 26.3705° E ]</span>
+                        </div>
                         <div class="flex items-center gap-2.5">
-                            <span class="w-2 h-2 bg-brand_signature-baby_blue animate-pulse inline-block"></span>
-                            <span class="font-data text-[11px] font-bold tracking-widest uppercase text-text-executive_dark/50">Interact Camena &bull; 2025–2026</span>
+                            <span class="w-2 h-2 bg-brand_signature-baby_blue animate-pulse inline-block rounded-full"></span>
+                            <span class="font-data text-[11px] font-bold tracking-widest uppercase text-text-executive_dark/60">Interact Camena &bull; 2025–2026</span>
                         </div>
                     </div>
 
-                    <!-- Photo frame -->
-                    <div class="board-hero-frame" id="board-photo-frame">
+                    <!-- Photo frame (Centered, reshaped & beautifully framed) -->
+                    <div class="board-hero-frame w-full max-w-5xl mx-auto rounded-2xl md:rounded-3xl overflow-hidden shadow-2xl relative" id="board-photo-frame">
                         <img
                             id="board-group-img"
                             src="/images/board/board-all.jpg"
-                            alt="Noul Board Interact Camena 2025–2026"
-                            class="board-hero-img"
+                            alt="Meet the New Board Interact Camena 2025–2026"
+                            class="board-hero-img w-full block object-cover"
                             onerror="this.style.display='none'; document.getElementById('board-placeholder').style.display='flex';"
                         />
                         <!-- Placeholder shown when photo is missing -->
                         <div id="board-placeholder" class="board-hero-placeholder" style="display:none;">
                             <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="0.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-                            <p>Adaugă fotografia de grup la<br><code>/public/images/board/board-group.jpg</code></p>
+                            <p>Adaugă fotografia de grup la<br><code>/public/images/board/board-all.jpg</code></p>
                         </div>
                         <!-- Cinematic overlay -->
                         <div class="board-hero-overlay" aria-hidden="true">
                             <div class="board-hero-overlay-content">
-                                <h3 class="board-hero-title">Welcome<br><em>the New Board</em></h3>
-                                <p class="board-hero-subtitle">Noul consiliu director al clubului Interact Camena Piatra Neamț — dedicat serviciului comunitar și excelenței.</p>
+                                <h3 class="board-hero-title">Meet<br><em>the New Board</em></h3>
+                                <p class="board-hero-subtitle">Consiliul director al clubului Interact Camena Piatra Neamț — dedicat serviciului comunitar și excelenței.</p>
                             </div>
                             <!-- Decorative grid lines -->
                             <div class="board-hero-grid" aria-hidden="true">
