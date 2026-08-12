@@ -305,6 +305,25 @@ export function RepartizareView({ isAdmin, members }: RepartizareViewProps) {
         )}
       </div>
 
+      {/* Dynamic Flexibility Banner */}
+      <div className="p-3.5 sm:p-4 rounded-2xl bg-indigo-50/90 dark:bg-indigo-950/50 border border-indigo-200 dark:border-indigo-800/80 text-indigo-950 dark:text-indigo-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+        <div className="flex items-center gap-2.5">
+          <Sparkles size={18} className="text-indigo-600 dark:text-indigo-400 shrink-0" />
+          <span className="text-xs font-bold font-['Manrope']">
+            <strong>Repartizare 100% Flexibilă & Editabilă</strong>: Poți muta oricând voluntarii între comitete sau îi poți scoate/adăuga cu 1 click dacă intervin schimbări în program sau disponibilitate.
+          </span>
+        </div>
+        {isAdmin && (
+          <button
+            type="button"
+            onClick={handleAddCommittee}
+            className="px-3.5 py-1.5 text-xs font-black uppercase tracking-wider bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl transition-all flex items-center gap-1.5 shadow-sm shrink-0 cursor-pointer"
+          >
+            <Plus size={14} /> + Comitet Nou
+          </button>
+        )}
+      </div>
+
       {/* Main Content Layout (Grid: Committees on Left, Members List on Right) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         

@@ -29,6 +29,7 @@ export function MemberDrawer({ member, onClose, onUpdateMember, isAdmin }: Membe
   // Committee preferences state
   const [userCommittees, setUserCommittees] = useState<string[]>(member.committeePreferences || []);
   const [userSkills, setUserSkills] = useState<string[]>(member.skills || []);
+  const [customSkillInput, setCustomSkillInput] = useState('');
   const [isSavingCommittees, setIsSavingCommittees] = useState(false);
 
   // Score Adjustment Modal states
@@ -118,6 +119,8 @@ export function MemberDrawer({ member, onClose, onUpdateMember, isAdmin }: Membe
     setJoinDate(member.joinDate ? member.joinDate.split('T')[0] : new Date().toISOString().split('T')[0]);
     setStatus(member.status || 'active');
     setBoardPosition(member.boardPosition || '');
+    setUserCommittees(member.committeePreferences || []);
+    setUserSkills(member.skills || []);
   }, [member]);
 
   const handleDeleteMember = async () => {
@@ -1062,16 +1065,19 @@ export function MemberDrawer({ member, onClose, onUpdateMember, isAdmin }: Membe
               <div className="p-4 rounded-2xl bg-indigo-50 border border-indigo-200 text-indigo-900 flex items-start gap-3">
                 <Users2 className="shrink-0 mt-0.5 text-indigo-600" size={18} />
                 <div className="text-xs font-['Manrope']">
-                  <strong>Preferințe de Comitet & Roluri</strong>: Selectarea comitetelor reprezintă o declarație de interes pentru coordonatori și board, facilitând distribuirea optimă a sarcinilor la proiecte fără a garanta sau bloca automat o poziție.
+                  <strong>Preferințe 100% Editabile & Flexibile</strong>: Voluntarii sau board-ul pot actualiza oricând comitetele de lucru în funcție de disponibilitate, program școlar sau noi interese. Nimic nu este bătut în cuie.
                 </div>
               </div>
 
               {/* Committee Options */}
               <div>
-                <h4 className="text-xs font-black uppercase tracking-wider text-slate-500 mb-3 flex items-center gap-1.5">
-                  <Target size={14} className="text-indigo-600" />
-                  <span>Comitete de Interes (Alege 1-2 comitete)</span>
-                </h4>
+                <div className="flex items-center justify-between mb-3">
+                  <h4 className="text-xs font-black uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
+                    <Target size={14} className="text-indigo-600" />
+                    <span>Comitete de Interes ({userCommittees.length} selectate)</span>
+                  </h4>
+                  <span className="text-[11px] text-slate-400 font-medium">Click pentru a alege sau deselecta</span>
+                </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {[
@@ -1089,11 +1095,7 @@ export function MemberDrawer({ member, onClose, onUpdateMember, isAdmin }: Membe
                           if (isSelected) {
                             setUserCommittees(prev => prev.filter(c => c !== comm.id));
                           } else {
-                            if (userCommittees.length >= 2) {
-                              setUserCommittees([userCommittees[1], comm.id]);
-                            } else {
-                              setUserCommittees(prev => [...prev, comm.id]);
-                            }
+                            setUserCommittees(prev => [...prev, comm.id]);
                           }
                         }}
                         className={`p-4 rounded-2xl border-2 cursor-pointer transition-all ${
@@ -1126,10 +1128,10 @@ export function MemberDrawer({ member, onClose, onUpdateMember, isAdmin }: Membe
               <div>
                 <h4 className="text-xs font-black uppercase tracking-wider text-slate-500 mb-3 flex items-center gap-1.5">
                   <Sparkles size={14} className="text-amber-500" />
-                  <span>Abilități & Pasiuni Practice</span>
+                  <span>Abilități, Talente & Pasiuni Practice</span>
                 </h4>
 
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-2 mb-3">
                   {[
                     'Design Canva / Adobe',
                     'Foto & Editare Video',
@@ -1141,7 +1143,18 @@ export function MemberDrawer({ member, onClose, onUpdateMember, isAdmin }: Membe
                     'Logistică & Transport (Permis)',
                     'Muzică / DJ / Artă',
                     'Programare & Web'
-                  ].map(skill => {
+                  ].concat(userSkills.filter(s => ![
+                    'Design Canva / Adobe',
+                    'Foto & Editare Video',
+                    'Social Media & Reels',
+                    'Public Speaking & Prezentare',
+                    'Copywriting & Redactare',
+                    'Atragere Sponsori & Pitching',
+                    'Management Evenimente',
+                    'Logistică & Transport (Permis)',
+                    'Muzică / DJ / Artă',
+                    'Programare & Web'
+                  ].includes(s))).map(skill => {
                     const isSelected = userSkills.includes(skill);
                     return (
                       <button
@@ -1154,7 +1167,7 @@ export function MemberDrawer({ member, onClose, onUpdateMember, isAdmin }: Membe
                             setUserSkills(prev => [...prev, skill]);
                           }
                         }}
-                        className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 border ${
+                        className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 border cursor-pointer ${
                           isSelected
                             ? 'bg-slate-900 text-white border-slate-900 shadow-sm'
                             : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
@@ -1166,6 +1179,38 @@ export function MemberDrawer({ member, onClose, onUpdateMember, isAdmin }: Membe
                     );
                   })}
                 </div>
+
+                {/* Add Custom Skill Input */}
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={customSkillInput}
+                    onChange={e => setCustomSkillInput(e.target.value)}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        if (customSkillInput.trim() && !userSkills.includes(customSkillInput.trim())) {
+                          setUserSkills(prev => [...prev, customSkillInput.trim()]);
+                          setCustomSkillInput('');
+                        }
+                      }
+                    }}
+                    placeholder="Adaugă o abilitate proprie (ex: Permis B, Chitară, Tehnică Sunet)..."
+                    className="flex-1 px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:border-indigo-500"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (customSkillInput.trim() && !userSkills.includes(customSkillInput.trim())) {
+                        setUserSkills(prev => [...prev, customSkillInput.trim()]);
+                        setCustomSkillInput('');
+                      }
+                    }}
+                    className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl transition-colors shrink-0 cursor-pointer"
+                  >
+                    + Adaugă
+                  </button>
+                </div>
               </div>
 
               {/* Save Button */}
@@ -1174,7 +1219,7 @@ export function MemberDrawer({ member, onClose, onUpdateMember, isAdmin }: Membe
                   type="button"
                   disabled={isSavingCommittees}
                   onClick={handleSaveCommittees}
-                  className="px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition-all shadow-md shadow-indigo-600/20 flex items-center gap-2"
+                  className="px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition-all shadow-md shadow-indigo-600/20 flex items-center gap-2 cursor-pointer"
                 >
                   <Check size={14} />
                   <span>{isSavingCommittees ? 'Se salvează...' : 'Salvează Preferințele'}</span>
