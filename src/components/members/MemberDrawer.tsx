@@ -3,12 +3,12 @@ import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   X, CheckCircle2, AlertCircle, Calendar as CalendarIcon, FileText, 
-  Phone, MapPin, Mail, RotateCcw, TrendingUp, Award, User, 
+  Phone, RotateCcw, TrendingUp, Award, User, Trash2,
   Edit3, PlusCircle, CreditCard, Sparkles, Users2, Target, Check
 } from 'lucide-react';
 import { toast } from '../ui/Toast';
 import { calculateDebt, calculateQualification, generateMemberLedger, COTIZATIE_LUNARA } from '../../utils/finance';
-import { updateMemberFields, applyMemberScoreAdjustment, revertLatestTreasuryPayment, TreasuryPayment } from '../../utils/supabaseService';
+import { updateMemberFields, applyMemberScoreAdjustment, revertLatestTreasuryPayment, deleteMemberFromDB, TreasuryPayment } from '../../utils/supabaseService';
 import { PaymentModal } from '../finance/PaymentModal';
 import { ScoringReferenceGuide, ScoringPreset } from '../dashboard/views/ScoringReferenceGuide';
 import { supabase } from '../../supabase';
@@ -89,9 +89,7 @@ export function MemberDrawer({ member, onClose, onUpdateMember, isAdmin }: Membe
 
   // Edit profile form states
   const [name, setName] = useState(member.name);
-  const [email, setEmail] = useState(member.email);
   const [phone, setPhone] = useState(member.phone || '');
-  const [address, setAddress] = useState(member.address || '');
   const [role, setRole] = useState(member.role || 'member');
   const [username, setUsername] = useState(member.username || '');
   const [password, setPassword] = useState(member.password || 'parola123');
@@ -103,11 +101,13 @@ export function MemberDrawer({ member, onClose, onUpdateMember, isAdmin }: Membe
   const [status, setStatus] = useState(member.status || 'active');
   const [boardPosition, setBoardPosition] = useState(member.boardPosition || '');
 
+  // Delete member confirmation modal state
+  const [isDeletingMember, setIsDeletingMember] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
   useEffect(() => {
     setName(member.name);
-    setEmail(member.email);
     setPhone(member.phone || '');
-    setAddress(member.address || '');
     setRole(member.role || 'member');
     setUsername(member.username || '');
     setPassword(member.password || 'parola123');
@@ -120,15 +120,28 @@ export function MemberDrawer({ member, onClose, onUpdateMember, isAdmin }: Membe
     setBoardPosition(member.boardPosition || '');
   }, [member]);
 
+  const handleDeleteMember = async () => {
+    setIsDeletingMember(true);
+    try {
+      await deleteMemberFromDB(member.id);
+      toast.success(`Membrul ${member.name} a fost șters cu succes.`);
+      onClose();
+    } catch (err) {
+      console.error(err);
+      toast.error('Eroare la ștergerea membrului.');
+    } finally {
+      setIsDeletingMember(false);
+      setShowDeleteConfirm(false);
+    }
+  };
+
   const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
     const { rate, qualification } = calculateQualification(Number(presences), Number(excusedAbsences), Number(unexcusedAbsences), status);
 
     const profileFields = {
       name,
-      email,
       phone,
-      address,
       role,
       username,
       password,
@@ -318,14 +331,24 @@ export function MemberDrawer({ member, onClose, onUpdateMember, isAdmin }: Membe
           {/* Action Buttons & Close */}
           <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
             {isAdmin && (
-              <button
-                onClick={() => setIsEditing(!isEditing)}
-                className="px-2.5 sm:px-3 py-1.5 text-xs font-semibold rounded-lg bg-slate-900 text-white hover:bg-slate-800 transition-colors flex items-center gap-1 font-title"
-              >
-                <Edit3 size={13} />
-                <span className="hidden sm:inline">{isEditing ? 'Vizualizează' : 'Editează Profil'}</span>
-                <span className="sm:hidden">{isEditing ? 'Vezi' : 'Editează'}</span>
-              </button>
+              <>
+                <button
+                  onClick={() => setShowDeleteConfirm(true)}
+                  className="px-2.5 sm:px-3 py-1.5 text-xs font-semibold rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 transition-colors flex items-center gap-1 font-title"
+                  title="Șterge Membru"
+                >
+                  <Trash2 size={13} />
+                  <span className="hidden sm:inline">Șterge</span>
+                </button>
+                <button
+                  onClick={() => setIsEditing(!isEditing)}
+                  className="px-2.5 sm:px-3 py-1.5 text-xs font-semibold rounded-lg bg-slate-900 text-white hover:bg-slate-800 transition-colors flex items-center gap-1 font-title"
+                >
+                  <Edit3 size={13} />
+                  <span className="hidden sm:inline">{isEditing ? 'Vizualizează' : 'Editează Profil'}</span>
+                  <span className="sm:hidden">{isEditing ? 'Vezi' : 'Editează'}</span>
+                </button>
+              </>
             )}
             <button
               onClick={onClose}
@@ -397,7 +420,7 @@ export function MemberDrawer({ member, onClose, onUpdateMember, isAdmin }: Membe
               }`}
             >
               <Users2 size={14} className="text-indigo-600" />
-              Comitet & Abilități
+              Abilități & Competențe
             </button>
           </div>
         )}
@@ -436,20 +459,9 @@ export function MemberDrawer({ member, onClose, onUpdateMember, isAdmin }: Membe
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1 font-title">Email</label>
-                  <input type="email" value={email} onChange={e => setEmail(e.target.value)} required className="w-full px-3 py-2 border border-slate-300 rounded-md text-sm text-slate-900 focus:border-slate-900 focus:outline-none font-data" />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1 font-title">Telefon</label>
-                  <input type="text" value={phone} onChange={e => setPhone(e.target.value)} className="w-full px-3 py-2 border border-slate-300 rounded-md text-sm text-slate-900 focus:border-slate-900 focus:outline-none font-data" />
-                </div>
-              </div>
-
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1 font-title">Adresă</label>
-                <input type="text" value={address} onChange={e => setAddress(e.target.value)} className="w-full px-3 py-2 border border-slate-300 rounded-md text-sm text-slate-900 focus:border-slate-900 focus:outline-none font-data" />
+                <label className="block text-xs font-semibold text-slate-700 mb-1 font-title">Telefon</label>
+                <input type="text" value={phone} onChange={e => setPhone(e.target.value)} className="w-full px-3 py-2 border border-slate-300 rounded-md text-sm text-slate-900 focus:border-slate-900 focus:outline-none font-data" />
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -779,26 +791,10 @@ export function MemberDrawer({ member, onClose, onUpdateMember, isAdmin }: Membe
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
                       <div className="p-3 rounded-sm bg-slate-50 border border-slate-200 font-data">
-                        <span className="text-slate-500 block font-title">Email</span>
-                        <span className="font-semibold text-slate-900 flex items-center gap-1.5 mt-0.5 font-data">
-                          <Mail size={13} className="text-slate-600" />
-                          {member.email}
-                        </span>
-                      </div>
-
-                      <div className="p-3 rounded-sm bg-slate-50 border border-slate-200 font-data">
                         <span className="text-slate-500 block font-title">Telefon</span>
                         <span className="font-semibold text-slate-900 flex items-center gap-1.5 mt-0.5 font-data">
                           <Phone size={13} className="text-slate-600" />
                           {member.phone || 'Nespecificat'}
-                        </span>
-                      </div>
-
-                      <div className="p-3 rounded-sm bg-slate-50 border border-slate-200 font-data">
-                        <span className="text-slate-500 block font-title">Adresă</span>
-                        <span className="font-semibold text-slate-900 flex items-center gap-1.5 mt-0.5 font-data">
-                          <MapPin size={13} className="text-slate-600" />
-                          {member.address || 'Nespecificată'}
                         </span>
                       </div>
 
@@ -1315,6 +1311,45 @@ export function MemberDrawer({ member, onClose, onUpdateMember, isAdmin }: Membe
                   className="flex-1 py-2 rounded-md bg-rose-700 hover:bg-rose-800 text-xs font-semibold text-white"
                 >
                   Confirmă Anularea
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Delete Member Confirmation Modal */}
+      <AnimatePresence>
+        {showDeleteConfirm && (
+          <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm font-data">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.97 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.97 }}
+              className="relative w-full max-w-sm bg-white border border-slate-300 rounded-2xl shadow-2xl p-6 z-[201] text-slate-900 space-y-4 font-data"
+            >
+              <div className="flex items-center gap-2.5 text-rose-700">
+                <AlertCircle size={22} />
+                <h3 className="font-bold text-base text-slate-900 font-title">Confirmare Ștergere Membru</h3>
+              </div>
+
+              <p className="text-xs text-slate-600 leading-relaxed font-data">
+                Ești sigur că dorești să ștergi definitiv membrul <strong className="text-slate-900 font-bold">{member.name}</strong>? Această acțiune va elimina contul și înregistrările sale și este ireversibilă.
+              </p>
+
+              <div className="flex gap-3 pt-2 font-title">
+                <button
+                  onClick={() => setShowDeleteConfirm(false)}
+                  className="flex-1 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 border border-slate-300 text-xs font-semibold text-slate-700"
+                >
+                  Anulează
+                </button>
+                <button
+                  onClick={handleDeleteMember}
+                  disabled={isDeletingMember}
+                  className="flex-1 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-xs font-bold text-white shadow-md shadow-rose-600/20"
+                >
+                  {isDeletingMember ? 'Se șterge...' : 'Șterge Definitiv'}
                 </button>
               </div>
             </motion.div>

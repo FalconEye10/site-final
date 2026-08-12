@@ -19,9 +19,7 @@ export function AddMemberModal({ isOpen, onClose, members, onAddMember }: AddMem
   const [nickname, setNickname] = useState('');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('parola123');
-  const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
-  const [address, setAddress] = useState('');
   const [role, setRole] = useState('member');
   const [status, setStatus] = useState('active');
   const [boardPosition, setBoardPosition] = useState('');
@@ -38,7 +36,6 @@ export function AddMemberModal({ isOpen, onClose, members, onAddMember }: AddMem
       .replace(/â/g, 'a')
       .replace(/[^a-z0-9.]/g, '');
     setUsername(generated);
-    setEmail(`${generated}@club.ro`);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -69,9 +66,7 @@ export function AddMemberModal({ isOpen, onClose, members, onAddMember }: AddMem
       nickname: nickname.trim() || firstWord,
       username: username.trim(),
       password: password || 'parola123',
-      email: email.trim(),
       phone: phone.trim(),
-      address: address.trim(),
       role: role,
       avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(name.trim())}&background=001f26&color=FAF9F5`,
       joinDate: new Date(joinDate).toISOString(),
@@ -98,9 +93,7 @@ export function AddMemberModal({ isOpen, onClose, members, onAddMember }: AddMem
       setNickname('');
       setUsername('');
       setPassword('parola123');
-      setEmail('');
       setPhone('');
-      setAddress('');
       setRole('member');
       setStatus('active');
       setBoardPosition('');
@@ -189,36 +182,14 @@ export function AddMemberModal({ isOpen, onClose, members, onAddMember }: AddMem
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-[10px] font-bold uppercase tracking-wider opacity-60 mb-1">Email</label>
-                  <input 
-                    type="email" 
-                    value={email}
-                    onChange={e => setEmail(e.target.value)}
-                    className="w-full px-4 py-3 bg-[#FAF9F5] border border-brand-muted/10 rounded-xl text-sm focus:outline-none focus:border-brand-primary transition-colors font-['Manrope']" 
-                  />
-                </div>
-                <div>
-                  <label className="block text-[10px] font-bold uppercase tracking-wider opacity-60 mb-1">Telefon</label>
-                  <input 
-                    type="text" 
-                    value={phone}
-                    onChange={e => setPhone(e.target.value)}
-                    className="w-full px-4 py-3 bg-[#FAF9F5] border border-brand-muted/10 rounded-xl text-sm focus:outline-none focus:border-brand-primary transition-colors font-['Manrope']" 
-                    placeholder="07XX..."
-                  />
-                </div>
-              </div>
-
               <div>
-                <label className="block text-[10px] font-bold uppercase tracking-wider opacity-60 mb-1">Adresă (Opțional)</label>
+                <label className="block text-[10px] font-bold uppercase tracking-wider opacity-60 mb-1">Telefon</label>
                 <input 
                   type="text" 
-                  value={address}
-                  onChange={e => setAddress(e.target.value)}
+                  value={phone}
+                  onChange={e => setPhone(e.target.value)}
                   className="w-full px-4 py-3 bg-[#FAF9F5] border border-brand-muted/10 rounded-xl text-sm focus:outline-none focus:border-brand-primary transition-colors font-['Manrope']" 
-                  placeholder="Strada, Număr, Oraș"
+                  placeholder="07XX..."
                 />
               </div>
 

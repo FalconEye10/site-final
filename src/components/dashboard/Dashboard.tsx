@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Home, Users, CheckCircle, Calendar as CalendarIcon,
+  Home, Users, Users2, CheckCircle, Calendar as CalendarIcon,
   Lightbulb, Globe, CreditCard, PieChart, FileText,
   User, LogOut, Search,
   AlertCircle, Download,
@@ -24,6 +24,7 @@ import { AttendanceView } from './views/AttendanceView';
 import { EventsView } from './views/EventsView';
 import { IdeasView } from './views/IdeasView';
 import { CommunityIdeasView } from './views/CommunityIdeasView';
+import { RepartizareView } from './views/RepartizareView';
 
 import { ProjectProposalsView } from './views/ProjectProposalsView';
 import { ForumView } from './views/ForumView';
@@ -1727,8 +1728,7 @@ const ViewProfile = ({ currentUserObj, onUpdateMember, members }: ViewProfilePro
                 </div>
               )}
               <div className="text-center md:text-left flex-1">
-                <h2 className="text-2xl font-black text-brand-accent mb-1">{currentUserObj.name}</h2>
-                <p className="opacity-60 text-sm mb-3">{currentUserObj.email || `${currentUserObj.username}@club.ro`}</p>
+                <h2 className="text-2xl font-black text-brand-accent mb-2">{currentUserObj.name}</h2>
                 <div className="flex flex-wrap justify-center md:justify-start gap-2">
                   <span className="px-3 py-1 rounded-full bg-sky-50 text-sky-700 border border-sky-200 text-xs font-bold uppercase tracking-wider">
                     {currentUserObj.role === 'admin' ? 'Board Member' : 'Voluntar'}
@@ -2210,6 +2210,7 @@ export function Dashboard({ username, onLogout }: DashboardProps) {
       title: "Operațional",
       items: [
         { id: 'dashboard', label: 'Dashboard', icon: Home },
+        { id: 'repartizare', label: 'Repartizare', icon: Users2 },
         { id: 'prezenta', label: 'Prezență', icon: CheckCircle },
         { id: 'calendar', label: 'Calendar', icon: CalendarIcon },
       ]
@@ -2261,6 +2262,13 @@ export function Dashboard({ username, onLogout }: DashboardProps) {
             setActiveSection('prezenta');
           }}
           events={events}
+        />
+      );
+      case 'repartizare': return (
+        <RepartizareView
+          isAdmin={isAdmin}
+          members={members}
+          currentUserId={currentUserObj?.id || ''}
         />
       );
       case 'membri': return (
@@ -2364,6 +2372,7 @@ export function Dashboard({ username, onLogout }: DashboardProps) {
   // Each section gets a distinct pair/trio from the brand palette so the aurora mesh actually shifts hue, not just a repeated flat color.
   const SECTION_THEMES: Record<string, ThemeConfig> = {
     dashboard: { colors: ['#89cff0', '#ffeacd', '#475569'] },
+    repartizare: { colors: ['#89cff0', '#ffeacd'] },
     membri: { colors: ['#89cff0', '#0F172A'] },
     prezenta: { colors: ['#ffeacd', '#89cff0'] },
     clasament: { colors: ['#475569', '#ffeacd'] },

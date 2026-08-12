@@ -1,14 +1,16 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { 
-  Users, UserPlus, Search, Filter, Mail, Edit2, Trash2, Activity, Clock, Star, 
-  FileSpreadsheet, X, LayoutGrid, Table as TableIcon, ChevronRight, RotateCcw, ChevronDown
+  Users, UserPlus, Search, Filter, Edit2, Trash2, Activity, Clock, Star, 
+  FileSpreadsheet, X, LayoutGrid, Table as TableIcon, ChevronRight, RotateCcw, ChevronDown, AlertCircle
 } from 'lucide-react';
 
 import { MemberDrawer } from '../../members/MemberDrawer';
 import { calculateDebt, calculateQualification } from '../../../utils/finance';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../ui/table';
 import { downloadXlsx } from '../../../utils/xlsx';
+import { deleteMemberFromDB } from '../../../utils/supabaseService';
+import { toast } from '../../ui/Toast';
 
 interface MembersViewProps {
   members: any[];
@@ -38,6 +40,27 @@ export function MembersView({
   const [selectedMember, setSelectedMember] = useState<any | null>(
     initialSelectedMemberId ? members.find(m => m.id === initialSelectedMemberId) || null : null
   );
+
+  const [memberToDelete, setMemberToDelete] = useState<any | null>(null);
+  const [isDeletingMember, setIsDeletingMember] = useState(false);
+
+  const handleConfirmDelete = async () => {
+    if (!memberToDelete) return;
+    setIsDeletingMember(true);
+    try {
+      await deleteMemberFromDB(memberToDelete.id);
+      toast.success(`Membrul ${memberToDelete.name} a fost șters cu succes.`);
+      if (selectedMember?.id === memberToDelete.id) {
+        setSelectedMember(null);
+      }
+      setMemberToDelete(null);
+    } catch (err) {
+      console.error(err);
+      toast.error('Eroare la ștergerea membrului.');
+    } finally {
+      setIsDeletingMember(false);
+    }
+  };
 
   // Deep-link resolution for initial member drawer
   const resolvedInitialMember = useRef(false);
@@ -600,11 +623,11 @@ export function MembersView({
                       <Edit2 size={13} /> Editează
                     </button>
                     <button 
-                      className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                      onClick={(e) => { e.stopPropagation(); window.location.href=`mailto:${m.email}`; }}
-                      title="Trimite Email"
+                      className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
+                      onClick={(e) => { e.stopPropagation(); setMemberToDelete(m); }}
+                      title="Șterge Membru"
                     >
-                      <Mail size={15} />
+                      <Trash2 size={15} />
                     </button>
                   </div>
                 )}
@@ -737,16 +760,9 @@ export function MembersView({
                               <Edit2 size={15} />
                             </button>
                             <button 
-                              className="p-1.5 sm:p-2 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                              onClick={(e) => { e.stopPropagation(); window.location.href=`mailto:${m.email}`; }}
-                              title="Trimite Email"
-                            >
-                              <Mail size={15} />
-                            </button>
-                            <button 
-                              className="p-1.5 sm:p-2 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                              onClick={(e) => { e.stopPropagation(); setSelectedMember(m); }}
-                              title="Setări Membru"
+                              className="p-1.5 sm:p-2 text-slate-500 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
+                              onClick={(e) => { e.stopPropagation(); setMemberToDelete(m); }}
+                              title="Șterge Membru"
                             >
                               <Trash2 size={15} />
                             </button>
@@ -776,6 +792,45 @@ export function MembersView({
             onUpdateMember={handleUpdateMember}
             isAdmin={isAdmin}
           />
+        )}
+      </AnimatePresence>
+
+      {/* 5. Confirmation Modal for Member Deletion */}
+      <AnimatePresence>
+        {memberToDelete && (
+          <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm font-data">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.97 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.97 }}
+              className="relative w-full max-w-sm bg-white border border-slate-300 rounded-3xl shadow-2xl p-6 z-[201] text-slate-900 space-y-4 font-data"
+            >
+              <div className="flex items-center gap-2.5 text-rose-700">
+                <AlertCircle size={22} />
+                <h3 className="font-bold text-base text-slate-900 font-title">Confirmare Ștergere Membru</h3>
+              </div>
+
+              <p className="text-xs text-slate-600 leading-relaxed font-data">
+                Ești sigur că dorești să ștergi definitiv membrul <strong className="text-slate-900 font-bold">{memberToDelete.name}</strong>? Această acțiune va elimina contul din sistem și este ireversibilă.
+              </p>
+
+              <div className="flex gap-3 pt-2 font-title">
+                <button
+                  onClick={() => setMemberToDelete(null)}
+                  className="flex-1 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 border border-slate-300 text-xs font-semibold text-slate-700"
+                >
+                  Anulează
+                </button>
+                <button
+                  onClick={handleConfirmDelete}
+                  disabled={isDeletingMember}
+                  className="flex-1 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-xs font-bold text-white shadow-md shadow-rose-600/20"
+                >
+                  {isDeletingMember ? 'Se șterge...' : 'Șterge Definitiv'}
+                </button>
+              </div>
+            </motion.div>
+          </div>
         )}
       </AnimatePresence>
     </div>

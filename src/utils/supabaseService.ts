@@ -40,6 +40,29 @@ export async function updateMemberFields(memberId: string, fields: Record<string
   }
 }
 
+/**
+ * Șterge un membru din Supabase.
+ * Păstrează chitanțele și semnăturile plăților istorice în tabela 'payments' (unlinking memberId),
+ * eliminând definitiv datoria și contul membrului.
+ */
+export async function deleteMemberFromDB(memberId: string): Promise<void> {
+  try {
+    // 1. Deconectăm memberId-ul din plățile efectuate pentru a păstra chitanțele și semnăturile în rapoartele istorice
+    await supabase.from('payments').update({ memberId: null }).eq('memberId', memberId.toString());
+    
+    // 2. Ștergem cererile de absență asociate
+    await supabase.from('absence_requests').delete().eq('memberId', memberId.toString());
+
+    // 3. Ștergem membrul propriu-zis
+    const { error } = await supabase.from('members').delete().eq('id', memberId.toString());
+    if (error) throw error;
+  } catch (error) {
+    console.error("Error deleting member from Supabase:", error);
+    throw error;
+  }
+}
+
+
 export interface ScoreAdjustment {
   id: string;
   points: number;
