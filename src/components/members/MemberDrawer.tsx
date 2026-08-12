@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { toast } from '../ui/Toast';
 import { calculateDebt, calculateQualification, generateMemberLedger, COTIZATIE_LUNARA } from '../../utils/finance';
+import { computeMemberMilestones } from '../../utils/milestones';
 import { updateMemberFields, applyMemberScoreAdjustment, revertLatestTreasuryPayment, deleteMemberFromDB, TreasuryPayment } from '../../utils/supabaseService';
 import { PaymentModal } from '../finance/PaymentModal';
 import { ScoringReferenceGuide, ScoringPreset } from '../dashboard/views/ScoringReferenceGuide';
@@ -36,6 +37,7 @@ export function MemberDrawer({ member, onClose, onUpdateMember, isAdmin }: Membe
 
   const [payments, setPayments] = useState<any[]>([]);
   const [loadingPayments, setLoadingPayments] = useState(true);
+  const [memberKudosCount, setMemberKudosCount] = useState(0);
 
   // Listen to escape key for closing modal
   useEffect(() => {
@@ -47,6 +49,25 @@ export function MemberDrawer({ member, onClose, onUpdateMember, isAdmin }: Membe
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [onClose, isPaymentModalOpen, selectedReceipt, isScoreModalOpen, receiptToRevert]);
+
+  // Load kudos count for achievements tab
+  useEffect(() => {
+    async function loadKudos() {
+      try {
+        const { data } = await supabase.from('kudos').select('id, toId, toName');
+        if (data) {
+          const count = data.filter((k: any) => 
+            (k.toId && String(k.toId) === String(member.id)) ||
+            (k.toName && member.name && k.toName.toLowerCase() === member.name.toLowerCase())
+          ).length;
+          setMemberKudosCount(count);
+        }
+      } catch (err) {
+        console.error("Failed to load kudos count", err);
+      }
+    }
+    loadKudos();
+  }, [member.id, member.name]);
 
   useEffect(() => {
     setLoadingPayments(true);
@@ -89,12 +110,21 @@ export function MemberDrawer({ member, onClose, onUpdateMember, isAdmin }: Membe
   const [username, setUsername] = useState(member.username || '');
   const [password, setPassword] = useState(member.password || 'parola123');
   const [nickname, setNickname] = useState(member.nickname || '');
+  const [hours, setHours] = useState<number>(member.stats?.hours ?? member.hours ?? (member.presences ? member.presences * 2 : 0));
   const [presences, setPresences] = useState(member.presences || 0);
   const [excusedAbsences, setExcusedAbsences] = useState(member.excusedAbsences || 0);
   const [unexcusedAbsences, setUnexcusedAbsences] = useState(member.unexcusedAbsences || 0);
+  const [customMilestones, setCustomMilestones] = useState<any[]>(member.customMilestones || member.stats?.customMilestones || []);
   const [joinDate, setJoinDate] = useState(() => member.joinDate ? member.joinDate.split('T')[0] : new Date().toISOString().split('T')[0]);
   const [status, setStatus] = useState(member.status || 'active');
   const [boardPosition, setBoardPosition] = useState(member.boardPosition || '');
+
+  // Add Custom Milestone form states
+  const [showAddMilestone, setShowAddMilestone] = useState(false);
+  const [newMilestoneTitle, setNewMilestoneTitle] = useState('');
+  const [newMilestoneDesc, setNewMilestoneDesc] = useState('');
+  const [newMilestoneBadge, setNewMilestoneBadge] = useState('');
+  const [newMilestoneIcon, setNewMilestoneIcon] = useState('🏆');
 
   // Delete member confirmation modal state
   const [isDeletingMember, setIsDeletingMember] = useState(false);
@@ -107,9 +137,11 @@ export function MemberDrawer({ member, onClose, onUpdateMember, isAdmin }: Membe
     setUsername(member.username || '');
     setPassword(member.password || 'parola123');
     setNickname(member.nickname || '');
+    setHours(member.stats?.hours ?? member.hours ?? (member.presences ? member.presences * 2 : 0));
     setPresences(member.presences || 0);
     setExcusedAbsences(member.excusedAbsences || 0);
     setUnexcusedAbsences(member.unexcusedAbsences || 0);
+    setCustomMilestones(member.customMilestones || member.stats?.customMilestones || []);
     setJoinDate(member.joinDate ? member.joinDate.split('T')[0] : new Date().toISOString().split('T')[0]);
     setStatus(member.status || 'active');
     setBoardPosition(member.boardPosition || '');
@@ -141,9 +173,12 @@ export function MemberDrawer({ member, onClose, onUpdateMember, isAdmin }: Membe
       username,
       password,
       nickname,
+      hours: Number(hours),
+      stats: { ...(member.stats || {}), hours: Number(hours), customMilestones },
       presences: Number(presences),
       excusedAbsences: Number(excusedAbsences),
       unexcusedAbsences: Number(unexcusedAbsences),
+      customMilestones,
       joinDate: new Date(joinDate).toISOString(),
       status,
       boardPosition: role === 'admin' ? boardPosition.trim() : null,
@@ -463,7 +498,11 @@ export function MemberDrawer({ member, onClose, onUpdateMember, isAdmin }: Membe
                 </div>
               )}
 
-              <div className="grid grid-cols-3 gap-3 pt-2">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1 font-title">Ore Voluntariat</label>
+                  <input type="number" min="0" value={hours} onChange={e => setHours(Number(e.target.value))} className="w-full px-3 py-2 border border-slate-300 rounded-md text-sm text-slate-900 focus:border-slate-900 focus:outline-none font-data" />
+                </div>
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 mb-1 font-title">Prezențe</label>
                   <input type="number" min="0" value={presences} onChange={e => setPresences(Number(e.target.value))} className="w-full px-3 py-2 border border-slate-300 rounded-md text-sm text-slate-900 focus:border-slate-900 focus:outline-none font-data" />
@@ -798,141 +837,8 @@ export function MemberDrawer({ member, onClose, onUpdateMember, isAdmin }: Membe
 
               {/* 4. TAB ACHIEVEMENTS & MILESTONES */}
               {activeTab === 'achievements' && (() => {
-                const p = Number(member.presences || 0);
-                const tp = Number(member.totalPaid || 0);
-                const isDebtFree = debt === 0;
-                const hours = p * 2;
-
-                const tier = p >= 25 
-                  ? { title: 'Ambasador Camena', icon: '👑', desc: 'Lider de opinie și pilon de bază al clubului', color: 'bg-amber-50 text-amber-900 border-amber-300' }
-                  : p >= 10
-                  ? { title: 'Senior Voluntar', icon: '🌟', desc: 'Implicare remarcabilă și experiență confirmată', color: 'bg-purple-50 text-purple-900 border-purple-300' }
-                  : p >= 4
-                  ? { title: 'Voluntar Activ', icon: '⚡', desc: 'Participare activă și dedicare constantă', color: 'bg-emerald-50 text-emerald-900 border-emerald-300' }
-                  : { title: 'Recrut Nou', icon: '🌱', desc: 'La început de drum în călătoria Interact', color: 'bg-blue-50 text-blue-900 border-blue-300' };
-
-                const scoreNum = Number(member.score || member.totalScore || 0);
-                const memberCommittees = member.committeePreferences || [];
-                const memberSkills = member.skills || [];
-                const hasLogisticOrTechnical = memberCommittees.includes('Organizare & Logistică') || memberSkills.some((s: string) => s.toLowerCase().includes('logistic') || s.toLowerCase().includes('tehnic'));
-                const hasPROrCreative = memberCommittees.includes('Imagine Publică & PR') || memberSkills.some((s: string) => s.toLowerCase().includes('foto') || s.toLowerCase().includes('video') || s.toLowerCase().includes('design'));
-                const hasFundraising = memberCommittees.includes('Finanțe & Fundraising') || memberSkills.some((s: string) => s.toLowerCase().includes('sponsor') || s.toLowerCase().includes('vanzari'));
-
-                const milestones = [
-                  {
-                    id: 'm1',
-                    title: 'Primii Pași',
-                    desc: 'Participă la minim 3 ședințe sau acțiuni',
-                    current: Math.min(p, 3),
-                    target: 3,
-                    icon: '🎯',
-                    unlocked: p >= 3
-                  },
-                  {
-                    id: 'm2',
-                    title: 'Pilonul Echipei',
-                    desc: 'Atinge 10 prezențe validate în club',
-                    current: Math.min(p, 10),
-                    target: 10,
-                    icon: '🏛️',
-                    unlocked: p >= 10
-                  },
-                  {
-                    id: 'm3',
-                    title: 'Legendă Activă',
-                    desc: 'Peste 25 de participări și devotament de lungă durată',
-                    current: Math.min(p, 25),
-                    target: 25,
-                    icon: '🔥',
-                    unlocked: p >= 25
-                  },
-                  {
-                    id: 'm4',
-                    title: 'Disciplină Financiară',
-                    desc: 'Balanță la zi (fără restanțe la cotizație)',
-                    current: isDebtFree ? 1 : 0,
-                    target: 1,
-                    icon: '💎',
-                    unlocked: isDebtFree
-                  },
-                  {
-                    id: 'm5',
-                    title: 'Sponsor Fidel',
-                    desc: 'Achită minim 6 luni de cotizație (90 RON)',
-                    current: Math.min(tp, 90),
-                    target: 90,
-                    unit: 'RON',
-                    icon: '🛡️',
-                    unlocked: tp >= 90
-                  },
-                  {
-                    id: 'm6',
-                    title: 'Calificativ de Excelență',
-                    desc: 'Rată de prezență de peste 85%',
-                    current: (rate === '100%' || qualification === 'Excelent' || qualification === 'Maxim') ? 1 : 0,
-                    target: 1,
-                    icon: '⭐',
-                    unlocked: (rate === '100%' || qualification === 'Excelent' || qualification === 'Maxim')
-                  },
-                  {
-                    id: 'm7',
-                    title: '🏗️ Salahor Desăvârșit',
-                    desc: 'Manipulare greutăți, cărat echipamente & forță brută pe teren',
-                    current: Math.min(scoreNum, 12),
-                    target: 12,
-                    unit: 'pct',
-                    icon: '🏗️',
-                    unlocked: scoreNum >= 12 || hasLogisticOrTechnical
-                  },
-                  {
-                    id: 'm8',
-                    title: '🔨 Inginer Constructor',
-                    desc: 'Montat standuri, structuri decor, bormașină & meșterit tehnic',
-                    current: hasLogisticOrTechnical ? 1 : 0,
-                    target: 1,
-                    icon: '🔨',
-                    unlocked: hasLogisticOrTechnical || p >= 5
-                  },
-                  {
-                    id: 'm9',
-                    title: '🎤 Vocea & Imaginea',
-                    desc: 'Prezentare pe scenă, MC, social media, foto sau video de impact',
-                    current: hasPROrCreative ? 1 : 0,
-                    target: 1,
-                    icon: '🎤',
-                    unlocked: hasPROrCreative || scoreNum >= 15
-                  },
-                  {
-                    id: 'm10',
-                    title: '🏆 Centurion Camena',
-                    desc: 'Peste 30 de ore de voluntariat validate pe teren',
-                    current: Math.min(hours, 30),
-                    target: 30,
-                    unit: 'ore',
-                    icon: '🏆',
-                    unlocked: hours >= 30
-                  },
-                  {
-                    id: 'm11',
-                    title: '💰 Rechin Financiar',
-                    desc: 'Atragere fonduri, vânzări bilete & sponsorizări obținute',
-                    current: hasFundraising ? 1 : 0,
-                    target: 1,
-                    icon: '💰',
-                    unlocked: hasFundraising || scoreNum >= 20
-                  },
-                  {
-                    id: 'm12',
-                    title: '❤️ Inima Echipei',
-                    desc: 'Energie pozitivă, spirit colegial și implicare constantă',
-                    current: p >= 4 ? 1 : 0,
-                    target: 1,
-                    icon: '❤️',
-                    unlocked: p >= 4
-                  }
-                ];
-
-                const unlockedCount = milestones.filter(m => m.unlocked).length;
+                const hours = Number(member.stats?.hours ?? member.hours ?? (member.presences ? member.presences * 2 : 0));
+                const { allMilestones: milestones, tier, unlockedCount } = computeMemberMilestones(member, memberKudosCount);
 
                 return (
                   <div className="space-y-6">
@@ -1013,6 +919,162 @@ export function MemberDrawer({ member, onClose, onUpdateMember, isAdmin }: Membe
                           );
                         })}
                       </div>
+                    </div>
+
+                    {/* Custom Registered Milestones */}
+                    <div className="pt-5 border-t border-slate-200 space-y-3 font-data">
+                      <div className="flex items-center justify-between">
+                        <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700 font-title flex items-center gap-1.5">
+                          <Sparkles size={14} className="text-amber-500" />
+                          Milestone-uri Personalizate înregistrate ({customMilestones.length})
+                        </h4>
+                        {isAdmin && (
+                          <button
+                            type="button"
+                            onClick={() => setShowAddMilestone(!showAddMilestone)}
+                            className="px-2.5 py-1 text-xs font-semibold rounded-md bg-slate-900 text-white hover:bg-slate-800 transition-colors flex items-center gap-1 font-title"
+                          >
+                            <PlusCircle size={12} />
+                            Adaugă Milestone
+                          </button>
+                        )}
+                      </div>
+
+                      {showAddMilestone && isAdmin && (
+                        <div className="p-4 rounded-xl border border-amber-300 bg-amber-50/60 space-y-3 font-data">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div>
+                              <label className="block text-[11px] font-bold text-slate-700 mb-1 font-title">Titlu Milestone</label>
+                              <input
+                                type="text"
+                                placeholder="ex: Coordonator Campanie Ecologizare"
+                                value={newMilestoneTitle}
+                                onChange={e => setNewMilestoneTitle(e.target.value)}
+                                className="w-full px-3 py-1.5 border border-slate-300 rounded-md text-xs text-slate-900 focus:outline-none bg-white font-data"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-[11px] font-bold text-slate-700 mb-1 font-title">Badge / Insignă</label>
+                              <input
+                                type="text"
+                                placeholder="ex: RECORD DE VITEZĂ, AMBASADOR"
+                                value={newMilestoneBadge}
+                                onChange={e => setNewMilestoneBadge(e.target.value)}
+                                className="w-full px-3 py-1.5 border border-slate-300 rounded-md text-xs text-slate-900 focus:outline-none bg-white font-data"
+                              />
+                            </div>
+                          </div>
+                          <div>
+                            <label className="block text-[11px] font-bold text-slate-700 mb-1 font-title">Descriere Detaliată</label>
+                            <input
+                              type="text"
+                              placeholder="ex: A organizat campania de strângere fonduri pentru comunitate."
+                              value={newMilestoneDesc}
+                              onChange={e => setNewMilestoneDesc(e.target.value)}
+                              className="w-full px-3 py-1.5 border border-slate-300 rounded-md text-xs text-slate-900 focus:outline-none bg-white font-data"
+                            />
+                          </div>
+                          <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
+                            <div className="flex items-center gap-1.5 text-xs text-slate-600">
+                              <span className="font-title">Iconiță:</span>
+                              {['🏆', '👑', '🚀', '🔥', '⚡', '🌟', '🎯'].map(ico => (
+                                <button
+                                  key={ico}
+                                  type="button"
+                                  onClick={() => setNewMilestoneIcon(ico)}
+                                  className={`p-1 rounded text-sm ${newMilestoneIcon === ico ? 'bg-amber-200 border border-amber-400 font-bold' : 'hover:bg-slate-200'}`}
+                                >
+                                  {ico}
+                                </button>
+                              ))}
+                            </div>
+                            <button
+                              type="button"
+                              onClick={async () => {
+                                if (!newMilestoneTitle.trim()) return toast.error('Introdu un titlu.');
+                                const item = {
+                                  id: `ms_${Date.now()}`,
+                                  title: newMilestoneTitle.trim(),
+                                  desc: newMilestoneDesc.trim(),
+                                  badge: newMilestoneBadge.trim() || 'RECORD VALIDAT',
+                                  icon: newMilestoneIcon,
+                                  date: new Date().toISOString()
+                                };
+                                const updated = [...customMilestones, item];
+                                setCustomMilestones(updated);
+                                setNewMilestoneTitle('');
+                                setNewMilestoneDesc('');
+                                setNewMilestoneBadge('');
+                                setShowAddMilestone(false);
+
+                                try {
+                                  const profileFields = {
+                                    customMilestones: updated,
+                                    stats: { ...(member.stats || {}), customMilestones: updated }
+                                  };
+                                  await updateMemberFields(member.id, profileFields);
+                                  onUpdateMember({ ...member, ...profileFields });
+                                  toast.success('Milestone înregistrat cu succes!');
+                                } catch (err) {
+                                  toast.error('Eroare la salvarea milestone-ului.');
+                                }
+                              }}
+                              className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-md font-bold text-xs transition-colors font-title"
+                            >
+                              Salvează Milestone
+                            </button>
+                          </div>
+                        </div>
+                      )}
+
+                      {customMilestones.length > 0 ? (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          {customMilestones.map((cm: any) => (
+                            <div key={cm.id} className="p-3.5 rounded-xl border border-amber-300 bg-gradient-to-br from-amber-50 to-orange-50/50 flex items-start justify-between gap-2 shadow-xs">
+                              <div className="flex items-start gap-2.5">
+                                <span className="text-xl">{cm.icon || '🏆'}</span>
+                                <div>
+                                  <div className="flex items-center gap-2">
+                                    <h5 className="text-xs font-bold text-slate-900">{cm.title}</h5>
+                                    <span className="px-1.5 py-0.5 rounded text-[9px] font-black uppercase bg-amber-200 text-amber-900">
+                                      {cm.badge}
+                                    </span>
+                                  </div>
+                                  <p className="text-[11px] text-slate-600 mt-0.5">{cm.desc}</p>
+                                </div>
+                              </div>
+                              {isAdmin && (
+                                <button
+                                  type="button"
+                                  onClick={async () => {
+                                    const updated = customMilestones.filter((m: any) => m.id !== cm.id);
+                                    setCustomMilestones(updated);
+                                    try {
+                                      const profileFields = {
+                                        customMilestones: updated,
+                                        stats: { ...(member.stats || {}), customMilestones: updated }
+                                      };
+                                      await updateMemberFields(member.id, profileFields);
+                                      onUpdateMember({ ...member, ...profileFields });
+                                      toast.success('Milestone șters.');
+                                    } catch (err) {
+                                      toast.error('Eroare la ștergere.');
+                                    }
+                                  }}
+                                  className="text-slate-400 hover:text-rose-600 p-1 transition-colors"
+                                  title="Șterge Milestone"
+                                >
+                                  <Trash2 size={13} />
+                                </button>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="text-xs text-slate-500 italic py-2">
+                          Niciun milestone personalizat înregistrat încă. {isAdmin ? 'Apasă pe "Adaugă Milestone" pentru a înregistra o realizare reală.' : ''}
+                        </div>
+                      )}
                     </div>
                   </div>
                 );

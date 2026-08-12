@@ -98,26 +98,31 @@ export function MembersView({
 
   // Filters & Sorting logic
   const processedMembers = useMemo(() => {
+    const q = searchTerm.trim().toLowerCase();
     const filtered = members.filter(m => {
       const mName = m.name || '';
       const mEmail = m.email || '';
       const rawRole = (m.role || '').toLowerCase();
-      const rawStatus = (m.status || '').toLowerCase();
+      const rawStatus = (m.status || 'active').toLowerCase();
       
-      const isBoardMember = rawRole === 'admin';
+      const isBoardMember = rawRole === 'admin' || (m.boardPosition && m.boardPosition.trim().length > 0);
       const mRole = isBoardMember ? 'Board' : 'Voluntar';
 
-      const matchesSearch = mName.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                            mEmail.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                            (m.nickname || '').toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesSearch = !q || 
+                            mName.toLowerCase().includes(q) || 
+                            mEmail.toLowerCase().includes(q) ||
+                            (m.nickname || '').toLowerCase().includes(q) ||
+                            (m.username || '').toLowerCase().includes(q) ||
+                            (m.phone || '').toLowerCase().includes(q);
+
       const matchesRole = selectedRole === 'Toți' || mRole === selectedRole;
       
       let matchesStatus = true;
       if (selectedStatus !== 'Toți') {
         if (selectedStatus === 'ACTIV') {
-          matchesStatus = rawStatus === 'active';
+          matchesStatus = rawStatus === 'active' || rawStatus === 'activ' || !m.status;
         } else if (selectedStatus === 'PASIV') {
-          matchesStatus = rawStatus === 'passive';
+          matchesStatus = rawStatus === 'passive' || rawStatus === 'pasiv';
         }
       }
       
@@ -254,25 +259,25 @@ export function MembersView({
       </div>
 
       {/* 2. Toolbar Adaptiv (Desktop, Tableta & Telefon) */}
-      <div className="rounded-2xl border border-slate-200 bg-white p-3 sm:p-4 shadow-lg flex flex-col gap-3 font-anthropic">
+      <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-3 sm:p-4 shadow-lg flex flex-col gap-3 font-anthropic">
         {/* Top Toolbar Row */}
         <div className="flex flex-col md:flex-row gap-3 justify-between items-stretch md:items-center">
           
           {/* Search + View Toggle + Mobile Filter Trigger */}
           <div className="flex items-center gap-2 w-full md:w-auto">
             <div className="relative group flex-1 md:w-64">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-brand-accent/40 group-focus-within:text-brand-primary transition-colors" size={16} />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-brand-primary transition-colors" size={16} />
               <input 
                 type="text" 
                 placeholder="Caută membru..." 
                 value={searchTerm}
                 onChange={e => setSearchTerm(e.target.value)}
-                className="w-full pl-9 pr-8 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm md:text-[15px] focus:outline-none focus:border-brand-primary/40 focus:ring-2 focus:ring-brand-primary/15 focus:bg-white transition-all font-['Manrope']"
+                className="w-full pl-9 pr-8 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl text-sm md:text-[15px] text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:border-brand-primary/60 focus:ring-2 focus:ring-brand-primary/20 focus:bg-white dark:focus:bg-slate-800 transition-all font-['Manrope']"
               />
               {searchTerm && (
                 <button
                   onClick={() => setSearchTerm('')}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-700"
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
                   title="Șterge căutarea"
                 >
                   <X size={14} />
@@ -285,14 +290,14 @@ export function MembersView({
               onClick={() => setIsMobileFilterOpen(!isMobileFilterOpen)}
               className={`md:hidden flex items-center gap-1.5 px-3 py-2 rounded-xl border text-xs font-bold transition-all shrink-0 ${
                 activeFiltersCount > 0 || isMobileFilterOpen
-                  ? 'bg-brand-primary text-brand-accent border-brand-accent/20'
-                  : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+                  ? 'bg-slate-900 dark:bg-sky-500 text-white dark:text-slate-950 border-slate-900 dark:border-sky-500'
+                  : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 border-slate-300 dark:border-slate-700 hover:bg-slate-200 dark:hover:bg-slate-700'
               }`}
             >
               <Filter size={15} />
               <span>Filtre</span>
               {activeFiltersCount > 0 && (
-                <span className="w-4 h-4 rounded-full bg-brand-accent text-white text-[10px] flex items-center justify-center font-bold ml-0.5">
+                <span className="w-4 h-4 rounded-full bg-amber-500 text-slate-950 text-[10px] flex items-center justify-center font-bold ml-0.5">
                   {activeFiltersCount}
                 </span>
               )}
@@ -300,11 +305,11 @@ export function MembersView({
             </button>
 
             {/* View Mode Switcher (Tabel vs Carduri) */}
-            <div className="flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200 shrink-0">
+            <div className="flex items-center bg-slate-100 dark:bg-slate-800 p-1 rounded-xl border border-slate-200 dark:border-slate-700 shrink-0">
               <button
                 onClick={() => setViewMode('table')}
                 className={`p-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1 ${
-                  viewMode === 'table' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500 hover:text-slate-900'
+                  viewMode === 'table' ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                 }`}
                 title="Vizualizare Tabel"
               >
@@ -314,7 +319,7 @@ export function MembersView({
               <button
                 onClick={() => setViewMode('cards')}
                 className={`p-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1 ${
-                  viewMode === 'cards' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500 hover:text-slate-900'
+                  viewMode === 'cards' ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                 }`}
                 title="Vizualizare Carduri"
               >
@@ -326,7 +331,7 @@ export function MembersView({
 
           {/* Desktop Filter Dropdowns (Inline) */}
           <div className="hidden md:flex items-center gap-2 flex-wrap">
-            <Filter className="text-brand-accent/40 shrink-0" size={16} />
+            <Filter className="text-slate-400 shrink-0" size={16} />
             <select 
               value={selectedRole}
               onChange={e => {
@@ -335,48 +340,48 @@ export function MembersView({
                   setSelectedStatus('Toți');
                 }
               }}
-              className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs md:text-sm focus:outline-none cursor-pointer font-bold uppercase tracking-wider hover:bg-slate-100 transition-all text-slate-800"
+              className="px-3 py-2 bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl text-xs md:text-sm focus:outline-none cursor-pointer font-bold uppercase tracking-wider hover:bg-slate-200 dark:hover:bg-slate-700 transition-all text-slate-900 dark:text-slate-100"
             >
-              <option value="Toți">Toate Rolurile</option>
-              <option value="Board">Board</option>
-              <option value="Voluntar">Voluntar</option>
+              <option className="bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100" value="Toți">Toate Rolurile</option>
+              <option className="bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100" value="Board">Board</option>
+              <option className="bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100" value="Voluntar">Voluntar</option>
             </select>
 
             {selectedRole !== 'Board' && (
               <select 
                 value={selectedStatus}
                 onChange={e => setSelectedStatus(e.target.value)}
-                className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs md:text-sm focus:outline-none cursor-pointer font-bold uppercase tracking-wider hover:bg-slate-100 transition-all text-slate-800"
+                className="px-3 py-2 bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl text-xs md:text-sm focus:outline-none cursor-pointer font-bold uppercase tracking-wider hover:bg-slate-200 dark:hover:bg-slate-700 transition-all text-slate-900 dark:text-slate-100"
               >
-                <option value="Toți">Orice Status</option>
-                <option value="ACTIV">ACTIV</option>
-                <option value="PASIV">PASIV</option>
+                <option className="bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100" value="Toți">Orice Status</option>
+                <option className="bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100" value="ACTIV">ACTIV</option>
+                <option className="bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100" value="PASIV">PASIV</option>
               </select>
             )}
 
             <select 
               value={selectedDebtFilter}
               onChange={e => setSelectedDebtFilter(e.target.value)}
-              className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs md:text-sm focus:outline-none cursor-pointer font-bold uppercase tracking-wider text-amber-700 hover:bg-slate-100 transition-all"
+              className="px-3 py-2 bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl text-xs md:text-sm focus:outline-none cursor-pointer font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all"
             >
-              <option value="Toți">Orice Balanță</option>
-              <option value="Restanțieri">Restanțieri</option>
-              <option value="La Zi">La Zi (0 Datorii)</option>
+              <option className="bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100" value="Toți">Orice Balanță</option>
+              <option className="bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100" value="Restanțieri">Restanțieri</option>
+              <option className="bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100" value="La Zi">La Zi (0 Datorii)</option>
             </select>
 
             <select 
               value={sortOrder}
               onChange={e => setSortOrder(e.target.value)}
-              className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs md:text-sm focus:outline-none cursor-pointer font-bold uppercase tracking-wider hover:bg-slate-100 transition-all text-slate-800"
+              className="px-3 py-2 bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl text-xs md:text-sm focus:outline-none cursor-pointer font-bold uppercase tracking-wider hover:bg-slate-200 dark:hover:bg-slate-700 transition-all text-slate-900 dark:text-slate-100"
             >
-              <option value="Implicit">Sortare Nume</option>
-              <option value="Datorie">Cea Mai Mare Datorie</option>
+              <option className="bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100" value="Implicit">Sortare Nume</option>
+              <option className="bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100" value="Datorie">Cea Mai Mare Datorie</option>
             </select>
 
             {activeFiltersCount > 0 && (
               <button
                 onClick={handleResetFilters}
-                className="p-2 text-slate-400 hover:text-rose-600 rounded-xl hover:bg-rose-50 transition-colors"
+                className="p-2 text-slate-400 hover:text-rose-600 rounded-xl hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors"
                 title="Resetează toate filtrele"
               >
                 <RotateCcw size={15} />
@@ -389,10 +394,10 @@ export function MembersView({
             {isAdmin && (
               <button 
                 onClick={handleExportExcel}
-                className="px-3 sm:px-4 py-2 text-xs sm:text-sm font-bold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 rounded-xl transition-all flex items-center justify-center gap-1.5 shadow-sm"
+                className="px-3 sm:px-4 py-2 text-xs sm:text-sm font-bold text-emerald-800 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 border border-emerald-300 dark:border-emerald-700 rounded-xl transition-all flex items-center justify-center gap-1.5 shadow-sm"
                 title="Descarcă foaie de calcul Excel cu toți membrii"
               >
-                <FileSpreadsheet size={15} className="text-emerald-600 shrink-0" />
+                <FileSpreadsheet size={15} className="text-emerald-600 dark:text-emerald-400 shrink-0" />
                 <span className="truncate">EXPORTĂ</span>
               </button>
             )}
@@ -411,7 +416,7 @@ export function MembersView({
 
         {/* Quick Filter Chips for Touch / Mobile */}
         <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5 max-w-full">
-          <span className="text-[10px] font-black uppercase text-slate-400 tracking-wider shrink-0 mr-1">Filtre Rapide:</span>
+          <span className="text-[10px] font-black uppercase text-slate-400 dark:text-slate-500 tracking-wider shrink-0 mr-1">Filtre Rapide:</span>
           {[
             { label: 'Toți', active: selectedRole === 'Toți' && selectedDebtFilter === 'Toți' && selectedStatus === 'Toți', onClick: () => { setSelectedRole('Toți'); setSelectedDebtFilter('Toți'); setSelectedStatus('Toți'); } },
             { label: 'Board', active: selectedRole === 'Board', onClick: () => { setSelectedRole('Board'); setSelectedStatus('Toți'); } },
@@ -426,8 +431,8 @@ export function MembersView({
               onClick={chip.onClick}
               className={`px-2.5 py-1 rounded-lg text-xs font-bold whitespace-nowrap transition-all shrink-0 ${
                 chip.active
-                  ? 'bg-slate-900 text-white shadow-xs'
-                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200 border border-slate-200/80'
+                  ? 'bg-slate-900 text-white dark:bg-sky-400 dark:text-slate-950 shadow-xs'
+                  : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-300/80 dark:border-slate-700'
               }`}
             >
               {chip.label}
@@ -442,71 +447,71 @@ export function MembersView({
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: 'auto' }}
               exit={{ opacity: 0, height: 0 }}
-              className="md:hidden pt-3 border-t border-slate-200 grid grid-cols-1 sm:grid-cols-2 gap-2.5 overflow-hidden"
+              className="md:hidden pt-3 border-t border-slate-200 dark:border-slate-800 grid grid-cols-1 sm:grid-cols-2 gap-2.5 overflow-hidden"
             >
               <div>
-                <label className="block text-[10px] font-black uppercase text-slate-500 mb-1">Rol</label>
+                <label className="block text-[10px] font-black uppercase text-slate-500 dark:text-slate-400 mb-1">Rol</label>
                 <select 
                   value={selectedRole}
                   onChange={e => {
                     setSelectedRole(e.target.value);
                     if (e.target.value === 'Board') setSelectedStatus('Toți');
                   }}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold uppercase tracking-wider text-slate-800"
+                  className="w-full px-3 py-2 bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-slate-100"
                 >
-                  <option value="Toți">Toate Rolurile</option>
-                  <option value="Board">Board</option>
-                  <option value="Voluntar">Voluntar</option>
+                  <option className="bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100" value="Toți">Toate Rolurile</option>
+                  <option className="bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100" value="Board">Board</option>
+                  <option className="bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100" value="Voluntar">Voluntar</option>
                 </select>
               </div>
 
               {selectedRole !== 'Board' && (
                 <div>
-                  <label className="block text-[10px] font-black uppercase text-slate-500 mb-1">Status</label>
+                  <label className="block text-[10px] font-black uppercase text-slate-500 dark:text-slate-400 mb-1">Status</label>
                   <select 
                     value={selectedStatus}
                     onChange={e => setSelectedStatus(e.target.value)}
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold uppercase tracking-wider text-slate-800"
+                    className="w-full px-3 py-2 bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-slate-100"
                   >
-                    <option value="Toți">Orice Status</option>
-                    <option value="ACTIV">ACTIV</option>
-                    <option value="PASIV">PASIV</option>
+                    <option className="bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100" value="Toți">Orice Status</option>
+                    <option className="bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100" value="ACTIV">ACTIV</option>
+                    <option className="bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100" value="PASIV">PASIV</option>
                   </select>
                 </div>
               )}
 
               <div>
-                <label className="block text-[10px] font-black uppercase text-slate-500 mb-1">Balanță Cotizații</label>
+                <label className="block text-[10px] font-black uppercase text-slate-500 dark:text-slate-400 mb-1">Balanță Cotizații</label>
                 <select 
                   value={selectedDebtFilter}
                   onChange={e => setSelectedDebtFilter(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold uppercase tracking-wider text-amber-750"
+                  className="w-full px-3 py-2 bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl text-xs font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400"
                 >
-                  <option value="Toți">Orice Balanță</option>
-                  <option value="Restanțieri">Restanțieri</option>
-                  <option value="La Zi">La Zi (Fără Datorii)</option>
+                  <option className="bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100" value="Toți">Orice Balanță</option>
+                  <option className="bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100" value="Restanțieri">Restanțieri</option>
+                  <option className="bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100" value="La Zi">La Zi (Fără Datorii)</option>
                 </select>
               </div>
 
               <div>
-                <label className="block text-[10px] font-black uppercase text-slate-500 mb-1">Sortare</label>
+                <label className="block text-[10px] font-black uppercase text-slate-500 dark:text-slate-400 mb-1">Sortare</label>
                 <select 
                   value={sortOrder}
                   onChange={e => setSortOrder(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold uppercase tracking-wider text-slate-800"
+                  className="w-full px-3 py-2 bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-slate-100"
                 >
-                  <option value="Implicit">Sortare Implicită (Nume)</option>
-                  <option value="Datorie">Cea Mai Mare Datorie</option>
+                  <option className="bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100" value="Implicit">Sortare Implicită (Nume)</option>
+                  <option className="bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100" value="Datorie">Cea Mai Mare Datorie</option>
                 </select>
               </div>
 
               <div className="sm:col-span-2 flex justify-between items-center pt-2">
-                <span className="text-xs font-semibold text-slate-500">
+                <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
                   {processedMembers.length} membri găsiți
                 </span>
                 <button
                   onClick={handleResetFilters}
-                  className="px-3 py-1.5 text-xs font-bold text-rose-600 bg-rose-50 hover:bg-rose-100 rounded-lg transition-colors flex items-center gap-1"
+                  className="px-3 py-1.5 text-xs font-bold text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-100 dark:hover:bg-rose-900/50 rounded-lg transition-colors flex items-center gap-1"
                 >
                   <RotateCcw size={13} /> Resetează Filtrele
                 </button>

@@ -2533,15 +2533,15 @@ html[data-theme="light"] .dashboard-shell {
   box-shadow: none !important;
 }
 
-/* Native form controls — give bare inputs a visible dark field by default */
+/* Native form controls — ensure high contrast in all themes */
 .dashboard-shell input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
 .dashboard-shell select,
 .dashboard-shell textarea {
-  color: var(--adm-ink);
-  background-color: var(--adm-surface);
+  color: var(--adm-ink, #0f172a);
+  background-color: var(--adm-surface, #ffffff);
 }
 .dashboard-shell input::placeholder,
-.dashboard-shell textarea::placeholder { color: var(--adm-ink-faint) !important; }
+.dashboard-shell textarea::placeholder { color: var(--adm-ink-faint, #94a3b8) !important; }
 .dashboard-shell input:focus,
 .dashboard-shell select:focus,
 .dashboard-shell textarea:focus {
@@ -2549,15 +2549,29 @@ html[data-theme="light"] .dashboard-shell {
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--theme-color, #89cff0) 15%, transparent) !important;
   outline: none;
 }
-.dashboard-shell option { background: var(--adm-panel); color: var(--adm-ink); }
+select option { 
+  background-color: #ffffff; 
+  color: #0f172a; 
+}
+html.dark select option,
+.dark select option,
+.dashboard-shell option { 
+  background-color: #1e293b !important; 
+  color: #f8fafc !important; 
+}
 
-/* Safety net: the public landing page's index.html loads the Tailwind CDN
-   Play script with its OWN light-theme config (brand_signature.*,
-   text.executive_dark, surface.background...). That script scans the whole
-   document — including the mounted React dashboard — and can inject a
-   competing (non-!important) light utility for any stray class that matches
-   its config. Anything from that vocabulary found inside .dashboard-shell is
-   almost certainly a leftover from the old light design, so force it dark. */
+/* Global Select & Input Contrast Protection */
+select {
+  color: #0f172a;
+}
+html.dark select,
+.dark select {
+  color: #f8fafc !important;
+  background-color: #1e293b !important;
+  border-color: #334155 !important;
+}
+
+/* Safety net: ensure proper background and text */
 .dashboard-shell [class*="brand_signature"] { background-color: var(--adm-panel) !important; color: var(--adm-ink) !important; }
 .dashboard-shell [class*="text-executive_dark"],
 .dashboard-shell [class*="text-surface-background"] { color: var(--adm-ink) !important; }

@@ -1,7 +1,9 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Trophy, Sparkles, Award, Crown, ChevronRight, History, PartyPopper, Zap, Flame, Star, Rocket, Clock, CheckCircle2 } from 'lucide-react';
+import { Trophy, Sparkles, Award, Crown, ChevronRight, History, PartyPopper, Star, Rocket, Clock, CheckCircle2 } from 'lucide-react';
 import { toast } from '../ui/Toast';
+import { supabase } from '../../supabase';
+import { computeMemberMilestones } from '../../utils/milestones';
 
 interface VolunteerSpotlightCardProps {
   members: any[];
@@ -18,6 +20,26 @@ export const VolunteerSpotlightCard: React.FC<VolunteerSpotlightCardProps> = ({
   const [showMilestones, setShowMilestones] = useState(false);
   const [congratsSent, setCongratsSent] = useState<Record<string, boolean>>({});
   const [showConfetti, setShowConfetti] = useState(false);
+  const [kudosCounts, setKudosCounts] = useState<Record<string, number>>({});
+
+  useEffect(() => {
+    async function loadKudos() {
+      try {
+        const { data, error } = await supabase.from('kudos').select('toId, toName');
+        if (!error && data) {
+          const map: Record<string, number> = {};
+          data.forEach((k: any) => {
+            if (k.toId) map[k.toId] = (map[k.toId] || 0) + 1;
+            if (k.toName) map[k.toName.toLowerCase()] = (map[k.toName.toLowerCase()] || 0) + 1;
+          });
+          setKudosCounts(map);
+        }
+      } catch (err) {
+        console.error('Error fetching kudos counts in Spotlight:', err);
+      }
+    }
+    loadKudos();
+  }, []);
 
   // Bi-Monthly Period Calculation (Every 2 Months)
   const biMonthlyPeriod = useMemo(() => {
@@ -66,11 +88,21 @@ export const VolunteerSpotlightCard: React.FC<VolunteerSpotlightCardProps> = ({
       if (effectiveScore > maxScore && effectiveScore > 0) {
         maxScore = effectiveScore;
         
-        // Calculated Rich Stats
-        const hoursCalculated = Math.max(12, Math.round(effectiveScore * 1.8));
-        const kudosCount = Math.max(3, (adjustments.length || 0) + 2);
-        const projectsCount = Math.max(1, Math.floor((m.presences || 4) / 3));
-        const attendanceRate = Math.min(100, 85 + Math.floor((m.presences || 5) * 2));
+        // Calculated Real Statistics
+        const hoursCalculated = Number(m.stats?.hours ?? m.hours ?? (m.presences ? m.presences * 2 : 0));
+
+        const memberKudosByToId = m.id ? (kudosCounts[m.id] || 0) : 0;
+        const memberKudosByName = m.name ? (kudosCounts[m.name.toLowerCase()] || 0) : 0;
+        const kudosCount = Math.max(memberKudosByToId, memberKudosByName, Array.isArray(m.kudos) ? m.kudos.length : 0);
+
+        const projectsCount = Number(m.stats?.projects ?? m.projects ?? (m.presences ? Math.floor(m.presences / 2) : 0));
+
+        const presences = Math.max(0, Number(m.presences || 0));
+        const unexcused = Math.max(0, Number(m.unexcusedAbsences || 0));
+        const totalEvents = presences + unexcused;
+        const attendanceRate = totalEvents > 0
+          ? Math.round((presences / totalEvents) * 100)
+          : (presences > 0 ? 100 : 0);
 
         topMember = {
           ...m,
@@ -85,41 +117,56 @@ export const VolunteerSpotlightCard: React.FC<VolunteerSpotlightCardProps> = ({
     });
 
     return topMember;
-  }, [members, biMonthlyPeriod]);
+  }, [members, biMonthlyPeriod, kudosCounts]);
 
-  // 2. Crazy & Unique Milestones List
+  // 2. Dynamic Real & Automatic Milestones
   const crazyMilestones = useMemo(() => {
+    if (!spotlightWinner) return [];
+
+    const { unlockedMilestones } = computeMemberMilestones(spotlightWinner, spotlightWinner.kudosCount);
+
+    if (unlockedMilestones.length > 0) {
+      return unlockedMilestones.slice(0, 4).map(m => ({
+        emoji: m.icon,
+        color: m.color || 'from-amber-500/20 to-orange-500/20 text-amber-400 border-amber-500/40',
+        title: m.title,
+        desc: m.desc,
+        badge: m.badge
+      }));
+    }
+
+    // Fallback if none unlocked yet: show real metrics
     return [
       {
-        icon: Rocket,
+        emoji: '⚡',
         color: 'from-[#28FAFC]/20 to-blue-500/20 text-[#28FAFC] border-[#28FAFC]/40',
-        title: '⚡ Proiect Transmis la Supraviteză',
-        desc: 'A organizat și mobilizat o echipă caritabilă în mai puțin de 48 ore.',
-        badge: 'RECORD DE VITEZĂ'
+        title: 'Punctaj Ediție',
+        desc: `A acumulat ${spotlightWinner.biMonthlyScore} puncte în ediția bimensuală curentă.`,
+        badge: 'SCOR REAL'
       },
       {
-        icon: Flame,
+        emoji: '🔥',
         color: 'from-amber-500/20 to-orange-500/20 text-amber-400 border-amber-500/40',
-        title: '🔥 Streak Imbatabil de 60 Zile',
-        desc: 'Implicare zilnică neîreruptă în activitățile și inițiativele Camena.',
-        badge: 'LEGENDĂ STREAK'
+        title: 'Rată de Prezență',
+        desc: `Rată de prezență de ${spotlightWinner.attendanceRate}% la activitățile clubului.`,
+        badge: 'PREZENȚĂ'
       },
       {
-        icon: Zap,
+        emoji: '🌱',
         color: 'from-purple-500/20 to-indigo-500/20 text-purple-400 border-purple-500/40',
-        title: '🧠 Mastermind al Comunității',
-        desc: 'A adus peste +20 de voluntari noi în ultima campanie de ecologizare.',
-        badge: 'MAGNET DE COMUNITATE'
+        title: 'Ore Voluntariat',
+        desc: `${spotlightWinner.hoursCalculated} ore de implicare comunitară validate.`,
+        badge: 'ORE REALE'
       },
       {
-        icon: Star,
+        emoji: '❤️',
         color: 'from-emerald-500/20 to-teal-500/20 text-emerald-400 border-emerald-500/40',
-        title: '🏆 100+ Ore de Voluntariat Pur',
-        desc: 'Depășit pragul psihologic de 100 ore devotate comunității din Piatra Neamț.',
-        badge: 'CENTURION VOLUNTARIAT'
+        title: 'Aprecieri Comunitate',
+        desc: `${spotlightWinner.kudosCount} aprecieri primite în platformă.`,
+        badge: 'KUDOS'
       }
     ];
-  }, []);
+  }, [spotlightWinner]);
 
   // 3. Hall of Fame (Past Bi-Monthly Champions)
   const hallOfFame = useMemo(() => {
@@ -243,7 +290,7 @@ export const VolunteerSpotlightCard: React.FC<VolunteerSpotlightCardProps> = ({
 
           <div className="text-center px-2 border-r border-amber-300/40 dark:border-white/10">
             <div className="text-xl md:text-2xl font-black text-slate-900 dark:text-white leading-none">
-              ~{spotlightWinner.hoursCalculated}h
+              {spotlightWinner.hoursCalculated}h
             </div>
             <div className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mt-1 flex items-center justify-center gap-1">
               <Clock size={10} /> Ore Voluntariat
@@ -329,7 +376,7 @@ export const VolunteerSpotlightCard: React.FC<VolunteerSpotlightCardProps> = ({
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-              {crazyMilestones.map((m, idx) => {
+              {crazyMilestones.map((m: any, idx: number) => {
                 const IconComponent = m.icon;
                 return (
                   <div
@@ -338,7 +385,13 @@ export const VolunteerSpotlightCard: React.FC<VolunteerSpotlightCardProps> = ({
                   >
                     <div>
                       <div className="flex items-center justify-between mb-2">
-                        <IconComponent size={18} />
+                        {m.emoji ? (
+                          <span className="text-xl">{m.emoji}</span>
+                        ) : IconComponent ? (
+                          <IconComponent size={18} />
+                        ) : (
+                          <span className="text-xl">🏆</span>
+                        )}
                         <span className="text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md bg-white/40 dark:bg-black/30">
                           {m.badge}
                         </span>
