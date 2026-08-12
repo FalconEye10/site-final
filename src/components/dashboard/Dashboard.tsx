@@ -1502,9 +1502,9 @@ const ViewProfile = ({ currentUserObj, onUpdateMember, members }: ViewProfilePro
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // 1MB Limit check before processing
-    if (file.size > 1 * 1024 * 1024) {
-      toast.error("Fișierul este prea mare! Limita de upload este de 1MB.");
+    // Up to 15MB file allowed for camera/phone photos
+    if (file.size > 15 * 1024 * 1024) {
+      toast.error("Fișierul este prea mare! Te rugăm să alegi o imagine sub 15MB.");
       return;
     }
 
@@ -1517,6 +1517,9 @@ const ViewProfile = ({ currentUserObj, onUpdateMember, members }: ViewProfilePro
           setCropOffsetX(0);
           setCropOffsetY(0);
         }
+      };
+      reader.onerror = () => {
+        toast.error("Eroare la citirea fișierului de imagine.");
       };
       reader.readAsDataURL(file);
     } catch (err) {
@@ -1558,7 +1561,7 @@ const ViewProfile = ({ currentUserObj, onUpdateMember, members }: ViewProfilePro
 
       ctx.drawImage(img, xOffset, yOffset, drawWidth, drawHeight);
 
-      // Now scale the 200x200 crop down to 192x192 to save space
+      // Now scale the 200x200 crop down to 192x192 to optimize storage
       const outCanvas = document.createElement('canvas');
       outCanvas.width = 192;
       outCanvas.height = 192;
@@ -1567,10 +1570,13 @@ const ViewProfile = ({ currentUserObj, onUpdateMember, members }: ViewProfilePro
         outCtx.drawImage(canvas, 0, 0, 200, 200, 0, 0, 192, 192);
       }
 
-      const dataUrl = outCanvas.toDataURL('image/jpeg', 0.75);
+      const dataUrl = outCanvas.toDataURL('image/jpeg', 0.82);
       setAvatar(dataUrl);
       setTempImageSrc(null);
-      toast.success("Imaginea a fost decupată și aplicată!");
+      toast.success("Imaginea a fost decupată! Apasă pe 'Salvează Modificările' pentru a finaliza.");
+    };
+    img.onerror = () => {
+      toast.error("Eroare la procesarea imaginii.");
     };
     img.src = tempImageSrc;
   };
@@ -1610,25 +1616,29 @@ const ViewProfile = ({ currentUserObj, onUpdateMember, members }: ViewProfilePro
             
             <div className="space-y-6">
               {/* Profile Photo Upload */}
-              <div className="flex flex-col items-center gap-4 p-4 bg-[#FAF9F5] rounded-2xl border border-brand-muted/5">
-                <div className="relative group">
+              <div className="flex flex-col items-center gap-4 p-5 bg-[#FAF9F5] rounded-2xl border border-brand-muted/10">
+                <div 
+                  className="relative group cursor-pointer" 
+                  onClick={() => document.getElementById('avatar-file-input')?.click()}
+                  title="Apasă pentru a alege o poză nouă"
+                >
                   {avatar ? (
                     <img 
                       src={avatar} 
                       alt="Avatar" 
-                      className="w-24 h-24 rounded-3xl object-cover border border-brand-muted/10 shadow-md"
+                      className="w-24 h-24 rounded-3xl object-cover border-2 border-brand-primary/30 shadow-md transition-transform group-hover:scale-105"
                     />
                   ) : (
-                    <div className="w-24 h-24 rounded-3xl bg-brand-accent text-white flex items-center justify-center font-bold text-4xl shadow-md uppercase">
+                    <div className="w-24 h-24 rounded-3xl bg-brand-accent text-white flex items-center justify-center font-bold text-4xl shadow-md uppercase transition-transform group-hover:scale-105">
                       {currentUserObj.name.charAt(0)}
                     </div>
                   )}
-                  <label 
-                    htmlFor="avatar-file-input" 
-                    className="absolute inset-0 flex items-center justify-center bg-black/40 text-white opacity-0 group-hover:opacity-100 rounded-3xl transition-opacity cursor-pointer"
+                  <div 
+                    className="absolute inset-0 flex flex-col items-center justify-center bg-black/45 text-white opacity-0 group-hover:opacity-100 rounded-3xl transition-opacity"
                   >
-                    <Upload size={20} />
-                  </label>
+                    <Upload size={22} className="mb-1" />
+                    <span className="text-[10px] font-bold">Schimbă</span>
+                  </div>
                   <input 
                     id="avatar-file-input"
                     type="file" 
@@ -1640,16 +1650,36 @@ const ViewProfile = ({ currentUserObj, onUpdateMember, members }: ViewProfilePro
                     }}
                   />
                 </div>
+
+                {/* Upload / Remove Actions */}
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => document.getElementById('avatar-file-input')?.click()}
+                    className="px-3.5 py-1.5 rounded-xl bg-brand-accent/10 hover:bg-brand-accent/20 text-brand-accent font-bold text-xs flex items-center gap-1.5 transition-colors cursor-pointer"
+                  >
+                    <Upload size={14} /> Încarcă Poză
+                  </button>
+                  {avatar && (
+                    <button
+                      type="button"
+                      onClick={() => setAvatar('')}
+                      className="px-3 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 font-bold text-xs transition-colors cursor-pointer"
+                    >
+                      Șterge
+                    </button>
+                  )}
+                </div>
                 
-                <div className="w-full">
-                  <label className="block text-xs font-semibold opacity-60 mb-1 text-center">
-                    Limita upload: 1MB (Se decupează și comprimă automat)
+                <div className="w-full space-y-1">
+                  <label className="block text-[11px] font-semibold opacity-60 text-center">
+                    Sau introdu link direct către poză (URL):
                   </label>
                   <input 
                     type="text" 
                     value={avatar}
                     onChange={e => setAvatar(e.target.value)}
-                    placeholder="URL Imagine (ex: https://...)" 
+                    placeholder="https://exemplu.ro/poza.jpg" 
                     className="w-full px-3 py-2 text-xs bg-white border border-brand-muted/10 rounded-xl focus:outline-none focus:border-brand-primary font-['Manrope']"
                   />
                 </div>
@@ -2044,6 +2074,26 @@ export function Dashboard({ username, onLogout }: DashboardProps) {
     }
   }, [members, username]);
 
+  // Auto-close mobile sidebar on resize to desktop (lg) or Escape key
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth >= 1024 && isMobileSidebarOpen) {
+        setIsMobileSidebarOpen(false);
+      }
+    };
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isMobileSidebarOpen) {
+        setIsMobileSidebarOpen(false);
+      }
+    };
+    window.addEventListener('resize', handleResize);
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isMobileSidebarOpen]);
+
   const handleCloseTutorial = async () => {
     setIsTutorialOpen(false);
     const localKey = `tutorial_seen_v2_${username.toLowerCase()}`;
@@ -2431,20 +2481,24 @@ export function Dashboard({ username, onLogout }: DashboardProps) {
       {/* Dynamic Animated Background */}
       <AuroraBackground colors={currentTheme.colors} />
 
-      {/* Mobile Sidebar Overlay */}
+      {/* Mobile Sidebar Overlay (Closes sidebar on tap outside) */}
       {isMobileSidebarOpen && (
         <div
-          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-35 lg:hidden"
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 lg:hidden cursor-pointer"
           onClick={() => setIsMobileSidebarOpen(false)}
+          aria-hidden="true"
         />
       )}
 
       {/* Sidebar Navigation */}
-      <aside className={`adm-sidebar fixed h-screen top-0 left-0 flex flex-col z-40 overflow-hidden transition-all duration-300 lg:translate-x-0 ${
-        isSidebarCollapsed ? 'lg:w-20' : 'lg:w-64'
-      } w-64 ${
-        isMobileSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
-      }`}>
+      <aside
+        id="adm-sidebar-nav"
+        className={`adm-sidebar fixed h-screen top-0 left-0 flex flex-col z-50 overflow-hidden transition-all duration-300 lg:translate-x-0 ${
+          isSidebarCollapsed ? 'lg:w-20' : 'lg:w-64'
+        } w-72 max-w-[85vw] ${
+          isMobileSidebarOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full lg:translate-x-0'
+        }`}
+      >
         <div className="px-5 pt-6 pb-4 flex flex-col items-center relative border-b border-white/10 shrink-0">
           {/* Close button for mobile sidebar */}
           <button
@@ -2544,7 +2598,12 @@ export function Dashboard({ username, onLogout }: DashboardProps) {
         </div>
       </aside>
 
-      <main className={`flex-1 flex flex-col h-screen overflow-y-auto relative transition-all duration-300 ${isSidebarCollapsed ? 'lg:ml-20' : 'lg:ml-64'}`}>
+      <main
+        onClick={() => {
+          if (isMobileSidebarOpen) setIsMobileSidebarOpen(false);
+        }}
+        className={`flex-1 flex flex-col h-screen overflow-y-auto relative transition-all duration-300 ${isSidebarCollapsed ? 'lg:ml-20' : 'lg:ml-64'}`}
+      >
 
         {/* Header */}
         <header className="adm-header sticky top-0 z-30 px-3.5 sm:px-6 py-3 sm:py-4 flex items-center justify-between">
@@ -2602,12 +2661,20 @@ export function Dashboard({ username, onLogout }: DashboardProps) {
                 onClick={() => setIsUserMenuOpen(v => !v)}
                 className="flex items-center gap-2.5 bg-white/[0.02] pl-2.5 pr-3 py-1.5 border border-white/10 hover:bg-white/5 transition-all"
               >
-                 <div
-                  className="w-7 h-7 flex items-center justify-center font-bold text-sm shrink-0"
-                  style={{ background: themeColor, color: themeTextColor }}
-                 >
-                   {username.charAt(0).toUpperCase()}
-                 </div>
+                 {currentUserObj?.avatar ? (
+                   <img
+                     src={currentUserObj.avatar}
+                     alt=""
+                     className="w-7 h-7 rounded-sm object-cover border border-white/10 shrink-0"
+                   />
+                 ) : (
+                   <div
+                    className="w-7 h-7 flex items-center justify-center font-bold text-sm shrink-0"
+                    style={{ background: themeColor, color: themeTextColor }}
+                   >
+                     {username.charAt(0).toUpperCase()}
+                   </div>
+                 )}
                  <div className="hidden sm:flex flex-col leading-tight text-left">
                    <span className="text-[10px] text-white/35 font-medium -mb-0.5">
                      {(() => { const h = new Date().getHours(); return h < 12 ? 'Bună dimineața' : h < 18 ? 'Bună ziua' : 'Bună seara'; })()}

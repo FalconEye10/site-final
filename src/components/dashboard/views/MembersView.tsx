@@ -541,9 +541,17 @@ export function MembersView({
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-center gap-3 min-w-0">
                     <div className="relative shrink-0">
-                      <div className="w-12 h-12 rounded-xl bg-brand-accent text-white flex items-center justify-center font-bold text-base shadow-sm">
-                        {m.name.split(' ').map((n: string) => n[0]).join('')}
-                      </div>
+                      {m.avatar ? (
+                        <img
+                          src={m.avatar}
+                          alt={m.name}
+                          className="w-12 h-12 rounded-xl object-cover border border-slate-200 shadow-sm"
+                        />
+                      ) : (
+                        <div className="w-12 h-12 rounded-xl bg-brand-accent text-white flex items-center justify-center font-bold text-base shadow-sm">
+                          {m.name.split(' ').map((n: string) => n[0]).join('')}
+                        </div>
+                      )}
                       {isClear && (
                         <div className="absolute -bottom-1 -right-1 bg-white rounded-full shadow-sm p-0.5" title="Membru Exemplar (La zi)">
                           <Star className="fill-emerald-400 text-emerald-400" size={12} />

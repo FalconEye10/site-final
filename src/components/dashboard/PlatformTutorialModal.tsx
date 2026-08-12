@@ -741,24 +741,23 @@ export const PlatformTutorialModal: React.FC<PlatformTutorialModalProps> = ({ is
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.88, y: 30 }}
         transition={{ duration: 0.45, ease: [0.23, 1, 0.32, 1] }}
-        className="relative w-full max-w-4xl bg-white dark:bg-[#0F1219] rounded-[2rem] border border-slate-200/80 dark:border-white/10 shadow-2xl overflow-hidden flex flex-col"
-        style={{ maxHeight: '94vh' }}
+        className="relative w-full max-w-4xl h-[90vh] max-h-[700px] min-h-[520px] sm:min-h-[580px] bg-white dark:bg-[#0F1219] rounded-[2rem] border border-slate-200/80 dark:border-white/10 shadow-2xl overflow-hidden flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Progress bar */}
-        <div className="h-1.5 bg-slate-100 dark:bg-slate-800 relative">
+        <div className="h-1.5 bg-slate-100 dark:bg-slate-800 relative shrink-0">
           <motion.div className={`h-full bg-gradient-to-r ${step.gradient}`}
             initial={false} animate={{ width: `${progress}%` }}
             transition={{ duration: 0.5, ease: [0.23, 1, 0.32, 1] }} />
         </div>
 
         {/* Header */}
-        <div className="px-8 md:px-10 pt-5 pb-2 flex items-center justify-between">
+        <div className="px-5 sm:px-8 md:px-10 pt-4 pb-3 flex items-center justify-between shrink-0 border-b border-slate-100 dark:border-white/5 bg-white dark:bg-[#0F1219] z-10">
           <div className="flex items-center gap-3">
             <motion.div key={step.id + '-hi'}
               initial={{ rotate: -90, scale: 0.5 }} animate={{ rotate: 0, scale: 1 }}
               transition={{ duration: 0.5, ease: [0.23, 1, 0.32, 1] }}
-              className={`w-10 h-10 rounded-2xl bg-gradient-to-br ${step.gradient} flex items-center justify-center shadow-lg`}
+              className={`w-10 h-10 rounded-2xl bg-gradient-to-br ${step.gradient} flex items-center justify-center shadow-lg shrink-0`}
             >
               <Compass size={20} className="text-white" />
             </motion.div>
@@ -777,32 +776,32 @@ export const PlatformTutorialModal: React.FC<PlatformTutorialModalProps> = ({ is
             </div>
           </div>
           <button onClick={handleSkip}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5 transition-all border border-transparent hover:border-slate-200 dark:hover:border-white/10"
+            className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-bold text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5 transition-all border border-transparent hover:border-slate-200 dark:hover:border-white/10 shrink-0"
           >Omite turul <X size={16} /></button>
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto px-8 md:px-10 pb-5">
+        <div className="flex-1 overflow-y-auto px-5 sm:px-8 md:px-10 py-5 overscroll-contain">
           <AnimatePresence mode="wait" custom={direction}>
             <motion.div key={step.id} custom={direction} variants={slideVariants}
               initial="enter" animate="center" exit="exit"
               transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
             >
               {/* Title */}
-              <div className="flex items-start gap-5 mb-6 mt-2">
+              <div className="flex items-start gap-4 sm:gap-5 mb-5 sm:mb-6 mt-1">
                 <motion.div key={step.id + '-ic'} initial={{ scale: 0, rotate: -180 }} animate={{ scale: 1, rotate: 0 }}
                   transition={{ delay: 0.1, duration: 0.6, ease: [0.23, 1, 0.32, 1] }}
-                  className={`w-16 h-16 md:w-20 md:h-20 rounded-3xl bg-gradient-to-br ${step.gradient} flex items-center justify-center shadow-xl shrink-0`}
+                  className={`w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 rounded-2xl sm:rounded-3xl bg-gradient-to-br ${step.gradient} flex items-center justify-center shadow-xl shrink-0`}
                 >
-                  <StepIcon size={32} className="text-white md:hidden" />
+                  <StepIcon size={28} className="text-white md:hidden" />
                   <StepIcon size={40} className="text-white hidden md:block" />
                 </motion.div>
-                <div className="min-w-0 pt-1">
+                <div className="min-w-0 pt-0.5 sm:pt-1">
                   <motion.h2 initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}
-                    className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white tracking-tight leading-tight"
+                    className="text-xl sm:text-2xl md:text-3xl font-black text-slate-900 dark:text-white tracking-tight leading-tight"
                   >{step.title}</motion.h2>
                   <motion.p initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}
-                    className="text-sm md:text-base font-semibold text-slate-500 dark:text-slate-400 mt-1"
+                    className="text-xs sm:text-sm md:text-base font-semibold text-slate-500 dark:text-slate-400 mt-1"
                   >{step.subtitle}</motion.p>
                 </div>
               </div>
@@ -811,7 +810,7 @@ export const PlatformTutorialModal: React.FC<PlatformTutorialModalProps> = ({ is
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5 md:gap-8">
                 <div className="space-y-4 flex flex-col justify-start">
                   <motion.p initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
-                    className="text-base text-slate-600 dark:text-slate-300 leading-relaxed font-['Manrope']"
+                    className="text-sm sm:text-base text-slate-600 dark:text-slate-300 leading-relaxed font-['Manrope']"
                   >{step.description}</motion.p>
 
                   {step.bullets && (
@@ -821,7 +820,7 @@ export const PlatformTutorialModal: React.FC<PlatformTutorialModalProps> = ({ is
                       {step.bullets.map((b, i) => (
                         <motion.li key={i} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }}
                           transition={{ delay: 0.3 + i * 0.06 }}
-                          className="text-sm text-slate-600 dark:text-slate-300 font-['Manrope'] leading-snug"
+                          className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 font-['Manrope'] leading-snug"
                         >{b}</motion.li>
                       ))}
                     </motion.ul>
@@ -829,11 +828,11 @@ export const PlatformTutorialModal: React.FC<PlatformTutorialModalProps> = ({ is
 
                   {step.tip && (
                     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.45 }}
-                      className={`p-4 rounded-2xl ${step.accentLight} ${step.accentDark} border border-slate-200/60 dark:border-white/10`}
+                      className={`p-3.5 sm:p-4 rounded-2xl ${step.accentLight} ${step.accentDark} border border-slate-200/60 dark:border-white/10`}
                     >
                       <div className="flex items-start gap-3">
                         <Sparkles size={18} className={`${step.iconColor} shrink-0 mt-0.5`} />
-                        <span className="text-sm font-semibold text-slate-700 dark:text-slate-200 leading-snug">{step.tip}</span>
+                        <span className="text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-200 leading-snug">{step.tip}</span>
                       </div>
                     </motion.div>
                   )}
@@ -842,7 +841,7 @@ export const PlatformTutorialModal: React.FC<PlatformTutorialModalProps> = ({ is
                     className="flex items-center gap-2.5 pt-1"
                   >
                     <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                    <span className="text-sm font-bold text-slate-400 dark:text-slate-500">
+                    <span className="text-xs sm:text-sm font-bold text-slate-400 dark:text-slate-500">
                       Locație: <span className="text-slate-700 dark:text-slate-300">{step.sidebarHighlight}</span>
                     </span>
                   </motion.div>
@@ -850,9 +849,9 @@ export const PlatformTutorialModal: React.FC<PlatformTutorialModalProps> = ({ is
 
                 <motion.div initial={{ opacity: 0, scale: 0.92, y: 10 }} animate={{ opacity: 1, scale: 1, y: 0 }}
                   transition={{ delay: 0.2, duration: 0.5 }}
-                  className="rounded-2xl bg-slate-50/80 dark:bg-white/[0.02] border border-slate-200/60 dark:border-white/8 p-5 md:p-6 overflow-hidden"
+                  className="rounded-2xl bg-slate-50/80 dark:bg-white/[0.02] border border-slate-200/60 dark:border-white/8 p-4 sm:p-5 md:p-6 overflow-hidden"
                 >
-                  <div className="flex items-center gap-2 mb-4">
+                  <div className="flex items-center gap-2 mb-3 sm:mb-4">
                     <div className="w-2.5 h-2.5 rounded-full bg-rose-400" />
                     <div className="w-2.5 h-2.5 rounded-full bg-amber-400" />
                     <div className="w-2.5 h-2.5 rounded-full bg-emerald-400" />
@@ -865,35 +864,50 @@ export const PlatformTutorialModal: React.FC<PlatformTutorialModalProps> = ({ is
           </AnimatePresence>
         </div>
 
-        {/* Footer */}
-        <div className="px-8 md:px-10 py-4 bg-slate-50/80 dark:bg-white/[0.02] border-t border-slate-200/60 dark:border-white/8 flex items-center justify-between gap-4">
-          <div className="flex items-center gap-1">
+        {/* Fixed Position Footer across PC, Mobile & Tablet */}
+        <div className="px-5 sm:px-8 md:px-10 py-3.5 sm:py-4 bg-slate-50/90 dark:bg-[#121620] border-t border-slate-200/80 dark:border-white/10 flex items-center justify-between gap-3 shrink-0 h-20 z-10">
+          <div className="flex items-center gap-1 sm:gap-1.5 overflow-x-auto py-1 max-w-[40%] sm:max-w-none shrink-0">
             {TUTORIAL_STEPS.map((_, idx) => (
               <button key={idx} onClick={() => goToStep(idx)}
-                className={`rounded-full transition-all duration-300 ${
-                  idx === currentStep ? 'w-7 h-2.5 bg-gradient-to-r ' + step.gradient + ' shadow-md'
-                  : idx < currentStep ? 'w-2.5 h-2.5 bg-slate-400 dark:bg-slate-500'
-                  : 'w-2.5 h-2.5 bg-slate-200 dark:bg-slate-700'
+                className={`rounded-full transition-all duration-300 cursor-pointer ${
+                  idx === currentStep ? 'w-6 sm:w-7 h-2.5 bg-gradient-to-r ' + step.gradient + ' shadow-md'
+                  : idx < currentStep ? 'w-2 sm:w-2.5 h-2 sm:h-2.5 bg-slate-400 dark:bg-slate-500'
+                  : 'w-2 sm:w-2.5 h-2 sm:h-2.5 bg-slate-200 dark:bg-slate-700'
                 }`} title={TUTORIAL_STEPS[idx].title}
               />
             ))}
           </div>
 
-          <div className="flex items-center gap-3">
-            {currentStep > 0 && (
-              <button onClick={goPrev}
-                className="px-4 py-2.5 rounded-xl border border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300 text-sm font-bold hover:bg-slate-100 dark:hover:bg-white/5 transition-all flex items-center gap-1.5"
-              ><ChevronLeft size={16} /> Înapoi</button>
-            )}
+          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+            {/* Always occupy space so layout never shifts */}
+            <button
+              onClick={goPrev}
+              disabled={currentStep === 0}
+              className={`px-3.5 sm:px-4 py-2.5 rounded-xl border border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300 text-xs sm:text-sm font-bold hover:bg-slate-100 dark:hover:bg-white/5 transition-all flex items-center justify-center gap-1.5 min-w-[80px] sm:min-w-[95px] ${
+                currentStep === 0 ? 'invisible pointer-events-none opacity-0' : 'opacity-100 cursor-pointer'
+              }`}
+            >
+              <ChevronLeft size={16} /> <span>Înapoi</span>
+            </button>
 
             {isLast ? (
-              <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }} onClick={handleFinish}
-                className="px-7 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white text-sm md:text-base font-bold flex items-center gap-2 shadow-xl shadow-emerald-500/25 transition-all"
-              ><Sparkles size={18} /> Începe Explorarea!</motion.button>
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={handleFinish}
+                className="px-4 sm:px-6 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white text-xs sm:text-sm md:text-base font-bold flex items-center justify-center gap-2 shadow-xl shadow-emerald-500/25 transition-all min-w-[140px] sm:min-w-[180px] cursor-pointer"
+              >
+                <Sparkles size={17} /> <span className="truncate">Începe Explorarea!</span>
+              </motion.button>
             ) : (
-              <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }} onClick={goNext}
-                className={`px-7 py-2.5 rounded-xl bg-gradient-to-r ${step.gradient} text-white text-sm md:text-base font-bold flex items-center gap-2 shadow-xl transition-all`}
-              >Următorul <ChevronRight size={16} /></motion.button>
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={goNext}
+                className={`px-4 sm:px-6 py-2.5 rounded-xl bg-gradient-to-r ${step.gradient} text-white text-xs sm:text-sm md:text-base font-bold flex items-center justify-center gap-2 shadow-xl transition-all min-w-[140px] sm:min-w-[180px] cursor-pointer`}
+              >
+                <span>Următorul</span> <ChevronRight size={17} />
+              </motion.button>
             )}
           </div>
         </div>

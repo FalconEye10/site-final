@@ -292,10 +292,18 @@ export function MemberDrawer({ member, onClose, onUpdateMember, isAdmin }: Membe
         {/* Header */}
         <div className="p-3.5 sm:p-5 bg-slate-50 border-b border-slate-200 flex items-start justify-between gap-3">
           <div className="flex items-center gap-3 sm:gap-4 min-w-0">
-            {/* Square Initials Avatar */}
-            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-slate-900 text-white font-bold text-sm sm:text-base flex items-center justify-center shrink-0 font-title">
-              {initials}
-            </div>
+            {/* Square Initials or Photo Avatar */}
+            {member.avatar ? (
+              <img
+                src={member.avatar}
+                alt={member.name}
+                className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl object-cover border border-slate-300 shrink-0 shadow-sm"
+              />
+            ) : (
+              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-slate-900 text-white font-bold text-sm sm:text-base flex items-center justify-center shrink-0 font-title">
+                {initials}
+              </div>
+            )}
 
             <div className="min-w-0">
               <div className="flex items-center gap-1.5 flex-wrap">

@@ -132,15 +132,13 @@ export function LeaderboardView({ members, isAdmin = false, onUpdateMember }: Le
     return winner;
   }, [members]);
 
-  // 4. Cea Mai Mare Evoluție (Diferența între perioada bimensuală curentă și cea anterioară)
+  // 4. Cea Mai Mare Evoluție (Diferența / Delta între perioada bimensuală curentă și cea anterioară)
   const ceaMaiMareEvolutie = useMemo(() => {
     let maxDiff = -999999;
     let winner: any = null;
 
-    const top4Ids = [locul1?.id, locul2?.id, locul3?.id, locul4?.id].filter(Boolean);
-
     members.forEach(m => {
-      if (m.role?.toLowerCase() === 'admin' || top4Ids.includes(m.id)) return;
+      if (m.role?.toLowerCase() === 'admin') return;
       const adjustments = m.scoreAdjustments || [];
 
       // Current Bi-Monthly Score
@@ -175,19 +173,20 @@ export function LeaderboardView({ members, isAdmin = false, onUpdateMember }: Le
 
       if (evolution > maxDiff && evolution > 0) {
         maxDiff = evolution;
-        winner = { ...m, evolution };
+        winner = { ...m, evolution, currentScore, prevScore };
       }
     });
 
     return winner;
-  }, [members, biMonthlyInfo, locul1, locul2, locul3, locul4]);
+  }, [members, biMonthlyInfo]);
 
-  // 5. Pagination & Search for members starting from Rank #5 (Locul 5+)
+  // 5. Pagination & Search: When searching, search through ALL members.
+  // If not searching, show from Rank #5 (Locul 5+) since 1-4 are already featured on the podium.
   const filteredList = useMemo(() => {
-    const list = sortedMembers.slice(4); // Exclude Locul 1, 2, 3, 4 from main table
-    const query = searchQuery.toLowerCase();
-    if (!query) return list;
-    return list.filter(m => {
+    const query = searchQuery.trim().toLowerCase();
+    const baseList = query ? sortedMembers : sortedMembers.slice(4);
+    if (!query) return baseList;
+    return baseList.filter(m => {
       const nameMatch = (m.name || '').toLowerCase().includes(query);
       const nicknameMatch = (m.nickname || '').toLowerCase().includes(query);
       const roleMatch = (m.role || '').toLowerCase().includes(query);
@@ -306,19 +305,42 @@ export function LeaderboardView({ members, isAdmin = false, onUpdateMember }: Le
               </div>
             </div>
 
-            <div className="flex items-center gap-4 bg-white/80 dark:bg-slate-900/80 px-6 py-4 rounded-2xl border border-amber-400/30 shadow-md">
-              <div className="text-center">
-                <div className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Scor Bilunar</div>
-                <div className="text-2xl md:text-3xl font-black text-amber-500">
-                  {locul1.biMonthlyScore > 0 ? `+${locul1.biMonthlyScore}` : locul1.biMonthlyScore} pct
+            <div className="flex flex-col sm:flex-row items-center gap-4">
+              <div className="flex items-center gap-4 bg-white/80 dark:bg-slate-900/80 px-6 py-4 rounded-2xl border border-amber-400/30 shadow-md">
+                <div className="text-center">
+                  <div className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Scor Bilunar</div>
+                  <div className="text-2xl md:text-3xl font-black text-amber-500">
+                    {locul1.biMonthlyScore > 0 ? `+${locul1.biMonthlyScore}` : locul1.biMonthlyScore} pct
+                  </div>
+                </div>
+                <div className="w-px h-10 bg-slate-200 dark:bg-slate-800" />
+                <div className="text-center">
+                  <div className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Total Istoric</div>
+                  <div className="text-xl font-bold text-slate-800 dark:text-slate-200">
+                    {locul1.totalScore} pct
+                  </div>
                 </div>
               </div>
-              <div className="w-px h-10 bg-slate-200 dark:bg-slate-800" />
-              <div className="text-center">
-                <div className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Total Istoric</div>
-                <div className="text-xl font-bold text-slate-800 dark:text-slate-200">
-                  {locul1.totalScore} pct
-                </div>
+
+              {/* Admin Actions for Locul 1 */}
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setHistoryModalMember(locul1)}
+                  title="Istoric puncte"
+                  className="p-3 bg-white/90 dark:bg-slate-900/90 hover:bg-white text-slate-700 dark:text-slate-200 rounded-2xl border border-amber-400/40 shadow-sm transition-all flex items-center gap-1.5 text-xs font-bold cursor-pointer"
+                >
+                  <History size={16} />
+                  <span className="hidden sm:inline">Istoric</span>
+                </button>
+                {isAdmin && (
+                  <button
+                    onClick={() => { setScoreModalMember(locul1); setScoreAdjustValue(''); setScoreAdjustReason(''); }}
+                    className="px-4 py-3 bg-amber-500 hover:bg-amber-400 text-slate-950 rounded-2xl text-xs font-black shadow-md transition-all flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <Plus size={16} />
+                    Ajustează Scor
+                  </button>
+                )}
               </div>
             </div>
           </div>
@@ -344,7 +366,7 @@ export function LeaderboardView({ members, isAdmin = false, onUpdateMember }: Le
             </h2>
           </div>
 
-          <div className="flex items-end justify-center gap-1.5 sm:gap-8 h-56 relative z-10">
+          <div className="flex items-end justify-center gap-2 sm:gap-8 min-h-[17rem] pb-2 relative z-10">
             {/* Locul 3 - Bronz (Stânga) */}
             {locul3 && (
               <div className="flex flex-col items-center w-1/3 min-w-0">
@@ -361,6 +383,24 @@ export function LeaderboardView({ members, isAdmin = false, onUpdateMember }: Le
                 <div className="w-14 sm:w-16 h-20 bg-amber-900/10 rounded-t-2xl border-t-2 border-amber-700 flex flex-col items-center justify-start pt-2 shadow-sm">
                   <span className="text-xl sm:text-2xl font-black text-amber-700">3</span>
                   <span className="text-[9px] sm:text-[10px] font-bold text-amber-800 mt-1 truncate px-0.5">{scoreMode === 'total' ? locul3.totalScore : locul3.biMonthlyScore} pts</span>
+                </div>
+                {/* Actions Locul 3 */}
+                <div className="flex items-center gap-1 mt-2.5">
+                  <button
+                    onClick={() => setHistoryModalMember(locul3)}
+                    title="Istoric puncte"
+                    className="p-1.5 rounded-lg border border-amber-700/20 hover:bg-amber-700/10 text-amber-800 transition-colors"
+                  >
+                    <History size={12} />
+                  </button>
+                  {isAdmin && (
+                    <button
+                      onClick={() => { setScoreModalMember(locul3); setScoreAdjustValue(''); setScoreAdjustReason(''); }}
+                      className="px-2 py-1 rounded-lg bg-amber-700 hover:bg-amber-800 text-white font-bold text-[10px] shadow-xs transition-colors"
+                    >
+                      Ajustează
+                    </button>
+                  )}
                 </div>
               </div>
             )}
@@ -383,6 +423,24 @@ export function LeaderboardView({ members, isAdmin = false, onUpdateMember }: Le
                   <span className="text-2xl sm:text-3xl font-black text-slate-500">2</span>
                   <span className="text-[10px] sm:text-xs font-bold text-slate-600 mt-1 truncate px-0.5">{scoreMode === 'total' ? locul2.totalScore : locul2.biMonthlyScore} pts</span>
                 </div>
+                {/* Actions Locul 2 */}
+                <div className="flex items-center gap-1 mt-2.5">
+                  <button
+                    onClick={() => setHistoryModalMember(locul2)}
+                    title="Istoric puncte"
+                    className="p-1.5 rounded-lg border border-slate-400/30 hover:bg-slate-200 text-slate-700 transition-colors"
+                  >
+                    <History size={13} />
+                  </button>
+                  {isAdmin && (
+                    <button
+                      onClick={() => { setScoreModalMember(locul2); setScoreAdjustValue(''); setScoreAdjustReason(''); }}
+                      className="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 text-white font-bold text-[11px] shadow-xs transition-colors"
+                    >
+                      Ajustează
+                    </button>
+                  )}
+                </div>
               </div>
             )}
 
@@ -403,6 +461,24 @@ export function LeaderboardView({ members, isAdmin = false, onUpdateMember }: Le
                   <span className="text-lg sm:text-xl font-black text-indigo-500">4</span>
                   <span className="text-[9px] sm:text-[10px] font-bold text-indigo-600 mt-0.5 truncate px-0.5">{scoreMode === 'total' ? locul4.totalScore : locul4.biMonthlyScore} pts</span>
                 </div>
+                {/* Actions Locul 4 */}
+                <div className="flex items-center gap-1 mt-2.5">
+                  <button
+                    onClick={() => setHistoryModalMember(locul4)}
+                    title="Istoric puncte"
+                    className="p-1.5 rounded-lg border border-indigo-400/30 hover:bg-indigo-100 text-indigo-700 transition-colors"
+                  >
+                    <History size={12} />
+                  </button>
+                  {isAdmin && (
+                    <button
+                      onClick={() => { setScoreModalMember(locul4); setScoreAdjustValue(''); setScoreAdjustReason(''); }}
+                      className="px-2 py-1 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-[10px] shadow-xs transition-colors"
+                    >
+                      Ajustează
+                    </button>
+                  )}
+                </div>
               </div>
             )}
           </div>
@@ -416,16 +492,26 @@ export function LeaderboardView({ members, isAdmin = false, onUpdateMember }: Le
               <h3 className="font-anthropicSerif font-semibold text-sm uppercase tracking-wider text-slate-800">Voluntarul Lunii</h3>
             </div>
             {voluntarulLunii ? (
-              <div className="flex items-center gap-4">
-                <img
-                  src={voluntarulLunii.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(voluntarulLunii.nickname || voluntarulLunii.name)}&background=001f26&color=FAF9F5`}
-                  className="w-12 h-12 rounded-full border border-emerald-500/30 object-cover"
-                  alt=""
-                />
-                <div>
-                  <div className="text-xl font-black text-brand-accent leading-tight mb-1">{voluntarulLunii.nickname || voluntarulLunii.name}</div>
-                  <div className="text-emerald-700 font-bold text-sm">+{voluntarulLunii.monthlyPoints} puncte luna aceasta</div>
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3 min-w-0">
+                  <img
+                    src={voluntarulLunii.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(voluntarulLunii.nickname || voluntarulLunii.name)}&background=001f26&color=FAF9F5`}
+                    className="w-12 h-12 rounded-full border border-emerald-500/30 object-cover shrink-0"
+                    alt=""
+                  />
+                  <div className="min-w-0">
+                    <div className="text-xl font-black text-brand-accent leading-tight mb-1 truncate">{voluntarulLunii.nickname || voluntarulLunii.name}</div>
+                    <div className="text-emerald-700 font-bold text-sm">+{voluntarulLunii.monthlyPoints} puncte luna aceasta</div>
+                  </div>
                 </div>
+                {isAdmin && (
+                  <button
+                    onClick={() => { setScoreModalMember(voluntarulLunii); setScoreAdjustValue(''); setScoreAdjustReason(''); }}
+                    className="px-2.5 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs shadow-xs shrink-0 transition-colors"
+                  >
+                    Ajustează
+                  </button>
+                )}
               </div>
             ) : (
               <div className="text-brand-accent/50 text-sm font-semibold">Nu sunt date suficiente luna aceasta.</div>
@@ -438,16 +524,26 @@ export function LeaderboardView({ members, isAdmin = false, onUpdateMember }: Le
               <h3 className="font-anthropicSerif font-semibold text-sm uppercase tracking-wider text-slate-800">Cea Mai Mare Evoluție</h3>
             </div>
             {ceaMaiMareEvolutie ? (
-              <div className="flex items-center gap-4">
-                <img
-                  src={ceaMaiMareEvolutie.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(ceaMaiMareEvolutie.nickname || ceaMaiMareEvolutie.name)}&background=001f26&color=FAF9F5`}
-                  className="w-10 h-10 rounded-full border border-indigo-500/20 object-cover"
-                  alt=""
-                />
-                <div>
-                  <div className="text-lg font-bold text-brand-accent leading-tight mb-1">{ceaMaiMareEvolutie.nickname || ceaMaiMareEvolutie.name}</div>
-                  <div className="text-indigo-600 font-bold text-xs uppercase tracking-wider">+{ceaMaiMareEvolutie.evolution} puncte (vs. perioada anterioară)</div>
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3 min-w-0">
+                  <img
+                    src={ceaMaiMareEvolutie.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(ceaMaiMareEvolutie.nickname || ceaMaiMareEvolutie.name)}&background=001f26&color=FAF9F5`}
+                    className="w-10 h-10 rounded-full border border-indigo-500/20 object-cover shrink-0"
+                    alt=""
+                  />
+                  <div className="min-w-0">
+                    <div className="text-lg font-bold text-brand-accent leading-tight mb-1 truncate">{ceaMaiMareEvolutie.nickname || ceaMaiMareEvolutie.name}</div>
+                    <div className="text-indigo-600 font-bold text-xs uppercase tracking-wider">+{ceaMaiMareEvolutie.evolution} puncte</div>
+                  </div>
                 </div>
+                {isAdmin && (
+                  <button
+                    onClick={() => { setScoreModalMember(ceaMaiMareEvolutie); setScoreAdjustValue(''); setScoreAdjustReason(''); }}
+                    className="px-2.5 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-xs shrink-0 transition-colors"
+                  >
+                    Ajustează
+                  </button>
+                )}
               </div>
             ) : (
               <div className="text-brand-accent/50 text-sm font-semibold">Nu sunt date suficiente.</div>
@@ -456,7 +552,7 @@ export function LeaderboardView({ members, isAdmin = false, onUpdateMember }: Le
         </div>
       </motion.div>
 
-      {/* FULL LEADERBOARD TABLE — LOCUL 5+ */}
+      {/* FULL LEADERBOARD TABLE */}
       <motion.div 
         variants={itemVariants}
         initial="hidden"
@@ -466,7 +562,11 @@ export function LeaderboardView({ members, isAdmin = false, onUpdateMember }: Le
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
           <div className="flex items-center gap-3 flex-wrap">
             <h2 className="text-xl font-anthropicSerif font-semibold text-slate-800">
-              {scoreMode === 'bimonthly' ? `Clasament Bimensual (Locul 5+) — ${biMonthlyInfo.periodLabel}` : 'Clasament General (Total Istoric)'}
+              {searchQuery.trim()
+                ? `Rezultate căutare: "${searchQuery}"`
+                : scoreMode === 'bimonthly'
+                ? `Clasament Bimensual (Locul 5+) — ${biMonthlyInfo.periodLabel}`
+                : 'Clasament General (Total Istoric)'}
             </h2>
             <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl border border-slate-200 dark:border-slate-700">
               <button
@@ -498,7 +598,7 @@ export function LeaderboardView({ members, isAdmin = false, onUpdateMember }: Le
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-brand-accent/40 group-focus-within:text-brand-primary transition-colors" size={16} />
             <input 
               type="text" 
-              placeholder="Caută voluntar de la locul 5+..." 
+              placeholder="Caută orice voluntar..." 
               value={searchQuery}
               onChange={e => { setSearchQuery(e.target.value); setCurrentPage(1); }}
               className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-brand-primary/40 focus:ring-2 focus:ring-brand-primary/15 focus:bg-white transition-all font-['Manrope']"
@@ -520,8 +620,8 @@ export function LeaderboardView({ members, isAdmin = false, onUpdateMember }: Le
               </TableRow>
             </TableHeader>
             <TableBody>
-              {paginatedMembers.map((m, idx) => {
-                const globalRank = 5 + (currentPage - 1) * itemsPerPage + idx;
+              {paginatedMembers.map((m) => {
+                const globalRank = sortedMembers.findIndex(sm => sm.id === m.id) + 1;
                 const scoreValue = scoreMode === 'total' ? (m.totalScore || 0) : (m.biMonthlyScore || 0);
                 const isNegative = scoreValue < 0;
 
