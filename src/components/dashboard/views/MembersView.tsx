@@ -541,9 +541,9 @@ export function MembersView({
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-center gap-3 min-w-0">
                     <div className="relative shrink-0">
-                      {m.avatar ? (
+                      {(m.avatar || m.photo_url || m.photoUrl) ? (
                         <img
-                          src={m.avatar}
+                          src={m.avatar || m.photo_url || m.photoUrl}
                           alt={m.name}
                           className="w-12 h-12 rounded-xl object-cover border border-slate-200 shadow-sm"
                         />
@@ -684,9 +684,17 @@ export function MembersView({
                       <TableCell>
                         <div className="flex items-center gap-3 sm:gap-4">
                           <div className="relative shrink-0">
-                            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-brand-accent text-white flex items-center justify-center font-bold text-xs sm:text-sm shadow-sm group-hover:scale-105 transition-transform">
-                              {m.name.split(' ').map((n: string) => n[0]).join('')}
-                            </div>
+                            {(m.avatar || m.photo_url || m.photoUrl) ? (
+                              <img
+                                src={m.avatar || m.photo_url || m.photoUrl}
+                                alt={m.name}
+                                className="w-9 h-9 sm:w-10 sm:h-10 rounded-full object-cover border border-slate-200 shadow-sm group-hover:scale-105 transition-transform"
+                              />
+                            ) : (
+                              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-brand-accent text-white flex items-center justify-center font-bold text-xs sm:text-sm shadow-sm group-hover:scale-105 transition-transform">
+                                {m.name.split(' ').map((n: string) => n[0]).join('')}
+                              </div>
+                            )}
                             {isClear && (
                               <div className="absolute -bottom-1 -right-1 bg-white rounded-full shadow-sm p-0.5" title="Membru Exemplar (La zi)">
                                 <Star className="fill-emerald-400 text-emerald-400" size={12} />

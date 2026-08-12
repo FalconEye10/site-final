@@ -293,9 +293,9 @@ export function MemberDrawer({ member, onClose, onUpdateMember, isAdmin }: Membe
         <div className="p-3.5 sm:p-5 bg-slate-50 border-b border-slate-200 flex items-start justify-between gap-3">
           <div className="flex items-center gap-3 sm:gap-4 min-w-0">
             {/* Square Initials or Photo Avatar */}
-            {member.avatar ? (
+            {(member.avatar || member.photo_url || member.photoUrl) ? (
               <img
-                src={member.avatar}
+                src={member.avatar || member.photo_url || member.photoUrl}
                 alt={member.name}
                 className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl object-cover border border-slate-300 shrink-0 shadow-sm"
               />

@@ -1746,9 +1746,9 @@ const ViewProfile = ({ currentUserObj, onUpdateMember, members }: ViewProfilePro
           {/* Top Header Card */}
           <Card>
             <div className="flex flex-col md:flex-row items-center gap-6">
-              {avatar ? (
+              {(avatar || currentUserObj.photo_url || currentUserObj.photoUrl) ? (
                 <img 
-                  src={avatar} 
+                  src={avatar || currentUserObj.photo_url || currentUserObj.photoUrl} 
                   alt="Profile" 
                   className="w-20 h-20 rounded-3xl object-cover border border-brand-muted/10 shadow-md"
                 />
@@ -2661,9 +2661,9 @@ export function Dashboard({ username, onLogout }: DashboardProps) {
                 onClick={() => setIsUserMenuOpen(v => !v)}
                 className="flex items-center gap-2.5 bg-white/[0.02] pl-2.5 pr-3 py-1.5 border border-white/10 hover:bg-white/5 transition-all"
               >
-                 {currentUserObj?.avatar ? (
+                 {(currentUserObj?.avatar || currentUserObj?.photo_url || currentUserObj?.photoUrl) ? (
                    <img
-                     src={currentUserObj.avatar}
+                     src={currentUserObj.avatar || currentUserObj.photo_url || currentUserObj.photoUrl}
                      alt=""
                      className="w-7 h-7 rounded-sm object-cover border border-white/10 shrink-0"
                    />

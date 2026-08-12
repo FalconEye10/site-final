@@ -453,9 +453,17 @@ export function RepartizareView({ isAdmin, members }: RepartizareViewProps) {
                                   : 'bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 border-slate-200 dark:border-slate-700 shadow-xs'
                               }`}
                             >
-                              <span className="w-5 h-5 rounded-full bg-indigo-500 text-white flex items-center justify-center text-[10px] font-black shrink-0 uppercase">
-                                {member?.name ? member.name.charAt(0) : '?'}
-                              </span>
+                              {(member?.avatar || member?.photo_url || member?.photoUrl) ? (
+                                <img
+                                  src={member.avatar || member.photo_url || member.photoUrl}
+                                  alt=""
+                                  className="w-5 h-5 rounded-full object-cover shrink-0 border border-slate-200"
+                                />
+                              ) : (
+                                <span className="w-5 h-5 rounded-full bg-indigo-500 text-white flex items-center justify-center text-[10px] font-black shrink-0 uppercase">
+                                  {member?.name ? member.name.charAt(0) : '?'}
+                                </span>
+                              )}
                               <span>{member?.name || 'Membru'}</span>
                               {isCoordinator && (
                                 <span className="text-[9px] font-black bg-amber-200 text-amber-800 px-1.5 py-0.5 rounded uppercase">Șef</span>
@@ -544,9 +552,17 @@ export function RepartizareView({ isAdmin, members }: RepartizareViewProps) {
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2.5 min-w-0">
-                        <div className="w-7 h-7 rounded-full bg-indigo-500 text-white flex items-center justify-center font-bold text-xs shrink-0 uppercase">
-                          {m.name ? m.name.charAt(0) : '?'}
-                        </div>
+                        {(m.avatar || m.photo_url || m.photoUrl) ? (
+                          <img
+                            src={m.avatar || m.photo_url || m.photoUrl}
+                            alt=""
+                            className="w-7 h-7 rounded-full object-cover shrink-0 border border-slate-200"
+                          />
+                        ) : (
+                          <div className="w-7 h-7 rounded-full bg-indigo-500 text-white flex items-center justify-center font-bold text-xs shrink-0 uppercase">
+                            {m.name ? m.name.charAt(0) : '?'}
+                          </div>
+                        )}
                         <div className="min-w-0">
                           <span className="text-xs font-bold text-slate-900 dark:text-slate-100 block truncate">
                             {m.name}
