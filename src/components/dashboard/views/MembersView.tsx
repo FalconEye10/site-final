@@ -526,7 +526,7 @@ export function MembersView({
             const presences = m.presences || 0;
             const excused = m.excusedAbsences || 0;
             const unexcused = m.unexcusedAbsences || 0;
-            const { rate, barColorClass, colorClass, percentage } = calculateQualification(presences, excused, unexcused, m.status);
+            const { rate, barColorClass, colorClass, percentage } = calculateQualification(presences, excused, unexcused, m.status, m.role);
             const textColorClass = colorClass.split(' ').find(c => c.startsWith('text-')) || 'text-brand-accent';
 
             return (
@@ -712,7 +712,7 @@ export function MembersView({
                           const presences = m.presences || 0;
                           const excused = m.excusedAbsences || 0;
                           const unexcused = m.unexcusedAbsences || 0;
-                          const { rate, barColorClass, colorClass, percentage } = calculateQualification(presences, excused, unexcused, m.status);
+                          const { rate, barColorClass, colorClass, percentage } = calculateQualification(presences, excused, unexcused, m.status, m.role);
                           const textColorClass = colorClass.split(' ').find(c => c.startsWith('text-')) || 'text-brand-accent';
                           
                           return (

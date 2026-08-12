@@ -179,7 +179,7 @@ export function EventsView({ isAdmin, members = [], currentUserId, onUpdateMembe
       }
 
       try {
-        const affectedMembers = members.filter(member => (event.rsvps?.[member.id] || 'none') === 'present');
+        const affectedMembers = members.filter(member => member.role !== 'admin' && (event.rsvps?.[member.id] || 'none') === 'present');
         // 2 puncte per oră de voluntariat, uniform pe tot site-ul.
         const pointsToAdd = Math.round(durationHours * 2);
 
@@ -252,7 +252,7 @@ export function EventsView({ isAdmin, members = [], currentUserId, onUpdateMembe
       }
 
       try {
-        const affectedMembers = members.filter(member => creditsByMember.has(member.id));
+        const affectedMembers = members.filter(member => member.role !== 'admin' && creditsByMember.has(member.id));
 
         for (const member of affectedMembers) {
           const credits = creditsByMember.get(member.id) || [];

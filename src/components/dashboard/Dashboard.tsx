@@ -285,6 +285,10 @@ const ViewDashboard = ({ members, currentUserObj, isAdmin, onNavigateToSection, 
       toast.error("Trebuie să fii conectat ca membru pentru RSVP.");
       return;
     }
+    if (currentUserObj.role === 'admin') {
+      toast.error("Membrii Board nu înregistrează RSVP.");
+      return;
+    }
     const userId = currentUserObj.id || currentUserObj.username;
     try {
       const currentRSVPs = { ...(nextEvent.rsvps || {}) };
@@ -310,10 +314,11 @@ const ViewDashboard = ({ members, currentUserObj, isAdmin, onNavigateToSection, 
     : 0;
 
   const personalDebt = currentUserObj ? calculateDebt(currentUserObj.joinDate, currentUserObj.totalPaid || 0) : 0;
-  const personalHours = currentUserObj?.stats?.hours || 0;
+  const personalHours = currentUserObj?.role === 'admin' ? 0 : (currentUserObj?.stats?.hours || 0);
   const personalProjects = currentUserObj?.stats?.projects || 0;
 
   const topVolunteers = [...members]
+    .filter(m => m.role?.toLowerCase() !== 'admin')
     .sort((a, b) => (b.stats?.hours || 0) - (a.stats?.hours || 0))
     .slice(0, 3);
 
@@ -321,7 +326,7 @@ const ViewDashboard = ({ members, currentUserObj, isAdmin, onNavigateToSection, 
   const rankableMembers = [...members]
     .filter(m => m.role?.toLowerCase() !== 'admin')
     .sort((a, b) => (b.score || 0) - (a.score || 0));
-  const myRankIndex = currentUserObj ? rankableMembers.findIndex(m => m.id === currentUserObj.id) : -1;
+  const myRankIndex = (currentUserObj && currentUserObj.role !== 'admin') ? rankableMembers.findIndex(m => m.id === currentUserObj.id) : -1;
   const myRank = myRankIndex >= 0 ? myRankIndex + 1 : null;
   const myTopPercent = myRank && rankableMembers.length > 0
     ? Math.max(1, Math.round((myRank / rankableMembers.length) * 100))
@@ -330,8 +335,10 @@ const ViewDashboard = ({ members, currentUserObj, isAdmin, onNavigateToSection, 
   const totalVotes = activePoll ? Object.keys(activePoll.votes || {}).length : 0;
   const userVote = currentUserObj && activePoll ? (activePoll.votes || {})[currentUserObj.id || currentUserObj.username] : undefined;
 
-  // combined volunteer stats
-  const totalCombinedHours = members.reduce((sum, m) => sum + (m.stats?.hours || 0), 0);
+  // combined volunteer stats (excluding Board / Admin members from total volunteer hours)
+  const totalCombinedHours = members
+    .filter(m => m.role?.toLowerCase() !== 'admin')
+    .reduce((sum, m) => sum + (m.stats?.hours || 0), 0);
   const totalCombinedProjects = events.filter(e => e.type === 'social').length;
   const targetMonthlyHours = 500;
   const targetPercentage = Math.min(100, Math.round((totalCombinedHours / targetMonthlyHours) * 100));
@@ -363,7 +370,8 @@ const ViewDashboard = ({ members, currentUserObj, isAdmin, onNavigateToSection, 
     statsObj.presences || 0,
     statsObj.excusedAbsences || 0,
     statsObj.unexcusedAbsences || 0,
-    currentUserObj?.status
+    currentUserObj?.status,
+    currentUserObj?.role
   );
 
   return (
@@ -677,33 +685,40 @@ const ViewDashboard = ({ members, currentUserObj, isAdmin, onNavigateToSection, 
                        </div>
                      )}
                    </div>
-                 ) : (
-                   <div className="pt-4 border-t border-brand-muted/5 space-y-2">
-                     <div className="text-xs font-bold opacity-50 uppercase tracking-wider mb-2">Te înscrii la activitate?</div>
-                     <div className="flex gap-2">
-                       <button
-                         onClick={() => handleRSVP('confirmed')}
-                         className={`flex-1 py-2.5 text-xs font-bold rounded-full transition-all border ${
-                           userRsvpStatus === 'confirmed'
-                             ? 'bg-emerald-500 border-emerald-500 text-white shadow-md shadow-emerald-500/10'
-                             : 'bg-white border-brand-muted/10 text-emerald-600 hover:bg-emerald-50'
-                         }`}
-                       >
-                         Particip
-                       </button>
-                       <button
-                         onClick={() => onRedirectToExcuse(nextEvent.id)}
-                         className={`flex-1 py-2.5 text-xs font-bold rounded-full transition-all border ${
-                           userRsvpStatus === 'declined'
-                             ? 'bg-rose-500 border-rose-500 text-white shadow-md shadow-rose-500/10'
-                             : 'bg-white border-brand-muted/10 text-rose-600 hover:bg-rose-50'
-                         }`}
-                       >
-                         Absentez
-                       </button>
-                     </div>
-                   </div>
-                 )}
+                 ) : currentUserObj?.role === 'admin' ? (
+                    <div className="pt-4 border-t border-brand-muted/5">
+                      <div className="p-3 bg-amber-50 border border-amber-200/80 rounded-xl text-amber-900 text-xs font-semibold flex items-center justify-between">
+                        <span>Membru Board (Exonerat de RSVP)</span>
+                        <span className="text-[10px] font-bold bg-amber-200/60 text-amber-900 px-2 py-0.5 rounded-md uppercase">ADMIN</span>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="pt-4 border-t border-brand-muted/5 space-y-2">
+                      <div className="text-xs font-bold opacity-50 uppercase tracking-wider mb-2">Te înscrii la activitate?</div>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => handleRSVP('confirmed')}
+                          className={`flex-1 py-2.5 text-xs font-bold rounded-full transition-all border ${
+                            userRsvpStatus === 'confirmed'
+                              ? 'bg-emerald-500 border-emerald-500 text-white shadow-md shadow-emerald-500/10'
+                              : 'bg-white border-brand-muted/10 text-emerald-600 hover:bg-emerald-50'
+                          }`}
+                        >
+                          Particip
+                        </button>
+                        <button
+                          onClick={() => onRedirectToExcuse(nextEvent.id)}
+                          className={`flex-1 py-2.5 text-xs font-bold rounded-full transition-all border ${
+                            userRsvpStatus === 'declined'
+                              ? 'bg-rose-500 border-rose-500 text-white shadow-md shadow-rose-500/10'
+                              : 'bg-white border-brand-muted/10 text-rose-600 hover:bg-rose-50'
+                          }`}
+                        >
+                          Absentez
+                        </button>
+                      </div>
+                    </div>
+                  )}
                </div>
             ) : (
               <div className="py-8 text-center text-xs opacity-50 italic">Nu sunt întâlniri planificate în viitor.</div>

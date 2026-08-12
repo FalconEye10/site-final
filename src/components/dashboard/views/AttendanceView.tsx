@@ -20,6 +20,23 @@ const MemberAttendanceView = ({ member, events, currentUserId, preselectedEventI
   const [reason, setReason] = useState('');
   const [loading, setLoading] = useState(true);
 
+  if (member?.role === 'admin') {
+    return (
+      <div className="admin-card text-brand-accent space-y-6">
+        <h2 className="text-2xl font-bold">Situație Prezențe</h2>
+        <div className="p-6 bg-amber-50 border border-amber-200 rounded-2xl text-amber-900 shadow-sm">
+          <div className="flex items-center gap-3 mb-2">
+            <span className="px-2.5 py-1 rounded-md bg-amber-200 text-amber-900 font-extrabold text-xs uppercase">Statut Board / Admin</span>
+            <span className="font-bold text-sm">Exonerat de la evidența prezențelor</span>
+          </div>
+          <p className="text-xs text-amber-800 leading-relaxed">
+            Ca membru în Board-ul de conducere sau Administrator, activitatea ta este orientată pe decizii de guvernanță și organizare. Nu ești contorizat pentru rata de prezență, absențe sau ore de voluntariat competitive.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   useEffect(() => {
     if (preselectedEventId) {
       setSelectedEventId(preselectedEventId);
@@ -211,7 +228,7 @@ export function AttendanceView({ members, onUpdateMember, isAdmin, currentUserId
     if (!selectedEvent) return;
 
     if (!selectedEvent.attendanceClosed) {
-      const unassignedCount = members.filter(m => (selectedEvent.rsvps?.[m.id] || 'none') === 'none').length;
+      const unassignedCount = members.filter(m => m.role !== 'admin').filter(m => (selectedEvent.rsvps?.[m.id] || 'none') === 'none').length;
       if (unassignedCount > 0) {
         toast.error(`Nu poți finaliza: ${unassignedCount} membri au status nespecificat.`);
         return;
@@ -544,10 +561,11 @@ export function AttendanceView({ members, onUpdateMember, isAdmin, currentUserId
               <div className="overflow-y-auto scrollbar-thin pr-2">
                 {selectedEvent.attendanceClosed ? (
                   (() => {
-                    const total = members.length;
-                    const presentCount = members.filter(m => selectedEvent.rsvps?.[m.id] === 'present').length;
-                    const absentCount = members.filter(m => selectedEvent.rsvps?.[m.id] === 'absent' || selectedEvent.rsvps?.[m.id] === 'unexcused').length;
-                    const excusedCount = members.filter(m => selectedEvent.rsvps?.[m.id] === 'excused').length;
+                    const activeMembers = members.filter(m => m.role !== 'admin');
+                    const total = activeMembers.length;
+                    const presentCount = activeMembers.filter(m => selectedEvent.rsvps?.[m.id] === 'present').length;
+                    const absentCount = activeMembers.filter(m => selectedEvent.rsvps?.[m.id] === 'absent' || selectedEvent.rsvps?.[m.id] === 'unexcused').length;
+                    const excusedCount = activeMembers.filter(m => selectedEvent.rsvps?.[m.id] === 'excused').length;
                     
                     const presentPct = total ? Math.round((presentCount / total) * 100) : 0;
                     const absentPct = total ? Math.round((absentCount / total) * 100) : 0;
@@ -665,6 +683,7 @@ export function AttendanceView({ members, onUpdateMember, isAdmin, currentUserId
                     </TableHeader>
                     <TableBody>
                       {members
+                        .filter(m => m.role !== 'admin')
                         .filter(m => !requests.some(r => r.memberId === m.id && r.status === 'approved'))
                         .filter(m => {
                           if (selectedEvent.type === 'meeting') return true;

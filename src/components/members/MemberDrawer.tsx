@@ -231,7 +231,8 @@ export function MemberDrawer({ member, onClose, onUpdateMember, isAdmin }: Membe
     member.presences || 0,
     member.excusedAbsences || 0,
     member.unexcusedAbsences || 0,
-    member.status
+    member.status,
+    member.role
   );
 
   const validReceipts = payments.filter((r: any) => r.status !== 'Anulat');
@@ -715,15 +716,15 @@ export function MemberDrawer({ member, onClose, onUpdateMember, isAdmin }: Membe
                     <div className="grid grid-cols-3 gap-3 pt-2 text-center text-xs font-data">
                       <div className="p-2.5 rounded-sm bg-slate-50 border border-slate-200">
                         <span className="text-slate-500 block font-title">Prezențe</span>
-                        <span className="text-base font-bold text-slate-900 font-data">{member.presences || 0}</span>
+                        <span className="text-base font-bold text-slate-900 font-data">{member.role === 'admin' ? '—' : (member.presences || 0)}</span>
                       </div>
                       <div className="p-2.5 rounded-sm bg-slate-50 border border-slate-200">
                         <span className="text-slate-500 block font-title">Motivate</span>
-                        <span className="text-base font-bold text-slate-900 font-data">{member.excusedAbsences || 0}</span>
+                        <span className="text-base font-bold text-slate-900 font-data">{member.role === 'admin' ? '—' : (member.excusedAbsences || 0)}</span>
                       </div>
                       <div className="p-2.5 rounded-sm bg-slate-50 border border-slate-200">
                         <span className="text-slate-500 block font-title">Nemotivate</span>
-                        <span className="text-base font-bold text-slate-900 font-data">{member.unexcusedAbsences || 0}</span>
+                        <span className="text-base font-bold text-slate-900 font-data">{member.role === 'admin' ? '—' : (member.unexcusedAbsences || 0)}</span>
                       </div>
                     </div>
                   </div>

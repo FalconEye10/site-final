@@ -146,7 +146,18 @@ export function generateSmartTransactionId(memberName: string, dateObj: Date): s
 /**
  * Calculează calificativul și procentul de prezență
  */
-export function calculateQualification(p: number, _e: number, u: number, status?: string): { rate: string, qualification: string, colorClass: string, percentage: number, barColorClass: string } {
+export function calculateQualification(p: number, _e: number, u: number, status?: string, role?: string): { rate: string, qualification: string, colorClass: string, percentage: number, barColorClass: string } {
+  // If member is Board / Admin, they are exempt from attendance tracking
+  if (role?.toLowerCase() === 'admin' || status?.toLowerCase() === 'admin') {
+    return {
+      rate: '—',
+      qualification: 'Board',
+      colorClass: 'bg-amber-50 text-amber-700 border-amber-200',
+      percentage: 0,
+      barColorClass: 'bg-amber-500'
+    };
+  }
+
   // If member is passive, they are not penalized and get a neutral qualification
   if (status?.toLowerCase() === 'passive') {
     return {
