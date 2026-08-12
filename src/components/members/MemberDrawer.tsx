@@ -257,7 +257,7 @@ export function MemberDrawer({ member, onClose, onUpdateMember, isAdmin }: Membe
     : 'M';
 
   return createPortal(
-    <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 sm:p-6 bg-slate-900/60 backdrop-blur-xs font-data">
+    <div className="fixed inset-0 z-[150] flex items-end sm:items-center justify-center p-0 sm:p-4 md:p-6 bg-slate-900/60 backdrop-blur-sm font-data">
       {/* Backdrop overlay */}
       <motion.div
         initial={{ opacity: 0 }}
@@ -267,39 +267,39 @@ export function MemberDrawer({ member, onClose, onUpdateMember, isAdmin }: Membe
         onClick={onClose}
       />
 
-      {/* Centered White Modal */}
+      {/* Centered White Modal (Bottom Sheet on mobile, centered modal on sm+) */}
       <motion.div
-        initial={{ opacity: 0, scale: 0.98, y: 8 }}
+        initial={{ opacity: 0, scale: 0.98, y: 16 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
-        exit={{ opacity: 0, scale: 0.98, y: 8 }}
-        transition={{ duration: 0.15, ease: 'easeOut' }}
-        className="relative w-full max-w-4xl max-h-[90vh] bg-white text-slate-900 border border-slate-300 shadow-2xl rounded-md z-[151] flex flex-col overflow-hidden"
+        exit={{ opacity: 0, scale: 0.98, y: 16 }}
+        transition={{ duration: 0.18, ease: 'easeOut' }}
+        className="relative w-full max-w-4xl max-h-[94vh] sm:max-h-[90vh] bg-white text-slate-900 border border-slate-300 shadow-2xl rounded-t-3xl sm:rounded-xl z-[151] flex flex-col overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="p-5 bg-slate-50 border-b border-slate-200 flex items-start justify-between gap-4">
-          <div className="flex items-center gap-4">
+        <div className="p-3.5 sm:p-5 bg-slate-50 border-b border-slate-200 flex items-start justify-between gap-3">
+          <div className="flex items-center gap-3 sm:gap-4 min-w-0">
             {/* Square Initials Avatar */}
-            <div className="w-12 h-12 rounded-md bg-slate-900 text-white font-bold text-base flex items-center justify-center shrink-0 font-title">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-slate-900 text-white font-bold text-sm sm:text-base flex items-center justify-center shrink-0 font-title">
               {initials}
             </div>
 
-            <div>
-              <div className="flex items-center gap-2 flex-wrap">
-                <h2 className="text-xl font-bold text-slate-900 tracking-tight font-title">{member.name}</h2>
+            <div className="min-w-0">
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <h2 className="text-lg sm:text-xl font-bold text-slate-900 tracking-tight font-title truncate">{member.name}</h2>
                 {member.nickname && (
                   <span className="text-xs text-slate-500 font-normal font-data">({member.nickname})</span>
                 )}
               </div>
 
-              <div className="flex items-center gap-2 mt-1 flex-wrap">
+              <div className="flex items-center gap-1.5 sm:gap-2 mt-1 flex-wrap">
                 {/* Role Badge */}
-                <span className="px-2 py-0.5 rounded-sm text-xs font-medium bg-slate-200 text-slate-800 border border-slate-300 font-title">
+                <span className="px-2 py-0.5 rounded-sm text-[11px] sm:text-xs font-medium bg-slate-200 text-slate-800 border border-slate-300 font-title">
                   {member.role === 'admin' ? (member.boardPosition || 'Board') : 'Voluntar'}
                 </span>
 
                 {/* Financial Status Badge */}
-                <span className={`px-2 py-0.5 rounded-sm text-xs font-medium border font-title ${
+                <span className={`px-2 py-0.5 rounded-sm text-[11px] sm:text-xs font-medium border font-title ${
                   computedStatus === 'active' 
                     ? 'bg-emerald-50 text-emerald-800 border-emerald-300' 
                     : 'bg-rose-50 text-rose-800 border-rose-300 font-semibold'
@@ -308,7 +308,7 @@ export function MemberDrawer({ member, onClose, onUpdateMember, isAdmin }: Membe
                 </span>
 
                 {/* Attendance Qualification Badge */}
-                <span className="px-2 py-0.5 rounded-sm text-xs font-medium bg-slate-100 text-slate-700 border border-slate-300 flex items-center gap-1 font-title">
+                <span className="px-2 py-0.5 rounded-sm text-[11px] sm:text-xs font-medium bg-slate-100 text-slate-700 border border-slate-300 flex items-center gap-1 font-title">
                   <Award size={12} /> {qualification} ({rate})
                 </span>
               </div>
@@ -316,19 +316,20 @@ export function MemberDrawer({ member, onClose, onUpdateMember, isAdmin }: Membe
           </div>
 
           {/* Action Buttons & Close */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
             {isAdmin && (
               <button
                 onClick={() => setIsEditing(!isEditing)}
-                className="px-3 py-1.5 text-xs font-semibold rounded-md bg-slate-900 text-white hover:bg-slate-800 transition-colors flex items-center gap-1.5 font-title"
+                className="px-2.5 sm:px-3 py-1.5 text-xs font-semibold rounded-lg bg-slate-900 text-white hover:bg-slate-800 transition-colors flex items-center gap-1 font-title"
               >
                 <Edit3 size={13} />
-                {isEditing ? 'Vizualizează' : 'Editează Profil'}
+                <span className="hidden sm:inline">{isEditing ? 'Vizualizează' : 'Editează Profil'}</span>
+                <span className="sm:hidden">{isEditing ? 'Vezi' : 'Editează'}</span>
               </button>
             )}
             <button
               onClick={onClose}
-              className="p-1.5 rounded-md bg-slate-100 hover:bg-slate-200 text-slate-600 hover:text-slate-900 border border-slate-300 transition-colors"
+              className="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 hover:text-slate-900 border border-slate-300 transition-colors"
               aria-label="Închide"
             >
               <X size={18} />
@@ -336,12 +337,12 @@ export function MemberDrawer({ member, onClose, onUpdateMember, isAdmin }: Membe
           </div>
         </div>
 
-        {/* Tab Navigation */}
+        {/* Tab Navigation (Scrollable Horizontally on Small Screens) */}
         {!isEditing && (
-          <div className="px-5 bg-slate-50 border-b border-slate-200 flex gap-6 text-xs font-medium text-slate-600 font-title">
+          <div className="px-3 sm:px-5 bg-slate-50 border-b border-slate-200 flex gap-4 sm:gap-6 text-xs font-medium text-slate-600 font-title overflow-x-auto no-scrollbar whitespace-nowrap">
             <button
               onClick={() => setActiveTab('finance')}
-              className={`py-3 border-b-2 transition-colors flex items-center gap-1.5 ${
+              className={`py-2.5 sm:py-3 border-b-2 transition-colors flex items-center gap-1.5 shrink-0 ${
                 activeTab === 'finance'
                   ? 'border-slate-900 text-slate-900 font-bold'
                   : 'border-transparent hover:text-slate-900'
@@ -353,7 +354,7 @@ export function MemberDrawer({ member, onClose, onUpdateMember, isAdmin }: Membe
 
             <button
               onClick={() => setActiveTab('activity')}
-              className={`py-3 border-b-2 transition-colors flex items-center gap-1.5 ${
+              className={`py-2.5 sm:py-3 border-b-2 transition-colors flex items-center gap-1.5 shrink-0 ${
                 activeTab === 'activity'
                   ? 'border-slate-900 text-slate-900 font-bold'
                   : 'border-transparent hover:text-slate-900'
@@ -365,7 +366,7 @@ export function MemberDrawer({ member, onClose, onUpdateMember, isAdmin }: Membe
 
             <button
               onClick={() => setActiveTab('achievements')}
-              className={`py-3 border-b-2 transition-colors flex items-center gap-1.5 ${
+              className={`py-2.5 sm:py-3 border-b-2 transition-colors flex items-center gap-1.5 shrink-0 ${
                 activeTab === 'achievements'
                   ? 'border-slate-900 text-slate-900 font-bold'
                   : 'border-transparent hover:text-slate-900'
@@ -377,7 +378,7 @@ export function MemberDrawer({ member, onClose, onUpdateMember, isAdmin }: Membe
 
             <button
               onClick={() => setActiveTab('profile')}
-              className={`py-3 border-b-2 transition-colors flex items-center gap-1.5 ${
+              className={`py-2.5 sm:py-3 border-b-2 transition-colors flex items-center gap-1.5 shrink-0 ${
                 activeTab === 'profile'
                   ? 'border-slate-900 text-slate-900 font-bold'
                   : 'border-transparent hover:text-slate-900'
@@ -389,7 +390,7 @@ export function MemberDrawer({ member, onClose, onUpdateMember, isAdmin }: Membe
 
             <button
               onClick={() => setActiveTab('committees')}
-              className={`py-3 border-b-2 transition-colors flex items-center gap-1.5 ${
+              className={`py-2.5 sm:py-3 border-b-2 transition-colors flex items-center gap-1.5 shrink-0 ${
                 activeTab === 'committees'
                   ? 'border-slate-900 text-slate-900 font-bold'
                   : 'border-transparent hover:text-slate-900'
@@ -402,7 +403,7 @@ export function MemberDrawer({ member, onClose, onUpdateMember, isAdmin }: Membe
         )}
 
         {/* Content Area */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-white font-data">
+        <div className="flex-1 overflow-y-auto p-3.5 sm:p-6 space-y-5 sm:space-y-6 bg-white font-data">
           {isEditing ? (
             /* Edit Form */
             <form onSubmit={handleSaveProfile} className="space-y-5 max-w-2xl mx-auto font-data">
@@ -1139,7 +1140,7 @@ export function MemberDrawer({ member, onClose, onUpdateMember, isAdmin }: Membe
       {/* Receipt View Modal */}
       <AnimatePresence>
         {selectedReceipt && (
-          <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs font-data">
+          <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm font-data">
             <motion.div
               initial={{ opacity: 0, scale: 0.97 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -1216,7 +1217,7 @@ export function MemberDrawer({ member, onClose, onUpdateMember, isAdmin }: Membe
       {/* Score Adjustment Modal */}
       <AnimatePresence>
         {isScoreModalOpen && (
-          <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs font-data">
+          <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm font-data">
             <motion.div
               initial={{ opacity: 0, scale: 0.97 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -1285,7 +1286,7 @@ export function MemberDrawer({ member, onClose, onUpdateMember, isAdmin }: Membe
       {/* Revert Payment Modal */}
       <AnimatePresence>
         {receiptToRevert && (
-          <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs font-data">
+          <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm font-data">
             <motion.div
               initial={{ opacity: 0, scale: 0.97 }}
               animate={{ opacity: 1, scale: 1 }}

@@ -19,12 +19,11 @@ export const VolunteerSpotlightCard: React.FC<VolunteerSpotlightCardProps> = ({
   const [congratsSent, setCongratsSent] = useState<Record<string, boolean>>({});
   const [showConfetti, setShowConfetti] = useState(false);
 
-  const now = new Date();
-
   // Bi-Monthly Period Calculation (Every 2 Months)
   const biMonthlyPeriod = useMemo(() => {
-    const month = now.getMonth(); // 0 - 11
-    const year = now.getFullYear();
+    const d = new Date();
+    const month = d.getMonth(); // 0 - 11
+    const year = d.getFullYear();
     const biMonthIndex = Math.floor(month / 2);
 
     const periods = [
@@ -41,7 +40,7 @@ export const VolunteerSpotlightCard: React.FC<VolunteerSpotlightCardProps> = ({
       months: [biMonthIndex * 2, biMonthIndex * 2 + 1],
       year
     };
-  }, [now]);
+  }, []);
 
   // 1. Calculate Bi-Monthly Winner & Rich Stats
   const spotlightWinner = useMemo(() => {
@@ -143,7 +142,11 @@ export const VolunteerSpotlightCard: React.FC<VolunteerSpotlightCardProps> = ({
     return null;
   }
 
-  const isSelf = currentUserId && (spotlightWinner.id === currentUserId || spotlightWinner.username?.toLowerCase() === currentUserId.toLowerCase());
+  const isSelf = currentUserId && (
+    spotlightWinner.id === currentUserId || 
+    (spotlightWinner.username || '').toLowerCase() === currentUserId.toLowerCase() ||
+    (spotlightWinner.name || '').toLowerCase() === currentUserId.toLowerCase()
+  );
 
   return (
     <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-amber-500/10 via-orange-500/5 to-amber-600/10 border border-amber-500/30 p-6 md:p-8 backdrop-blur-md shadow-xl font-['Hanken_Grotesk']">
@@ -158,7 +161,7 @@ export const VolunteerSpotlightCard: React.FC<VolunteerSpotlightCardProps> = ({
             initial={{ opacity: 0, scale: 0.5 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 1.5 }}
-            className="absolute inset-0 z-20 flex items-center justify-center pointer-events-none bg-amber-500/10 backdrop-blur-xs rounded-3xl"
+            className="absolute inset-0 z-20 flex items-center justify-center pointer-events-none bg-amber-500/10 backdrop-blur-sm rounded-3xl"
           >
             <div className="text-center">
               <span className="text-6xl animate-bounce block">🎉✨👑</span>

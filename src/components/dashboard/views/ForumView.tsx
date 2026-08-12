@@ -15,6 +15,7 @@ interface ForumPost {
 interface ForumViewProps {
   isAdmin: boolean;
   currentUserId: string;
+  currentUsername?: string;
 }
 
 const REACTION_CONFIG = [
@@ -23,7 +24,7 @@ const REACTION_CONFIG = [
   { key: 'dislike', icon: ThumbsDown, label: '👎' },
 ];
 
-export const ForumView: React.FC<ForumViewProps> = ({ isAdmin, currentUserId }) => {
+export const ForumView: React.FC<ForumViewProps> = ({ isAdmin, currentUserId, currentUsername }) => {
   const [posts, setPosts] = useState<ForumPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [newPostTitle, setNewPostTitle] = useState('');
@@ -76,7 +77,7 @@ export const ForumView: React.FC<ForumViewProps> = ({ isAdmin, currentUserId }) 
         title: newPostTitle.trim(),
         content: newPostContent.trim(),
         authorId: currentUserId,
-        authorName: currentUserId || 'Membru',
+        authorName: currentUsername || currentUserId || 'Membru',
         reactions: { like: [], love: [], dislike: [] },
         createdAt: new Date().toISOString(),
       });

@@ -115,7 +115,7 @@ export function AddMemberModal({ isOpen, onClose, members, onAddMember }: AddMem
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center p-0 sm:p-4">
           <motion.div 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -128,7 +128,7 @@ export function AddMemberModal({ isOpen, onClose, members, onAddMember }: AddMem
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
             transition={{ duration: 0.3, ease: easeOut }}
-            className="relative w-full max-w-3xl bg-white rounded-3xl shadow-[0_40px_100px_rgba(0,0,0,0.3)] p-8 overflow-y-auto overflow-x-hidden max-h-[92vh] scrollbar-thin"
+            className="relative w-full max-w-3xl bg-white rounded-t-3xl sm:rounded-3xl shadow-[0_40px_100px_rgba(0,0,0,0.3)] p-4 sm:p-8 overflow-y-auto overflow-x-hidden max-h-[94vh] sm:max-h-[92vh] scrollbar-thin"
           >
             <div className="absolute top-[-20%] right-[-10%] w-[50%] h-[50%] bg-brand-primary/30 blur-[60px] rounded-full pointer-events-none" />
             

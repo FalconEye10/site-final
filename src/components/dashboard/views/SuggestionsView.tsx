@@ -175,7 +175,7 @@ export const SuggestionsView: React.FC<SuggestionsViewProps> = ({
               <select
                 value={topic}
                 onChange={e => setTopic(e.target.value)}
-                className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-750 rounded-xl text-xs font-bold text-slate-900 dark:text-white focus:outline-none focus:border-slate-400"
+                className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-900 dark:text-white focus:outline-none focus:border-slate-400"
               >
                 {TOPIC_TYPES.map((t, idx) => (
                   <option key={idx} value={t} className="dark:bg-slate-900">{t}</option>
@@ -193,15 +193,15 @@ export const SuggestionsView: React.FC<SuggestionsViewProps> = ({
                 onChange={e => setMessage(e.target.value)}
                 placeholder="Descrie ideea sau întrebarea pe care dorești să o adresezi board-ului..."
                 required
-                className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-750 rounded-xl text-sm text-slate-900 dark:text-white focus:outline-none focus:border-slate-400 font-['Manrope']"
+                className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-900 dark:text-white focus:outline-none focus:border-slate-400 font-['Manrope']"
               />
             </div>
 
             {/* Anonymous Toggle & Reward Notice */}
             <div className="space-y-2">
-              <div className="p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-750 rounded-2xl flex items-center justify-between">
+              <div className="p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <EyeOff size={16} className={isAnonymous ? "text-purple-600 dark:text-purple-450" : "text-slate-400"} />
+                  <EyeOff size={16} className={isAnonymous ? "text-purple-600 dark:text-purple-400" : "text-slate-400"} />
                   <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
                     {isAnonymous ? "Trimitere Anonimă" : "Trimitere Publică (cu Nume)"}
                   </span>
@@ -258,18 +258,18 @@ export const SuggestionsView: React.FC<SuggestionsViewProps> = ({
                 </button>
               ))}
             </div>
-            <span className="text-xs font-bold text-slate-500 dark:text-slate-450 mr-2 font-title">
+            <span className="text-xs font-bold text-slate-500 dark:text-slate-400 mr-2 font-title">
               {filteredSuggestions.length} {filteredSuggestions.length === 1 ? 'sugestie' : 'sugestii'}
             </span>
           </div>
 
           {loading ? (
-            <div className="p-12 text-center text-slate-500 dark:text-slate-450 font-bold">Se încarcă sugestiile...</div>
+            <div className="p-12 text-center text-slate-500 dark:text-slate-400 font-bold">Se încarcă sugestiile...</div>
           ) : filteredSuggestions.length === 0 ? (
             <div className="rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-12 text-center shadow-lg">
               <MessageSquarePlus className="w-12 h-12 mx-auto text-slate-300 dark:text-slate-700 mb-3" />
               <h3 className="text-lg font-bold text-slate-800 dark:text-white">Nicio sugestie în această categorie</h3>
-              <p className="text-sm text-slate-500 dark:text-slate-455 mt-1 font-['Manrope']">Ai o idee? Trimite-o folosind formularul din stânga!</p>
+              <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 font-['Manrope']">Ai o idee? Trimite-o folosind formularul din stânga!</p>
             </div>
           ) : (
             <div className="space-y-4">
@@ -330,7 +330,7 @@ export const SuggestionsView: React.FC<SuggestionsViewProps> = ({
                           : item.status === 'discutat'
                           ? 'bg-blue-50 text-blue-700 border-blue-300'
                           : 'bg-amber-50 text-amber-700 border-amber-300'
-                      } dark:bg-slate-800 dark:text-slate-250 dark:border-slate-700`}>
+                      } dark:bg-slate-800 dark:text-slate-200 dark:border-slate-700`}>
                         {item.status === 'implementat' ? '✓ Implementat' : item.status === 'discutat' ? '💬 Discutat' : '⏳ În așteptare'}
                       </span>
                     </div>

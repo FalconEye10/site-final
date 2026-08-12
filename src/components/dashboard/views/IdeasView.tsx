@@ -322,17 +322,17 @@ export const IdeasView: React.FC<IdeasViewProps> = ({ isAdmin, currentUserId }) 
                       <div className="absolute top-4 right-4 flex gap-2">
                         <button
                           onClick={() => handleTogglePollStatus(poll.id, poll.isActive !== false)}
-                          className={`px-3 py-1 text-[10px] font-bold uppercase tracking-wider rounded-full border transition-all opacity-0 group-hover:opacity-100 ${
+                          className={`px-3 py-1 text-[10px] font-bold uppercase tracking-wider rounded-full border transition-all opacity-100 md:opacity-0 md:group-hover:opacity-100 ${
                             poll.isActive !== false
-                              ? 'border-orange-200 text-orange-650 hover:bg-orange-50'
-                              : 'border-emerald-250 text-emerald-700 hover:bg-emerald-50'
+                              ? 'border-orange-200 text-orange-600 hover:bg-orange-50'
+                              : 'border-emerald-200 text-emerald-700 hover:bg-emerald-50'
                           }`}
                         >
                           {poll.isActive !== false ? 'Închide' : 'Deschide'}
                         </button>
                         <button
                           onClick={() => handleDeletePoll(poll.id)}
-                          className="text-slate-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity"
+                          className="text-slate-400 hover:text-red-600 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity p-1"
                           title="Șterge sondaj"
                         >
                           <Trash2 className="w-4 h-4" />

@@ -92,12 +92,15 @@ export const NotificationsDropdown: React.FC<NotificationsDropdownProps> = ({
 
     // 1. Kudos received or recent
     rawKudos.forEach(k => {
-      const isTarget = currentUserId && (k.recipientId === currentUserId || k.recipientName?.toLowerCase() === currentUsername?.toLowerCase());
+      const toId = k.toId || k.recipientId;
+      const toName = (k.toName || k.recipientName || '').toLowerCase();
+      const fromName = k.fromName || k.senderName || 'un coleg';
+      const isTarget = currentUserId && (toId === currentUserId || toName === (currentUsername || '').toLowerCase());
       if (isTarget) {
         list.push({
           id: `kudos_${k.id}`,
           type: 'kudos',
-          title: `Kudos primit de la ${k.senderName || 'un coleg'}!`,
+          title: `Kudos primit de la ${fromName}!`,
           description: `"${k.message || k.badgeType || 'Apreciere deosebită'}"`,
           timestamp: k.createdAt,
           targetSection: 'kudos',
@@ -217,7 +220,7 @@ export const NotificationsDropdown: React.FC<NotificationsDropdownProps> = ({
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 10, scale: 0.95 }}
             transition={{ duration: 0.18, ease: 'easeOut' }}
-            className="absolute right-0 top-[calc(100%+0.5rem)] w-80 sm:w-96 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden z-50 flex flex-col font-['Hanken_Grotesk'] text-slate-800 dark:text-white"
+            className="fixed sm:absolute inset-x-3 sm:inset-x-auto sm:right-0 top-16 sm:top-[calc(100%+0.5rem)] max-w-sm sm:w-96 rounded-2xl sm:rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden z-50 flex flex-col font-['Hanken_Grotesk'] text-slate-800 dark:text-white"
           >
             {/* Dropdown Header */}
             <div className="px-5 py-4 bg-slate-50 dark:bg-slate-950/60 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">

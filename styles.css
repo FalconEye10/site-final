@@ -2058,13 +2058,47 @@ html[data-theme="light"] .dashboard-shell {
   background-size: 64px 64px;
 }
 
-/* --- Table (dark) --- */
+/* --- Table (Responsive & Scrollable) --- */
 .adm-table-wrap {
-  border-radius: 2px;
+  border-radius: 6px;
   border: 1px solid var(--adm-border);
   background: var(--adm-surface);
-  overflow: hidden;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-x pan-y;
+  width: 100%;
+  max-width: 100%;
 }
+.adm-table-wrap::-webkit-scrollbar {
+  height: 6px;
+  width: 6px;
+}
+.adm-table-wrap::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.04);
+  border-radius: 9999px;
+}
+.adm-table-wrap::-webkit-scrollbar-thumb {
+  background: rgba(100, 116, 139, 0.35);
+  border-radius: 9999px;
+}
+.adm-table-wrap::-webkit-scrollbar-thumb:hover {
+  background: rgba(100, 116, 139, 0.55);
+}
+.dark .adm-table-wrap::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.04);
+}
+.dark .adm-table-wrap::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
 .adm-table-head { background: var(--adm-surface); border-bottom: 1px solid var(--adm-border); }
 .adm-table-row { border-bottom: 1px solid var(--adm-border); transition: background 0.2s ease; }
 .adm-table-row:hover { background: var(--adm-surface-hover); }

@@ -111,18 +111,23 @@ export const KudosView: React.FC<KudosViewProps> = ({ currentUserId, currentUser
 
   const filteredKudos = useMemo(() => {
     return kudosList.filter(k => {
+      const toName = (k.toName || '').toLowerCase();
+      const fromName = (k.fromName || '').toLowerCase();
+      const message = (k.message || '').toLowerCase();
+      const search = (searchMember || '').toLowerCase();
+
       const matchesSearch = 
-        k.toName.toLowerCase().includes(searchMember.toLowerCase()) || 
-        k.fromName.toLowerCase().includes(searchMember.toLowerCase()) ||
-        k.message.toLowerCase().includes(searchMember.toLowerCase());
+        toName.includes(search) || 
+        fromName.includes(search) ||
+        message.includes(search);
 
       if (!matchesSearch) return false;
 
       if (activeFilter === 'received') {
-        return k.toId === currentUserId || k.toName.toLowerCase() === currentUsername.toLowerCase();
+        return k.toId === currentUserId || toName === (currentUsername || '').toLowerCase();
       }
       if (activeFilter === 'sent') {
-        return k.fromId === currentUserId || k.fromName.toLowerCase() === currentUsername.toLowerCase();
+        return k.fromId === currentUserId || fromName === (currentUsername || '').toLowerCase();
       }
       return true;
     });
@@ -130,8 +135,8 @@ export const KudosView: React.FC<KudosViewProps> = ({ currentUserId, currentUser
 
   const stats = useMemo(() => {
     const total = kudosList.length;
-    const receivedCount = kudosList.filter(k => k.toId === currentUserId || k.toName.toLowerCase() === currentUsername.toLowerCase()).length;
-    const sentCount = kudosList.filter(k => k.fromId === currentUserId || k.fromName.toLowerCase() === currentUsername.toLowerCase()).length;
+    const receivedCount = kudosList.filter(k => k.toId === currentUserId || (k.toName || '').toLowerCase() === (currentUsername || '').toLowerCase()).length;
+    const sentCount = kudosList.filter(k => k.fromId === currentUserId || (k.fromName || '').toLowerCase() === (currentUsername || '').toLowerCase()).length;
     return { total, receivedCount, sentCount };
   }, [kudosList, currentUserId, currentUsername]);
 
@@ -287,8 +292,8 @@ export const KudosView: React.FC<KudosViewProps> = ({ currentUserId, currentUser
 
       {/* Modal Send Kudos */}
       {showSendModal && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-slate-900 rounded-3xl max-w-lg w-full p-6 md:p-8 shadow-2xl border border-slate-200 dark:border-slate-850 space-y-6 animate-in zoom-in-95">
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl sm:rounded-3xl max-w-lg w-full p-5 sm:p-8 shadow-2xl border border-slate-200 dark:border-slate-800 space-y-6 animate-in zoom-in-95">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-rose-50 dark:bg-rose-950/30 text-rose-600 dark:text-rose-400 flex items-center justify-center font-bold">
@@ -298,50 +303,49 @@ export const KudosView: React.FC<KudosViewProps> = ({ currentUserId, currentUser
               </div>
               <button
                 onClick={() => setShowSendModal(false)}
-                className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 flex items-center justify-center font-bold text-slate-600 dark:text-slate-300"
+                className="p-1.5 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
               >
                 ✕
               </button>
             </div>
 
-            <form onSubmit={handleSendKudos} className="space-y-4">
-              {/* Select Recipient */}
+            <form onSubmit={handleSendKudos} className="space-y-4 font-['Manrope']">
               <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1.5">
-                  Alege Colegul
+                <label className="block text-xs font-black uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
+                  Alege Destinatarul
                 </label>
                 <select
                   value={selectedRecipientId}
                   onChange={e => setSelectedRecipientId(e.target.value)}
                   required
-                  className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-750 rounded-xl text-sm font-bold text-slate-900 dark:text-white focus:outline-none focus:border-slate-400"
+                  className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-bold text-slate-900 dark:text-white focus:outline-none focus:border-slate-400"
                 >
-                  <option value="" className="dark:bg-slate-900">-- Selectează membru --</option>
+                  <option value="">-- Selectează un coleg din club --</option>
                   {members
                     .filter(m => m.id !== currentUserId)
+                    .sort((a, b) => a.name.localeCompare(b.name))
                     .map(m => (
-                      <option key={m.id} value={m.id} className="dark:bg-slate-900">
-                        {m.name} ({m.role === 'admin' ? m.boardPosition || 'Board' : 'Voluntar'})
+                      <option key={m.id} value={m.id}>
+                        {m.name} {m.nickname ? `(${m.nickname})` : ''} — {m.role === 'admin' ? (m.boardPosition || 'Board') : 'Voluntar'}
                       </option>
                     ))}
                 </select>
               </div>
 
-              {/* Select Category */}
               <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1.5">
-                  Categorie Apreciere
+                <label className="block text-xs font-black uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
+                  Categorie
                 </label>
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   {KUDOS_CATEGORIES.map(cat => (
                     <button
-                      type="button"
                       key={cat.id}
+                      type="button"
                       onClick={() => setSelectedCategory(cat.id)}
-                      className={`p-2.5 rounded-xl text-xs font-bold text-left border transition-all ${
+                      className={`p-2.5 rounded-xl border text-left text-xs font-bold transition-all ${
                         selectedCategory === cat.id
-                          ? 'border-slate-900 dark:border-white bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-sm'
-                          : 'border-slate-200 dark:border-slate-750 bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700'
+                          ? 'border-slate-900 dark:border-white bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-md'
+                          : 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700'
                       }`}
                     >
                       {cat.label}
@@ -350,18 +354,17 @@ export const KudosView: React.FC<KudosViewProps> = ({ currentUserId, currentUser
                 </div>
               </div>
 
-              {/* Message */}
               <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1.5">
-                  Mesajul Tău de Mulțumire
+                <label className="block text-xs font-black uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
+                  Mesaj Personalizat
                 </label>
                 <textarea
                   rows={3}
                   value={kudosMessage}
                   onChange={e => setKudosMessage(e.target.value)}
-                  placeholder="Ex: Îți mulțumesc mult pentru suportul logistic și atitudinea pozitivă de la târg!"
                   required
-                  className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-750 rounded-xl text-sm text-slate-900 dark:text-white focus:outline-none focus:border-slate-400 font-['Manrope']"
+                  placeholder="Scrie câteva cuvinte frumoase sau mulțumește-i pentru sprijin..."
+                  className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-900 dark:text-white focus:outline-none focus:border-slate-400 font-['Manrope']"
                 />
               </div>
 

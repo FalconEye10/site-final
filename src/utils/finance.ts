@@ -107,7 +107,8 @@ export function calculateDebt(joinDateStr: string | undefined | null, totalPaid:
   if (totalMonths <= 0) return 0;
   
   const totalExpected = totalMonths * COTIZATIE_LUNARA;
-  const debt = totalExpected - (totalPaid || 0);
+  const safePaid = Math.max(0, Number(totalPaid) || 0);
+  const debt = totalExpected - safePaid;
   return Math.max(0, debt);
 }
 

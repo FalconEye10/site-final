@@ -718,7 +718,7 @@ export function EventsView({ isAdmin, members = [], currentUserId, onUpdateMembe
                             ) : (
                               <button 
                                 onClick={() => handleFinalize(event)}
-                                className="px-4 py-1.5 rounded-full bg-rose-50 hover:bg-rose-100 text-rose-650 font-bold text-xs transition-colors border border-rose-200/50 flex items-center gap-1 shadow-sm"
+                                className="px-4 py-1.5 rounded-full bg-rose-50 hover:bg-rose-100 text-rose-600 font-bold text-xs transition-colors border border-rose-200/50 flex items-center gap-1 shadow-sm"
                                 title="Finalizează prezența definitiv"
                               >
                                 <Lock size={12} /> Finalizează
@@ -745,7 +745,7 @@ export function EventsView({ isAdmin, members = [], currentUserId, onUpdateMembe
                           <div className="flex gap-2 shrink-0 self-start">
                             <button
                               onClick={() => setRequestingAbsenceFor(event)}
-                              className="px-4 py-1.5 rounded-full bg-orange-50 hover:bg-orange-100 text-orange-650 font-bold text-xs border border-orange-200/50 shadow-sm transition-colors"
+                              className="px-4 py-1.5 rounded-full bg-orange-50 hover:bg-orange-100 text-orange-600 font-bold text-xs border border-orange-200/50 shadow-sm transition-colors"
                             >
                               Cere Învoire
                             </button>

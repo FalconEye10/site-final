@@ -344,64 +344,64 @@ export function LeaderboardView({ members, isAdmin = false, onUpdateMember }: Le
             </h2>
           </div>
 
-          <div className="flex items-end justify-center gap-4 sm:gap-8 h-56 relative z-10">
+          <div className="flex items-end justify-center gap-1.5 sm:gap-8 h-56 relative z-10">
             {/* Locul 3 - Bronz (Stânga) */}
             {locul3 && (
-              <div className="flex flex-col items-center w-1/3">
-                <div className="relative mb-2 flex flex-col items-center">
+              <div className="flex flex-col items-center w-1/3 min-w-0">
+                <div className="relative mb-1.5 flex flex-col items-center">
                   <img
                     src={locul3.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(locul3.nickname || locul3.name)}&background=b45309&color=0F172A`}
-                    className="w-12 h-12 rounded-full border-2 border-amber-700 object-cover shadow-[0_0_10px_rgba(180,83,9,0.3)]"
+                    className="w-10 h-10 sm:w-12 sm:h-12 rounded-full border-2 border-amber-700 object-cover shadow-[0_0_10px_rgba(180,83,9,0.3)]"
                     alt=""
                   />
                 </div>
-                <div className="text-xs font-bold uppercase tracking-widest text-amber-700 mb-2 truncate w-full text-center">
+                <div className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-amber-700 mb-1.5 truncate max-w-full px-1 text-center">
                   {locul3.nickname || locul3.name}
                 </div>
-                <div className="w-16 h-20 bg-amber-900/10 rounded-t-2xl border-t-2 border-amber-700 flex flex-col items-center justify-start pt-2 shadow-sm">
-                  <span className="text-2xl font-black text-amber-700">3</span>
-                  <span className="text-[10px] font-bold text-amber-800 mt-1">{scoreMode === 'total' ? locul3.totalScore : locul3.biMonthlyScore} pts</span>
+                <div className="w-14 sm:w-16 h-20 bg-amber-900/10 rounded-t-2xl border-t-2 border-amber-700 flex flex-col items-center justify-start pt-2 shadow-sm">
+                  <span className="text-xl sm:text-2xl font-black text-amber-700">3</span>
+                  <span className="text-[9px] sm:text-[10px] font-bold text-amber-800 mt-1 truncate px-0.5">{scoreMode === 'total' ? locul3.totalScore : locul3.biMonthlyScore} pts</span>
                 </div>
               </div>
             )}
 
             {/* Locul 2 - Argint (Centru) */}
             {locul2 && (
-              <div className="flex flex-col items-center w-1/3 z-10">
-                <div className="relative mb-2 flex flex-col items-center">
-                  <Medal className="text-slate-400 absolute -top-5 z-20" size={24} />
+              <div className="flex flex-col items-center w-1/3 min-w-0 z-10">
+                <div className="relative mb-1.5 flex flex-col items-center">
+                  <Medal className="text-slate-400 absolute -top-4 sm:-top-5 z-20" size={20} />
                   <img
                     src={locul2.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(locul2.nickname || locul2.name)}&background=94a3b8&color=0F172A`}
-                    className="w-14 h-14 rounded-full border-2 border-slate-400 object-cover shadow-[0_0_15px_rgba(148,163,184,0.4)] z-10"
+                    className="w-12 h-12 sm:w-14 sm:h-14 rounded-full border-2 border-slate-400 object-cover shadow-[0_0_15px_rgba(148,163,184,0.4)] z-10"
                     alt=""
                   />
                 </div>
-                <div className="text-sm font-bold uppercase tracking-widest text-slate-500 mb-2 truncate w-full text-center">
+                <div className="text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-500 mb-1.5 truncate max-w-full px-1 text-center">
                   {locul2.nickname || locul2.name}
                 </div>
-                <div className="w-20 h-28 bg-slate-100 rounded-t-2xl border-t-4 border-slate-400 flex flex-col items-center justify-start pt-4 shadow-md">
-                  <span className="text-3xl font-black text-slate-500">2</span>
-                  <span className="text-xs font-bold text-slate-600 mt-1">{scoreMode === 'total' ? locul2.totalScore : locul2.biMonthlyScore} pts</span>
+                <div className="w-16 sm:w-20 h-28 bg-slate-100 rounded-t-2xl border-t-4 border-slate-400 flex flex-col items-center justify-start pt-4 shadow-md">
+                  <span className="text-2xl sm:text-3xl font-black text-slate-500">2</span>
+                  <span className="text-[10px] sm:text-xs font-bold text-slate-600 mt-1 truncate px-0.5">{scoreMode === 'total' ? locul2.totalScore : locul2.biMonthlyScore} pts</span>
                 </div>
               </div>
             )}
 
             {/* Locul 4 - Top Contribuitor (Dreapta) */}
             {locul4 && (
-              <div className="flex flex-col items-center w-1/3">
-                <div className="relative mb-2 flex flex-col items-center">
+              <div className="flex flex-col items-center w-1/3 min-w-0">
+                <div className="relative mb-1.5 flex flex-col items-center">
                   <img
                     src={locul4.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(locul4.nickname || locul4.name)}&background=334155&color=0F172A`}
-                    className="w-11 h-11 rounded-full border-2 border-indigo-400 object-cover shadow-[0_0_10px_rgba(99,102,241,0.3)]"
+                    className="w-9 h-9 sm:w-11 sm:h-11 rounded-full border-2 border-indigo-400 object-cover shadow-[0_0_10px_rgba(99,102,241,0.3)]"
                     alt=""
                   />
                 </div>
-                <div className="text-xs font-bold uppercase tracking-widest text-indigo-600 dark:text-indigo-400 mb-2 truncate w-full text-center">
+                <div className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400 mb-1.5 truncate max-w-full px-1 text-center">
                   {locul4.nickname || locul4.name}
                 </div>
-                <div className="w-16 h-16 bg-indigo-50 dark:bg-indigo-950/20 rounded-t-2xl border-t-2 border-indigo-400 flex flex-col items-center justify-start pt-1.5 shadow-sm">
-                  <span className="text-xl font-black text-indigo-500">4</span>
-                  <span className="text-[10px] font-bold text-indigo-600 mt-0.5">{scoreMode === 'total' ? locul4.totalScore : locul4.biMonthlyScore} pts</span>
+                <div className="w-14 sm:w-16 h-16 bg-indigo-50 dark:bg-indigo-950/20 rounded-t-2xl border-t-2 border-indigo-400 flex flex-col items-center justify-start pt-1.5 shadow-sm">
+                  <span className="text-lg sm:text-xl font-black text-indigo-500">4</span>
+                  <span className="text-[9px] sm:text-[10px] font-bold text-indigo-600 mt-0.5 truncate px-0.5">{scoreMode === 'total' ? locul4.totalScore : locul4.biMonthlyScore} pts</span>
                 </div>
               </div>
             )}

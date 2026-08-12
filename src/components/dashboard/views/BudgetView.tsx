@@ -181,15 +181,15 @@ export const BudgetView: React.FC<BudgetViewProps> = ({ isAdmin = false, current
   };
 
   return (
-    <div className="flex flex-col gap-5 p-4 sm:p-6">
+    <div className="flex flex-col gap-5 p-0 sm:p-2 md:p-6">
       {/* Header */}
       <header className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div>
           <span className="adm-meta-label">Mandat {mandate} · Acces Board</span>
-          <h1 className="mt-1.5 text-2xl font-bold tracking-tight" style={{ color: 'var(--adm-ink)' }}>
+          <h1 className="mt-1.5 text-xl sm:text-2xl font-bold tracking-tight" style={{ color: 'var(--adm-ink)' }}>
             Buget &amp; Management Financiar
           </h1>
-          <p className="mt-1 text-sm font-medium" style={{ color: 'var(--adm-ink-dim)' }}>
+          <p className="mt-1 text-xs sm:text-sm font-medium" style={{ color: 'var(--adm-ink-dim)' }}>
             Evidența completă a veniturilor, cheltuielilor, proiectelor și cotizațiilor clubului.
           </p>
         </div>
@@ -220,7 +220,7 @@ export const BudgetView: React.FC<BudgetViewProps> = ({ isAdmin = false, current
 
       {/* Sub-navigation */}
       <nav
-        className="flex gap-1 overflow-x-auto"
+        className="flex gap-1 overflow-x-auto no-scrollbar whitespace-nowrap"
         style={{ borderBottom: '1px solid var(--adm-border)' }}
         role="tablist"
       >

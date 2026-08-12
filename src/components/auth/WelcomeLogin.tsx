@@ -136,7 +136,7 @@ export function WelcomeLogin({ onLoginSuccess }: WelcomeLoginProps) {
  
       {/* Floating 3D Geometric Shape 3: Glossy Glass Bubble (Middle Right) */}
       <motion.div
-        className="absolute top-[40%] right-[20%] w-20 h-20 rounded-full bg-gradient-to-br from-white/30 via-white/5 to-transparent border border-white/30 backdrop-blur-xs shadow-[inset_-3px_-3px_9px_rgba(255,255,255,0.3),3px_3px_9px_rgba(137,207,240,0.2)] pointer-events-none hidden lg:block z-0"
+        className="absolute top-[40%] right-[20%] w-20 h-20 rounded-full bg-gradient-to-br from-white/30 via-white/5 to-transparent border border-white/30 backdrop-blur-sm shadow-[inset_-3px_-3px_9px_rgba(255,255,255,0.3),3px_3px_9px_rgba(137,207,240,0.2)] pointer-events-none hidden lg:block z-0"
         animate={{
           y: [0, -25, 0],
           x: [0, 15, 0],

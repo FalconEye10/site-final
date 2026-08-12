@@ -26,6 +26,7 @@ interface NewsItem {
 interface NewsViewProps {
   isAdmin: boolean;
   currentUserId: string;
+  currentUsername?: string;
 }
 
 const REACTION_CONFIG = [
@@ -34,7 +35,7 @@ const REACTION_CONFIG = [
   { key: 'dislike', label: '👎' },
 ];
 
-export const NewsView: React.FC<NewsViewProps> = ({ isAdmin, currentUserId }) => {
+export const NewsView: React.FC<NewsViewProps> = ({ isAdmin, currentUserId, currentUsername }) => {
   const [news, setNews] = useState<NewsItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreateForm, setShowCreateForm] = useState(false);
@@ -108,7 +109,7 @@ export const NewsView: React.FC<NewsViewProps> = ({ isAdmin, currentUserId }) =>
       const newComment: NewsComment = {
         id: `comment_${Date.now()}`,
         authorId: currentUserId,
-        authorName: currentUserId,
+        authorName: currentUsername || currentUserId || 'Membru',
         text,
         createdAt: new Date().toISOString(),
       };

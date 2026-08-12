@@ -610,21 +610,21 @@ export function AttendanceView({ members, onUpdateMember, isAdmin, currentUserId
                         </div>
 
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                          <div className="bg-white border-l-4 border-l-slate-400 border border-y-[brand-accent]/5 border-r-[brand-accent]/5 p-5 rounded-2xl shadow-sm flex flex-col justify-between">
+                          <div className="bg-white border-l-4 border-l-slate-400 border border-y-brand-accent/5 border-r-brand-accent/5 p-4 sm:p-5 rounded-2xl shadow-sm flex flex-col justify-between">
                               <div className="text-sm font-bold text-brand-accent/50 mb-2">Membri Total</div>
-                              <div className="text-4xl font-black text-slate-700">{total}</div>
+                              <div className="text-3xl sm:text-4xl font-black text-slate-700">{total}</div>
                           </div>
-                          <div className="bg-white border-l-4 border-l-emerald-400 border border-y-[brand-accent]/5 border-r-[brand-accent]/5 p-5 rounded-2xl shadow-sm flex flex-col justify-between">
+                          <div className="bg-white border-l-4 border-l-emerald-400 border border-y-brand-accent/5 border-r-brand-accent/5 p-4 sm:p-5 rounded-2xl shadow-sm flex flex-col justify-between">
                               <div className="text-sm font-bold text-brand-accent/50 mb-2">Prezenți</div>
-                              <div className="text-4xl font-black text-emerald-600">{presentCount}</div>
+                              <div className="text-3xl sm:text-4xl font-black text-emerald-600">{presentCount}</div>
                           </div>
-                          <div className="bg-white border-l-4 border-l-rose-400 border border-y-[brand-accent]/5 border-r-[brand-accent]/5 p-5 rounded-2xl shadow-sm flex flex-col justify-between">
+                          <div className="bg-white border-l-4 border-l-rose-400 border border-y-brand-accent/5 border-r-brand-accent/5 p-4 sm:p-5 rounded-2xl shadow-sm flex flex-col justify-between">
                               <div className="text-sm font-bold text-brand-accent/50 mb-2">Absenți</div>
-                              <div className="text-4xl font-black text-rose-500">{absentCount}</div>
+                              <div className="text-3xl sm:text-4xl font-black text-rose-500">{absentCount}</div>
                           </div>
-                          <div className="bg-white border-l-4 border-l-amber-400 border border-y-[brand-accent]/5 border-r-[brand-accent]/5 p-5 rounded-2xl shadow-sm flex flex-col justify-between">
+                          <div className="bg-white border-l-4 border-l-amber-400 border border-y-brand-accent/5 border-r-brand-accent/5 p-4 sm:p-5 rounded-2xl shadow-sm flex flex-col justify-between">
                               <div className="text-sm font-bold text-brand-accent/50 mb-2">Motivați</div>
-                              <div className="text-4xl font-black text-amber-500">{excusedCount}</div>
+                              <div className="text-3xl sm:text-4xl font-black text-amber-500">{excusedCount}</div>
                           </div>
                         </div>
 

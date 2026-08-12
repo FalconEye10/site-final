@@ -10,6 +10,10 @@ module.exports = {
           baby_blue: '#A0D8EF',
           cream: '#F9EBD1',
         },
+        'brand-primary': '#89cff0',
+        'brand-accent': '#0F172A',
+        'brand-muted': '#475569',
+        'brand-cream': '#ffeacd',
         surface: {
           background: '#FFFFFF',
           dark: '#121212',
@@ -23,6 +27,11 @@ module.exports = {
         emerald: '#10B981',
         orangeWarm: '#F97316',
         darkBase: '#0A0A0A',
+        // Extended slate palette for dark UI
+        slate: {
+          750: '#293548',
+          850: '#172033',
+        },
         // Extended cyan palette for subtle tinting
         cyan: {
           50: '#f0fdfe',
@@ -52,6 +61,7 @@ module.exports = {
         anthropicSerif: ['"Newsreader"', 'serif'],
       },
       boxShadow: {
+        'xs': '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
         'card': '0 1px 3px rgba(0,31,38,0.04), 0 8px 24px rgba(0,31,38,0.06)',
         'card-lg': '0 4px 12px rgba(0,31,38,0.04), 0 20px 48px rgba(0,31,38,0.08)',
         'card-hover': '0 8px 32px rgba(40,250,252,0.10), 0 24px 64px -12px rgba(0,31,38,0.10)',
@@ -61,6 +71,9 @@ module.exports = {
         'glow': '0 0 24px rgba(40,250,252,0.20)',
         'glow-lg': '0 4px 40px rgba(40,250,252,0.25)',
         'inner-glow': 'inset 0 1px 0 rgba(255,255,255,0.6)',
+      },
+      backdropBlur: {
+        xs: '2px',
       },
       backgroundImage: {
         'gradient-sidebar': 'linear-gradient(195deg, rgba(40,250,252,0.04) 0%, rgba(250,249,245,0.98) 50%, rgba(137,207,240,0.03) 100%)',

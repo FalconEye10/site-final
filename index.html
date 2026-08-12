@@ -94,34 +94,34 @@
     <div id="cursor-ring"></div>
 
     <!-- Top Navigation -->
-    <header class="fixed top-4 md:top-6 left-4 md:left-6 right-4 md:right-6 z-50 rounded-none border border-text-executive_dark/10 px-4 md:px-8 py-3 flex items-center justify-between transition-all hover:border-brand_signature-baby_blue/50 bg-white/90 backdrop-blur-md shadow-sm">
-        <div class="flex items-center gap-3 md:gap-4">
+    <header class="fixed top-3 sm:top-4 md:top-6 left-3 sm:left-4 md:left-6 right-3 sm:right-4 md:right-6 z-50 rounded-none border border-text-executive_dark/10 px-3 sm:px-4 md:px-8 py-2.5 sm:py-3 flex items-center justify-between transition-all hover:border-brand_signature-baby_blue/50 bg-white/90 backdrop-blur-md shadow-sm">
+        <div class="flex items-center gap-2.5 sm:gap-3 md:gap-4 min-w-0">
             <!-- Interact Logo (Prominent) -->
             <img 
                 src="/images/interact-logo.png" 
                 alt="Interact Camena" 
-                class="h-9 md:h-12 w-auto object-contain" 
+                class="h-8 sm:h-9 md:h-12 w-auto object-contain shrink-0" 
                 onerror="if(!this.dataset.tried){this.dataset.tried='true';this.src='/logo.png';}"
             />
             <!-- Rotary International Logo (Discrete & Secondary) -->
             <img 
                 src="/images/rotary-logo.png" 
                 alt="Rotary International" 
-                class="h-7 md:h-9 w-auto object-contain opacity-75 hover:opacity-100 transition-opacity border-l border-text-executive_dark/15 pl-3 md:pl-4" 
+                class="h-6 sm:h-7 md:h-9 w-auto object-contain opacity-75 hover:opacity-100 transition-opacity border-l border-text-executive_dark/15 pl-2.5 sm:pl-3 md:pl-4 shrink-0 hidden xs:block" 
                 onerror="this.style.display='none'"
             />
-            <div class="hidden sm:flex flex-col border-l border-text-executive_dark/15 pl-3 md:pl-4">
+            <div class="hidden sm:flex flex-col border-l border-text-executive_dark/15 pl-3 md:pl-4 min-w-0">
                 <div class="flex items-center gap-2">
-                    <span class="w-1.5 h-1.5 rounded-full bg-brand_signature-baby_blue animate-pulse"></span>
-                    <span class="font-headings text-xs font-black tracking-widest uppercase text-text-executive_dark">District 2241 &bull; Piatra Neamț</span>
+                    <span class="w-1.5 h-1.5 rounded-full bg-brand_signature-baby_blue animate-pulse shrink-0"></span>
+                    <span class="font-headings text-xs font-black tracking-widest uppercase text-text-executive_dark truncate">District 2241 &bull; Piatra Neamț</span>
                 </div>
-                <span class="font-data text-[10.5px] text-text-executive_dark/70 tracking-widest font-semibold uppercase mt-0.5">
+                <span class="font-data text-[10.5px] text-text-executive_dark/70 tracking-widest font-semibold uppercase mt-0.5 truncate">
                     [ 46.9279° N, 26.3705° E ] &bull; Service Above Self
                 </span>
             </div>
         </div>
-        <button onclick="window.location.hash = '#dashboard'" class="px-5 md:px-6 py-2 md:py-2.5 rounded-none border border-text-executive_dark bg-text-executive_dark text-surface-background hover:bg-surface-background hover:text-text-executive_dark transition-colors shrink-0">
-            <span class="font-headings text-xs font-bold tracking-widest uppercase">Acces Administrație</span>
+        <button onclick="window.location.hash = '#dashboard'" class="px-3.5 sm:px-5 md:px-6 py-2 md:py-2.5 rounded-none border border-text-executive_dark bg-text-executive_dark text-surface-background hover:bg-surface-background hover:text-text-executive_dark transition-colors shrink-0">
+            <span class="font-headings text-[11px] sm:text-xs font-bold tracking-wider sm:tracking-widest uppercase whitespace-nowrap">Acces Administrație</span>
         </button>
     </header>
 
@@ -709,31 +709,41 @@
         const REDUCED_MOTION = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
         // Initialize Lenis for Smooth Scrolling
-        window.lenis = new Lenis({
-            duration: 1.2,
-            easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
-            direction: 'vertical',
-            gestureDirection: 'vertical',
-            smooth: true,
-            mouseMultiplier: 1,
-            smoothTouch: false,
-            touchMultiplier: 2,
-            infinite: false,
-        });
+        if (typeof Lenis !== 'undefined') {
+            window.lenis = new Lenis({
+                duration: 1.2,
+                easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+                direction: 'vertical',
+                gestureDirection: 'vertical',
+                smooth: true,
+                mouseMultiplier: 1,
+                smoothTouch: false,
+                touchMultiplier: 2,
+                infinite: false,
+            });
 
-        // Get scroll value
-        window.lenis.on('scroll', ScrollTrigger.update);
-        gsap.ticker.add((time) => { if(window.lenis) window.lenis.raf(time * 1000); });
-        gsap.ticker.lagSmoothing(0);
+            // Get scroll value
+            window.lenis.on('scroll', ScrollTrigger.update);
+            gsap.ticker.add((time) => { if(window.lenis) window.lenis.raf(time * 1000); });
+            gsap.ticker.lagSmoothing(0);
+        }
 
         /* ================================================================
            SCROLL PROGRESS BAR
            ================================================================ */
         const progressBar = document.getElementById('scroll-progress');
-        window.lenis.on('scroll', ({ scroll, limit }) => {
-            const p = limit > 0 ? scroll / limit : 0;
-            if (progressBar) progressBar.style.transform = `scaleX(${p})`;
-        });
+        if (window.lenis && window.lenis.on) {
+            window.lenis.on('scroll', ({ scroll, limit }) => {
+                const p = limit > 0 ? scroll / limit : 0;
+                if (progressBar) progressBar.style.transform = `scaleX(${p})`;
+            });
+        } else {
+            window.addEventListener('scroll', () => {
+                const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+                const p = docHeight > 0 ? window.scrollY / docHeight : 0;
+                if (progressBar) progressBar.style.transform = `scaleX(${p})`;
+            }, { passive: true });
+        }
 
         /* ================================================================
            SPLIT HEADINGS INTO MASKED LINES (for rise-up reveal)
@@ -981,12 +991,14 @@
             });
             // Scroll velocity nudges the marquee speed for a lively feel
             let lastScroll = 0;
-            window.lenis.on('scroll', ({ scroll }) => {
-                const v = scroll - lastScroll;
-                lastScroll = scroll;
-                loop.timeScale(1 + Math.min(Math.abs(v) * 0.06, 5));
-                gsap.to(loop, { timeScale: 1, duration: 0.8, overwrite: true, ease: 'power2.out' });
-            });
+            if (window.lenis && window.lenis.on) {
+                window.lenis.on('scroll', ({ scroll }) => {
+                    const v = scroll - lastScroll;
+                    lastScroll = scroll;
+                    loop.timeScale(1 + Math.min(Math.abs(v) * 0.06, 5));
+                    gsap.to(loop, { timeScale: 1, duration: 0.8, overwrite: true, ease: 'power2.out' });
+                });
+            }
         })();
 
         /* ================================================================

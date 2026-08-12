@@ -386,74 +386,74 @@ const ViewDashboard = ({ members, currentUserObj, isAdmin, onNavigateToSection, 
       </div>
 
       {/* 1. Header Cards Grid */}
-      <div className={`grid grid-cols-1 md:grid-cols-3 ${!isAdmin ? 'xl:grid-cols-4' : ''} gap-6 items-center font-anthropic`}>
+      <div className={`grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 ${!isAdmin ? 'xl:grid-cols-4' : ''} gap-3.5 sm:gap-6 items-center font-anthropic`}>
         {isAdmin ? (
           <>
-            <Card className="stat-hero group relative overflow-hidden cursor-pointer border border-brand-muted/10 bg-white shadow-md !p-6 flex items-center gap-5 !rounded-3xl" onClick={() => onNavigateToSection('membri')}>
+            <Card className="stat-hero group relative overflow-hidden cursor-pointer border border-brand-muted/10 bg-white shadow-md !p-4 sm:!p-6 flex items-center gap-4 sm:gap-5 !rounded-2xl sm:!rounded-3xl" onClick={() => onNavigateToSection('membri')}>
               <span className="stat-hero-bar bg-gradient-to-r from-[#89cff0] to-transparent" />
-              <div className="w-14 h-14 rounded-2xl bg-brand-primary/10 flex items-center justify-center text-brand-primary shrink-0"><Users size={26} /></div>
+              <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-brand-primary/10 flex items-center justify-center text-brand-primary shrink-0"><Users size={24} className="sm:w-[26px] sm:h-[26px]" /></div>
               <div className="flex-1 min-w-0">
                 <span className="text-[10px] font-bold uppercase tracking-wider opacity-40 block">Membri</span>
-                <div className="text-4xl font-extrabold leading-none text-brand-accent my-1">{membersCount}</div>
+                <div className="text-3xl sm:text-4xl font-extrabold leading-none text-brand-accent my-1">{membersCount}</div>
                 <div className="text-[11px] opacity-60 truncate">Voluntari înregistrați</div>
               </div>
             </Card>
 
-            <Card className="stat-hero group relative overflow-hidden cursor-pointer border border-emerald-600/20 bg-white shadow-md !p-6 flex items-center gap-5 !rounded-3xl" onClick={() => onNavigateToSection('istoric')}>
+            <Card className="stat-hero group relative overflow-hidden cursor-pointer border border-emerald-600/20 bg-white shadow-md !p-4 sm:!p-6 flex items-center gap-4 sm:gap-5 !rounded-2xl sm:!rounded-3xl" onClick={() => onNavigateToSection('istoric')}>
               <span className="stat-hero-bar bg-gradient-to-r from-emerald-500 to-transparent" />
-              <div className="w-14 h-14 rounded-2xl bg-emerald-500/10 flex items-center justify-center text-emerald-600 shrink-0"><Wallet size={26} /></div>
+              <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-emerald-500/10 flex items-center justify-center text-emerald-600 shrink-0"><Wallet size={24} className="sm:w-[26px] sm:h-[26px]" /></div>
               <div className="flex-1 min-w-0">
                 <span className="text-[10px] font-bold uppercase tracking-wider opacity-40 block">Fonduri</span>
-                <div className="text-4xl font-extrabold leading-none text-emerald-600 my-1">{totalCollected} <span className="text-xl">Lei</span></div>
+                <div className="text-3xl sm:text-4xl font-extrabold leading-none text-emerald-600 my-1">{totalCollected} <span className="text-lg sm:text-xl">Lei</span></div>
                 <div className="text-[11px] opacity-60 truncate">Total cotizații încasate</div>
               </div>
             </Card>
 
-            <Card className="stat-hero group relative overflow-hidden cursor-pointer border border-rose-200 bg-white shadow-md !p-6 flex items-center gap-5 !rounded-3xl" onClick={() => onNavigateToSection('istoric')}>
+            <Card className="stat-hero group relative overflow-hidden cursor-pointer border border-rose-200 bg-white shadow-md !p-4 sm:!p-6 flex items-center gap-4 sm:gap-5 !rounded-2xl sm:!rounded-3xl" onClick={() => onNavigateToSection('istoric')}>
               <span className="stat-hero-bar bg-gradient-to-r from-rose-500 to-transparent" />
-              <div className="w-14 h-14 rounded-2xl bg-rose-500/10 flex items-center justify-center text-rose-600 shrink-0"><AlertCircle size={26} /></div>
+              <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-rose-500/10 flex items-center justify-center text-rose-600 shrink-0"><AlertCircle size={24} className="sm:w-[26px] sm:h-[26px]" /></div>
               <div className="flex-1 min-w-0">
                 <span className="text-[10px] font-bold uppercase tracking-wider opacity-40 block text-rose-600">Restanțe</span>
-                <div className="text-4xl font-extrabold leading-none text-rose-650 my-1">{totalGlobalDebt} <span className="text-xl">Lei</span></div>
+                <div className="text-3xl sm:text-4xl font-extrabold leading-none text-rose-600 my-1">{totalGlobalDebt} <span className="text-lg sm:text-xl">Lei</span></div>
                 <div className="text-[11px] opacity-60 truncate">Total datorat de recuperat</div>
               </div>
             </Card>
           </>
         ) : (
           <>
-            <Card className="stat-hero group relative overflow-hidden border border-brand-muted/10 bg-white shadow-md !p-6 flex items-center gap-5 !rounded-3xl">
+            <Card className="stat-hero group relative overflow-hidden border border-brand-muted/10 bg-white shadow-md !p-4 sm:!p-6 flex items-center gap-4 sm:gap-5 !rounded-2xl sm:!rounded-3xl">
               <span className="stat-hero-bar bg-gradient-to-r from-[#89cff0] to-transparent" />
-              <div className="w-14 h-14 rounded-2xl bg-brand-primary/10 flex items-center justify-center text-brand-primary shrink-0"><CreditCard size={26} /></div>
+              <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-brand-primary/10 flex items-center justify-center text-brand-primary shrink-0"><CreditCard size={24} className="sm:w-[26px] sm:h-[26px]" /></div>
               <div className="flex-1 min-w-0">
                 <span className="text-[10px] font-bold uppercase tracking-wider opacity-40 block">Cotizație</span>
-                <div className="text-3xl font-extrabold leading-none text-brand-accent my-1">
+                <div className="text-2xl sm:text-3xl font-extrabold leading-none text-brand-accent my-1">
                   {personalDebt === 0 ? (
-                    <span className="text-emerald-650 text-xl font-bold">La zi!</span>
+                    <span className="text-emerald-600 text-lg sm:text-xl font-bold">La zi!</span>
                   ) : (
-                    <span>{personalDebt} <span className="text-base font-bold">Lei datorați</span></span>
+                    <span>{personalDebt} <span className="text-sm sm:text-base font-bold">Lei datorați</span></span>
                   )}
                 </div>
                 <div className="text-[11px] opacity-60 truncate">Datoria ta curentă</div>
               </div>
             </Card>
 
-            <Card className="stat-hero group relative overflow-hidden cursor-pointer border border-amber-200 bg-white shadow-md !p-6 flex items-center gap-5 !rounded-3xl" onClick={() => onNavigateToSection('clasament')}>
+            <Card className="stat-hero group relative overflow-hidden cursor-pointer border border-amber-200 bg-white shadow-md !p-4 sm:!p-6 flex items-center gap-4 sm:gap-5 !rounded-2xl sm:!rounded-3xl" onClick={() => onNavigateToSection('clasament')}>
               <span className="stat-hero-bar bg-gradient-to-r from-amber-500 to-transparent" />
-              <div className="w-14 h-14 rounded-2xl bg-amber-500/10 flex items-center justify-center text-amber-600 shrink-0"><Trophy size={26} /></div>
+              <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-amber-500/10 flex items-center justify-center text-amber-600 shrink-0"><Trophy size={24} className="sm:w-[26px] sm:h-[26px]" /></div>
               <div className="flex-1 min-w-0">
                 <span className="text-[10px] font-bold uppercase tracking-wider opacity-40 block">Activitate</span>
-                <div className="text-4xl font-extrabold leading-none text-brand-accent my-1">{personalHours} <span className="text-xl">ore</span></div>
+                <div className="text-3xl sm:text-4xl font-extrabold leading-none text-brand-accent my-1">{personalHours} <span className="text-lg sm:text-xl">ore</span></div>
                 <div className="text-[11px] opacity-60 truncate">Ore voluntariat înregistrate</div>
               </div>
             </Card>
 
-            <Card className="stat-hero group relative overflow-hidden cursor-pointer border border-emerald-200 bg-white shadow-md !p-6 flex items-center gap-5 !rounded-3xl" onClick={() => onNavigateToSection('clasament')}>
+            <Card className="stat-hero group relative overflow-hidden cursor-pointer border border-emerald-200 bg-white shadow-md !p-4 sm:!p-6 flex items-center gap-4 sm:gap-5 !rounded-2xl sm:!rounded-3xl" onClick={() => onNavigateToSection('clasament')}>
               <span className="stat-hero-bar bg-gradient-to-r from-emerald-500 to-transparent" />
-              <div className="w-14 h-14 rounded-2xl bg-emerald-500/10 flex items-center justify-center text-emerald-600 shrink-0"><Trophy size={26} /></div>
+              <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-emerald-500/10 flex items-center justify-center text-emerald-600 shrink-0"><Trophy size={24} className="sm:w-[26px] sm:h-[26px]" /></div>
               <div className="flex-1 min-w-0">
                 <span className="text-[10px] font-bold uppercase tracking-wider opacity-40 block">Clasament</span>
-                <div className="text-4xl font-extrabold leading-none text-brand-accent my-1">
-                  {myTopPercent !== null ? <>Top {myTopPercent}<span className="text-xl">%</span></> : '—'}
+                <div className="text-3xl sm:text-4xl font-extrabold leading-none text-brand-accent my-1">
+                  {myTopPercent !== null ? <>Top {myTopPercent}<span className="text-lg sm:text-xl">%</span></> : '—'}
                 </div>
                 <div className="text-[11px] opacity-60 truncate">
                   {myRank !== null ? `Locul #${myRank} din ${rankableMembers.length} membri` : 'Fără punctaj înregistrat încă'}
@@ -461,12 +461,12 @@ const ViewDashboard = ({ members, currentUserObj, isAdmin, onNavigateToSection, 
               </div>
             </Card>
 
-            <Card className="stat-hero group relative overflow-hidden cursor-pointer border border-indigo-200 bg-white shadow-md !p-6 flex items-center gap-5 !rounded-3xl" onClick={() => onNavigateToSection('idei')}>
+            <Card className="stat-hero group relative overflow-hidden cursor-pointer border border-indigo-200 bg-white shadow-md !p-4 sm:!p-6 flex items-center gap-4 sm:gap-5 !rounded-2xl sm:!rounded-3xl" onClick={() => onNavigateToSection('idei')}>
               <span className="stat-hero-bar bg-gradient-to-r from-indigo-500 to-transparent" />
-              <div className="w-14 h-14 rounded-2xl bg-indigo-500/10 flex items-center justify-center text-indigo-600 shrink-0"><Lightbulb size={26} /></div>
+              <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-indigo-500/10 flex items-center justify-center text-indigo-600 shrink-0"><Lightbulb size={24} className="sm:w-[26px] sm:h-[26px]" /></div>
               <div className="flex-1 min-w-0">
                 <span className="text-[10px] font-bold uppercase tracking-wider opacity-40 block">Proiecte</span>
-                <div className="text-4xl font-extrabold leading-none text-brand-accent my-1">{personalProjects}</div>
+                <div className="text-3xl sm:text-4xl font-extrabold leading-none text-brand-accent my-1">{personalProjects}</div>
                 <div className="text-[11px] opacity-60 truncate">Propuneri active în sistem</div>
               </div>
             </Card>
@@ -645,7 +645,7 @@ const ViewDashboard = ({ members, currentUserObj, isAdmin, onNavigateToSection, 
         <Card className="md:col-span-5 lg:col-span-4 h-full flex flex-col justify-between font-['Manrope']">
           <div>
             <div className="flex justify-between items-center mb-6">
-              <h3 className="font-anthropicSerif font-semibold text-lg flex items-center gap-2 text-slate-800"><Clock size={18} className="text-indigo-550" /> Următoarea Întâlnire</h3>
+              <h3 className="font-anthropicSerif font-semibold text-lg flex items-center gap-2 text-slate-800"><Clock size={18} className="text-indigo-600" /> Următoarea Întâlnire</h3>
               <span className="text-[10px] uppercase font-bold bg-[#0F172A]/10 text-[#0F172A] px-2.5 py-1 rounded-lg border border-[#0F172A]/5">Rsvp</span>
             </div>
 
@@ -1061,7 +1061,7 @@ const ViewPayments = ({ members, onUpdateMember, isAdmin }: { members: any[], on
         </div>
 
         <div className="overflow-x-auto p-1">
-          <Table>
+          <Table className="min-w-[840px]">
             <TableHeader>
               <TableRow>
                 <TableHead className="text-sm md:text-base py-4 px-4 font-bold">Membru</TableHead>
@@ -1167,7 +1167,7 @@ const ViewPayments = ({ members, onUpdateMember, isAdmin }: { members: any[], on
             >
               <div className="absolute top-0 left-0 w-full h-2 bg-red-500"></div>
               
-              <div className="flex items-center gap-4 text-red-650 mb-6">
+              <div className="flex items-center gap-4 text-red-600 mb-6">
                 <AlertCircle size={28} />
                 <h3 className="text-lg font-bold">Anulare Plată (Revert)</h3>
               </div>
@@ -1829,7 +1829,7 @@ const ViewProfile = ({ currentUserObj, onUpdateMember, members }: ViewProfilePro
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
               <div className="p-3 bg-[#FAF9F5] rounded-xl border border-brand-muted/5">
                 <div className="text-[10px] opacity-60 uppercase">Total Plătit</div>
-                <div className="text-lg font-black text-emerald-650">{currentUserObj.totalPaid || 0} RON</div>
+                <div className="text-lg font-black text-emerald-600">{currentUserObj.totalPaid || 0} RON</div>
               </div>
               <div className="p-3 bg-[#FAF9F5] rounded-xl border border-brand-muted/5">
                 <div className="text-[10px] opacity-60 uppercase">Datorie Curentă</div>
@@ -2311,8 +2311,8 @@ export function Dashboard({ username, onLogout }: DashboardProps) {
       case 'idei': return <IdeasView isAdmin={isAdmin} currentUserId={currentUserObj?.id || ''} currentUsername={currentUserObj?.username || username || ''} />;
       case 'comunitate': return <CommunityIdeasView isAdmin={isAdmin} currentUserId={currentUserObj?.id || ''} />;
       case 'proiecte': return <ProjectProposalsView isAdmin={isAdmin} currentUserId={currentUserObj?.id || ''} currentUsername={currentUserObj?.username || username || ''} />;
-      case 'forum': return <ForumView isAdmin={isAdmin} currentUserId={currentUserObj?.id || ''} />;
-      case 'stiri': return <NewsView isAdmin={isAdmin} currentUserId={currentUserObj?.id || ''} />;
+      case 'forum': return <ForumView isAdmin={isAdmin} currentUserId={currentUserObj?.id || ''} currentUsername={currentUserObj?.name || currentUserObj?.username || username || ''} />;
+      case 'stiri': return <NewsView isAdmin={isAdmin} currentUserId={currentUserObj?.id || ''} currentUsername={currentUserObj?.name || currentUserObj?.username || username || ''} />;
       case 'istoric': return <ViewPayments members={members} onUpdateMember={handleUpdateMember} isAdmin={isAdmin} />;
       case 'buget': return (
         <BudgetView
@@ -2483,7 +2483,10 @@ export function Dashboard({ username, onLogout }: DashboardProps) {
                   return (
                     <button
                       key={item.id}
-                      onClick={() => setActiveSection(item.id)}
+                      onClick={() => {
+                        setActiveSection(item.id);
+                        setIsMobileSidebarOpen(false);
+                      }}
                       title={isSidebarCollapsed ? item.label : undefined}
                       className={`adm-nav-item w-full flex items-center gap-3 py-2.5 font-medium transition-all ${
                         isSidebarCollapsed ? 'justify-center px-0' : 'px-4'
@@ -2535,7 +2538,7 @@ export function Dashboard({ username, onLogout }: DashboardProps) {
       <main className={`flex-1 flex flex-col h-screen overflow-y-auto relative transition-all duration-300 ${isSidebarCollapsed ? 'lg:ml-20' : 'lg:ml-64'}`}>
 
         {/* Header */}
-        <header className="adm-header sticky top-0 z-30 px-6 py-4 flex items-center justify-between">
+        <header className="adm-header sticky top-0 z-30 px-3.5 sm:px-6 py-3 sm:py-4 flex items-center justify-between">
           <div className="flex-1 flex items-center gap-3 min-w-0">
             {/* Mobile Sidebar Hamburger Toggle */}
             <button
@@ -2645,9 +2648,7 @@ export function Dashboard({ username, onLogout }: DashboardProps) {
         <MemberAlertsBar alerts={memberAlerts} dismissedIds={dismissedAlertIds} onDismiss={(id) => setDismissedAlertIds(prev => [...prev, id])} />
 
         {/* Dynamic View Content */}
-        <div className={`p-6 md:p-8 w-full relative z-10 pb-20 ${
-          activeSection === 'istoric' ? 'max-w-[95%] mx-auto' : 'max-w-[96%] ml-0 pr-6 md:pr-12'
-        }`}>
+        <div className="p-3.5 sm:p-5 md:p-8 w-full max-w-full relative z-10 pb-20">
           <AnimatePresence mode="wait">
             <motion.div
               key={activeSection}
