@@ -3,6 +3,8 @@ import { WelcomeLogin } from './components/auth/WelcomeLogin';
 import { Toaster } from './components/ui/Toast';
 import { seedDatabase } from './data/seedDatabase';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { MAINTENANCE_MODE } from './config/maintenance';
+import { MaintenanceScreen } from './components/maintenance/MaintenanceScreen';
 
 const Dashboard = lazy(() =>
   import('./components/dashboard/Dashboard').then((m) => ({ default: m.Dashboard }))
@@ -55,9 +57,14 @@ function MainApp() {
 }
 
 export default function App() {
+  if (MAINTENANCE_MODE) {
+    return <MaintenanceScreen />;
+  }
+
   return (
     <AuthProvider>
       <MainApp />
     </AuthProvider>
   );
 }
+

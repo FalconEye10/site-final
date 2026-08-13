@@ -1,6 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App.tsx';
+import { MAINTENANCE_MODE } from './config/maintenance.ts';
 
 declare global {
   interface Window {
@@ -13,23 +14,22 @@ const headerEl = document.querySelector('header');
 const rootEl = document.getElementById('root');
 
 function handleRouting() {
-  if (window.location.hash === '#dashboard') {
+  if (MAINTENANCE_MODE || window.location.hash === '#dashboard') {
     if (mainEl) mainEl.classList.add('hidden');
     if (headerEl) headerEl.classList.add('hidden');
     if (rootEl) rootEl.classList.remove('hidden');
 
-    // The custom cursor is a landing-page effect. Inside the admin app we
-    // restore the native cursor so forms, tables and buttons behave normally.
+    // Restore native cursor and disable landing page effects during maintenance/app
     document.body.classList.add('app-active');
     
-    // Disable Lenis smooth scrolling for the React App
+    // Disable Lenis smooth scrolling
     if (window.lenis) {
       window.lenis.destroy();
       window.lenis = null;
     }
     document.documentElement.classList.remove('lenis', 'lenis-smooth', 'lenis-stopped');
-    document.documentElement.style.height = 'auto';
-    document.body.style.overflow = 'auto';
+    document.documentElement.style.height = '100%';
+    document.body.style.overflow = MAINTENANCE_MODE ? 'hidden' : 'auto';
     document.body.classList.remove('overflow-x-hidden');
   } else {
     if (mainEl) mainEl.classList.remove('hidden');
