@@ -4,7 +4,6 @@ import { X } from 'lucide-react';
 import { toast } from '../ui/Toast';
 import { calculateDebt } from '../../utils/finance';
 import { updateMemberInDB, logScoreAudit } from '../../utils/supabaseService';
-import { canEditMemberPassword } from '../../utils/permissions';
 
 interface AddMemberModalProps {
   isOpen: boolean;
@@ -20,7 +19,6 @@ export function AddMemberModal({ isOpen, onClose, members, onAddMember, currentU
   const [name, setName] = useState('');
   const [nickname, setNickname] = useState('');
   const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('parola123');
   const [phone, setPhone] = useState('');
   const [role, setRole] = useState('member');
   const [status, setStatus] = useState('active');
@@ -61,14 +59,13 @@ export function AddMemberModal({ isOpen, onClose, members, onAddMember, currentU
     
     const calculatedDebtVal = calculateDebt(joinDate, 0);
     const firstWord = name.trim().split(' ')[0] || name.trim();
-    const canSetCustomPassword = canEditMemberPassword(currentUserObj, role);
 
     const newMember = {
       id: newId,
       name: name.trim(),
       nickname: nickname.trim() || firstWord,
       username: username.trim(),
-      password: canSetCustomPassword ? (password || 'parola123') : 'parola123',
+      email: `${username.trim().toLowerCase()}@club.ro`,
       phone: phone.trim(),
       role: role,
       avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(name.trim())}&background=001f26&color=FAF9F5`,
@@ -104,7 +101,6 @@ export function AddMemberModal({ isOpen, onClose, members, onAddMember, currentU
       setName('');
       setNickname('');
       setUsername('');
-      setPassword('parola123');
       setPhone('');
       setRole('member');
       setStatus('active');
@@ -183,29 +179,19 @@ export function AddMemberModal({ isOpen, onClose, members, onAddMember, currentU
                   />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-bold uppercase tracking-wider opacity-60 mb-1">Parolă (Implicit: parola123)</label>
-                  {canEditMemberPassword(currentUserObj, role) ? (
+                  <label className="block text-[10px] font-bold uppercase tracking-wider opacity-60 mb-1">Autentificare Cont</label>
+                  <div className="space-y-1">
                     <input 
                       type="text" 
-                      value={password}
-                      onChange={e => setPassword(e.target.value)}
-                      required
-                      className="w-full px-4 py-3 bg-[#FAF9F5] border border-brand-muted/10 rounded-xl text-sm focus:outline-none focus:border-brand-primary transition-colors font-['Manrope']" 
+                      value="Supabase Auth Engine"
+                      disabled
+                      readOnly
+                      className="w-full px-4 py-3 bg-slate-100 border border-slate-200 rounded-xl text-sm text-slate-500 cursor-not-allowed font-['Manrope']" 
                     />
-                  ) : (
-                    <div className="space-y-1">
-                      <input 
-                        type="text" 
-                        value="parola123"
-                        disabled
-                        readOnly
-                        className="w-full px-4 py-3 bg-slate-100 border border-slate-200 rounded-xl text-sm text-slate-500 cursor-not-allowed font-['Manrope']" 
-                      />
-                      <p className="text-[10px] font-semibold text-amber-700">
-                        🔒 Doar Stan Ștefan poate edita parolele membrilor din Board.
-                      </p>
-                    </div>
-                  )}
+                    <p className="text-[10px] font-semibold text-emerald-700">
+                      🔒 Creare securizată cu Supabase Auth JWT credentials.
+                    </p>
+                  </div>
                 </div>
               </div>
 

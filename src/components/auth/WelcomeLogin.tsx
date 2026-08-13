@@ -1,13 +1,14 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { supabase } from '../../supabase';
 import { LiveBackground } from '../ui/LiveBackground';
+import { useAuth } from '../../context/AuthContext';
 
 interface WelcomeLoginProps {
   onLoginSuccess: (username: string) => void;
 }
 
 export function WelcomeLogin({ onLoginSuccess }: WelcomeLoginProps) {
+  const { login } = useAuth();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -29,18 +30,16 @@ export function WelcomeLogin({ onLoginSuccess }: WelcomeLoginProps) {
     const formattedUser = username.trim().toLowerCase();
 
     try {
-      const { data, error } = await supabase
-        .from('members')
-        .select('*')
-        .eq('username', formattedUser)
-        .eq('password', password);
+      const { error: loginErr } = await login(formattedUser, password);
 
-      if (error) throw error;
-
-      if (data && data.length > 0) {
-        onLoginSuccess(formattedUser);
+      if (loginErr) {
+        if (loginErr.message?.includes('Invalid login credentials')) {
+          setError('Utilizator sau parolă incorecte.');
+        } else {
+          setError(loginErr.message || 'Eroare la autentificare.');
+        }
       } else {
-        setError('Utilizator sau parolă incorecte.');
+        onLoginSuccess(formattedUser);
       }
     } catch (err: any) {
       console.error("Supabase Login Error:", err);
