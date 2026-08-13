@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { CheckCircle2, XCircle, Clock, ChevronDown, Lock, Loader2 } from 'lucide-react';
+import { CheckCircle2, XCircle, Clock, ChevronDown, Lock, Loader2, MessageSquare, Search } from 'lucide-react';
 import { EventData, AbsenceRequest, fetchAbsenceRequests, saveAbsenceRequest, recordAttendance, fetchEvents, saveEvent, applyMemberScoreAdjustment } from '../../../utils/supabaseService';
 import { toast } from '../../ui/Toast';
 import { Badge } from '../../ui/Badge';
@@ -192,6 +192,71 @@ export function AttendanceView({ members, onUpdateMember, isAdmin, currentUserId
   const [showFinalizeModal, setShowFinalizeModal] = useState(false);
   const [eventDurationInput, setEventDurationInput] = useState('2');
   const [isFinalizing, setIsFinalizing] = useState(false);
+
+  const [showWhatsappModal, setShowWhatsappModal] = useState(false);
+  const [whatsappSearchTerm, setWhatsappSearchTerm] = useState('');
+  const [isExcusingWhatsapp, setIsExcusingWhatsapp] = useState(false);
+
+  const handleQuickWhatsappExcuse = async (memberId: string) => {
+    if (!selectedEvent) {
+      toast.error('Selectează mai întâi un eveniment.');
+      return;
+    }
+    if (selectedEvent.attendanceClosed) {
+      toast.error('Sesiunea de prezență este închisă.');
+      return;
+    }
+
+    const member = members.find(m => m.id === memberId);
+    if (!member) return;
+
+    setIsExcusingWhatsapp(true);
+    try {
+      const whatsappReq: AbsenceRequest = {
+        id: `req_wa_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
+        eventId: selectedEvent.id,
+        memberId: member.id,
+        reason: 'Confirmat pe WhatsApp (Motivare Directă Board)',
+        status: 'approved',
+        timestamp: new Date().toISOString(),
+        reviewedAt: new Date().toISOString()
+      };
+      await saveAbsenceRequest(whatsappReq);
+      setRequests(prev => [whatsappReq, ...prev]);
+
+      const currentPresence = selectedEvent.rsvps?.[member.id] || 'none';
+      let newPresences = member.presences || 0;
+      let newExcused = member.excusedAbsences || 0;
+      let newUnexcused = member.unexcusedAbsences || 0;
+
+      if (selectedEvent.type === 'meeting') {
+        if (currentPresence === 'present') newPresences = Math.max(0, newPresences - 1);
+        if (currentPresence === 'excused') newExcused = Math.max(0, newExcused - 1);
+        if (currentPresence === 'unexcused' || currentPresence === 'absent') newUnexcused = Math.max(0, newUnexcused - 1);
+        newExcused += 1;
+      }
+
+      const updatedStats = { presences: newPresences, excusedAbsences: newExcused, unexcusedAbsences: newUnexcused };
+      const deltas = {
+        presencesDelta: newPresences - (member.presences || 0),
+        excusedDelta: newExcused - (member.excusedAbsences || 0),
+        unexcusedDelta: newUnexcused - (member.unexcusedAbsences || 0),
+      };
+      await recordAttendance(selectedEvent.id, member.id, 'excused', deltas);
+
+      const updatedEvent = { ...selectedEvent, rsvps: { ...selectedEvent.rsvps, [member.id]: 'excused' } };
+      setSelectedEvent(updatedEvent);
+      setEvents(prev => prev.map(e => e.id === updatedEvent.id ? updatedEvent : e));
+      onUpdateMember({ ...member, ...updatedStats });
+
+      toast.success(`✅ Absența lui ${member.name} a fost motivată via WhatsApp!`);
+    } catch (err) {
+      console.error(err);
+      toast.error('Eroare la motivarea prin WhatsApp.');
+    } finally {
+      setIsExcusingWhatsapp(false);
+    }
+  };
 
   // Load events
   useEffect(() => {
@@ -597,7 +662,7 @@ export function AttendanceView({ members, onUpdateMember, isAdmin, currentUserId
           )}
 
           <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 mb-6 shrink-0 border-b border-brand-muted/5 pb-4">
-            <div className="flex gap-4">
+            <div className="flex flex-wrap items-center gap-3">
               <button 
                 onClick={() => setActiveTab('attendance')}
                 className={`px-5 py-2.5 rounded-full text-sm font-bold transition-all ${activeTab === 'attendance' ? 'bg-brand-primary text-brand-accent shadow-sm' : 'bg-white/40 text-brand-accent/60 hover:bg-white/60 border border-brand-muted/5'}`}
@@ -613,6 +678,14 @@ export function AttendanceView({ members, onUpdateMember, isAdmin, currentUserId
                   {pendingRequestsCount > 0 && (
                     <span className="bg-red-500 text-white text-[10px] px-1.5 py-0.5 rounded-full">{pendingRequestsCount}</span>
                   )}
+                </button>
+              )}
+              {!selectedEvent.attendanceClosed && (
+                <button
+                  onClick={() => { setWhatsappSearchTerm(''); setShowWhatsappModal(true); }}
+                  className="px-4 py-2.5 rounded-full text-xs font-extrabold bg-emerald-600 hover:bg-emerald-700 text-white flex items-center gap-2 shadow-sm transition-all cursor-pointer border border-emerald-500"
+                >
+                  <MessageSquare size={16} /> Confirmat pe WhatsApp
                 </button>
               )}
             </div>
@@ -794,6 +867,14 @@ export function AttendanceView({ members, onUpdateMember, isAdmin, currentUserId
                                         onClick={() => handleMarkAttendance(m.id, 'unexcused')}
                                         className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all ${status === 'unexcused' ? 'bg-rose-100 dark:bg-rose-900/50 text-rose-800 dark:text-rose-300' : 'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-rose-50 dark:hover:bg-rose-900/30 hover:border-rose-200 dark:hover:border-rose-700'} disabled:opacity-50 disabled:cursor-not-allowed`}
                                       >Absent</button>
+                                      <button 
+                                        disabled={isButtonLocked || isExcusingWhatsapp}
+                                        onClick={() => handleQuickWhatsappExcuse(m.id)}
+                                        title="Motivează rapid absența confirmată pe WhatsApp (fără formular)"
+                                        className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all ${status === 'excused' ? 'bg-amber-100 dark:bg-amber-900/50 text-amber-800 dark:text-amber-300' : 'bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-300 dark:border-emerald-700 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/60'} disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1`}
+                                      >
+                                        <MessageSquare size={13} /> Motivat (WhatsApp)
+                                      </button>
                                     </>
                                   ) : (
                                     <>
@@ -977,6 +1058,102 @@ export function AttendanceView({ members, onUpdateMember, isAdmin, currentUserId
                   </button>
                 </div>
               </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showWhatsappModal && selectedEvent && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl w-full max-w-lg overflow-hidden shadow-2xl border border-slate-200 dark:border-slate-800 flex flex-col max-h-[85vh]">
+            <div className="p-6 bg-gradient-to-r from-emerald-600 to-teal-700 text-white shrink-0">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-3">
+                  <div className="p-2.5 bg-white/20 rounded-2xl backdrop-blur-sm">
+                    <MessageSquare size={22} className="text-white" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-extrabold text-white">Motivare Rapidă WhatsApp</h3>
+                    <p className="text-xs text-emerald-100 font-medium">{selectedEvent.title}</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowWhatsappModal(false)}
+                  className="w-8 h-8 rounded-full bg-white/20 hover:bg-white/30 text-white flex items-center justify-center text-sm font-bold cursor-pointer"
+                >
+                  ✕
+                </button>
+              </div>
+              <p className="text-xs text-emerald-50 opacity-90 mt-2">
+                Selectează un voluntar din listă pentru a-i motiva absența direct (confirmată pe WhatsApp), fără formular.
+              </p>
+            </div>
+
+            <div className="p-5 flex-1 flex flex-col overflow-hidden">
+              <div className="relative mb-4 shrink-0">
+                <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                <input
+                  type="text"
+                  value={whatsappSearchTerm}
+                  onChange={e => setWhatsappSearchTerm(e.target.value)}
+                  placeholder="Caută voluntar după nume..."
+                  className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-bold text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                />
+              </div>
+
+              <div className="flex-1 overflow-y-auto pr-1 space-y-2">
+                {members
+                  .filter(m => m.role !== 'admin')
+                  .filter(m => m.name.toLowerCase().includes(whatsappSearchTerm.toLowerCase()))
+                  .sort((a, b) => a.name.localeCompare(b.name))
+                  .map(m => {
+                    const status = selectedEvent.rsvps?.[m.id] || 'none';
+                    const isExcused = status === 'excused';
+
+                    return (
+                      <div
+                        key={m.id}
+                        className="flex items-center justify-between p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/60 hover:border-emerald-500/50 transition-all"
+                      >
+                        <div className="flex items-center gap-3">
+                          <img
+                            src={m.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(m.name)}`}
+                            className="w-9 h-9 rounded-full border border-slate-200 dark:border-slate-700"
+                            alt=""
+                          />
+                          <div>
+                            <div className="text-sm font-extrabold text-slate-900 dark:text-white">{m.name}</div>
+                            <div className="text-[11px] font-bold text-slate-500">
+                              Status: {status === 'present' ? 'Prezent' : isExcused ? 'Motivat (Învoit)' : status === 'unexcused' ? 'Absent' : 'Nespecificat'}
+                            </div>
+                          </div>
+                        </div>
+
+                        <button
+                          disabled={isExcusingWhatsapp || isExcused}
+                          onClick={() => handleQuickWhatsappExcuse(m.id)}
+                          className={`px-3.5 py-1.5 rounded-xl text-xs font-extrabold transition-all flex items-center gap-1.5 shadow-sm ${
+                            isExcused
+                              ? 'bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300 border border-amber-300 opacity-80 cursor-default'
+                              : 'bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer active:scale-95'
+                          }`}
+                        >
+                          <MessageSquare size={14} />
+                          {isExcused ? 'Deja Motivat' : 'Motivează (WhatsApp)'}
+                        </button>
+                      </div>
+                    );
+                  })}
+              </div>
+            </div>
+
+            <div className="p-4 bg-slate-100 dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 flex justify-end shrink-0">
+              <button
+                onClick={() => setShowWhatsappModal(false)}
+                className="px-5 py-2 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-800 dark:text-slate-200 rounded-xl text-xs font-extrabold transition-all cursor-pointer"
+              >
+                Închide
+              </button>
             </div>
           </div>
         </div>
