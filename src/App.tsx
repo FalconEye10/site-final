@@ -5,6 +5,7 @@ import { seedDatabase } from './data/seedDatabase';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { MAINTENANCE_MODE } from './config/maintenance';
 import { MaintenanceScreen } from './components/maintenance/MaintenanceScreen';
+import { PushNotificationPromptModal } from './components/dashboard/PushNotificationPromptModal';
 
 const Dashboard = lazy(() =>
   import('./components/dashboard/Dashboard').then((m) => ({ default: m.Dashboard }))
@@ -51,6 +52,7 @@ function MainApp() {
           <Dashboard username={username} onLogout={logout} />
         </Suspense>
       </div>
+      <PushNotificationPromptModal memberId={memberProfile?.id || user.id} />
       <Toaster />
     </>
   );
