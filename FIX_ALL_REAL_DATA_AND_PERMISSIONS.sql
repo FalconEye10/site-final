@@ -27,6 +27,7 @@ CREATE TABLE IF NOT EXISTS public.push_subscriptions (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 CREATE INDEX IF NOT EXISTS idx_push_subs_member_id ON public.push_subscriptions(member_id);
+ALTER TABLE public.push_subscriptions ENABLE ROW LEVEL SECURITY;
 
 CREATE TABLE IF NOT EXISTS public.kudos (
   id TEXT PRIMARY KEY,
@@ -40,6 +41,7 @@ CREATE TABLE IF NOT EXISTS public.kudos (
   badge_type TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
+ALTER TABLE public.kudos ENABLE ROW LEVEL SECURITY;
 
 CREATE TABLE IF NOT EXISTS public.suggestions (
   id TEXT PRIMARY KEY,
@@ -51,6 +53,7 @@ CREATE TABLE IF NOT EXISTS public.suggestions (
   status TEXT DEFAULT 'pending',
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
+ALTER TABLE public.suggestions ENABLE ROW LEVEL SECURITY;
 
 CREATE TABLE IF NOT EXISTS public.absence_requests (
   id TEXT PRIMARY KEY,
@@ -61,6 +64,7 @@ CREATE TABLE IF NOT EXISTS public.absence_requests (
   reject_reason TEXT,
   timestamp TIMESTAMPTZ DEFAULT NOW()
 );
+ALTER TABLE public.absence_requests ENABLE ROW LEVEL SECURITY;
 
 -- 3. Șterge politicile restrictive vechi pentru a preveni suprapunerile
 DO $$ 
