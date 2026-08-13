@@ -1608,17 +1608,28 @@ const ViewProfile = ({ currentUserObj, onUpdateMember, members }: ViewProfilePro
     setIsSaving(true);
     try {
       const allowedPasswordChange = canEditMemberPassword(currentUserObj || effectiveUser, effectiveUser.role);
-      const finalPassword = allowedPasswordChange ? password : (effectiveUser.password || '');
+
+      // Dacă s-a introdus o parolă nouă, o actualizăm prin Supabase Auth
+      if (allowedPasswordChange && password && password.trim().length > 0) {
+        const { error: authPassErr } = await supabase.auth.updateUser({
+          password: password.trim()
+        });
+        if (authPassErr) {
+          console.warn("Eroare la actualizarea parolei în Auth:", authPassErr.message);
+          toast.error(`Eroare parolă: ${authPassErr.message}`);
+        } else {
+          toast.success("Parola a fost actualizată cu succes!");
+        }
+      }
 
       const updated = {
         ...effectiveUser,
         nickname,
         avatar,
-        password: finalPassword,
       };
-      // Scriem doar câmpurile editate aici, ca să nu suprascriem scorul/plata
-      // schimbate între timp de un admin (updateMemberFields ≠ overwrite total).
-      await updateMemberFields(effectiveUser.id, { nickname, avatar, password: finalPassword });
+
+      // Scriem doar câmpurile de profil în tabela members
+      await updateMemberFields(effectiveUser.id, { nickname, avatar });
       onUpdateMember(updated);
       toast.success("Profilul a fost salvat cu succes!");
     } catch (err: any) {

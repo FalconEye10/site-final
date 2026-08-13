@@ -92,10 +92,32 @@ export async function fetchMembers(): Promise<any[]> {
   }
 }
 
+const VALID_MEMBER_COLUMNS = new Set([
+  'id', 'name', 'email', 'phone', 'role', 'committee', 'status', 'joinDate',
+  'totalPaid', 'score', 'avatar', 'stats', 'scoreAdjustments', 'customFields',
+  'createdAt', 'boardPosition', 'address', 'payments', 'attendanceRate',
+  'qualification', 'totalDebt', 'nickname', 'presences', 'excusedAbsences',
+  'unexcusedAbsences', 'username', 'login_count', 'has_seen_tutorial',
+  'user_id', 'hours'
+]);
+
+function sanitizeMemberPayload(payload: Record<string, any>): Record<string, any> {
+  const sanitized: Record<string, any> = {};
+  for (const [key, value] of Object.entries(payload)) {
+    if (VALID_MEMBER_COLUMNS.has(key) && key !== 'password') {
+      sanitized[key] = value;
+    } else if (key === 'customMilestones') {
+      sanitized.stats = { ...(sanitized.stats || {}), customMilestones: value };
+    }
+  }
+  return sanitized;
+}
+
 // Actualizează datele unui membru (ex: totalPaid)
 export async function updateMemberInDB(member: any): Promise<void> {
   try {
-    const { error } = await supabase.from('members').upsert(member);
+    const cleanMember = sanitizeMemberPayload(member);
+    const { error } = await supabase.from('members').upsert(cleanMember);
     if (error) throw error;
   } catch (error) {
     console.error("Error updating member in Supabase:", error);
@@ -108,9 +130,12 @@ export async function updateMemberInDB(member: any): Promise<void> {
  */
 export async function updateMemberFields(memberId: string, fields: Record<string, any>): Promise<void> {
   try {
+    const cleanFields = sanitizeMemberPayload(fields);
+    if (Object.keys(cleanFields).length === 0) return;
+
     const { error } = await supabase
       .from('members')
-      .update(fields)
+      .update(cleanFields)
       .eq('id', memberId.toString());
     if (error) throw error;
   } catch (error) {
@@ -637,6 +662,17 @@ export async function saveAbsenceRequest(request: AbsenceRequest): Promise<void>
     throw error;
   }
 }
+
+export async function deleteAbsenceRequest(requestId: string): Promise<void> {
+  try {
+    const { error } = await supabase.from('absence_requests').delete().eq('id', requestId);
+    if (error) throw error;
+  } catch (error) {
+    console.error("Error deleting absence request from Supabase:", error);
+    throw error;
+  }
+}
+
 
 // ==========================================
 // ATTENDANCE TRANSACTIONS

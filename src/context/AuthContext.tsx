@@ -1,7 +1,6 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '../supabase';
-import { fetchMembers } from '../utils/supabaseService';
 
 interface AuthContextType {
   session: Session | null;
@@ -33,14 +32,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const fetchProfileForUser = async (authUser: User) => {
     try {
-      // 1. Încercăm găsirea după user_id UUID
+      // 1. Căutăm după user_id UUID
       let { data } = await supabase
         .from('members')
         .select('*')
         .eq('user_id', authUser.id)
         .maybeSingle();
 
-      // 2. Dacă nu e găsit după user_id, căutăm după email sau username
+      // 2. Dacă nu e găsit după user_id, căutăm după email sau username prefix
       if (!data && authUser.email) {
         const usernamePrefix = authUser.email.split('@')[0];
         const { data: match } = await supabase
@@ -62,52 +61,43 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (data) {
         setMemberProfile(data);
+        localStorage.setItem('active_member_session', JSON.stringify(data));
       }
     } catch (err) {
-      console.warn('Could not fetch remote profile, keeping current profile:', err);
+      console.warn('Eroare la încărcarea profilului:', err);
     }
   };
 
   useEffect(() => {
     let mounted = true;
 
-    // Verificăm sesiunea curentă Supabase Auth sau sesiunea locală activă
-    supabase.auth.getSession().then(({ data: { session: currentSession } }) => {
+    // Verificăm exclusiv sesiunea oficială Supabase Auth (fără bypass sau token-uri fictive)
+    supabase.auth.getSession().then(async ({ data: { session: currentSession } }) => {
       if (!mounted) return;
-      if (currentSession) {
+      if (currentSession && currentSession.user) {
         setSession(currentSession);
         setUser(currentSession.user);
-        fetchProfileForUser(currentSession.user).finally(() => {
-          if (mounted) setLoading(false);
-        });
+        await fetchProfileForUser(currentSession.user);
       } else {
-        try {
-          const stored = localStorage.getItem('active_member_session');
-          if (stored) {
-            const parsed = JSON.parse(stored);
-            const mockUsr = {
-              id: parsed.user_id || parsed.id || 'usr_stored',
-              email: parsed.email || `${parsed.username || 'user'}@club.ro`,
-              app_metadata: { role: parsed.role || 'member' },
-              user_metadata: { name: parsed.name, role: parsed.role || 'member', username: parsed.username },
-            } as any;
-            setMemberProfile(parsed);
-            setUser(mockUsr);
-            setSession({ user: mockUsr, access_token: 'local_active_token' } as any);
-          }
-        } catch (e) {
-          // ignore
-        }
-        setLoading(false);
+        setSession(null);
+        setUser(null);
+        setMemberProfile(null);
+        localStorage.removeItem('active_member_session');
       }
+      if (mounted) setLoading(false);
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, newSession) => {
       if (!mounted) return;
-      if (newSession) {
+      if (newSession && newSession.user) {
         setSession(newSession);
         setUser(newSession.user);
         await fetchProfileForUser(newSession.user);
+      } else {
+        setSession(null);
+        setUser(null);
+        setMemberProfile(null);
+        localStorage.removeItem('active_member_session');
       }
       setLoading(false);
     });
@@ -128,117 +118,64 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const cleanIdentifier = identifier.trim();
       const lowerIdent = cleanIdentifier.toLowerCase();
-      const emailToUse = lowerIdent.includes('@') ? lowerIdent : `${lowerIdent}@club.ro`;
 
-      // 1. Încercăm autentificarea nativă prin Supabase Auth
-      try {
+      // Construim lista de adrese posibile de email asociate membrului
+      const candidateEmails: string[] = [];
+
+      if (lowerIdent.includes('@')) {
+        candidateEmails.push(lowerIdent);
+      } else {
+        // Căutăm întâi în tabela members adresa exactă de email înregistrată
+        try {
+          const { data: member } = await supabase
+            .from('members')
+            .select('email, username, id')
+            .or(`username.ilike.${lowerIdent},id.ilike.${cleanIdentifier}`)
+            .maybeSingle();
+
+          if (member?.email) {
+            candidateEmails.push(member.email.trim().toLowerCase());
+          }
+        } catch {
+          // ignore lookup error
+        }
+
+        candidateEmails.push(`${lowerIdent}@interact-camena.internal`);
+        candidateEmails.push(`${lowerIdent}@club.ro`);
+      }
+
+      // Încercăm autentificarea strictă prin Supabase Auth
+      let lastAuthError: any = null;
+      let authenticatedData: any = null;
+
+      for (const email of candidateEmails) {
         const { data: authData, error: authErr } = await supabase.auth.signInWithPassword({
-          email: emailToUse,
+          email,
           password: pass,
         });
 
         if (!authErr && authData?.session) {
-          setSession(authData.session);
-          setUser(authData.user);
-          if (authData.user) {
-            await fetchProfileForUser(authData.user);
-          }
-          localStorage.setItem('active_member_session', JSON.stringify({ username: lowerIdent, email: emailToUse }));
-          return { error: null };
+          authenticatedData = authData;
+          lastAuthError = null;
+          break;
+        } else if (authErr) {
+          lastAuthError = authErr;
         }
-
-        // Dacă nu este înregistrat în Supabase Auth, încercăm crearea contului
-        if (authErr && (authErr.message?.includes('Invalid login credentials') || authErr.message?.includes('User not found'))) {
-          const { data: signUpData } = await supabase.auth.signUp({
-            email: emailToUse,
-            password: pass,
-          });
-
-          if (signUpData?.session) {
-            setSession(signUpData.session);
-            setUser(signUpData.user);
-            if (signUpData.user) {
-              await fetchProfileForUser(signUpData.user);
-            }
-            localStorage.setItem('active_member_session', JSON.stringify({ username: lowerIdent, email: emailToUse }));
-            return { error: null };
-          }
-        }
-      } catch (authError) {
-        console.warn('Supabase Auth remote check failed, proceeding to intelligent resolver:', authError);
       }
 
-      // 2. Rezoluție inteligentă de profil pentru membru / admin (ex: stan.stefan, admin etc.)
-      const isStefanOrAdmin =
-        lowerIdent === 'stan.stefan' ||
-        lowerIdent === 'admin' ||
-        lowerIdent.includes('stefan') ||
-        lowerIdent === 'm053';
+      if (!authenticatedData || !authenticatedData.session) {
+        // Nicio adresă nu s-a putut autentifica cu parola furnizată
+        return {
+          error: lastAuthError || new Error('Nume de utilizator sau parolă incorectă.')
+        };
+      }
 
-      const resolvedRole = isStefanOrAdmin ? 'admin' : 'member';
-      const resolvedName = isStefanOrAdmin ? 'STAN STEFAN' : cleanIdentifier.toUpperCase();
-      const resolvedNickname = isStefanOrAdmin ? 'Ștefan' : cleanIdentifier;
-
-      const profileObj = {
-        id: isStefanOrAdmin ? 'M053' : `M_${lowerIdent}`,
-        name: resolvedName,
-        username: lowerIdent,
-        email: emailToUse,
-        role: resolvedRole,
-        avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(resolvedName)}&background=101D34&color=FAF9F5`,
-        nickname: resolvedNickname,
-        score: 120,
-        hours: 32,
-        presences: 16,
-        status: 'active',
-        attendanceRate: '100%',
-        qualification: 'Maxim',
-        boardPosition: isStefanOrAdmin ? 'Președinte' : 'Membru',
-      };
-
-      const customUser = {
-        id: isStefanOrAdmin ? 'usr_stan_stefan' : `usr_${lowerIdent}`,
-        email: emailToUse,
-        app_metadata: { role: resolvedRole },
-        user_metadata: { name: resolvedName, role: resolvedRole, username: lowerIdent },
-      } as any;
-
-      const customSession = {
-        access_token: `token_${lowerIdent}_${Date.now()}`,
-        user: customUser,
-      } as any;
-
-      setSession(customSession);
-      setUser(customUser);
-      setMemberProfile(profileObj);
-      localStorage.setItem('active_member_session', JSON.stringify(profileObj));
-
-      // Încercăm în fundal să potrivim profilul exact al membrului din baza de date sau din registrul oficial
-      (async () => {
-        try {
-          const allMembers = await fetchMembers();
-          const normInput = lowerIdent.replace(/[^a-z0-9]/g, '');
-          const matched = allMembers.find(m => {
-            const mUserNorm = (m.username || '').toLowerCase().replace(/[^a-z0-9]/g, '');
-            const mNameNorm = (m.name || '').toLowerCase().replace(/[^a-z0-9]/g, '');
-            return (
-              mUserNorm === normInput ||
-              mNameNorm === normInput ||
-              mUserNorm.includes(normInput) ||
-              normInput.includes(mUserNorm) ||
-              mNameNorm.includes(normInput) ||
-              normInput.includes(mNameNorm)
-            );
-          });
-
-          if (matched) {
-            setMemberProfile(matched);
-            localStorage.setItem('active_member_session', JSON.stringify(matched));
-          }
-        } catch {
-          // ignore
-        }
-      })();
+      // Autentificare validă prin Supabase Auth
+      setSession(authenticatedData.session);
+      setUser(authenticatedData.user);
+      if (authenticatedData.user) {
+        await fetchProfileForUser(authenticatedData.user);
+      }
 
       return { error: null };
     } catch (err: any) {

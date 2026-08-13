@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { CheckCircle2, XCircle, Clock, ChevronDown, Lock, Loader2, MessageSquare, Search } from 'lucide-react';
-import { EventData, AbsenceRequest, fetchAbsenceRequests, saveAbsenceRequest, recordAttendance, fetchEvents, saveEvent, applyMemberScoreAdjustment } from '../../../utils/supabaseService';
+import { CheckCircle2, XCircle, Clock, ChevronDown, Lock, Loader2, MessageSquare, Search, RotateCcw } from 'lucide-react';
+import { EventData, AbsenceRequest, fetchAbsenceRequests, saveAbsenceRequest, deleteAbsenceRequest, recordAttendance, fetchEvents, saveEvent, applyMemberScoreAdjustment } from '../../../utils/supabaseService';
 import { toast } from '../../ui/Toast';
 import { Badge } from '../../ui/Badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../ui/table';
@@ -77,6 +77,16 @@ const MemberAttendanceView = ({ member, events, currentUserId, preselectedEventI
       toast.success('Cererea a fost trimisă cu succes!');
     } catch (err) {
       toast.error('Eroare la trimiterea cererii.');
+    }
+  };
+
+  const handleCancelPendingRequest = async (reqId: string) => {
+    try {
+      await deleteAbsenceRequest(reqId);
+      setRequests(prev => prev.filter(r => r.id !== reqId));
+      toast.success('Cererea ta de învoire a fost anulată.');
+    } catch (e) {
+      toast.error('Eroare la anularea cererii.');
     }
   };
 
@@ -165,7 +175,17 @@ const MemberAttendanceView = ({ member, events, currentUserId, preselectedEventI
                         <p className="text-sm text-rose-700 italic">{req.rejectReason}</p>
                       </div>
                     )}
-                    <div className="text-xs text-slate-400 mt-2">Trimis: {new Date(req.timestamp).toLocaleDateString('ro-RO')}</div>
+                    <div className="flex justify-between items-center text-xs text-slate-400 mt-2">
+                      <span>Trimis: {new Date(req.timestamp).toLocaleDateString('ro-RO')}</span>
+                      {req.status === 'pending' && (
+                        <button
+                          onClick={() => handleCancelPendingRequest(req.id)}
+                          className="text-rose-600 hover:text-rose-700 font-bold hover:underline flex items-center gap-1 cursor-pointer"
+                        >
+                          <RotateCcw size={12} /> Anulează Cererea
+                        </button>
+                      )}
+                    </div>
                   </div>
                 );
               })}
@@ -496,6 +516,90 @@ export function AttendanceView({ members, onUpdateMember, isAdmin, currentUserId
     }
   };
 
+  const handleRevertRequest = async (req: AbsenceRequest) => {
+    if (selectedEvent?.attendanceClosed) {
+      toast.error('Sesiunea este finalizată. Redeschideți prezența pentru a gestiona cererile.');
+      return;
+    }
+    try {
+      await deleteAbsenceRequest(req.id);
+      setRequests(prev => prev.filter(r => r.id !== req.id));
+
+      const member = members.find(m => m.id === req.memberId);
+      if (member && selectedEvent) {
+        const currentPresence = selectedEvent.rsvps?.[member.id] || 'none';
+        if (currentPresence === 'excused') {
+          const newPresences = member.presences || 0;
+          let newExcused = member.excusedAbsences || 0;
+          const newUnexcused = member.unexcusedAbsences || 0;
+
+          if (selectedEvent.type === 'meeting') {
+            newExcused = Math.max(0, newExcused - 1);
+          }
+
+          const updatedStats = { presences: newPresences, excusedAbsences: newExcused, unexcusedAbsences: newUnexcused };
+          const deltas = {
+            presencesDelta: 0,
+            excusedDelta: newExcused - (member.excusedAbsences || 0),
+            unexcusedDelta: 0,
+          };
+          await recordAttendance(selectedEvent.id, member.id, 'none', deltas);
+          
+          const updatedEvent = { ...selectedEvent, rsvps: { ...selectedEvent.rsvps, [member.id]: 'none' } };
+          setSelectedEvent(updatedEvent);
+          setEvents(prev => prev.map(e => e.id === updatedEvent.id ? updatedEvent : e));
+          onUpdateMember({ ...member, ...updatedStats });
+        }
+      }
+
+      toast.success('Motivarea a fost anulată cu succes!');
+    } catch (err) {
+      console.error(err);
+      toast.error('Eroare la anularea motivării.');
+    }
+  };
+
+  const handleRevertRequestForMember = async (memberId: string) => {
+    if (!selectedEvent) return;
+    const req = requests.find(r => r.memberId === memberId && r.eventId === selectedEvent.id);
+    if (req) {
+      await handleRevertRequest(req);
+    } else {
+      const member = members.find(m => m.id === memberId);
+      if (member) {
+        try {
+          const currentPresence = selectedEvent.rsvps?.[memberId] || 'none';
+          if (currentPresence === 'excused') {
+            const newPresences = member.presences || 0;
+            let newExcused = member.excusedAbsences || 0;
+            const newUnexcused = member.unexcusedAbsences || 0;
+
+            if (selectedEvent.type === 'meeting') {
+              newExcused = Math.max(0, newExcused - 1);
+            }
+
+            const updatedStats = { presences: newPresences, excusedAbsences: newExcused, unexcusedAbsences: newUnexcused };
+            const deltas = {
+              presencesDelta: 0,
+              excusedDelta: newExcused - (member.excusedAbsences || 0),
+              unexcusedDelta: 0,
+            };
+            await recordAttendance(selectedEvent.id, member.id, 'none', deltas);
+            
+            const updatedEvent = { ...selectedEvent, rsvps: { ...selectedEvent.rsvps, [member.id]: 'none' } };
+            setSelectedEvent(updatedEvent);
+            setEvents(prev => prev.map(e => e.id === updatedEvent.id ? updatedEvent : e));
+            onUpdateMember({ ...member, ...updatedStats });
+            toast.success('Motivarea a fost anulată!');
+          }
+        } catch (err) {
+          console.error(err);
+          toast.error('Eroare la anularea motivării.');
+        }
+      }
+    }
+  };
+
   const handleMarkAttendance = async (memberId: string, presenceType: 'present' | 'absent' | 'excused' | 'unexcused') => {
     if (!selectedEvent) return;
 
@@ -555,6 +659,19 @@ export function AttendanceView({ members, onUpdateMember, isAdmin, currentUserId
     try {
       await recordAttendance(selectedEvent.id, memberId, presenceType, deltas);
       
+      // If marking as present or unexcused/absent, remove any existing absence request
+      if (presenceType !== 'excused') {
+        const existingReq = requests.find(r => r.memberId === memberId && r.eventId === selectedEvent.id);
+        if (existingReq) {
+          try {
+            await deleteAbsenceRequest(existingReq.id);
+            setRequests(prev => prev.filter(r => r.id !== existingReq.id));
+          } catch (e) {
+            console.error("Error removing absence request on manual mark:", e);
+          }
+        }
+      }
+
       // Update local event object for UI reflection
       const updatedEvent = { ...selectedEvent, rsvps: { ...selectedEvent.rsvps, [memberId]: presenceType } };
       setSelectedEvent(updatedEvent);
@@ -828,7 +945,6 @@ export function AttendanceView({ members, onUpdateMember, isAdmin, currentUserId
                     <TableBody>
                       {members
                         .filter(m => m.role !== 'admin')
-                        .filter(m => !requests.some(r => r.memberId === m.id && r.status === 'approved'))
                         .filter(m => {
                           if (selectedEvent.type === 'meeting') return true;
                           if (!selectedEvent.committees) return false;
@@ -867,14 +983,25 @@ export function AttendanceView({ members, onUpdateMember, isAdmin, currentUserId
                                         onClick={() => handleMarkAttendance(m.id, 'unexcused')}
                                         className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all ${status === 'unexcused' ? 'bg-rose-100 dark:bg-rose-900/50 text-rose-800 dark:text-rose-300' : 'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-rose-50 dark:hover:bg-rose-900/30 hover:border-rose-200 dark:hover:border-rose-700'} disabled:opacity-50 disabled:cursor-not-allowed`}
                                       >Absent</button>
-                                      <button 
-                                        disabled={isButtonLocked || isExcusingWhatsapp}
-                                        onClick={() => handleQuickWhatsappExcuse(m.id)}
-                                        title="Motivează rapid absența confirmată pe WhatsApp (fără formular)"
-                                        className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all ${status === 'excused' ? 'bg-amber-100 dark:bg-amber-900/50 text-amber-800 dark:text-amber-300' : 'bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-300 dark:border-emerald-700 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/60'} disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1`}
-                                      >
-                                        <MessageSquare size={13} /> Motivat (WhatsApp)
-                                      </button>
+                                      {status === 'excused' ? (
+                                        <button 
+                                          disabled={isSessionLocked || isExcusingWhatsapp}
+                                          onClick={() => handleRevertRequestForMember(m.id)}
+                                          title="Anulează motivarea și resetează statusul"
+                                          className="px-3 py-1.5 rounded-full text-xs font-bold transition-all bg-amber-100 hover:bg-amber-200 dark:bg-amber-900/50 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-700 flex items-center gap-1 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                                        >
+                                          <RotateCcw size={13} /> Anulează Motivarea
+                                        </button>
+                                      ) : (
+                                        <button 
+                                          disabled={isButtonLocked || isExcusingWhatsapp}
+                                          onClick={() => handleQuickWhatsappExcuse(m.id)}
+                                          title="Motivează rapid absența confirmată pe WhatsApp (fără formular)"
+                                          className="px-3 py-1.5 rounded-full text-xs font-bold transition-all bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-300 dark:border-emerald-700 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
+                                        >
+                                          <MessageSquare size={13} /> Motivat (WhatsApp)
+                                        </button>
+                                      )}
                                     </>
                                   ) : (
                                     <>
@@ -928,7 +1055,7 @@ export function AttendanceView({ members, onUpdateMember, isAdmin, currentUserId
                           <div className="bg-white/40 p-4 rounded-xl text-[13px] text-brand-accent/80 font-['Manrope'] font-medium border border-brand-muted/5 italic">
                             "{req.reason}"
                           </div>
-                          {req.status === 'pending' && (
+                          {req.status === 'pending' ? (
                             <div className="flex gap-2 mt-auto pt-2 border-t border-brand-muted/5">
                               <button 
                                 disabled={isSessionLocked}
@@ -943,6 +1070,25 @@ export function AttendanceView({ members, onUpdateMember, isAdmin, currentUserId
                                 className="flex-1 py-2 bg-rose-50 text-rose-700 hover:bg-rose-100 rounded-full text-[11px] font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
                               >
                                 <XCircle size={16} /> Respinge
+                              </button>
+                              <button 
+                                disabled={isSessionLocked}
+                                onClick={() => handleRevertRequest(req)}
+                                title="Anulează/Șterge această cerere"
+                                className="px-3 py-2 bg-amber-50 text-amber-700 hover:bg-amber-100 rounded-full text-[11px] font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
+                              >
+                                <RotateCcw size={14} /> Anulează
+                              </button>
+                            </div>
+                          ) : (
+                            <div className="flex justify-end gap-2 mt-auto pt-2 border-t border-brand-muted/5">
+                              <button 
+                                disabled={isSessionLocked}
+                                onClick={() => handleRevertRequest(req)}
+                                title="Anulează motivarea și resetează cererea"
+                                className="py-2 px-4 bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 rounded-full text-[11px] font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                              >
+                                <RotateCcw size={14} /> Anulează Motivarea (Revert)
                               </button>
                             </div>
                           )}
@@ -1129,18 +1275,26 @@ export function AttendanceView({ members, onUpdateMember, isAdmin, currentUserId
                           </div>
                         </div>
 
-                        <button
-                          disabled={isExcusingWhatsapp || isExcused}
-                          onClick={() => handleQuickWhatsappExcuse(m.id)}
-                          className={`px-3.5 py-1.5 rounded-xl text-xs font-extrabold transition-all flex items-center gap-1.5 shadow-sm ${
-                            isExcused
-                              ? 'bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300 border border-amber-300 opacity-80 cursor-default'
-                              : 'bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer active:scale-95'
-                          }`}
-                        >
-                          <MessageSquare size={14} />
-                          {isExcused ? 'Deja Motivat' : 'Motivează (WhatsApp)'}
-                        </button>
+                        {isExcused ? (
+                          <button
+                            disabled={isExcusingWhatsapp}
+                            onClick={() => handleRevertRequestForMember(m.id)}
+                            title="Anulează motivarea pentru acest voluntar"
+                            className="px-3.5 py-1.5 rounded-xl text-xs font-extrabold transition-all flex items-center gap-1.5 shadow-sm bg-amber-100 hover:bg-amber-200 dark:bg-amber-900/40 dark:hover:bg-amber-900/70 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-700 cursor-pointer active:scale-95 disabled:opacity-50"
+                          >
+                            <RotateCcw size={14} />
+                            Anulează Motivarea
+                          </button>
+                        ) : (
+                          <button
+                            disabled={isExcusingWhatsapp}
+                            onClick={() => handleQuickWhatsappExcuse(m.id)}
+                            className="px-3.5 py-1.5 rounded-xl text-xs font-extrabold transition-all flex items-center gap-1.5 shadow-sm bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer active:scale-95 disabled:opacity-50"
+                          >
+                            <MessageSquare size={14} />
+                            Motivează (WhatsApp)
+                          </button>
+                        )}
                       </div>
                     );
                   })}
