@@ -7,8 +7,11 @@ export default defineConfig({
   plugins: [react()],
   define: {
     __APP_VERSION__: JSON.stringify(pkg.version),
+    global: 'globalThis',
+    'process.env': {},
   },
   build: {
+    target: ['es2020', 'safari14', 'chrome87', 'edge88', 'firefox78'],
     rollupOptions: {
       output: {
         manualChunks: {

@@ -271,11 +271,16 @@ export async function showLocalTestNotification(title?: string, body?: string): 
       return true;
     }
 
-    new Notification(title || '🎉 Test Notificare Interact Camena', {
-      body: body || 'Sistemul de notificări push funcționează perfect pe dispozitivul tău!',
-      icon: '/logo.png',
-    });
-    return true;
+    try {
+      new Notification(title || '🎉 Test Notificare Interact Camena', {
+        body: body || 'Sistemul de notificări push funcționează perfect pe dispozitivul tău!',
+        icon: '/logo.png',
+      });
+      return true;
+    } catch (e) {
+      console.warn('Constructing Notification directly is not supported on Android Chrome/WebKit:', e);
+      return false;
+    }
   } catch (err) {
     console.error('❌ Eroare la trimiterea notificării de test:', err);
     return false;
@@ -315,12 +320,17 @@ export async function sendSystemNotification({
       }
     }
 
-    new Notification(title, {
-      body,
-      icon: '/logo.png',
-      tag: tag || `notif_${Date.now()}`,
-    });
-    return true;
+    try {
+      new Notification(title, {
+        body,
+        icon: '/logo.png',
+        tag: tag || `notif_${Date.now()}`,
+      });
+      return true;
+    } catch (e) {
+      console.warn('Direct notification constructor suppressed on mobile:', e);
+      return false;
+    }
   } catch (err) {
     console.warn('System push notification could not be shown:', err);
     return false;
