@@ -1,6 +1,10 @@
 -- ==============================================================================
 -- DNSC AUDIT COMPLIANCE: 100% CLEAN SUPABASE RLS & SECURITY MIGRATION
 -- ==============================================================================
+-- Includes all tables: members, payments, events, absence_requests, project_proposals,
+-- project_pitches, news, polls, archived_polls, forum_posts, budget_*, score_audit_logs,
+-- kudos, suggestions, and push_subscriptions.
+-- ==============================================================================
 
 -- ------------------------------------------------------------------------------
 -- STEP 1: ENSURE PRIVATE SCHEMA & ALL TABLES & COLUMNS EXIST
@@ -260,6 +264,17 @@ ALTER TABLE public.suggestions ADD COLUMN IF NOT EXISTS "authorId" TEXT;
 ALTER TABLE public.suggestions ADD COLUMN IF NOT EXISTS category TEXT;
 ALTER TABLE public.suggestions ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'pending';
 
+-- 1.5 Push Subscriptions Table (Web Push VAPID Subscriptions)
+CREATE TABLE IF NOT EXISTS public.push_subscriptions (
+  id TEXT PRIMARY KEY,
+  member_id TEXT REFERENCES public.members(id) ON DELETE CASCADE,
+  endpoint TEXT UNIQUE NOT NULL,
+  p256dh TEXT NOT NULL,
+  auth TEXT NOT NULL,
+  user_agent TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
 -- ------------------------------------------------------------------------------
 -- STEP 2: PERFORMANCE INDEXES
 -- ------------------------------------------------------------------------------
@@ -276,6 +291,7 @@ CREATE INDEX IF NOT EXISTS idx_budget_transactions_project ON public.budget_tran
 CREATE INDEX IF NOT EXISTS idx_budget_transactions_line ON public.budget_transactions("lineId");
 CREATE INDEX IF NOT EXISTS idx_kudos_to_id ON public.kudos("toId");
 CREATE INDEX IF NOT EXISTS idx_suggestions_author_id ON public.suggestions("authorId");
+CREATE INDEX IF NOT EXISTS idx_push_subs_member_id ON public.push_subscriptions(member_id);
 
 -- ------------------------------------------------------------------------------
 -- STEP 3: PRIVATE HELPER FUNCTION (Unexposed from API & Fixed Search Path)
@@ -337,6 +353,7 @@ ALTER TABLE public.budget_archives ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.score_audit_logs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.kudos ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.suggestions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.push_subscriptions ENABLE ROW LEVEL SECURITY;
 
 REVOKE ALL ON public.members FROM anon;
 REVOKE ALL ON public.payments FROM anon;
@@ -356,6 +373,7 @@ REVOKE ALL ON public.budget_archives FROM anon;
 REVOKE ALL ON public.score_audit_logs FROM anon;
 REVOKE ALL ON public.kudos FROM anon;
 REVOKE ALL ON public.suggestions FROM anon;
+REVOKE ALL ON public.push_subscriptions FROM anon;
 
 -- ------------------------------------------------------------------------------
 -- STEP 6: GRANULAR & AUDIT-COMPLIANT RLS POLICIES (NO PERMISSIVE WILDCARDS)
@@ -658,6 +676,28 @@ CREATE POLICY "suggestions_delete_policy"
   ON public.suggestions FOR DELETE
   TO authenticated
   USING (private.is_admin() OR "authorId" = (SELECT auth.uid())::text);
+
+-- 6.14 Push Subscriptions Table Policies
+CREATE POLICY "push_select_policy"
+  ON public.push_subscriptions FOR SELECT
+  TO authenticated
+  USING (true);
+
+CREATE POLICY "push_insert_policy"
+  ON public.push_subscriptions FOR INSERT
+  TO authenticated
+  WITH CHECK ((SELECT auth.uid()) IS NOT NULL OR member_id IS NOT NULL);
+
+CREATE POLICY "push_update_policy"
+  ON public.push_subscriptions FOR UPDATE
+  TO authenticated
+  USING (private.is_admin() OR member_id = (SELECT auth.uid())::text)
+  WITH CHECK (private.is_admin() OR member_id = (SELECT auth.uid())::text);
+
+CREATE POLICY "push_delete_policy"
+  ON public.push_subscriptions FOR DELETE
+  TO authenticated
+  USING (private.is_admin() OR member_id = (SELECT auth.uid())::text);
 
 -- ==============================================================================
 -- MIGRATION SCRIPT COMPLETED

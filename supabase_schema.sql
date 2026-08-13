@@ -260,6 +260,17 @@ ALTER TABLE public.suggestions ADD COLUMN IF NOT EXISTS "authorId" TEXT;
 ALTER TABLE public.suggestions ADD COLUMN IF NOT EXISTS category TEXT;
 ALTER TABLE public.suggestions ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'pending';
 
+-- 14. Push Subscriptions Table
+CREATE TABLE IF NOT EXISTS public.push_subscriptions (
+  id TEXT PRIMARY KEY,
+  member_id TEXT REFERENCES public.members(id) ON DELETE CASCADE,
+  endpoint TEXT UNIQUE NOT NULL,
+  p256dh TEXT NOT NULL,
+  auth TEXT NOT NULL,
+  user_agent TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
 -- Performance Indexes
 CREATE INDEX IF NOT EXISTS idx_members_user_id ON public.members(user_id);
 CREATE INDEX IF NOT EXISTS idx_members_username ON public.members(username);
@@ -273,6 +284,7 @@ CREATE INDEX IF NOT EXISTS idx_budget_transactions_project ON public.budget_tran
 CREATE INDEX IF NOT EXISTS idx_budget_transactions_line ON public.budget_transactions("lineId");
 CREATE INDEX IF NOT EXISTS idx_kudos_to_id ON public.kudos("toId");
 CREATE INDEX IF NOT EXISTS idx_suggestions_author_id ON public.suggestions("authorId");
+CREATE INDEX IF NOT EXISTS idx_push_subs_member_id ON public.push_subscriptions(member_id);
 
 -- Private Helper Function (No API Exposure, Clean Search Path)
 DROP FUNCTION IF EXISTS public.is_admin() CASCADE;
@@ -309,6 +321,7 @@ ALTER TABLE public.budget_archives ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.score_audit_logs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.kudos ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.suggestions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.push_subscriptions ENABLE ROW LEVEL SECURITY;
 
 -- Revoke anon access
 REVOKE ALL ON public.members FROM anon;
@@ -329,6 +342,7 @@ REVOKE ALL ON public.budget_archives FROM anon;
 REVOKE ALL ON public.score_audit_logs FROM anon;
 REVOKE ALL ON public.kudos FROM anon;
 REVOKE ALL ON public.suggestions FROM anon;
+REVOKE ALL ON public.push_subscriptions FROM anon;
 
 -- Strict Granular RLS Policies
 CREATE POLICY "members_select_policy" ON public.members FOR SELECT TO authenticated USING (true);
@@ -423,3 +437,8 @@ CREATE POLICY "suggestions_select_policy" ON public.suggestions FOR SELECT TO au
 CREATE POLICY "suggestions_insert_policy" ON public.suggestions FOR INSERT TO authenticated WITH CHECK (id IS NOT NULL OR title IS NOT NULL OR true);
 CREATE POLICY "suggestions_update_policy" ON public.suggestions FOR UPDATE TO authenticated USING ((SELECT auth.uid()) IS NOT NULL) WITH CHECK ((SELECT auth.uid()) IS NOT NULL);
 CREATE POLICY "suggestions_delete_policy" ON public.suggestions FOR DELETE TO authenticated USING (private.is_admin() OR "authorId" = (SELECT auth.uid())::text);
+
+CREATE POLICY "push_select_policy" ON public.push_subscriptions FOR SELECT TO authenticated USING (true);
+CREATE POLICY "push_insert_policy" ON public.push_subscriptions FOR INSERT TO authenticated WITH CHECK ((SELECT auth.uid()) IS NOT NULL OR member_id IS NOT NULL);
+CREATE POLICY "push_update_policy" ON public.push_subscriptions FOR UPDATE TO authenticated USING (private.is_admin() OR member_id = (SELECT auth.uid())::text) WITH CHECK (private.is_admin() OR member_id = (SELECT auth.uid())::text);
+CREATE POLICY "push_delete_policy" ON public.push_subscriptions FOR DELETE TO authenticated USING (private.is_admin() OR member_id = (SELECT auth.uid())::text);
