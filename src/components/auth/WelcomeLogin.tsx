@@ -236,12 +236,12 @@ export function WelcomeLogin({ onLoginSuccess }: WelcomeLoginProps) {
               initial={{ rotate: -15, scale: 0.8, y: 20 }}
               animate={{ rotate: 0, scale: 1, y: 0 }}
               transition={{ type: 'spring', damping: 24, stiffness: 45 }}
-              className="relative w-[280px] h-[160px] flex items-center justify-center mx-auto"
+              className="relative w-full max-w-[320px] h-auto max-h-[110px] py-2 flex items-center justify-center mx-auto"
             >
               <img 
                 src="/logo.png" 
                 alt="Interact Logo" 
-                className="w-full h-full object-contain mix-blend-multiply" 
+                className="w-full h-auto max-h-[110px] object-contain mix-blend-multiply" 
                 referrerPolicy="no-referrer" 
               />
             </motion.div>

@@ -13,7 +13,7 @@ export const MaintenanceScreen: React.FC = () => {
         
         {/* Logo / Icon Header */}
         <div className="flex flex-col items-center gap-4">
-          <div className="w-20 h-20 rounded-2xl bg-gradient-to-tr from-[#101D34] to-[#1E293B] border border-white/15 shadow-xl flex items-center justify-center relative p-3">
+          <div className="w-auto max-w-[260px] h-20 px-6 py-2.5 rounded-2xl bg-gradient-to-tr from-[#101D34] to-[#1E293B] border border-white/15 shadow-xl flex items-center justify-center relative">
             <img src="/logo.png" alt="Interact Camena Logo" className="w-full h-full object-contain filter drop-shadow-md" />
             <span className="absolute -top-1 -right-1 flex h-4 w-4">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>

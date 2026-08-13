@@ -1,0 +1,24 @@
+{
+  "name": "Interact Camena Piatra Neamț",
+  "short_name": "Interact Camena",
+  "description": "Platforma oficială a clubului Interact Camena Piatra Neamț — Voluntariat și Serviciu Comunitar",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0B132B",
+  "theme_color": "#0B132B",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/logo.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
