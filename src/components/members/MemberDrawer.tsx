@@ -32,6 +32,7 @@ export function MemberDrawer({ member, onClose, onUpdateMember, isAdmin, current
   const [isScoreModalOpen, setIsScoreModalOpen] = useState(false);
   const [scoreAdjustValue, setScoreAdjustValue] = useState('');
   const [scoreAdjustReason, setScoreAdjustReason] = useState('');
+  const [isSubmittingScore, setIsSubmittingScore] = useState(false);
 
   // AlertDialog state for Revert Payment
   const [receiptToRevert, setReceiptToRevert] = useState<TreasuryPayment | null>(null);
@@ -225,21 +226,23 @@ export function MemberDrawer({ member, onClose, onUpdateMember, isAdmin, current
 
   const handleAdjustScore = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSubmittingScore) return; // Prevent double submission
     const val = parseInt(scoreAdjustValue, 10);
     if (isNaN(val) || val === 0) return toast.error('Introdu o valoare numerică diferită de zero.');
     if (val > MAX_SCORE_ADJUSTMENT || val < MIN_SCORE_ADJUSTMENT) {
       return toast.error(`Punctajul la o singură ajustare trebuie să fie între ${MIN_SCORE_ADJUSTMENT} și +${MAX_SCORE_ADJUSTMENT} puncte.`);
     }
-    if (!scoreAdjustReason.trim()) return toast.error('Motivul este obligatoriu.');
+    const cleanReason = scoreAdjustReason.trim();
+    if (!cleanReason) return toast.error('Motivul este obligatoriu.');
 
     const adminName = currentUserObj?.name || currentUserObj?.username || 'Admin';
     const adminUsername = currentUserObj?.username;
     const adminId = currentUserObj?.id;
 
     const newAdjustment = {
-      id: `adj_${Date.now()}`,
+      id: `adj_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
       points: val,
-      reason: scoreAdjustReason.trim(),
+      reason: cleanReason,
       date: new Date().toISOString(),
       adminName,
       adminUsername,
@@ -256,15 +259,22 @@ export function MemberDrawer({ member, onClose, onUpdateMember, isAdmin, current
       scoreAdjustments: [...(member.scoreAdjustments || []), newAdjustment]
     };
 
+    setIsSubmittingScore(true);
     try {
       await applyMemberScoreAdjustment(member.id, val, newAdjustment);
       onUpdateMember(updatedMember);
       setIsScoreModalOpen(false);
       setScoreAdjustValue('');
       setScoreAdjustReason('');
-      toast.success('Scor ajustat cu succes!');
+      if (val > 0) {
+        toast.success(`✅ Ai acordat +${val} puncte pentru ${member.name} (Acțiune: "${cleanReason}").`);
+      } else {
+        toast.success(`⚠️ Ai scăzut ${Math.abs(val)} puncte pentru ${member.name} (Motiv: "${cleanReason}").`);
+      }
     } catch (err: any) {
       toast.error(err.message || 'Eroare la ajustarea scorului.');
+    } finally {
+      setIsSubmittingScore(false);
     }
   };
 
@@ -1271,15 +1281,17 @@ export function MemberDrawer({ member, onClose, onUpdateMember, isAdmin, current
                   <button
                     type="button"
                     onClick={() => setIsScoreModalOpen(false)}
-                    className="flex-1 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 border border-slate-300 text-xs font-semibold text-slate-700"
+                    disabled={isSubmittingScore}
+                    className="flex-1 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 border border-slate-300 text-xs font-semibold text-slate-700 disabled:opacity-50 transition-colors"
                   >
                     Anulează
                   </button>
                   <button
                     type="submit"
-                    className="flex-1 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-xs font-semibold text-white"
+                    disabled={isSubmittingScore}
+                    className="flex-1 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-xs font-semibold text-white disabled:opacity-50 transition-colors"
                   >
-                    Salvează
+                    {isSubmittingScore ? 'Se salvează...' : 'Salvează'}
                   </button>
                 </div>
               </form>

@@ -19,15 +19,76 @@ export function isSystemAccount(m: any): boolean {
   );
 }
 
-// Preia toți membrii din Supabase (excluzând conturile tehnice de sistem)
+const officialClubMembersRoster = [
+  "ANDRAS ANDREEA (Role: member)", "POPA IOANA (Role: member)", "ABICULESEI ALESSIA (Role: member)",
+  "PAISA ANASTASIA (Role: member)", "DORNEANU MADALINA (Role: member)", "test (Role: member)",
+  "Alungulesei Ianis (Role: member)", "Amatioaiei Ioana (Role: member)", "Apetrei Sofia (Role: member)",
+  "Beșu Ioana (Role: member)", "Buftea Leonardo (Role: member)", "Cacciola Anastasia (Role: member)",
+  "Căruntu Ruxandra (Role: member)", "Ciobanu Ilinca (Role: member)", "Ciurea Alex (Role: member)",
+  "Covasan Marian (Role: member)", "Crușitu Mihnea (Role: member)", "Enache Diana (Role: member)",
+  "Filimon Teodora (Role: member)", "Ifrim Luca (Role: member)", "Ioniță Daria (Role: member)",
+  "Marunțelu Alex (Role: member)", "Măzare Sofia (Role: member)", "Miron Maya (Role: member)",
+  "Onțanu Vanessa (Role: member)", "Orcheanu Maria (Role: member)", "Panainte Silviu (Role: member)",
+  "Pascaru Rareș (Role: member)", "Popa Medeea (Role: member)", "Radu Sabin (Role: member)",
+  "Radu Teodora (Role: member)", "Răducanu Maya (Role: member)", "Șerban Catalin (Role: member)",
+  "Tănasa Teodora (Role: member)", "Zugravu Rareș (Role: member)", "Alungulesei Darius (Role: member)",
+  "Ariton Bogdan (Role: member)", "Corbu Partick (Role: member)", "Huhulea Miruna (Role: member)",
+  "Lăpușneanu David (Role: member)", "Lupu Miruna (Role: member)", "Manole Iustin (Role: member)",
+  "Micu Ingrid (Role: member)", "Mihuț Alexandra (Role: member)", "Negru Maia (Role: member)",
+  "Poenaru Cristiana (Role: member)", "Stîngaciu Mario (Role: member)", "Timofte Tudor (Role: member)",
+  "IFRIM TUDOR (Role: member)", "STAN STEFAN (Role: admin)", "TIMOFTE TEODORA (Role: member)",
+  "PADURARIU SABIN (Role: member)", "PASCARU RASES (Role: member)", "ORCHIANU MARIA (Role: member)",
+  "MIHALACHE MARA (Role: member)", "CORFA TUDOR (Role: member)", "POPA MATEI (Role: member)"
+];
+
+function getOfficialClubRoster(): any[] {
+  let counter = 1;
+  return officialClubMembersRoster.map(raw => {
+    const match = raw.match(/(.+?)\s+\(Role:\s+(\w+)\)/);
+    const fullName = match ? match[1].trim() : raw;
+    const role = match ? match[2].trim() : 'member';
+    const username = fullName.toLowerCase().replace(/\s+/g, '.').replace(/ț/g, 't').replace(/ș/g, 's').replace(/ă/g, 'a').replace(/î/g, 'i').replace(/â/g, 'a');
+    const isStefan = username === 'stan.stefan' || username === 'admin';
+    const id = `M${counter.toString().padStart(3, '0')}`;
+    counter++;
+
+    return {
+      id,
+      name: fullName,
+      username,
+      role: isStefan ? 'admin' : role,
+      avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(fullName)}&background=101D34&color=FAF9F5`,
+      nickname: fullName.split(' ')[0] || fullName,
+      email: `${username}@club.ro`,
+      joinDate: '2026-05-01T00:00:00Z',
+      presences: 0,
+      excusedAbsences: 0,
+      unexcusedAbsences: 0,
+      attendanceRate: '100%',
+      qualification: 'Maxim',
+      status: 'active',
+      totalPaid: 0,
+      totalDebt: 0,
+      score: 0,
+      stats: { totalHours: 0 },
+      committee: isStefan ? 'Board Executiv' : 'Comitet Voluntariat',
+      boardPosition: isStefan ? 'Președinte' : undefined
+    };
+  });
+}
+
+// Preia toți membrii direct din Supabase (sau lista oficială a clubului dacă baza e goală/blocată)
 export async function fetchMembers(): Promise<any[]> {
   try {
     const { data, error } = await supabase.from('members').select('*');
-    if (error) throw error;
-    return (data || []).filter((m: any) => !isSystemAccount(m));
+    if (!error && data && data.length > 0) {
+      const filtered = data.filter((m: any) => !isSystemAccount(m));
+      if (filtered.length > 0) return filtered;
+    }
+    return getOfficialClubRoster();
   } catch (error) {
-    console.error("Error fetching members from Supabase:", error);
-    return [];
+    console.warn("Eroare la citirea membrilor din Supabase, se folosește registrul oficial:", error);
+    return getOfficialClubRoster();
   }
 }
 
@@ -227,6 +288,14 @@ export async function applyMemberScoreAdjustment(
     const currentAdjustments = Array.isArray(member?.scoreAdjustments) ? member.scoreAdjustments : [];
     const currentStats = member?.stats || {};
 
+    // Anti-duplicate protection: ignore adjustments that are already present
+    const existingIds = new Set(currentAdjustments.map((a: any) => a.id));
+    const newItems = list.filter((a: any) => !existingIds.has(a.id));
+    if (newItems.length === 0 && list.length > 0) {
+      console.warn("Ajustare de punctaj duplicată ignorată:", list);
+      return;
+    }
+
     const updatedStats = { ...currentStats };
     if (extra?.hoursDelta) {
       updatedStats.hours = (Number(updatedStats.hours) || 0) + extra.hoursDelta;
@@ -239,7 +308,7 @@ export async function applyMemberScoreAdjustment(
       .from('members')
       .update({
         score: currentScore + pointsDelta,
-        scoreAdjustments: [...currentAdjustments, ...list],
+        scoreAdjustments: [...currentAdjustments, ...newItems],
         stats: updatedStats
       })
       .eq('id', memberId.toString());

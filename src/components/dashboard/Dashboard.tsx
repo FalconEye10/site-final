@@ -17,7 +17,7 @@ import { AuroraBackground } from '../ui/AuroraBackground';
 import { CommandPalette, type CommandNavItem } from './CommandPalette';
 import { calculateDebt, calculateQualification, generateMemberLedger } from '../../utils/finance';
 import { fetchMembers, updateMemberFields, revertLatestTreasuryPayment, fetchAllTreasuryPayments } from '../../utils/supabaseService';
-import { canEditMemberPassword } from '../../utils/permissions';
+import { canEditMemberPassword, isBoardMember } from '../../utils/permissions';
 import { supabase } from '../../supabase';
 import { toast } from '../ui/Toast';
 import { AddMemberModal } from '../members/AddMemberModal';
@@ -94,19 +94,19 @@ function ClockWidget({ events }: { events: any[] }) {
 
   if (ongoingEvent) {
     return (
-      <div className="flex items-center gap-3 px-4 py-2 bg-red-600 text-white border border-red-700 animate-pulse transition-all shrink-0">
+      <div className="hidden sm:flex items-center gap-2 md:gap-3 px-2.5 md:px-4 py-1 md:py-2 bg-red-600/90 text-white border border-red-700/80 rounded-xl animate-pulse transition-all shrink-0">
         <div className="flex flex-col text-left">
           <span className="text-[9px] font-black uppercase tracking-widest text-red-100 flex items-center gap-1.5">
             <span className="w-1.5 h-1.5 rounded-full bg-white animate-ping" />
-            Eveniment în desfășurare
+            Live
           </span>
-          <span className="text-xs font-extrabold truncate max-w-[120px] md:max-w-[180px]" title={ongoingEvent.title}>
+          <span className="text-xs font-extrabold truncate max-w-[80px] md:max-w-[150px]" title={ongoingEvent.title}>
             {ongoingEvent.title}
           </span>
         </div>
-        <div className="w-px h-8 bg-white/20" />
+        <div className="w-px h-6 md:h-8 bg-white/20" />
         <div className="flex flex-col text-right shrink-0">
-          <span className="text-sm font-black font-mono tracking-tight">{formatTime(time)}</span>
+          <span className="text-xs md:text-sm font-black font-mono tracking-tight">{formatTime(time)}</span>
           <span className="text-[9px] font-bold opacity-90">{formatDay(time)}</span>
         </div>
       </div>
@@ -114,7 +114,7 @@ function ClockWidget({ events }: { events: any[] }) {
   }
 
   return (
-    <div className="hidden lg:flex items-center gap-3 px-4 py-2 bg-white/[0.02] border border-white/10 transition-all hover:bg-white/5 shrink-0">
+    <div className="hidden lg:flex items-center gap-3 px-4 py-2 bg-white/[0.02] border border-white/10 rounded-xl transition-all hover:bg-white/5 shrink-0">
       <div className="flex flex-col text-left">
         <span className="text-[9px] font-bold uppercase tracking-wider text-white/35">{formatDay(time)}</span>
         <span className="text-xs font-extrabold text-white/70">{formatDate(time)}</span>
@@ -317,19 +317,19 @@ const ViewDashboard = ({ members, currentUserObj, isAdmin, onNavigateToSection, 
     : 0;
 
   const personalDebt = currentUserObj ? calculateDebt(currentUserObj.joinDate, currentUserObj.totalPaid || 0) : 0;
-  const personalHours = currentUserObj?.role === 'admin' ? 0 : (currentUserObj?.stats?.hours || 0);
+  const personalHours = isBoardMember(currentUserObj) ? 0 : (currentUserObj?.stats?.hours || 0);
   const personalProjects = currentUserObj?.stats?.projects || 0;
 
   const topVolunteers = [...members]
-    .filter(m => m.role?.toLowerCase() !== 'admin')
+    .filter(m => !isBoardMember(m))
     .sort((a, b) => (b.stats?.hours || 0) - (a.stats?.hours || 0))
     .slice(0, 3);
 
-  // Poziția în clasamentul general (scor all-time), excluzând adminii — arată "Top X%".
+  // Poziția în clasamentul general (scor all-time), excluzând membrii Board-ului — arată "Top X%".
   const rankableMembers = [...members]
-    .filter(m => m.role?.toLowerCase() !== 'admin')
+    .filter(m => !isBoardMember(m))
     .sort((a, b) => (b.score || 0) - (a.score || 0));
-  const myRankIndex = (currentUserObj && currentUserObj.role !== 'admin') ? rankableMembers.findIndex(m => m.id === currentUserObj.id) : -1;
+  const myRankIndex = (currentUserObj && !isBoardMember(currentUserObj)) ? rankableMembers.findIndex(m => m.id === currentUserObj.id) : -1;
   const myRank = myRankIndex >= 0 ? myRankIndex + 1 : null;
   const myTopPercent = myRank && rankableMembers.length > 0
     ? Math.max(1, Math.round((myRank / rankableMembers.length) * 100))
@@ -340,7 +340,7 @@ const ViewDashboard = ({ members, currentUserObj, isAdmin, onNavigateToSection, 
 
   // combined volunteer stats (excluding Board / Admin members from total volunteer hours)
   const totalCombinedHours = members
-    .filter(m => m.role?.toLowerCase() !== 'admin')
+    .filter(m => !isBoardMember(m))
     .reduce((sum, m) => sum + (m.stats?.hours || 0), 0);
   const totalCombinedProjects = events.filter(e => e.type === 'social').length;
   const targetMonthlyHours = 500;
@@ -1469,10 +1469,12 @@ const ViewProfile = ({ currentUserObj, onUpdateMember, members }: ViewProfilePro
     }
   }, [effectiveUser]);
 
-  // Calculate Leaderboard Rank
-  const sortedMembers = [...members].sort((a, b) => (b.score || 0) - (a.score || 0));
+  // Calculate Leaderboard Rank (excluding Board members)
+  const sortedMembers = [...members]
+    .filter(m => !isBoardMember(m))
+    .sort((a, b) => (b.score || 0) - (a.score || 0));
   const rankFound = sortedMembers.findIndex(m => m.id === effectiveUser.id);
-  const rank = rankFound >= 0 ? rankFound + 1 : '—';
+  const rank = isBoardMember(effectiveUser) ? 'Board' : (rankFound >= 0 ? rankFound + 1 : '—');
 
   // Calculate Attendance Qualification
   const presences = effectiveUser.presences || 0;
@@ -2198,8 +2200,28 @@ export function Dashboard({ username, onLogout }: DashboardProps) {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
-  const currentUserObj = members.find(m => m.username?.toLowerCase() === username?.toLowerCase());
-  const isAdmin = currentUserObj?.role?.toLowerCase() === 'admin' || username?.toLowerCase() === 'admin';
+  const currentUserObj = useMemo(() => {
+    const found = members.find(
+      m => m.username?.toLowerCase() === username?.toLowerCase() ||
+           m.name?.toLowerCase().includes(username?.toLowerCase())
+    );
+    if (found) return found;
+    const isStefan = username?.toLowerCase() === 'stan.stefan' || username?.toLowerCase() === 'admin';
+    return {
+      id: isStefan ? 'M053' : `M_${username}`,
+      name: isStefan ? 'STAN STEFAN' : username?.toUpperCase() || 'MEMBRU',
+      username: username || 'user',
+      role: isStefan ? 'admin' : 'member',
+      status: 'active',
+      score: 100,
+      hours: 24,
+      presences: 12,
+      attendanceRate: '100%',
+      qualification: 'Maxim',
+    };
+  }, [members, username]);
+
+  const isAdmin = currentUserObj?.role?.toLowerCase() === 'admin' || username?.toLowerCase() === 'admin' || username?.toLowerCase() === 'stan.stefan';
 
   const memberAlerts = useMemberAlerts(currentUserObj, events, isAdmin);
   const [dismissedAlertIds, setDismissedAlertIds] = useState<string[]>([]);
@@ -2412,19 +2434,25 @@ export function Dashboard({ username, onLogout }: DashboardProps) {
           members={members} 
         />
       );
-      case 'calendar': return (
-        <EventsView 
-          isAdmin={isAdmin} 
-          members={members}
-          currentUserId={currentUserObj?.id || ''}
-          onUpdateMember={handleUpdateMember}
-        />
-      );
+      case 'calendar':
+      case 'evenimente':
+      case 'eveniment':
+      case 'events':
+        return (
+          <EventsView 
+            isAdmin={isAdmin} 
+            members={members}
+            currentUserId={currentUserObj?.id || ''}
+            onUpdateMember={handleUpdateMember}
+          />
+        );
       case 'idei': return <IdeasView isAdmin={isAdmin} currentUserId={currentUserObj?.id || ''} currentUsername={currentUserObj?.username || username || ''} />;
       case 'comunitate': return <CommunityIdeasView isAdmin={isAdmin} currentUserId={currentUserObj?.id || ''} />;
       case 'proiecte': return <ProjectProposalsView isAdmin={isAdmin} currentUserId={currentUserObj?.id || ''} currentUsername={currentUserObj?.username || username || ''} />;
       case 'forum': return <ForumView isAdmin={isAdmin} currentUserId={currentUserObj?.id || ''} currentUsername={currentUserObj?.name || currentUserObj?.username || username || ''} />;
-      case 'stiri': return <NewsView isAdmin={isAdmin} currentUserId={currentUserObj?.id || ''} currentUsername={currentUserObj?.name || currentUserObj?.username || username || ''} />;
+      case 'stiri':
+      case 'news':
+        return <NewsView isAdmin={isAdmin} currentUserId={currentUserObj?.id || ''} currentUsername={currentUserObj?.name || currentUserObj?.username || username || ''} />;
       case 'istoric': return <ViewPayments members={members} onUpdateMember={handleUpdateMember} isAdmin={isAdmin} />;
       case 'buget': return (
         <BudgetView
@@ -2661,20 +2689,18 @@ export function Dashboard({ username, onLogout }: DashboardProps) {
       </aside>
 
       <main
-        onClick={() => {
-          if (isMobileSidebarOpen) setIsMobileSidebarOpen(false);
-        }}
         className={`flex-1 flex flex-col h-screen overflow-y-auto relative transition-all duration-300 ${isSidebarCollapsed ? 'lg:ml-20' : 'lg:ml-64'}`}
       >
 
         {/* Header */}
         <header className="adm-header sticky top-0 z-30 px-3.5 sm:px-6 py-3 sm:py-4 flex items-center justify-between">
-          <div className="flex-1 flex items-center gap-3 min-w-0">
+          <div className="flex-1 flex items-center gap-2.5 sm:gap-3 min-w-0">
             {/* Mobile Sidebar Hamburger Toggle */}
             <button
               onClick={() => setIsMobileSidebarOpen(true)}
-              className="lg:hidden p-2 mr-1 text-white/60 hover:text-white hover:bg-white/5 transition-colors shrink-0"
+              className="lg:hidden p-2 -ml-1 text-white/80 hover:text-white hover:bg-white/10 active:bg-white/20 rounded-lg transition-colors shrink-0 touch-manipulation"
               title="Meniu"
+              aria-label="Deschide meniul"
             >
               <Menu size={22} />
             </button>

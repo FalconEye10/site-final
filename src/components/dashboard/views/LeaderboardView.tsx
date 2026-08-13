@@ -5,6 +5,7 @@ import { ScoringReferenceGuide, ScoringPreset } from './ScoringReferenceGuide';
 import { Badge } from '../../ui/Badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../ui/table';
 import { applyMemberScoreAdjustment, revertMemberScoreAdjustment, MAX_SCORE_ADJUSTMENT, MIN_SCORE_ADJUSTMENT, isSystemAccount } from '../../../utils/supabaseService';
+import { isBoardMember } from '../../../utils/permissions';
 import { ScoreAuditLogModal } from './ScoreAuditLogModal';
 import { toast } from '../../ui/Toast';
 
@@ -71,10 +72,10 @@ export function LeaderboardView({ members, isAdmin = false, onUpdateMember, curr
 
   const [scoreMode, setScoreMode] = useState<'bimonthly' | 'total'>('bimonthly');
 
-  // 2. Sort all members by selected score mode (bimonthly or total all-time) descending
+  // 2. Sort all members by selected score mode (bimonthly or total all-time) descending (EXCLUDING BOARD MEMBERS)
   const sortedMembers = useMemo(() => {
     return [...members]
-      .filter(m => !isSystemAccount(m)) // exclude admins from leaderboard
+      .filter(m => !isSystemAccount(m) && !isBoardMember(m)) // Excludem membrii Board-ului și administratorii din clasament
       .map(m => {
         const adjustments = m.scoreAdjustments || [];
         const biMonthlyScore = adjustments.reduce((sum: number, adj: any) => {
@@ -106,7 +107,7 @@ export function LeaderboardView({ members, isAdmin = false, onUpdateMember, curr
   const locul3 = sortedMembers[2];
   const locul4 = sortedMembers[3];
 
-  // 3. Voluntarul Lunii (based on current month)
+  // 3. Voluntarul Lunii (based on current month - EXCLUDING BOARD MEMBERS)
   const voluntarulLunii = useMemo(() => {
     const now = new Date();
     const currentMonth = now.getMonth();
@@ -116,7 +117,7 @@ export function LeaderboardView({ members, isAdmin = false, onUpdateMember, curr
     let winner: any = null;
 
     members.forEach(m => {
-      if (m.role?.toLowerCase() === 'admin') return;
+      if (isBoardMember(m)) return; // Excludem membrii Board-ului din Voluntarul Lunii
       const adjustments = m.scoreAdjustments || [];
       const pointsThisMonth = adjustments.reduce((sum: number, adj: any) => {
         const d = new Date(adj.date);
@@ -141,7 +142,7 @@ export function LeaderboardView({ members, isAdmin = false, onUpdateMember, curr
     let winner: any = null;
 
     members.forEach(m => {
-      if (m.role?.toLowerCase() === 'admin') return;
+      if (isBoardMember(m)) return; // Excludem membrii Board-ului din Cea Mai Mare Evoluție
       const adjustments = m.scoreAdjustments || [];
 
       // Current Bi-Monthly Score
@@ -202,31 +203,34 @@ export function LeaderboardView({ members, isAdmin = false, onUpdateMember, curr
 
   const handleAdjustScore = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSubmittingScore) return; // Anti-duplicate double click prevention
     if (!scoreModalMember) return;
     const val = parseInt(scoreAdjustValue, 10);
     if (isNaN(val) || val === 0) return toast.error('Introdu o valoare numerică diferită de zero.');
     if (val > MAX_SCORE_ADJUSTMENT || val < MIN_SCORE_ADJUSTMENT) {
       return toast.error(`Punctajul la o singură ajustare trebuie să fie între ${MIN_SCORE_ADJUSTMENT} și +${MAX_SCORE_ADJUSTMENT} puncte.`);
     }
-    if (!scoreAdjustReason.trim()) return toast.error('Motivul este obligatoriu.');
+    const cleanReason = scoreAdjustReason.trim();
+    if (!cleanReason) return toast.error('Motivul este obligatoriu.');
 
     // Read the freshest copy from the live members list to avoid stale scores.
     const liveMember = members.find(m => m.id === scoreModalMember.id) || scoreModalMember;
+    const memberName = liveMember.name || liveMember.nickname || 'Membru';
 
     const adminName = currentUserObj?.name || currentUserObj?.username || 'Admin';
     const adminUsername = currentUserObj?.username;
     const adminId = currentUserObj?.id;
 
     const newAdjustment = {
-      id: `adj_${Date.now()}`,
+      id: `adj_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
       points: val,
-      reason: scoreAdjustReason.trim(),
+      reason: cleanReason,
       date: new Date().toISOString(),
       adminName,
       adminUsername,
       adminId,
       targetMemberId: liveMember.id,
-      targetMemberName: liveMember.name || 'Membru'
+      targetMemberName: memberName
     };
 
     // No floor at 0 — scores are allowed to go negative.
@@ -245,7 +249,11 @@ export function LeaderboardView({ members, isAdmin = false, onUpdateMember, curr
       setScoreModalMember(null);
       setScoreAdjustValue('');
       setScoreAdjustReason('');
-      toast.success(val > 0 ? `+${val} puncte acordate!` : `${val} puncte scăzute.`);
+      if (val > 0) {
+        toast.success(`✅ Ai acordat +${val} puncte pentru ${memberName} (Acțiune: "${cleanReason}").`);
+      } else {
+        toast.success(`⚠️ Ai scăzut ${Math.abs(val)} puncte pentru ${memberName} (Motiv: "${cleanReason}").`);
+      }
     } catch (err: any) {
       console.error(err);
       toast.error(err.message || 'Eroare la ajustarea scorului.');

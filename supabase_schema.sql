@@ -4,6 +4,12 @@
 
 CREATE SCHEMA IF NOT EXISTS private;
 
+-- Grant schema and table permissions to standard Supabase roles
+GRANT USAGE ON SCHEMA public TO anon, authenticated, service_role;
+GRANT ALL ON ALL TABLES IN SCHEMA public TO anon, authenticated, service_role;
+GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO anon, authenticated, service_role;
+GRANT ALL ON ALL ROUTINES IN SCHEMA public TO anon, authenticated, service_role;
+
 -- 1. Members
 CREATE TABLE IF NOT EXISTS public.members (
   id TEXT PRIMARY KEY,

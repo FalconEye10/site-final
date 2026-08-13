@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Bell, CheckCheck, Heart, Megaphone, CheckCircle2, XCircle, PieChart, Sparkles, ChevronRight } from 'lucide-react';
+import { Bell, CheckCheck, Heart, Megaphone, CheckCircle2, XCircle, PieChart, Sparkles, ChevronRight, Trophy, Calendar } from 'lucide-react';
 import { supabase } from '../../supabase';
 import { PushNotificationToggle } from './PushNotificationToggle';
+import { sendSystemNotification } from '../../utils/pushNotifications';
 
 export interface NotificationItem {
   id: string;
-  type: 'kudos' | 'excuse_approved' | 'excuse_rejected' | 'news' | 'poll' | 'event';
+  type: 'score' | 'excuse_approved' | 'excuse_rejected' | 'news' | 'poll' | 'forum' | 'event' | 'kudos';
   title: string;
   description: string;
   timestamp: string;
@@ -28,7 +29,7 @@ export const NotificationsDropdown: React.FC<NotificationsDropdownProps> = ({
   const [isOpen, setIsOpen] = useState(false);
   const [readIds, setReadIds] = useState<string[]>(() => {
     try {
-      return JSON.parse(localStorage.getItem('read_notifications_v1') || '[]');
+      return JSON.parse(localStorage.getItem('read_notifications_v2') || '[]');
     } catch {
       return [];
     }
@@ -38,6 +39,9 @@ export const NotificationsDropdown: React.FC<NotificationsDropdownProps> = ({
   const [rawAbsences, setRawAbsences] = useState<any[]>([]);
   const [rawNews, setRawNews] = useState<any[]>([]);
   const [rawPolls, setRawPolls] = useState<any[]>([]);
+  const [rawPitches, setRawPitches] = useState<any[]>([]);
+  const [rawEvents, setRawEvents] = useState<any[]>([]);
+  const [currentMemberData, setCurrentMemberData] = useState<any>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Close dropdown on click outside
@@ -55,17 +59,30 @@ export const NotificationsDropdown: React.FC<NotificationsDropdownProps> = ({
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [kudosRes, absRes, newsRes, pollsRes] = await Promise.all([
+        const [kudosRes, absRes, newsRes, pollsRes, pitchRes, eventRes] = await Promise.all([
           supabase.from('kudos').select('*').order('createdAt', { ascending: false }).limit(10),
           supabase.from('absence_requests').select('*').order('timestamp', { ascending: false }).limit(10),
           supabase.from('news').select('*').order('createdAt', { ascending: false }).limit(5),
           supabase.from('polls').select('*').order('createdAt', { ascending: false }).limit(5),
+          supabase.from('project_pitches').select('*').order('createdAt', { ascending: false }).limit(5),
+          supabase.from('events').select('*').order('date', { ascending: false }).limit(5),
         ]);
 
         if (kudosRes.data) setRawKudos(kudosRes.data);
         if (absRes.data) setRawAbsences(absRes.data);
         if (newsRes.data) setRawNews(newsRes.data);
         if (pollsRes.data) setRawPolls(pollsRes.data);
+        if (pitchRes.data) setRawPitches(pitchRes.data);
+        if (eventRes.data) setRawEvents(eventRes.data);
+
+        if (currentUserId || currentUsername) {
+          const { data: memberData } = await supabase
+            .from('members')
+            .select('*')
+            .or(`id.eq.${currentUserId || ''},username.eq.${currentUsername || ''}`)
+            .single();
+          if (memberData) setCurrentMemberData(memberData);
+        }
       } catch (err) {
         console.error('Error loading notifications:', err);
       }
@@ -75,39 +92,95 @@ export const NotificationsDropdown: React.FC<NotificationsDropdownProps> = ({
 
     // Subscribe to channels for live updates
     const channel = supabase
-      .channel('notifications_realtime_channel')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'kudos' }, () => fetchData())
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'absence_requests' }, () => fetchData())
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'news' }, () => fetchData())
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'polls' }, () => fetchData())
+      .channel('notifications_realtime_channel_v2')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'kudos' }, (payload: any) => {
+        fetchData();
+        if (payload?.new && (payload.new.toId === currentUserId || payload.new.toName?.toLowerCase() === currentUsername?.toLowerCase())) {
+          sendSystemNotification({
+            title: `💖 Kudos primit de la ${payload.new.fromName || 'un coleg'}!`,
+            body: `"${payload.new.message || payload.new.badgeType || 'Apreciere deosebită'}"`,
+            url: '/#kudos',
+          });
+        }
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'absence_requests' }, (payload: any) => {
+        fetchData();
+        if (payload?.new && (payload.new.memberId === currentUserId || payload.new.memberName?.toLowerCase() === currentUsername?.toLowerCase())) {
+          if (payload.new.status === 'approved') {
+            sendSystemNotification({
+              title: '📅 Cerere de Motivare Aprobată! ✅',
+              body: 'Absența ta a fost motivată oficial de către Board.',
+              url: '/#prezenta',
+            });
+          } else if (payload.new.status === 'rejected') {
+            sendSystemNotification({
+              title: '📅 Cerere de Motivare Respinsă ❌',
+              body: `Motiv: ${payload.new.reason || 'Verifică detaliile în secțiunea Prezență.'}`,
+              url: '/#prezenta',
+            });
+          }
+        }
+      })
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'news' }, (payload: any) => {
+        fetchData();
+        if (payload?.new) {
+          sendSystemNotification({
+            title: `📢 Știre nouă: ${payload.new.title}`,
+            body: payload.new.content ? (payload.new.content.slice(0, 80) + '...') : 'Află noutățile clubului.',
+            url: '/#stiri',
+          });
+        }
+      })
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'polls' }, (payload: any) => {
+        fetchData();
+        if (payload?.new) {
+          sendSystemNotification({
+            title: `📊 Sondaj nou: ${payload.new.question}`,
+            body: 'Exprimă-ți opinia pe platforma clubului.',
+            url: '/#idei',
+          });
+        }
+      })
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'project_pitches' }, (payload: any) => {
+        fetchData();
+        if (payload?.new) {
+          sendSystemNotification({
+            title: `💬 Forum: Propunere nouă!`,
+            body: `"${payload.new.title}" de la ${payload.new.submitterName || 'un coleg'}.`,
+            url: '/#comunitate',
+          });
+        }
+      })
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'members' }, (payload: any) => {
+        if (payload?.new && (payload.new.id === currentUserId || payload.new.username === currentUsername)) {
+          setCurrentMemberData(payload.new);
+        }
+      })
       .subscribe();
 
     return () => {
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [currentUserId, currentUsername]);
 
   // Transform raw data into structured notifications
   const notifications: NotificationItem[] = useMemo(() => {
     const list: NotificationItem[] = [];
 
-    // 1. Kudos received or recent
-    rawKudos.forEach(k => {
-      const toId = k.toId || k.recipientId;
-      const toName = (k.toName || k.recipientName || '').toLowerCase();
-      const fromName = k.fromName || k.senderName || 'un coleg';
-      const isTarget = currentUserId && (toId === currentUserId || toName === (currentUsername || '').toLowerCase());
-      if (isTarget) {
+    // 1. Score adjustments for the current user
+    if (currentMemberData?.scoreAdjustments && Array.isArray(currentMemberData.scoreAdjustments)) {
+      currentMemberData.scoreAdjustments.forEach((adj: any) => {
+        const isPos = (adj.points || 0) > 0;
         list.push({
-          id: `kudos_${k.id}`,
-          type: 'kudos',
-          title: `Kudos primit de la ${fromName}!`,
-          description: `"${k.message || k.badgeType || 'Apreciere deosebită'}"`,
-          timestamp: k.createdAt,
-          targetSection: 'kudos',
+          id: `score_${adj.id || adj.date}`,
+          type: 'score',
+          title: isPos ? `🏆 Ai primit +${adj.points} puncte!` : `⚠️ Ajustare punctaj: ${adj.points} puncte`,
+          description: `Acțiune: "${adj.reason || 'Ajustare scor'}" (acordat de ${adj.adminName || 'Board'})`,
+          timestamp: adj.date,
+          targetSection: 'clasament',
         });
-      }
-    });
+      });
+    }
 
     // 2. Absence Requests of user
     rawAbsences.forEach(req => {
@@ -125,7 +198,7 @@ export const NotificationsDropdown: React.FC<NotificationsDropdownProps> = ({
           list.push({
             id: `abs_rej_${req.id}`,
             type: 'excuse_rejected',
-            title: 'Cerere de motivare Respinsă',
+            title: 'Cerere de motivare Respinsă ❌',
             description: `Motivul: ${req.reason || 'Verifică detaliile în secțiunea Prezență.'}`,
             timestamp: req.timestamp || req.createdAt,
             targetSection: 'prezenta',
@@ -140,13 +213,25 @@ export const NotificationsDropdown: React.FC<NotificationsDropdownProps> = ({
         id: `news_${n.id}`,
         type: 'news',
         title: `Știre nouă: ${n.title}`,
-        description: n.content ? (n.content.slice(0, 70) + '...') : 'Află noutățile clubului.',
+        description: n.content ? (n.content.slice(0, 75) + '...') : 'Află noutățile clubului.',
         timestamp: n.createdAt,
         targetSection: 'stiri',
       });
     });
 
-    // 4. Active Polls
+    // 4. Forum Project Pitches
+    rawPitches.forEach(p => {
+      list.push({
+        id: `pitch_${p.id}`,
+        type: 'forum',
+        title: `Propunere Forum: ${p.title}`,
+        description: `Propusă de ${p.submitterName || 'un coleg'}. Intră să votezi și să comentezi.`,
+        timestamp: p.createdAt,
+        targetSection: 'comunitate',
+      });
+    });
+
+    // 5. Active Polls
     rawPolls.forEach(p => {
       list.push({
         id: `poll_${p.id}`,
@@ -158,23 +243,53 @@ export const NotificationsDropdown: React.FC<NotificationsDropdownProps> = ({
       });
     });
 
+    // 6. Upcoming Events
+    rawEvents.forEach(e => {
+      list.push({
+        id: `event_${e.id}`,
+        type: 'event',
+        title: `Eveniment: ${e.title}`,
+        description: `${e.date || ''} la ${e.time || '18:00'} - ${e.location || 'Sediul Clubului'}`,
+        timestamp: e.createdAt || e.date,
+        targetSection: 'calendar',
+      });
+    });
+
+    // 7. Kudos received
+    rawKudos.forEach(k => {
+      const toId = k.toId || k.recipientId;
+      const toName = (k.toName || k.recipientName || '').toLowerCase();
+      const fromName = k.fromName || k.senderName || 'un coleg';
+      const isTarget = currentUserId && (toId === currentUserId || toName === (currentUsername || '').toLowerCase());
+      if (isTarget) {
+        list.push({
+          id: `kudos_${k.id}`,
+          type: 'kudos',
+          title: `Kudos primit de la ${fromName}!`,
+          description: `"${k.message || k.badgeType || 'Apreciere deosebită'}"`,
+          timestamp: k.createdAt,
+          targetSection: 'kudos',
+        });
+      }
+    });
+
     // Sort descending by timestamp
     return list.sort((a, b) => new Date(b.timestamp || 0).getTime() - new Date(a.timestamp || 0).getTime());
-  }, [rawKudos, rawAbsences, rawNews, rawPolls, currentUserId, currentUsername]);
+  }, [rawKudos, rawAbsences, rawNews, rawPolls, rawPitches, rawEvents, currentMemberData, currentUserId, currentUsername]);
 
   const unreadCount = notifications.filter(n => !readIds.includes(n.id)).length;
 
   const markAllAsRead = () => {
     const allIds = notifications.map(n => n.id);
     setReadIds(allIds);
-    localStorage.setItem('read_notifications_v1', JSON.stringify(allIds));
+    localStorage.setItem('read_notifications_v2', JSON.stringify(allIds));
   };
 
   const handleNotificationClick = (item: NotificationItem) => {
     if (!readIds.includes(item.id)) {
       const updated = [...readIds, item.id];
       setReadIds(updated);
-      localStorage.setItem('read_notifications_v1', JSON.stringify(updated));
+      localStorage.setItem('read_notifications_v2', JSON.stringify(updated));
     }
     setIsOpen(false);
     onNavigateToSection(item.targetSection);
@@ -182,8 +297,10 @@ export const NotificationsDropdown: React.FC<NotificationsDropdownProps> = ({
 
   const getIcon = (type: NotificationItem['type']) => {
     switch (type) {
+      case 'score':
+        return <Trophy size={16} className="text-amber-500" />;
       case 'kudos':
-        return <Heart size={16} className="text-rose-500" />;
+        return <Heart size={16} className="text-rose-500 fill-rose-500/20" />;
       case 'excuse_approved':
         return <CheckCircle2 size={16} className="text-emerald-500" />;
       case 'excuse_rejected':
@@ -192,8 +309,10 @@ export const NotificationsDropdown: React.FC<NotificationsDropdownProps> = ({
         return <Megaphone size={16} className="text-blue-500" />;
       case 'poll':
         return <PieChart size={16} className="text-purple-500" />;
-      default:
-        return <Sparkles size={16} className="text-amber-500" />;
+      case 'forum':
+        return <Sparkles size={16} className="text-indigo-500" />;
+      case 'event':
+        return <Calendar size={16} className="text-teal-500" />;
     }
   };
 
@@ -202,34 +321,35 @@ export const NotificationsDropdown: React.FC<NotificationsDropdownProps> = ({
       {/* Bell Button */}
       <button
         onClick={() => setIsOpen(v => !v)}
-        title="Centru de Notificări & Alerte"
-        className="relative p-2 rounded-xl border border-white/10 hover:bg-white/5 text-white/70 hover:text-white transition-all shrink-0"
+        className="relative p-2 border border-white/10 text-white/60 hover:text-white hover:bg-white/5 transition-all shrink-0"
+        title="Notificări"
+        aria-label="Deschide panoul de notificări"
       >
-        <Bell size={18} />
+        <Bell size={17} />
         {unreadCount > 0 && (
-          <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-rose-500 text-white text-[10px] font-black flex items-center justify-center shadow-lg animate-pulse">
+          <span className="absolute -top-1 -right-1 min-w-[17px] h-[17px] px-1 rounded-full bg-rose-500 text-white text-[9px] font-black flex items-center justify-center animate-bounce shadow-md">
             {unreadCount > 9 ? '9+' : unreadCount}
           </span>
         )}
       </button>
 
-      {/* Dropdown Card */}
+      {/* Notifications Dropdown Panel */}
       <AnimatePresence>
         {isOpen && (
           <motion.div
-            initial={{ opacity: 0, y: 10, scale: 0.95 }}
+            initial={{ opacity: 0, y: -8, scale: 0.97 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 10, scale: 0.95 }}
-            transition={{ duration: 0.18, ease: 'easeOut' }}
+            exit={{ opacity: 0, y: -8, scale: 0.97 }}
+            transition={{ duration: 0.15 }}
             className="fixed sm:absolute inset-x-3 sm:inset-x-auto sm:right-0 top-16 sm:top-[calc(100%+0.5rem)] max-w-sm sm:w-96 rounded-2xl sm:rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden z-50 flex flex-col font-['Hanken_Grotesk'] text-slate-800 dark:text-white"
           >
-            {/* Dropdown Header */}
-            <div className="px-5 py-4 bg-slate-50 dark:bg-slate-950/60 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+            {/* Header */}
+            <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-100/90 dark:bg-slate-900">
               <div className="flex items-center gap-2">
-                <Bell size={16} className="text-blue-600 dark:text-blue-400" />
-                <span className="text-sm font-extrabold text-slate-900 dark:text-white">Notificări & Noutăți</span>
+                <div className="w-2.5 h-2.5 rounded-full bg-blue-500 shadow-sm" />
+                <h3 className="text-sm font-extrabold tracking-tight text-slate-900 dark:text-white">Centru Notificări</h3>
                 {unreadCount > 0 && (
-                  <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300">
+                  <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-blue-600 text-white shadow-sm">
                     {unreadCount} noi
                   </span>
                 )}
@@ -238,15 +358,15 @@ export const NotificationsDropdown: React.FC<NotificationsDropdownProps> = ({
               {unreadCount > 0 && (
                 <button
                   onClick={markAllAsRead}
-                  className="text-[11px] font-bold text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1"
+                  className="text-[11px] font-semibold text-slate-400 hover:text-slate-700 dark:hover:text-white flex items-center gap-1 transition-colors"
                 >
                   <CheckCheck size={13} />
-                  <span>Marchează citite</span>
+                  Marchează citite
                 </button>
               )}
             </div>
 
-            {/* Push Notifications Toggle Section */}
+            {/* Push Notifications Opt-in Toggle Banner */}
             <div className="p-3 bg-slate-100/70 dark:bg-slate-950/40 border-b border-slate-200 dark:border-slate-800">
               <PushNotificationToggle memberId={currentUserId || currentUsername || 'member'} />
             </div>

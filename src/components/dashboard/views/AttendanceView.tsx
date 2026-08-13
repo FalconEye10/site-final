@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { CheckCircle2, XCircle, Clock, ChevronDown, Lock } from 'lucide-react';
-import { EventData, AbsenceRequest, fetchAbsenceRequests, saveAbsenceRequest, recordAttendance, fetchEvents, saveEvent } from '../../../utils/supabaseService';
+import { CheckCircle2, XCircle, Clock, ChevronDown, Lock, Loader2 } from 'lucide-react';
+import { EventData, AbsenceRequest, fetchAbsenceRequests, saveAbsenceRequest, recordAttendance, fetchEvents, saveEvent, applyMemberScoreAdjustment } from '../../../utils/supabaseService';
 import { toast } from '../../ui/Toast';
 import { Badge } from '../../ui/Badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../ui/table';
@@ -189,6 +189,10 @@ export function AttendanceView({ members, onUpdateMember, isAdmin, currentUserId
   const [rejectingReq, setRejectingReq] = useState<AbsenceRequest | null>(null);
   const [rejectReason, setRejectReason] = useState('');
 
+  const [showFinalizeModal, setShowFinalizeModal] = useState(false);
+  const [eventDurationInput, setEventDurationInput] = useState('2');
+  const [isFinalizing, setIsFinalizing] = useState(false);
+
   // Load events
   useEffect(() => {
     async function load() {
@@ -224,7 +228,7 @@ export function AttendanceView({ members, onUpdateMember, isAdmin, currentUserId
     }
   };
 
-  const handleToggleAttendanceLock = async () => {
+  const handleOpenFinalizeModal = () => {
     if (!selectedEvent) return;
 
     if (!selectedEvent.attendanceClosed) {
@@ -233,19 +237,86 @@ export function AttendanceView({ members, onUpdateMember, isAdmin, currentUserId
         toast.error(`Nu poți finaliza: ${unassignedCount} membri au status nespecificat.`);
         return;
       }
+    } else {
+      // Toggle reopen
+      handleReopenAttendance();
+      return;
     }
 
-    const updatedEvent = { 
-      ...selectedEvent, 
-      attendanceClosed: !selectedEvent.attendanceClosed 
-    };
+    setEventDurationInput('2');
+    setShowFinalizeModal(true);
+  };
+
+  const handleReopenAttendance = async () => {
+    if (!selectedEvent) return;
+    const updatedEvent = { ...selectedEvent, attendanceClosed: false };
     try {
       await saveEvent(updatedEvent);
       setSelectedEvent(updatedEvent);
       setEvents(prev => prev.map(e => e.id === updatedEvent.id ? updatedEvent : e));
-      toast.success(updatedEvent.attendanceClosed ? 'Prezența a fost finalizată/închisă.' : 'Prezența a fost redeschisă.');
+      toast.success('Prezența a fost redeschisă pentru editare.');
     } catch (err) {
-      toast.error('Eroare la modificarea stării prezenței.');
+      toast.error('Eroare la redeschiderea prezenței.');
+    }
+  };
+
+  const handleConfirmFinalize = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedEvent || isFinalizing) return;
+
+    const durationHours = parseFloat(eventDurationInput);
+    if (isNaN(durationHours) || durationHours <= 0) {
+      toast.error('Te rugăm să introduci o durată validă în ore (ex: 2.5).');
+      return;
+    }
+
+    setIsFinalizing(true);
+    try {
+      const activeMembers = members.filter(m => m.role !== 'admin');
+      const presentMembers = activeMembers.filter(m => selectedEvent.rsvps?.[m.id] === 'present');
+      const pointsToAdd = Math.round(durationHours * 2);
+
+      for (const member of presentMembers) {
+        const newAdjustment = {
+          id: `adj_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
+          points: pointsToAdd,
+          reason: `Prezență eveniment (${durationHours}h): ${selectedEvent.title}`,
+          date: new Date().toISOString(),
+          adminName: 'Admin'
+        };
+
+        const updatedMember = {
+          ...member,
+          stats: {
+            ...member.stats,
+            hours: (member.stats?.hours || 0) + durationHours,
+            projects: (member.stats?.projects || 0) + 1
+          },
+          score: (member.score || 0) + pointsToAdd,
+          scoreAdjustments: [...(member.scoreAdjustments || []), newAdjustment]
+        };
+
+        await applyMemberScoreAdjustment(member.id, pointsToAdd, newAdjustment, { hoursDelta: durationHours, projectsDelta: 1 });
+        if (onUpdateMember) {
+          onUpdateMember(updatedMember);
+        }
+      }
+
+      const updatedEvent = { 
+        ...selectedEvent, 
+        attendanceClosed: true,
+        durationHours 
+      };
+      await saveEvent(updatedEvent);
+      setSelectedEvent(updatedEvent);
+      setEvents(prev => prev.map(e => e.id === updatedEvent.id ? updatedEvent : e));
+      setShowFinalizeModal(false);
+      toast.success(`✅ Prezență finalizată! S-au adăugat +${durationHours}h de voluntariat pentru cei ${presentMembers.length} membri prezenți.`);
+    } catch (err) {
+      console.error(err);
+      toast.error('Eroare la finalizarea prezenței și adăugarea orelor.');
+    } finally {
+      setIsFinalizing(false);
     }
   };
 
@@ -548,10 +619,10 @@ export function AttendanceView({ members, onUpdateMember, isAdmin, currentUserId
 
             {!isTimeLocked && !selectedEvent.attendanceClosed && (
               <button
-                onClick={handleToggleAttendanceLock}
+                onClick={handleOpenFinalizeModal}
                 className="px-6 py-2.5 btn-stitch-danger text-xs font-bold flex items-center gap-2 shadow-sm"
               >
-                <Lock size={16} /> Finalizează Prezența
+                <Lock size={16} /> Finalizează Prezența & Adaugă Ore
               </button>
             )}
           </div>
@@ -834,6 +905,75 @@ export function AttendanceView({ members, onUpdateMember, isAdmin, currentUserId
                     className="flex-1 py-2.5 btn-stitch-danger text-xs font-bold"
                   >
                     Confirmă
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showFinalizeModal && selectedEvent && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl w-full max-w-md overflow-hidden shadow-2xl border border-slate-200">
+            <div className="p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="p-3 bg-amber-500/10 text-amber-600 rounded-2xl">
+                  <Clock size={24} />
+                </div>
+                <div>
+                  <h3 className="text-xl font-extrabold text-slate-900">Finalizare Prezență</h3>
+                  <p className="text-xs text-slate-500 font-medium">{selectedEvent.title}</p>
+                </div>
+              </div>
+
+              <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 mb-5">
+                <div className="text-xs text-slate-600 font-semibold mb-1">Membri marcați PREZENT:</div>
+                <div className="text-2xl font-black text-emerald-600">
+                  {members.filter(m => m.role !== 'admin' && selectedEvent.rsvps?.[m.id] === 'present').length} membri
+                </div>
+                <div className="text-[11px] text-slate-500 mt-1">
+                  * Orele se vor adăuga automat doar în contul celor marcați prezent.
+                </div>
+              </div>
+
+              <form onSubmit={handleConfirmFinalize}>
+                <div className="mb-6">
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-2">
+                    Durata Evenimentului (Ore de Voluntariat)
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="number"
+                      step="0.5"
+                      min="0.5"
+                      max="24"
+                      value={eventDurationInput}
+                      onChange={e => setEventDurationInput(e.target.value)}
+                      placeholder="ex: 2.5"
+                      className="w-full bg-white border border-slate-300 rounded-2xl px-4 py-3 text-slate-900 font-bold focus:outline-none focus:ring-2 focus:ring-amber-500 text-lg"
+                      required
+                    />
+                    <span className="absolute right-4 top-3.5 text-sm font-bold text-slate-400">ore</span>
+                  </div>
+                </div>
+
+                <div className="flex gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setShowFinalizeModal(false)}
+                    disabled={isFinalizing}
+                    className="flex-1 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-colors"
+                  >
+                    Anulează
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isFinalizing}
+                    className="flex-1 py-3 bg-amber-500 hover:bg-amber-600 text-slate-950 font-black rounded-xl text-xs shadow-md transition-all flex items-center justify-center gap-2"
+                  >
+                    {isFinalizing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Lock size={16} />}
+                    Finalizează & Adaugă Orele
                   </button>
                 </div>
               </form>
