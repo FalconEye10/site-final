@@ -2486,7 +2486,11 @@ html[data-theme="light"] .dashboard-shell {
 .dashboard-shell [class*="bg-fuchsia-5"][class*="text-white"],
 .dashboard-shell [class*="bg-fuchsia-6"][class*="text-white"],
 .dashboard-shell [class*="bg-fuchsia-7"][class*="text-white"],
-.dashboard-shell [class*="bg-fuchsia-8"][class*="text-white"]
+.dashboard-shell [class*="bg-fuchsia-8"][class*="text-white"],
+.dashboard-shell [class*="bg-slate-"][class*="text-white"],
+.dashboard-shell [class*="bg-zinc-"][class*="text-white"],
+.dashboard-shell [class*="bg-gray-"][class*="text-white"],
+.dashboard-shell [class*="bg-neutral-"][class*="text-white"]
 { color: #ffffff !important; }
 
 
@@ -2577,3 +2581,11 @@ html.dark select,
 .dashboard-shell [class*="text-surface-background"] { color: var(--adm-ink) !important; }
 .dashboard-shell [class*="bg-surface-background"],
 .dashboard-shell [class*="bg-surface-dark"] { background-color: var(--adm-panel) !important; }
+
+/* Score Audit Log Modal Isolation & Contrast Guarantee */
+.score-audit-modal {
+  color: #0f172a !important;
+}
+.score-audit-modal .text-white {
+  color: #ffffff !important;
+}

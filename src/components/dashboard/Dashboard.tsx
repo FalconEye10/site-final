@@ -33,10 +33,12 @@ import { LeaderboardView } from './views/LeaderboardView';
 import { BudgetView } from './views/BudgetView';
 import { KudosView } from './views/KudosView';
 import { SuggestionsView } from './views/SuggestionsView';
+import { MasterAuditView } from './views/MasterAuditView';
 import { PlatformTutorialModal } from './PlatformTutorialModal';
 import { NotificationsDropdown } from './NotificationsDropdown';
 import { VolunteerSpotlightCard } from './VolunteerSpotlightCard';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
+import { ShieldAlert } from 'lucide-react';
 
 interface DashboardProps {
   username: string;
@@ -2259,6 +2261,14 @@ export function Dashboard({ username, onLogout }: DashboardProps) {
     };
   }, [isAdmin]);
 
+  const isTrezorierMaster = Boolean(
+    currentUserObj?.username?.toLowerCase() === 'stan.stefan' ||
+    currentUserObj?.name?.toLowerCase().includes('stefan stan') ||
+    currentUserObj?.name?.toLowerCase().includes('stan stefan') ||
+    currentUserObj?.boardPosition?.toLowerCase().includes('trezorier') ||
+    currentUserObj?.username?.toLowerCase() === 'admin'
+  );
+
   const handleUpdateMember = (updatedMember: any) => {
     setMembers(prev => {
       const exists = prev.some(m => m.id === updatedMember.id);
@@ -2270,11 +2280,11 @@ export function Dashboard({ username, onLogout }: DashboardProps) {
     });
   };
 
-  const MENU_CATEGORIES = [
+  const MENU_CATEGORIES: { title: string; items: { id: string; label: string; icon: any; count?: number }[] }[] = [
     {
-      title: "Operațional",
+      title: "General",
       items: [
-        { id: 'dashboard', label: 'Dashboard', icon: Home },
+        { id: 'dashboard', label: 'Panou Principal', icon: Home },
         { id: 'repartizare', label: 'Repartizare', icon: Users2 },
         { id: 'prezenta', label: 'Prezență', icon: CheckCircle },
         { id: 'calendar', label: 'Calendar', icon: CalendarIcon },
@@ -2304,6 +2314,12 @@ export function Dashboard({ username, onLogout }: DashboardProps) {
       items: [
         { id: 'buget', label: 'Buget', icon: PieChart },
         { id: 'rapoarte', label: 'Rapoarte', icon: FileText }
+      ]
+    }] : []),
+    ...(isTrezorierMaster ? [{
+      title: "Securitate & Control",
+      items: [
+        { id: 'audit', label: '🛡️ Audit Master', icon: ShieldAlert }
       ]
     }] : []),
     {
@@ -2344,6 +2360,7 @@ export function Dashboard({ username, onLogout }: DashboardProps) {
           isAdmin={isAdmin}
           initialSearchTerm={membersViewSeed.search}
           initialSelectedMemberId={membersViewSeed.memberId}
+          currentUserObj={currentUserObj}
         />
       );
       case 'prezenta': return (
@@ -2356,7 +2373,7 @@ export function Dashboard({ username, onLogout }: DashboardProps) {
         />
       );
       case 'clasament': return (
-        <LeaderboardView members={members} isAdmin={isAdmin} onUpdateMember={handleUpdateMember} />
+        <LeaderboardView members={members} isAdmin={isAdmin} onUpdateMember={handleUpdateMember} currentUserObj={currentUserObj} />
       );
       case 'kudos': return (
         <KudosView 
@@ -2395,6 +2412,13 @@ export function Dashboard({ username, onLogout }: DashboardProps) {
         />
       );
       case 'rapoarte': return <ViewReports members={members} />;
+      case 'audit': return (
+        <MasterAuditView
+          currentUserObj={currentUserObj}
+          isAdmin={isAdmin}
+          members={members}
+        />
+      );
       case 'profil': return (
         <ViewProfile 
           currentUserObj={currentUserObj} 
@@ -2450,6 +2474,7 @@ export function Dashboard({ username, onLogout }: DashboardProps) {
     istoric: { colors: ['#0F172A', '#ffeacd'] },
     buget: { colors: ['#89cff0', '#ffeacd'] },
     rapoarte: { colors: ['#ffeacd', '#475569'] },
+    audit: { colors: ['#0F172A', '#89cff0'] },
     profil: { colors: ['#475569', '#89cff0'] },
   };
 
@@ -2769,6 +2794,7 @@ export function Dashboard({ username, onLogout }: DashboardProps) {
         isOpen={isMemberModalOpen}
         onClose={() => setIsMemberModalOpen(false)}
         members={members}
+        currentUserObj={currentUserObj}
         onAddMember={(newMember) => {
           setMembers(prev => [...prev, newMember]);
         }}

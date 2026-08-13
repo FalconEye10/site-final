@@ -9,7 +9,7 @@ import {
 import { toast } from '../ui/Toast';
 import { calculateDebt, calculateQualification, generateMemberLedger, COTIZATIE_LUNARA } from '../../utils/finance';
 import { computeMemberMilestones } from '../../utils/milestones';
-import { updateMemberFields, applyMemberScoreAdjustment, revertLatestTreasuryPayment, deleteMemberFromDB, TreasuryPayment } from '../../utils/supabaseService';
+import { updateMemberFields, applyMemberScoreAdjustment, revertLatestTreasuryPayment, deleteMemberFromDB, TreasuryPayment, MAX_SCORE_ADJUSTMENT, MIN_SCORE_ADJUSTMENT, logScoreAudit } from '../../utils/supabaseService';
 import { PaymentModal } from '../finance/PaymentModal';
 import { ScoringReferenceGuide, ScoringPreset } from '../dashboard/views/ScoringReferenceGuide';
 import { supabase } from '../../supabase';
@@ -19,9 +19,10 @@ interface MemberDrawerProps {
   onClose: () => void;
   onUpdateMember: (updatedMember: any) => void;
   isAdmin: boolean;
+  currentUserObj?: any;
 }
 
-export function MemberDrawer({ member, onClose, onUpdateMember, isAdmin }: MemberDrawerProps) {
+export function MemberDrawer({ member, onClose, onUpdateMember, isAdmin, currentUserObj }: MemberDrawerProps) {
   const [activeTab, setActiveTab] = useState<'finance' | 'activity' | 'profile' | 'achievements'>('finance');
   const [isEditing, setIsEditing] = useState(false);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
@@ -150,6 +151,19 @@ export function MemberDrawer({ member, onClose, onUpdateMember, isAdmin }: Membe
   const handleDeleteMember = async () => {
     setIsDeletingMember(true);
     try {
+      const adminName = currentUserObj?.name || currentUserObj?.username || 'Admin';
+      const adminUsername = currentUserObj?.username;
+
+      await logScoreAudit({
+        adminId: currentUserObj?.id,
+        adminName,
+        adminUsername,
+        targetMemberId: member.id,
+        targetMemberName: member.name,
+        action: 'MEMBER_DELETE',
+        reason: `ȘTERGERE MEMBRU: Definitiv din baza de date ${member.name} (ID: ${member.id})`
+      });
+
       await deleteMemberFromDB(member.id);
       toast.success(`Membrul ${member.name} a fost șters cu succes.`);
       onClose();
@@ -188,7 +202,24 @@ export function MemberDrawer({ member, onClose, onUpdateMember, isAdmin }: Membe
     const updatedMember = { ...member, ...profileFields };
 
     try {
+      const adminName = currentUserObj?.name || currentUserObj?.username || 'Admin';
+      const adminUsername = currentUserObj?.username;
+      const isPasswordChange = member.password !== password;
+
       await updateMemberFields(member.id, profileFields);
+      
+      await logScoreAudit({
+        adminId: currentUserObj?.id,
+        adminName,
+        adminUsername,
+        targetMemberId: member.id,
+        targetMemberName: member.name,
+        action: isPasswordChange ? 'PASSWORD_CHANGE' : 'MEMBER_EDIT',
+        reason: isPasswordChange 
+          ? `SCHIMBARE PAROLĂ: Parola membrului ${member.name} a fost modificată`
+          : `EDITARE PROFIL: Modificare date cont pentru ${member.name}`
+      });
+
       onUpdateMember(updatedMember);
       setIsEditing(false);
       toast.success('Profilul a fost salvat cu succes.');
@@ -200,16 +231,27 @@ export function MemberDrawer({ member, onClose, onUpdateMember, isAdmin }: Membe
 
   const handleAdjustScore = async (e: React.FormEvent) => {
     e.preventDefault();
-    const val = parseInt(scoreAdjustValue);
-    if (isNaN(val)) return toast.error('Introdu o valoare numerică.');
+    const val = parseInt(scoreAdjustValue, 10);
+    if (isNaN(val) || val === 0) return toast.error('Introdu o valoare numerică diferită de zero.');
+    if (val > MAX_SCORE_ADJUSTMENT || val < MIN_SCORE_ADJUSTMENT) {
+      return toast.error(`Punctajul la o singură ajustare trebuie să fie între ${MIN_SCORE_ADJUSTMENT} și +${MAX_SCORE_ADJUSTMENT} puncte.`);
+    }
     if (!scoreAdjustReason.trim()) return toast.error('Motivul este obligatoriu.');
+
+    const adminName = currentUserObj?.name || currentUserObj?.username || 'Admin';
+    const adminUsername = currentUserObj?.username;
+    const adminId = currentUserObj?.id;
 
     const newAdjustment = {
       id: `adj_${Date.now()}`,
       points: val,
       reason: scoreAdjustReason.trim(),
       date: new Date().toISOString(),
-      adminName: 'Admin'
+      adminName,
+      adminUsername,
+      adminId,
+      targetMemberId: member.id,
+      targetMemberName: member.name || 'Membru'
     };
 
     const newScore = (member.score || 0) + val;
@@ -227,8 +269,8 @@ export function MemberDrawer({ member, onClose, onUpdateMember, isAdmin }: Membe
       setScoreAdjustValue('');
       setScoreAdjustReason('');
       toast.success('Scor ajustat cu succes!');
-    } catch (err) {
-      toast.error('Eroare la ajustarea scorului.');
+    } catch (err: any) {
+      toast.error(err.message || 'Eroare la ajustarea scorului.');
     }
   };
 

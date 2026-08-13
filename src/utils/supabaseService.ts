@@ -1,12 +1,30 @@
 import { supabase } from '../supabase';
 import { calculateDebt } from './finance';
 
-// Preia toți membrii din Supabase
+/**
+ * Verifică dacă un membru este un cont tehnic de sistem (admin tehnic sau registrul de audit)
+ */
+export function isSystemAccount(m: any): boolean {
+  if (!m) return true;
+  const username = (m.username || '').toLowerCase().trim();
+  const id = (m.id || '').toUpperCase().trim();
+  const name = (m.name || '').toLowerCase().trim();
+  return (
+    username === 'admin' ||
+    username === 'sys_audit_logs' ||
+    id === 'SYS_AUDIT_LOGS' ||
+    id === 'M058' ||
+    name === 'admin' ||
+    name === 'system audit records'
+  );
+}
+
+// Preia toți membrii din Supabase (excluzând conturile tehnice de sistem)
 export async function fetchMembers(): Promise<any[]> {
   try {
     const { data, error } = await supabase.from('members').select('*');
     if (error) throw error;
-    return data || [];
+    return (data || []).filter((m: any) => !isSystemAccount(m));
   } catch (error) {
     console.error("Error fetching members from Supabase:", error);
     return [];
@@ -63,16 +81,126 @@ export async function deleteMemberFromDB(memberId: string): Promise<void> {
 }
 
 
+export const MAX_SCORE_ADJUSTMENT = 35;
+export const MIN_SCORE_ADJUSTMENT = -35;
+
 export interface ScoreAdjustment {
   id: string;
   points: number;
   reason: string;
   date: string;
   adminName: string;
+  adminUsername?: string;
+  adminId?: string;
+  targetMemberId?: string;
+  targetMemberName?: string;
+}
+
+export interface ScoreAuditLog {
+  id: string;
+  adminId?: string;
+  adminName: string;
+  adminUsername?: string;
+  targetMemberId?: string;
+  targetMemberName?: string;
+  action: 'ADDED' | 'SUBTRACTED' | 'REVERTED' | 'MEMBER_CREATE' | 'MEMBER_DELETE' | 'PASSWORD_CHANGE' | 'PAYMENT_ADD' | 'PAYMENT_REVERT' | string;
+  points?: number;
+  reason: string;
+  createdAt: string;
+}
+
+/**
+ * Salvează un buștean de audit (Audit Log) în Supabase
+ */
+export async function logScoreAudit(log: Omit<ScoreAuditLog, 'id' | 'createdAt'>): Promise<void> {
+  try {
+    const auditEntry: ScoreAuditLog = {
+      id: `audit_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+      adminId: log.adminId || undefined,
+      adminName: log.adminName || 'Admin',
+      adminUsername: log.adminUsername || undefined,
+      targetMemberId: log.targetMemberId || '',
+      targetMemberName: log.targetMemberName || 'Sistem',
+      action: log.action,
+      points: log.points || 0,
+      reason: log.reason,
+      createdAt: new Date().toISOString()
+    };
+
+    const { data: sysSnap } = await supabase
+      .from('members')
+      .select('stats')
+      .eq('id', 'SYS_AUDIT_LOGS')
+      .single();
+
+    const currentLogs = Array.isArray(sysSnap?.stats?.logs) ? sysSnap.stats.logs : [];
+    const updatedLogs = [auditEntry, ...currentLogs].slice(0, 1000);
+
+    await supabase.from('members').upsert({
+      id: 'SYS_AUDIT_LOGS',
+      name: 'System Audit Records',
+      username: 'sys_audit_logs',
+      role: 'admin',
+      stats: { logs: updatedLogs }
+    });
+  } catch (err) {
+    console.warn("Error logging score audit:", err);
+  }
+}
+
+/**
+ * Preia toate jurnalele de audit pentru punctaj (doar pentru admini)
+ */
+export async function fetchScoreAuditLogs(): Promise<ScoreAuditLog[]> {
+  try {
+    const { data: sysSnap } = await supabase
+      .from('members')
+      .select('stats')
+      .eq('id', 'SYS_AUDIT_LOGS')
+      .single();
+
+    const sysLogs: ScoreAuditLog[] = Array.isArray(sysSnap?.stats?.logs) ? sysSnap.stats.logs : [];
+
+    const { data: membersData } = await supabase
+      .from('members')
+      .select('id, name, scoreAdjustments')
+      .neq('id', 'SYS_AUDIT_LOGS');
+
+    const compiledMap = new Map<string, ScoreAuditLog>();
+    sysLogs.forEach(l => compiledMap.set(l.id, l));
+
+    if (membersData) {
+      membersData.forEach((m: any) => {
+        const adjustments = m.scoreAdjustments || [];
+        adjustments.forEach((adj: any) => {
+          if (adj.id && !compiledMap.has(adj.id)) {
+            compiledMap.set(adj.id, {
+              id: adj.id,
+              adminId: adj.adminId,
+              adminName: adj.adminName || 'Admin',
+              adminUsername: adj.adminUsername,
+              targetMemberId: m.id,
+              targetMemberName: m.name || 'Membru',
+              action: adj.action || (adj.points >= 0 ? 'ADDED' : 'SUBTRACTED'),
+              points: adj.points || 0,
+              reason: adj.reason || 'Fără motiv',
+              createdAt: adj.date || new Date().toISOString()
+            });
+          }
+        });
+      });
+    }
+
+    return Array.from(compiledMap.values()).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  } catch (err) {
+    console.error("Error fetching audit logs:", err);
+    return [];
+  }
 }
 
 /**
  * Aplică o ajustare de scor (și, opțional, ore/proiecte) pe un membru.
+ * Limitează punctajul la maxim +35 și minim -35 per acțiune (conform ghidului de punctare).
  */
 export async function applyMemberScoreAdjustment(
   memberId: string,
@@ -80,10 +208,15 @@ export async function applyMemberScoreAdjustment(
   adjustments: ScoreAdjustment | ScoreAdjustment[],
   extra?: { hoursDelta?: number; projectsDelta?: number }
 ): Promise<void> {
+  // Limita de securitate conform ghidului de punctare (Max: 35, Min: -35)
+  if (pointsDelta > MAX_SCORE_ADJUSTMENT || pointsDelta < MIN_SCORE_ADJUSTMENT) {
+    throw new Error(`Punctajul acordat sau scăzut la o singură ajustare trebuie să fie între ${MIN_SCORE_ADJUSTMENT} și +${MAX_SCORE_ADJUSTMENT} puncte.`);
+  }
+
   try {
     const { data: member, error: fetchErr } = await supabase
       .from('members')
-      .select('score, scoreAdjustments, stats')
+      .select('name, score, scoreAdjustments, stats')
       .eq('id', memberId.toString())
       .single();
 
@@ -112,11 +245,83 @@ export async function applyMemberScoreAdjustment(
       .eq('id', memberId.toString());
 
     if (updateErr) throw updateErr;
+
+    // Logăm în Audit Log pentru fiecare ajustare
+    for (const adj of list) {
+      await logScoreAudit({
+        adminId: adj.adminId,
+        adminName: adj.adminName || 'Admin',
+        adminUsername: adj.adminUsername,
+        targetMemberId: memberId,
+        targetMemberName: member.name || 'Membru',
+        action: pointsDelta >= 0 ? 'ADDED' : 'SUBTRACTED',
+        points: pointsDelta,
+        reason: adj.reason
+      });
+    }
   } catch (error) {
     console.error("Error applying score adjustment in Supabase:", error);
     throw error;
   }
 }
+
+/**
+ * Anulează (revert) o ajustare de scor specifică a unui membru.
+ */
+export async function revertMemberScoreAdjustment(
+  memberId: string,
+  adjustmentId: string,
+  adminInfo: { name: string; username?: string; id?: string }
+): Promise<{ newScore: number; updatedAdjustments: ScoreAdjustment[] }> {
+  try {
+    const { data: member, error: fetchErr } = await supabase
+      .from('members')
+      .select('name, score, scoreAdjustments')
+      .eq('id', memberId.toString())
+      .single();
+
+    if (fetchErr || !member) throw new Error("Membrul nu a fost găsit.");
+
+    const currentAdjustments: ScoreAdjustment[] = Array.isArray(member.scoreAdjustments) ? member.scoreAdjustments : [];
+    const targetAdj = currentAdjustments.find(a => a.id === adjustmentId);
+
+    if (!targetAdj) {
+      throw new Error("Ajustarea de punctaj specificată nu a fost găsită.");
+    }
+
+    const updatedAdjustments = currentAdjustments.filter(a => a.id !== adjustmentId);
+    const pointsToRemove = targetAdj.points || 0;
+    const newScore = (member.score || 0) - pointsToRemove;
+
+    const { error: updateErr } = await supabase
+      .from('members')
+      .update({
+        score: newScore,
+        scoreAdjustments: updatedAdjustments
+      })
+      .eq('id', memberId.toString());
+
+    if (updateErr) throw updateErr;
+
+    // Înregistrăm acțiunea de REVERT în jurnalul de audit
+    await logScoreAudit({
+      adminId: adminInfo.id,
+      adminName: adminInfo.name || 'Admin',
+      adminUsername: adminInfo.username,
+      targetMemberId: memberId,
+      targetMemberName: member.name || 'Membru',
+      action: 'REVERTED',
+      points: -pointsToRemove,
+      reason: `ANULAT: ${targetAdj.reason} (${pointsToRemove > 0 ? '+' : ''}${pointsToRemove} pct)`
+    });
+
+    return { newScore, updatedAdjustments };
+  } catch (error) {
+    console.error("Error reverting score adjustment:", error);
+    throw error;
+  }
+}
+
 
 // ==========================================
 // TREASURY & PAYMENTS (STRICT RULES)

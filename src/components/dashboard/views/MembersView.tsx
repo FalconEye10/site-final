@@ -9,7 +9,7 @@ import { MemberDrawer } from '../../members/MemberDrawer';
 import { calculateDebt, calculateQualification } from '../../../utils/finance';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../ui/table';
 import { downloadXlsx } from '../../../utils/xlsx';
-import { deleteMemberFromDB } from '../../../utils/supabaseService';
+import { deleteMemberFromDB, logScoreAudit, isSystemAccount } from '../../../utils/supabaseService';
 import { toast } from '../../ui/Toast';
 
 interface MembersViewProps {
@@ -19,6 +19,7 @@ interface MembersViewProps {
   onAddMemberClick: () => void;
   initialSearchTerm?: string;
   initialSelectedMemberId?: string;
+  currentUserObj?: any;
 }
 
 export function MembersView({
@@ -27,7 +28,8 @@ export function MembersView({
   isAdmin,
   onAddMemberClick,
   initialSearchTerm,
-  initialSelectedMemberId
+  initialSelectedMemberId,
+  currentUserObj
 }: MembersViewProps) {
   const [searchTerm, setSearchTerm] = useState(initialSearchTerm || '');
   const [selectedRole, setSelectedRole] = useState('Toți');
@@ -48,6 +50,19 @@ export function MembersView({
     if (!memberToDelete) return;
     setIsDeletingMember(true);
     try {
+      const adminName = currentUserObj?.name || currentUserObj?.username || 'Admin';
+      const adminUsername = currentUserObj?.username;
+
+      await logScoreAudit({
+        adminId: currentUserObj?.id,
+        adminName,
+        adminUsername,
+        targetMemberId: memberToDelete.id,
+        targetMemberName: memberToDelete.name,
+        action: 'MEMBER_DELETE',
+        reason: `ȘTERGERE MEMBRU: Definitiv din baza de date ${memberToDelete.name} (ID: ${memberToDelete.id})`
+      });
+
       await deleteMemberFromDB(memberToDelete.id);
       toast.success(`Membrul ${memberToDelete.name} a fost șters cu succes.`);
       if (selectedMember?.id === memberToDelete.id) {
@@ -96,10 +111,14 @@ export function MembersView({
     setSearchTerm('');
   };
 
-  // Filters & Sorting logic
+  // Filters & Sorting logic (Excludes technical system accounts)
   const processedMembers = useMemo(() => {
     const q = searchTerm.trim().toLowerCase();
     const filtered = members.filter(m => {
+      if (isSystemAccount(m)) {
+        return false;
+      }
+
       const mName = m.name || '';
       const mEmail = m.email || '';
       const rawRole = (m.role || '').toLowerCase();
@@ -144,17 +163,18 @@ export function MembersView({
   }, [members, searchTerm, selectedRole, selectedStatus, selectedDebtFilter, sortOrder]);
 
   const { totalMembri, membriActivi, membriNoi, rataRetentie } = useMemo(() => {
-    const total = members.length;
+    const validMembers = members.filter(m => !isSystemAccount(m));
+    const total = validMembers.length;
     const active = total;
     
     const now = new Date();
-    const newMembers = members.filter(m => {
+    const newMembers = validMembers.filter(m => {
       if (!m.joinDate) return false;
       const d = new Date(m.joinDate);
       return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
     }).length;
 
-    const inactiveOrSuspended = members.filter(m => {
+    const inactiveOrSuspended = validMembers.filter(m => {
       const s = (m.status || '').toLowerCase();
       return s === 'inactive' || s === 'inactiv' || s === 'suspended' || s === 'suspendat';
     }).length;
@@ -164,7 +184,8 @@ export function MembersView({
   }, [members]);
 
   const handleExportExcel = () => {
-    const rows = members.map(m => {
+    const validMembers = members.filter(m => m.username?.toLowerCase() !== 'admin' && m.name?.toLowerCase() !== 'admin');
+    const rows = validMembers.map(m => {
       const debt = calculateDebt(m.joinDate, m.totalPaid || 0);
       const qual = calculateQualification(m.presences || 0, m.excusedAbsences || 0, m.unexcusedAbsences || 0, m.status);
       return [
@@ -814,6 +835,7 @@ export function MembersView({
             onClose={() => setSelectedMember(null)}
             onUpdateMember={handleUpdateMember}
             isAdmin={isAdmin}
+            currentUserObj={currentUserObj}
           />
         )}
       </AnimatePresence>

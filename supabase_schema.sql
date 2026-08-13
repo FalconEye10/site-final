@@ -191,6 +191,20 @@ CREATE TABLE IF NOT EXISTS budget_archives (
   "createdAt" TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- 11. Score Audit Logs (Strict Admin Audit Log - Non-deletable)
+CREATE TABLE IF NOT EXISTS score_audit_logs (
+  id TEXT PRIMARY KEY,
+  "adminId" TEXT,
+  "adminName" TEXT,
+  "adminUsername" TEXT,
+  "targetMemberId" TEXT,
+  "targetMemberName" TEXT,
+  action TEXT, -- 'ADDED', 'SUBTRACTED', 'REVERTED'
+  points NUMERIC,
+  reason TEXT,
+  "createdAt" TIMESTAMPTZ DEFAULT NOW()
+);
+
 -- Enable RLS and public access policies
 ALTER TABLE members ENABLE ROW LEVEL SECURITY;
 ALTER TABLE payments ENABLE ROW LEVEL SECURITY;
@@ -208,6 +222,7 @@ ALTER TABLE budget_lines ENABLE ROW LEVEL SECURITY;
 ALTER TABLE budget_dues ENABLE ROW LEVEL SECURITY;
 ALTER TABLE budget_audit ENABLE ROW LEVEL SECURITY;
 ALTER TABLE budget_archives ENABLE ROW LEVEL SECURITY;
+ALTER TABLE score_audit_logs ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "Public anonymous visitors can submit pitches" ON project_pitches FOR INSERT TO public WITH CHECK (true);
 CREATE POLICY "Authorized app access on project_pitches" ON project_pitches FOR SELECT TO public USING (true);
@@ -230,3 +245,8 @@ CREATE POLICY "App budget_lines access" ON budget_lines FOR ALL TO public USING 
 CREATE POLICY "App budget_dues access" ON budget_dues FOR ALL TO public USING (true) WITH CHECK (true);
 CREATE POLICY "App budget_audit access" ON budget_audit FOR ALL TO public USING (true) WITH CHECK (true);
 CREATE POLICY "App budget_archives access" ON budget_archives FOR ALL TO public USING (true) WITH CHECK (true);
+
+-- Score Audit Logs Access (Read & Insert only, NO DELETE policy exists)
+CREATE POLICY "App score_audit_logs select" ON score_audit_logs FOR SELECT TO public USING (true);
+CREATE POLICY "App score_audit_logs insert" ON score_audit_logs FOR INSERT TO public WITH CHECK (true);
+

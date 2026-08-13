@@ -1,19 +1,21 @@
 import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Trophy, Medal, Star, TrendingUp, Search, ChevronLeft, ChevronRight, Plus, Minus, History, X } from 'lucide-react';
+import { Trophy, Medal, Star, TrendingUp, Search, ChevronLeft, ChevronRight, Plus, Minus, History, X, RotateCcw, ShieldAlert } from 'lucide-react';
 import { ScoringReferenceGuide, ScoringPreset } from './ScoringReferenceGuide';
 import { Badge } from '../../ui/Badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../ui/table';
-import { applyMemberScoreAdjustment } from '../../../utils/supabaseService';
+import { applyMemberScoreAdjustment, revertMemberScoreAdjustment, MAX_SCORE_ADJUSTMENT, MIN_SCORE_ADJUSTMENT, isSystemAccount } from '../../../utils/supabaseService';
+import { ScoreAuditLogModal } from './ScoreAuditLogModal';
 import { toast } from '../../ui/Toast';
 
 interface LeaderboardViewProps {
   members: any[];
   isAdmin?: boolean;
   onUpdateMember?: (member: any) => void;
+  currentUserObj?: any;
 }
 
-export function LeaderboardView({ members, isAdmin = false, onUpdateMember }: LeaderboardViewProps) {
+export function LeaderboardView({ members, isAdmin = false, onUpdateMember, currentUserObj }: LeaderboardViewProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
@@ -24,8 +26,9 @@ export function LeaderboardView({ members, isAdmin = false, onUpdateMember }: Le
   const [scoreAdjustReason, setScoreAdjustReason] = useState('');
   const [isSubmittingScore, setIsSubmittingScore] = useState(false);
 
-  // History Modal state
+  // History & Audit Log Modal states
   const [historyModalMember, setHistoryModalMember] = useState<any | null>(null);
+  const [isAuditLogOpen, setIsAuditLogOpen] = useState(false);
 
   // 1. Bi-monthly period calculation (2 months: Jan-Feb, Mar-Apr, May-Jun, Jul-Aug, Sep-Oct, Nov-Dec)
   const biMonthlyInfo = useMemo(() => {
@@ -71,7 +74,7 @@ export function LeaderboardView({ members, isAdmin = false, onUpdateMember }: Le
   // 2. Sort all members by selected score mode (bimonthly or total all-time) descending
   const sortedMembers = useMemo(() => {
     return [...members]
-      .filter(m => m.role?.toLowerCase() !== 'admin') // exclude admins from leaderboard
+      .filter(m => !isSystemAccount(m)) // exclude admins from leaderboard
       .map(m => {
         const adjustments = m.scoreAdjustments || [];
         const biMonthlyScore = adjustments.reduce((sum: number, adj: any) => {
@@ -202,17 +205,28 @@ export function LeaderboardView({ members, isAdmin = false, onUpdateMember }: Le
     if (!scoreModalMember) return;
     const val = parseInt(scoreAdjustValue, 10);
     if (isNaN(val) || val === 0) return toast.error('Introdu o valoare numerică diferită de zero.');
+    if (val > MAX_SCORE_ADJUSTMENT || val < MIN_SCORE_ADJUSTMENT) {
+      return toast.error(`Punctajul la o singură ajustare trebuie să fie între ${MIN_SCORE_ADJUSTMENT} și +${MAX_SCORE_ADJUSTMENT} puncte.`);
+    }
     if (!scoreAdjustReason.trim()) return toast.error('Motivul este obligatoriu.');
 
     // Read the freshest copy from the live members list to avoid stale scores.
     const liveMember = members.find(m => m.id === scoreModalMember.id) || scoreModalMember;
+
+    const adminName = currentUserObj?.name || currentUserObj?.username || 'Admin';
+    const adminUsername = currentUserObj?.username;
+    const adminId = currentUserObj?.id;
 
     const newAdjustment = {
       id: `adj_${Date.now()}`,
       points: val,
       reason: scoreAdjustReason.trim(),
       date: new Date().toISOString(),
-      adminName: 'Admin'
+      adminName,
+      adminUsername,
+      adminId,
+      targetMemberId: liveMember.id,
+      targetMemberName: liveMember.name || 'Membru'
     };
 
     // No floor at 0 — scores are allowed to go negative.
@@ -226,16 +240,15 @@ export function LeaderboardView({ members, isAdmin = false, onUpdateMember }: Le
 
     setIsSubmittingScore(true);
     try {
-      // Ajustare atomică (increment + arrayUnion) — nu suprascrie tot documentul.
       await applyMemberScoreAdjustment(liveMember.id, val, newAdjustment);
       onUpdateMember?.(updatedMember);
       setScoreModalMember(null);
       setScoreAdjustValue('');
       setScoreAdjustReason('');
       toast.success(val > 0 ? `+${val} puncte acordate!` : `${val} puncte scăzute.`);
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      toast.error('Eroare la ajustarea scorului.');
+      toast.error(err.message || 'Eroare la ajustarea scorului.');
     } finally {
       setIsSubmittingScore(false);
     }
@@ -324,6 +337,16 @@ export function LeaderboardView({ members, isAdmin = false, onUpdateMember }: Le
 
               {/* Admin Actions for Locul 1 */}
               <div className="flex items-center gap-2">
+                {isAdmin && (
+                  <button
+                    onClick={() => setIsAuditLogOpen(true)}
+                    title="Vezi Audit Log Puncte"
+                    className="p-3 bg-slate-900 text-amber-400 hover:bg-slate-800 rounded-2xl border border-amber-400/40 shadow-sm transition-all flex items-center gap-1.5 text-xs font-black cursor-pointer"
+                  >
+                    <ShieldAlert size={16} />
+                    <span>Audit Log</span>
+                  </button>
+                )}
                 <button
                   onClick={() => setHistoryModalMember(locul1)}
                   title="Istoric puncte"
@@ -721,31 +744,30 @@ export function LeaderboardView({ members, isAdmin = false, onUpdateMember }: Le
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="relative w-full max-w-xl max-h-[90vh] overflow-y-auto rounded-[2rem] shadow-[0_40px_100px_rgba(0,0,0,0.6)] p-6 md:p-8 z-[121] border border-brand-muted/10"
-              style={{ background: 'var(--adm-panel)' }}
+              className="relative w-full max-w-xl max-h-[90vh] overflow-y-auto rounded-3xl shadow-2xl p-6 md:p-8 z-[121] bg-white text-slate-900 border border-slate-200"
             >
               <div className="mb-6 flex items-center gap-3">
                 <img
                   src={scoreModalMember.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(scoreModalMember.nickname || scoreModalMember.name)}&background=0f172a&color=f8fafc`}
-                  className="w-10 h-10 rounded-full border border-brand-muted/10 object-cover"
+                  className="w-10 h-10 rounded-full border border-slate-200 object-cover"
                   alt=""
                 />
                 <div>
-                  <h3 className="font-bold text-lg text-brand-accent leading-tight">Ajustare Punctaj</h3>
-                  <p className="text-xs opacity-60 font-bold">{scoreModalMember.nickname || scoreModalMember.name}</p>
+                  <h3 className="font-bold text-lg text-slate-900 leading-tight">Ajustare Punctaj</h3>
+                  <p className="text-xs text-slate-500 font-bold">{scoreModalMember.nickname || scoreModalMember.name}</p>
                 </div>
               </div>
 
               <form onSubmit={handleAdjustScore} className="space-y-4">
                 <div>
-                  <label className="block text-[10px] font-bold uppercase tracking-wider opacity-60 mb-1">
+                  <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-600 mb-1">
                     Puncte (folosește minus pentru scădere, ex: -3)
                   </label>
                   <div className="flex items-center gap-2">
                     <button
                       type="button"
                       onClick={() => setScoreAdjustValue(v => String((parseInt(v, 10) || 0) - 1))}
-                      className="p-3 rounded-xl border border-brand-muted/10 hover:bg-rose-50 text-rose-600 transition-colors"
+                      className="p-3 rounded-xl border border-slate-300 hover:bg-rose-50 text-rose-600 transition-colors"
                     >
                       <Minus size={16} />
                     </button>
@@ -755,26 +777,26 @@ export function LeaderboardView({ members, isAdmin = false, onUpdateMember }: Le
                       onChange={e => setScoreAdjustValue(e.target.value)}
                       required
                       placeholder="0"
-                      className="w-full text-center px-4 py-3 bg-[#FAF9F5] border border-brand-muted/10 rounded-xl text-sm font-bold focus:outline-none focus:border-brand-primary transition-colors"
+                      className="w-full text-center px-4 py-3 bg-slate-50 border border-slate-300 rounded-xl text-sm font-bold text-slate-900 focus:outline-none focus:border-brand-primary transition-colors"
                     />
                     <button
                       type="button"
                       onClick={() => setScoreAdjustValue(v => String((parseInt(v, 10) || 0) + 1))}
-                      className="p-3 rounded-xl border border-brand-muted/10 hover:bg-emerald-50 text-emerald-600 transition-colors"
+                      className="p-3 rounded-xl border border-slate-300 hover:bg-emerald-50 text-emerald-600 transition-colors"
                     >
                       <Plus size={16} />
                     </button>
                   </div>
                 </div>
                 <div>
-                  <label className="block text-[10px] font-bold uppercase tracking-wider opacity-60 mb-1">Motiv / Justificare</label>
+                  <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-600 mb-1">Motiv / Justificare</label>
                   <input
                     type="text"
                     value={scoreAdjustReason}
                     onChange={e => setScoreAdjustReason(e.target.value)}
                     required
                     placeholder="Ex: Implicare excepțională / Absență nemotivată"
-                    className="w-full px-4 py-3 bg-[#FAF9F5] border border-brand-muted/10 rounded-xl text-sm focus:outline-none focus:border-brand-primary transition-colors"
+                    className="w-full px-4 py-3 bg-slate-50 border border-slate-300 rounded-xl text-sm font-bold text-slate-900 placeholder-slate-400 focus:outline-none focus:border-brand-primary transition-colors"
                   />
                 </div>
 
@@ -792,14 +814,14 @@ export function LeaderboardView({ members, isAdmin = false, onUpdateMember }: Le
                     type="button"
                     onClick={() => setScoreModalMember(null)}
                     disabled={isSubmittingScore}
-                    className="flex-1 py-2.5 btn-stitch-secondary text-xs font-bold disabled:opacity-50"
+                    className="flex-1 py-2.5 rounded-xl border border-slate-300 hover:bg-slate-100 text-slate-700 text-xs font-bold disabled:opacity-50 transition-colors"
                   >
                     Anulează
                   </button>
                   <button
                     type="submit"
                     disabled={isSubmittingScore}
-                    className="flex-1 py-2.5 btn-stitch-theme text-xs font-bold disabled:opacity-50"
+                    className="flex-1 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold disabled:opacity-50 transition-colors"
                   >
                     {isSubmittingScore ? 'Se salvează...' : 'Salvează'}
                   </button>
@@ -818,63 +840,92 @@ export function LeaderboardView({ members, isAdmin = false, onUpdateMember }: Le
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="absolute inset-0 bg-brand-accent/60 backdrop-blur-md"
+              className="absolute inset-0 bg-slate-950/70 backdrop-blur-md"
               onClick={() => setHistoryModalMember(null)}
             />
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="relative w-full max-w-md max-h-[80vh] flex flex-col rounded-[2rem] shadow-[0_40px_100px_rgba(0,0,0,0.6)] p-8 z-[121] border border-brand-muted/10"
-              style={{ background: 'var(--adm-panel)' }}
+              className="relative w-full max-w-md max-h-[80vh] flex flex-col rounded-3xl shadow-2xl p-6 sm:p-8 z-[121] bg-white text-slate-900 border border-slate-200"
             >
               <div className="mb-6 flex items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
                   <img
                     src={liveHistoryMember.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(liveHistoryMember.nickname || liveHistoryMember.name)}&background=0f172a&color=f8fafc`}
-                    className="w-10 h-10 rounded-full border border-brand-muted/10 object-cover"
+                    className="w-10 h-10 rounded-full border border-slate-200 object-cover"
                     alt=""
                   />
                   <div>
-                    <h3 className="font-bold text-lg text-brand-accent leading-tight">Istoric Punctaj</h3>
-                    <p className="text-xs opacity-60 font-bold">{liveHistoryMember.nickname || liveHistoryMember.name}</p>
+                    <h3 className="font-bold text-lg text-slate-900 leading-tight">Istoric Punctaj</h3>
+                    <p className="text-xs text-slate-500 font-bold">{liveHistoryMember.nickname || liveHistoryMember.name}</p>
                   </div>
                 </div>
                 <button
                   onClick={() => setHistoryModalMember(null)}
-                  className="p-2 rounded-full hover:bg-brand-accent/5 text-brand-accent/50 hover:text-brand-accent transition-colors"
+                  className="p-2 rounded-full hover:bg-slate-100 text-slate-500 hover:text-slate-900 transition-colors"
                 >
                   <X size={18} />
                 </button>
               </div>
 
-              <div className="overflow-y-auto pr-1 space-y-2 flex-1">
+              <div className="overflow-y-auto pr-1 space-y-2.5 flex-1">
                 {sortedHistory.length === 0 ? (
-                  <div className="text-center text-brand-accent/40 text-sm font-semibold py-10">
+                  <div className="text-center text-slate-500 text-sm font-semibold py-10">
                     Niciun punctaj ajustat încă pentru acest membru.
                   </div>
                 ) : (
                   sortedHistory.map((adj: any) => (
                     <div
                       key={adj.id}
-                      className="flex items-start justify-between gap-3 bg-white border border-brand-muted/5 rounded-2xl p-4"
+                      className="flex items-start justify-between gap-3 bg-slate-50 border border-slate-200 rounded-2xl p-4 shadow-xs"
                     >
                       <div className="min-w-0 flex-1">
-                        <p className="text-sm font-semibold text-slate-800 break-words">{adj.reason || 'Fără motiv specificat'}</p>
-                        <p className="text-[11px] text-brand-accent/40 font-bold mt-1">
+                        <p className="text-sm font-bold text-slate-900 break-words">{adj.reason || 'Fără motiv specificat'}</p>
+                        <p className="text-[11px] text-slate-500 font-bold mt-1">
                           {new Date(adj.date).toLocaleDateString('ro-RO', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                           {adj.adminName ? ` · ${adj.adminName}` : ''}
                         </p>
                       </div>
-                      <span
-                        className={`shrink-0 font-black font-['Manrope'] text-sm px-2.5 py-1 rounded-full ${
-                          adj.points > 0
-                            ? 'bg-emerald-50 text-emerald-600'
-                            : 'bg-rose-50 text-rose-600'
-                        }`}
-                      >
-                        {adj.points > 0 ? `+${adj.points}` : adj.points}
-                      </span>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <span
+                          className={`font-black font-['Manrope'] text-sm px-2.5 py-1 rounded-full ${
+                            adj.points > 0
+                              ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+                              : 'bg-rose-100 text-rose-800 border border-rose-300'
+                          }`}
+                        >
+                          {adj.points > 0 ? `+${adj.points}` : adj.points}
+                        </span>
+
+                        {isAdmin && (
+                          <button
+                            onClick={async () => {
+                              try {
+                                const adminName = currentUserObj?.name || currentUserObj?.username || 'Admin';
+                                const adminUsername = currentUserObj?.username;
+                                const { newScore, updatedAdjustments } = await revertMemberScoreAdjustment(
+                                  liveHistoryMember.id,
+                                  adj.id,
+                                  { name: adminName, username: adminUsername, id: currentUserObj?.id }
+                                );
+                                onUpdateMember?.({
+                                  ...liveHistoryMember,
+                                  score: newScore,
+                                  scoreAdjustments: updatedAdjustments
+                                });
+                                toast.success(`Ajustarea de punctaj (${adj.points > 0 ? '+' : ''}${adj.points} pct) a fost anulată!`);
+                              } catch (err: any) {
+                                toast.error(err.message || 'Eroare la anularea punctajului.');
+                              }
+                            }}
+                            className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors"
+                            title="Anulează această ajustare (Revert)"
+                          >
+                            <RotateCcw size={14} />
+                          </button>
+                        )}
+                      </div>
                     </div>
                   ))
                 )}
@@ -883,6 +934,13 @@ export function LeaderboardView({ members, isAdmin = false, onUpdateMember }: Le
           </div>
         )}
       </AnimatePresence>
+
+      {/* Admin Score Audit Log Modal */}
+      <ScoreAuditLogModal
+        isOpen={isAuditLogOpen}
+        onClose={() => setIsAuditLogOpen(false)}
+        isAdmin={isAdmin}
+      />
     </div>
   );
 }

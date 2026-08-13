@@ -3,18 +3,19 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X } from 'lucide-react';
 import { toast } from '../ui/Toast';
 import { calculateDebt } from '../../utils/finance';
-import { updateMemberInDB } from '../../utils/supabaseService';
+import { updateMemberInDB, logScoreAudit } from '../../utils/supabaseService';
 
 interface AddMemberModalProps {
   isOpen: boolean;
   onClose: () => void;
   members: any[];
   onAddMember: (newMember: any) => void;
+  currentUserObj?: any;
 }
 
 const easeOut: [number, number, number, number] = [0.23, 1, 0.32, 1];
 
-export function AddMemberModal({ isOpen, onClose, members, onAddMember }: AddMemberModalProps) {
+export function AddMemberModal({ isOpen, onClose, members, onAddMember, currentUserObj }: AddMemberModalProps) {
   const [name, setName] = useState('');
   const [nickname, setNickname] = useState('');
   const [username, setUsername] = useState('');
@@ -86,6 +87,15 @@ export function AddMemberModal({ isOpen, onClose, members, onAddMember }: AddMem
 
     try {
       await updateMemberInDB(newMember);
+      await logScoreAudit({
+        adminId: currentUserObj?.id,
+        adminName: currentUserObj?.name || currentUserObj?.username || 'Admin',
+        adminUsername: currentUserObj?.username,
+        targetMemberId: newMember.id,
+        targetMemberName: newMember.name,
+        action: 'MEMBER_CREATE',
+        reason: `Adăugat membru nou: ${newMember.name} (Rol: ${newMember.role === 'admin' ? 'Board - ' + (newMember.boardPosition || 'Admin') : 'Voluntar'})`
+      });
       onAddMember(newMember);
       onClose();
       // Reset form states
