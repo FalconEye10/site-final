@@ -11,7 +11,8 @@ export interface ScoringPreset {
     | 'Ședințe & Guvernanță'
     | 'Comunitate & Mentoring'
     | 'Inovație & Merite'
-    | 'Penalizări & Conduită';
+    | 'Penalizări & Conduită'
+    | 'Evenimente Speciale';
   action: string;
   points: number;
   description: string;
@@ -30,6 +31,11 @@ export const SCORING_PRESETS: ScoringPreset[] = [
   { category: 'Muncă Grea & Logistică', action: 'Operator Sunet / DJ & Mixer Eveniment', points: 8, description: 'Montaj stație audio, microfoane wireless și gestionare playlist pe parcursul acțiunii', badge: '🎧 Sound Master' },
   { category: 'Muncă Grea & Logistică', action: 'Montare & Demontare Corturi / Pavilioane Eveniment', points: 7, description: 'Ancorare, montat prelate și strâns pavilioane în condiții de vânt sau ploaie', badge: '⛺ Corturi & Teren' },
   { category: 'Muncă Grea & Logistică', action: 'Deplasare pe Teren în Condiții Meteo Dificile (Frig/Ploaie/Caniculă)', points: 8, description: 'Dedicare excepțională pe teren când vremea a fost nefavorabilă', badge: '🌧️ Voluntar de Fier' },
+  { category: 'Muncă Grea & Logistică', action: 'Load-in & Load-out Crew (Descărcare & Încărcare Camioane)', points: 9, description: 'Descărcare și încărcare camioane cu echipamente de volum mare', badge: '🚚 Load Crew' },
+  { category: 'Muncă Grea & Logistică', action: 'Tehnician Lumini & Efecte Speciale', points: 9, description: 'Montat și programat lumini, spoturi și efecte speciale de scenă', badge: '💡 Light Master' },
+  { category: 'Muncă Grea & Logistică', action: 'Setup Standuri & Booth-uri Sponsori', points: 7, description: 'Aranjat și decorat standuri pentru sponsori și activități interactive', badge: '🪑 Setup Master' },
+  { category: 'Muncă Grea & Logistică', action: 'Rigging & Siguranță Structurală', points: 11, description: 'Verificat și asigurat structuri suspendate și elemente de scenă', badge: '🔒 Rigging Pro' },
+  { category: 'Muncă Grea & Logistică', action: 'Voluntar de Noapte / Tura Târzie', points: 10, description: 'Muncă în tura de noapte sau dimineața devreme pentru pregătirea terenului', badge: '🌙 Night Owl' },
 
   // ── 2. SCENĂ, VOCE, PUBLIC SPEAKING & RELAȚII CU OAMENII ──
   { category: 'Scenă & Public Speaking', action: 'Maestru de Ceremonii / MC Oficial (Prezentare Scenă, Baluri, Gale)', points: 15, description: 'Susținere discursuri în fața a sute de oameni, carismă și control scenă', badge: '🎤 Vocea Clubului' },
@@ -39,6 +45,12 @@ export const SCORING_PRESETS: ScoringPreset[] = [
   { category: 'Scenă & Public Speaking', action: 'Protocol & Primire Oaspeți Speciali (Rotary, Presă, Autorități)', points: 6, description: 'Wording impecabil, înmânare mape și ghidare invitați de onoare', badge: '🤝 Protocol de Onoare' },
   { category: 'Scenă & Public Speaking', action: 'Pitch Proiect în Fața Sponsorilor / Juriului', points: 10, description: 'Prezentare convingătoare a nevoilor clubului către finanțatori', badge: '🎯 Pitch Master' },
   { category: 'Scenă & Public Speaking', action: 'Interviu Live / Apariție Presă Locală (TV / Radio / Ziare)', points: 10, description: 'Reprezentarea oficială a imaginii clubului în mass-media', badge: '📺 Star Media' },
+  { category: 'Scenă & Public Speaking', action: 'Host Ateliere & Workshop-uri Interactive', points: 9, description: 'Facilitare și moderare sesiuni interactive de învățare', badge: '🧑‍🏫 Workshop Host' },
+  { category: 'Scenă & Public Speaking', action: 'Speaker la Conferințe Districtuale', points: 12, description: 'Prezentare oficială în fața altor cluburi Interact / Rotaract', badge: '🎙️ Speaker District' },
+  { category: 'Scenă & Public Speaking', action: 'Moderator Panel & Discuții de Grup', points: 8, description: 'Coordonat discuții structurate cu mai mulți vorbitori', badge: '💬 Panel Moderator' },
+  { category: 'Scenă & Public Speaking', action: 'Animator Copii & Activități Family', points: 6, description: 'Jocuri, concursuri și activități antrenante pentru copii', badge: '🎈 Animator Pro' },
+  { category: 'Scenă & Public Speaking', action: 'Usher & Ghidare Participanți', points: 5, description: 'Ghidare participanți la locuri și furnizare informații utile', badge: '🧭 Usher' },
+  { category: 'Scenă & Public Speaking', action: 'Voice-over & Narator Video', points: 7, description: 'Narațiune vocală pentru aftermovie-uri, reel-uri sau spoturi promo', badge: '🎬 Voice Talent' },
 
   // ── 3. PR, VIZUAL, CREATOR DE CONȚINUT & SOCIAL MEDIA ──
   { category: 'PR & Social Media', action: 'Paparazzo Oficial / Fotograf de Eveniment (Album Editat în 24h)', points: 8, description: 'Sute de fotografii profesionale clare, selectate și editate rapid', badge: '📸 Paparazzo Oficial' },
@@ -49,6 +61,14 @@ export const SCORING_PRESETS: ScoringPreset[] = [
   { category: 'PR & Social Media', action: 'Creator Diplome, Ecusoane, Legitimații & Stickere', points: 5, description: 'Personalizare și trimitere la print a tuturor materialelor de identificare', badge: '🖨️ Master Tipar' },
   { category: 'PR & Social Media', action: 'Live Coverage Non-Stop (Instagram Stories & Actualizări în Timp Real)', points: 5, description: 'Postat stories din 15 în 15 minute pe toată durata acțiunii', badge: '📡 Live Master' },
   { category: 'PR & Social Media', action: 'Moderare & Răspuns Prompt DMs / Comentarii pe Social Media', points: 4, description: 'Reactivitate imediată la mesajele primite de la tineri și susținători', badge: '💬 Community Rep' },
+  { category: 'PR & Social Media', action: 'Canva Designer / Postări Story & Afișe', points: 6, description: 'Creat postări, story-uri și vizualuri rapide în Canva', badge: '🎨 Canva Pro' },
+  { category: 'PR & Social Media', action: 'Content Creator Behind-the-Scenes (BTS)', points: 7, description: 'Conținut autentic din spatele scenei și imagini necenzurate', badge: '🎥 BTS Master' },
+  { category: 'PR & Social Media', action: 'Grafician Merch, Hanorace & Tricouri', points: 9, description: 'Design vectorizat pentru tricouri, hanorace și accesorii', badge: '👕 Merch Designer' },
+  { category: 'PR & Social Media', action: 'Operator Foto / Video Live Event', points: 10, description: 'Filmări și fotografii în timp real pe tot parcursul evenimentului', badge: '📹 Live Operator' },
+  { category: 'PR & Social Media', action: 'Social Media Scheduler Pro', points: 5, description: 'Programat postări în avans pe toate rețelele sociale ale clubului', badge: '⏰ Scheduler Pro' },
+  { category: 'PR & Social Media', action: 'Influencer Collaboration Manager', points: 8, description: 'Coordonat colaborări și parteneriate cu influenceri locali', badge: '🤳 Influencer Liaison' },
+  { category: 'PR & Social Media', action: 'Newsletter & Email Marketing Master', points: 6, description: 'Redactat și trimis newslettere către membri, sponsori și parteneri', badge: '📧 Email Master' },
+  { category: 'PR & Social Media', action: 'Podcast / Audio Content Creator', points: 8, description: 'Înregistrat, moderat și editat episoade de podcast ale clubului', badge: '🎧 Podcast Producer' },
 
   // ── 4. FINANȚE, SPONSORIZĂRI, NEGOCIERI & VÂNZĂRI ──
   { category: 'Finanțe & Sponsorizări', action: 'Rechin Financiar (>2000 RON Cash / Sponsorizare Strategică)', points: 35, description: 'Contract major de sponsorizare atras prin negociere directă', badge: '💰 Rechin Financiar' },
@@ -59,6 +79,13 @@ export const SCORING_PRESETS: ScoringPreset[] = [
   { category: 'Finanțe & Sponsorizări', action: 'Gardianul Bugetului (Deconturi Fără Nicio Greșeală, Chitanțe la Timp)', points: 8, description: 'Organizare contabilă curată a cheltuielilor și plăți la zi', badge: '📊 Gardianul Bugetului' },
   { category: 'Finanțe & Sponsorizări', action: 'Urnă Mobilă / Strângere Fonduri Stradală Activă', points: 7, description: 'Abordare politicoasă a trecătorilor și strângere donații la stand', badge: '🪙 Fundraiser Stradal' },
   { category: 'Finanțe & Sponsorizări', action: 'Plată Cotizație Semestrială Integrală în Avans', points: 4, description: 'Exemplu de responsabilitate financiară față de club', badge: '💎 Membru Exemplar' },
+  { category: 'Finanțe & Sponsorizări', action: 'Vânzător Bilete Online & QR Codes', points: 8, description: 'Vânzare activă de bilete prin link-uri digitale și coduri QR', badge: '🎫 Ticket Seller' },
+  { category: 'Finanțe & Sponsorizări', action: 'Sponsorizare In-Kind (Produse / Servicii / Discount-uri)', points: 9, description: 'Atrase servicii gratuite sau discount-uri masive la furnizori', badge: '🎁 Sponsor In-Kind' },
+  { category: 'Finanțe & Sponsorizări', action: 'Grant Writer / Cereri Finanțare Nerambursabilă', points: 15, description: 'Redactat și depus proiecte de finanțare nerambursabilă', badge: '📝 Grant Master' },
+  { category: 'Finanțe & Sponsorizări', action: 'Parteneriat Strategic pe Termen Lung', points: 18, description: 'Negociat acorduri de colaborare pe durată de 1 an+', badge: '🤝 Partener Strategic' },
+  { category: 'Finanțe & Sponsorizări', action: 'Merchandise Sales Manager', points: 10, description: 'Gestionat stocul și vânzările de merch al clubului', badge: '👕 Merch Manager' },
+  { category: 'Finanțe & Sponsorizări', action: 'Crowdfunding Campaign Lead', points: 14, description: 'Lansat și gestionat o campanie online de strângere de fonduri', badge: '🌐 Crowdfunding Lead' },
+  { category: 'Finanțe & Sponsorizări', action: 'Raportare Financiară & Transparență Totală', points: 7, description: 'Publicat rapoarte financiare transparente după proiect', badge: '📈 Transparency Pro' },
 
   // ── 5. MANAGEMENT, CONDUCERE PROIECTE & COORDONARE ──
   { category: 'Management & Proiecte', action: 'General de Proiect / Project Manager Suprem (Cap-Coadă + Raport)', points: 25, description: 'Concepere, bugetare, coordonare echipă, derulare și raportare finală', badge: '👑 General de Proiect' },
@@ -67,6 +94,12 @@ export const SCORING_PRESETS: ScoringPreset[] = [
   { category: 'Management & Proiecte', action: 'Salvator de Criză (Rezolvat o Problemă Critică Apărută Imprevizibil)', points: 12, description: 'Găsit soluție salvatoare când ceva a picat pe ultima sută de metri', badge: '🚒 Salvator de Criză' },
   { category: 'Management & Proiecte', action: 'Coordonare Tură Voluntari pe Schimburi', points: 8, description: 'Verificare prezențe, pauze de masă și rotația posturilor', badge: '📋 Shift Manager' },
   { category: 'Management & Proiecte', action: 'Preluare Task Dificil Refuzat de Alții', points: 6, description: 'Asumare responsabilitate atunci când nimeni altcineva nu a vrut', badge: '💪 Curaj & Asumare' },
+  { category: 'Management & Proiecte', action: 'Risk Manager & Plan B (Identificare Riscuri & Contingency)', points: 10, description: 'Identificat riscuri posibile și pregătit soluții de rezervă', badge: '⚠️ Risk Manager' },
+  { category: 'Management & Proiecte', action: 'Timeline & Deadline Master', points: 7, description: 'Monitorizat și impus respectarea deadline-urilor pe proiect', badge: '⏳ Timeline Master' },
+  { category: 'Management & Proiecte', action: 'Stakeholder Communication Lead', points: 9, description: 'Legătură constantă cu partenerii, locațiile și factorii de decizie', badge: '📞 Stakeholder Lead' },
+  { category: 'Management & Proiecte', action: 'Post-Event Review & Lessons Learned Lead', points: 8, description: 'Coordonat analiza debriefing post-eveniment', badge: '📊 Review Leader' },
+  { category: 'Management & Proiecte', action: 'Resource Allocation Manager', points: 9, description: 'Optimizat alocarea resurselor umane și materiale', badge: '📦 Resource Manager' },
+  { category: 'Management & Proiecte', action: 'Conflict Resolution Mediator', points: 8, description: 'Aplanat cu succes neînțelegerile din echipă', badge: '🕊️ Mediator' },
 
   // ── 6. ȘEDINȚE & GUVERNANȚĂ ──
   { category: 'Ședințe & Guvernanță', action: 'Prezență Ședință Ordinară Săptămânală', points: 2, description: 'Participare activă și vot la ședința săptămânală', badge: 'Standard' },
@@ -74,7 +107,10 @@ export const SCORING_PRESETS: ScoringPreset[] = [
   { category: 'Ședințe & Guvernanță', action: 'Ceas Elvețian (Punctualitate Perfectă & Ordine de Zi Pregătită)', points: 2, description: 'Sosire cu 10 minute înainte, agendă notată și focus total', badge: '⏰ Ceas Elvețian' },
   { category: 'Ședințe & Guvernanță', action: 'Scrib de Aur (Redactare & Trimitere Proces-Verbal în 24h)', points: 4, description: 'Minute de ședință redactate curat cu deciziile și taskurile alocate', badge: '📜 Scrib de Aur' },
   { category: 'Ședințe & Guvernanță', action: 'Găzduire Spațiu Ședință / Protocol Cafea & Ceai', points: 4, description: 'Asigurare locație primitoare și protocol pentru întâlnire', badge: '☕ Gazdă Club' },
-  { category: 'Ședințe & Guvernanță', action: 'Moderare Discuții & Facilitare Dezbateri Ședință', points: 3, description: 'Păstrarea ordinii și a cadrului constructiv în timpul ședinței' },
+  { category: 'Ședințe & Guvernanță', action: 'Agenda Setter & Timekeeper Ședință', points: 3, description: 'Pregătit ordinea de zi și gestionat timpul alocat fiecărui subiect', badge: '📅 Agenda Master' },
+  { category: 'Ședințe & Guvernanță', action: 'Decision & Voting Tracker', points: 3, description: 'Monitorizat și înregistrat voturile exprimate de membri', badge: '✅ Decision Tracker' },
+  { category: 'Ședințe & Guvernanță', action: 'Onboarding Pro pentru Membri Noi', points: 5, description: 'Instruit membrii proaspăt primiți în procedurile interne', badge: '🎓 Onboarding Pro' },
+  { category: 'Ședințe & Guvernanță', action: 'Redactare Regulamente & Proceduri Intern', points: 6, description: 'Scris proceduri de lucru clare pentru departamente', badge: '📖 Policy Writer' },
 
   // ── 7. COMUNITATE, SPIRIT DE ECHIPĂ & MENTORING ──
   { category: 'Comunitate & Mentoring', action: 'Inima Echipei (A adus prăjituri, ceai cald, grijă de colegi pe frig)', points: 8, description: 'Grijă caldă pentru colegi, susținere morală și atmosferă prietenoasă', badge: '❤️ Inima Echipei' },
@@ -83,6 +119,11 @@ export const SCORING_PRESETS: ScoringPreset[] = [
   { category: 'Comunitate & Mentoring', action: 'Organizare Seară Socială / Teambuilding Reușit', points: 6, description: 'Planificare activități recreative pentru sudarea prieteniilor', badge: '🎉 Teambuilding' },
   { category: 'Comunitate & Mentoring', action: 'Reprezentare Oficială Club la Conferințe Rotary / District', points: 8, description: 'Participare activă ca delegat Camena la nivel districtual', badge: '🌐 Ambasador Rotary' },
   { category: 'Comunitate & Mentoring', action: 'Colaborare cu alt Club Interact / Rotaract din Țară', points: 8, description: 'Creare punți de legătură și proiecte comune inter-cluburi' },
+  { category: 'Comunitate & Mentoring', action: 'Wellness & Mental Health Advocate', points: 7, description: 'Promovat echilibru, odihnă și climat sănătos în echipă', badge: '🧠 Wellness Advocate' },
+  { category: 'Comunitate & Mentoring', action: 'Diversity & Inclusion Champion', points: 7, description: 'Asigurat un mediu deschis, primitor și inclusiv pentru toți', badge: '🌈 Inclusion Champion' },
+  { category: 'Comunitate & Mentoring', action: 'Alumni Network Connection Manager', points: 6, description: 'Menținut legătura și colaborarea cu foștii membri ai clubului', badge: '🎓 Alumni Liaison' },
+  { category: 'Comunitate & Mentoring', action: 'Community Outreach Coordinator', points: 8, description: 'Inițiat acțiuni directe de sprijin în comunitatea locală', badge: '🤲 Outreach Pro' },
+  { category: 'Comunitate & Mentoring', action: 'Peer Support & Care Check-in', points: 5, description: 'Verificat starea de spirit a colegilor și oferit suport emoțional', badge: '💬 Peer Support' },
 
   // ── 8. INOVAȚIE & MERITE SPECIALE ──
   { category: 'Inovație & Merite', action: 'Fabrica de Idei (Proiect Nou Inovator Votat & Aprobat de Board)', points: 10, description: 'Concept original care a devenit proiect de succes al clubului', badge: '💡 Fabrica de Idei' },
@@ -90,6 +131,12 @@ export const SCORING_PRESETS: ScoringPreset[] = [
   { category: 'Inovație & Merite', action: 'Voluntar de Fier (Prezență 100% Ședințe & Acțiuni pe o perioadă bimensuală)', points: 15, description: 'Nicio absență și disponibilitate totală timp de 2 luni', badge: '🏛️ Voluntar de Fier' },
   { category: 'Inovație & Merite', action: 'Dezvoltare IT Platformă / Website & Baze de Date', points: 12, description: 'Mentenanță cod, funcții noi și automatizări pentru club', badge: '💻 Dev Master' },
   { category: 'Inovație & Merite', action: 'Inițiativă Benevolă Proprie Necesară dar Necereută de Nimeni', points: 8, description: 'Proactivitate pură care a adus un beneficiu clar clubului', badge: '✨ Proactiv' },
+  { category: 'Inovație & Merite', action: 'AI & Automation Pioneer', points: 11, description: 'Implementat soluții AI sau automatizări utile în fluxul clubului', badge: '🤖 AI Pioneer' },
+  { category: 'Inovație & Merite', action: 'Sustainability & Green Champion', points: 9, description: 'Inițiative ecologice, colectare selectivă și sustenabilitate', badge: '🌱 Green Champion' },
+  { category: 'Inovație & Merite', action: 'Data Analytics & Insights Master', points: 10, description: 'Analizat date de prezență/satisfacție și extras concluzii utile', badge: '📊 Data Wizard' },
+  { category: 'Inovație & Merite', action: 'Innovation Lab Lead', points: 12, description: 'Coordonat sesiuni creative de brainstorming și inovație', badge: '🔬 Innovation Lead' },
+  { category: 'Inovație & Merite', action: 'Cross-Platform Integration Specialist', points: 10, description: 'Conectat și sincronizat unelte software folosite de echimpă', badge: '🔗 Integration Pro' },
+  { category: 'Inovație & Merite', action: 'Propuneri Reale de Îmbunătățire UX/UI Platformă', points: 7, description: 'Propuneri valoroase de simplificare a aplicației clubului', badge: '🎨 UX Suggester' },
 
   // ── 9. PENALIZĂRI & CONDUITĂ ──
   { category: 'Penalizări & Conduită', action: 'Ghosting / Abandonat Post pe Teren Fără Înlocuitor', points: -10, description: 'Plecare prematură sau dispariție din tură fără anunțare prealabilă', badge: '❌ Ghosting' },
@@ -98,6 +145,23 @@ export const SCORING_PRESETS: ScoringPreset[] = [
   { category: 'Penalizări & Conduită', action: 'Absență Nemotivată la Ședință sau Proiect Asumat', points: -3, description: 'Neprezentare fără cerere de învoire transmisă la timp' },
   { category: 'Penalizări & Conduită', action: 'Adormit / Întârziat Masiv la Acțiune de Dimineață (>30 min)', points: -2, description: 'Sosire tardivă care a întârziat debutul acțiunii' },
   { category: 'Penalizări & Conduită', action: 'Întârziere Predare Decont / Chitanțe Financiare (>7 zile)', points: -2, description: 'Blocarea evidenței contabile a trezorierului' },
+  { category: 'Penalizări & Conduită', action: 'Comunicare Agresivă sau Inadecvată în Echipă', points: -8, description: 'Limbaj agresiv, disrespect sau tensiuni provocate gratuit', badge: '😠 Conductă Inadecvată' },
+  { category: 'Penalizări & Conduită', action: 'Răspândire de Negativitate & Bârfe', points: -5, description: 'Afectat climatul colegial prin zvonuri și energie negativă', badge: '💬 Negativitate' },
+  { category: 'Penalizări & Conduită', action: 'Depășit Deadline Fără Anunțare Prealabilă', points: -4, description: 'Nerespectat termenul limită stabilit fără comunicare', badge: '⏰ Deadline Depășit' },
+  { category: 'Penalizări & Conduită', action: 'Comportament Neadecvat în Spațiul Public / Online', points: -7, description: 'Afectarea imaginii publice a Interact Camena', badge: '🚫 Conduită Publică' },
+  { category: 'Penalizări & Conduită', action: 'Încălcare Confidențialitate Date Club / Membri', points: -10, description: 'Partajare neautorizată de date personale sau documente interne', badge: '🔒 Încălcare Date' },
+
+  // ── 10. EVENIMENTE SPECIALE & URGENȚE ──
+  { category: 'Evenimente Speciale', action: 'Intervenție Urgență (Emergency Response Team)', points: 13, description: 'Reacție rapidă și rezolvare pe loc a unei situații critice de ultim moment', badge: '🚨 Emergency Response' },
+  { category: 'Evenimente Speciale', action: 'VIP Guest Handler', points: 9, description: 'Întâmpinat și asistat exclusiv invitați de înalt rang', badge: '👑 VIP Handler' },
+  { category: 'Evenimente Speciale', action: 'Traducător & Ghid Multilingv Live', points: 8, description: 'Traducere live și asistență pentru oaspeți străini', badge: '🌍 Translator Pro' },
+  { category: 'Evenimente Speciale', action: 'Accessibility & Inclusion Coordinator', points: 8, description: 'Asigurat condiții optime și accesibilitate persoanelor cu dizabilități', badge: '♿ Accessibility Pro' },
+  { category: 'Evenimente Speciale', action: 'Crisis Communication Lead', points: 11, description: 'Gestionat comunicarea oficială în caz de urgență sau incidente', badge: '📢 Crisis Comms' },
+  { category: 'Evenimente Speciale', action: 'Weather Contingency Executor', points: 10, description: 'Activat și executat planul B din cauza schimbarilor meteo', badge: '⛈️ Weather Pro' },
+  { category: 'Evenimente Speciale', action: 'Coordonare Securitate & Pază Extinsă', points: 9, description: 'Legătură directă cu paznicii și agenții de securitate externi', badge: '🛡️ Security Lead' },
+  { category: 'Evenimente Speciale', action: 'Primul Intervenient Medical / Prim Ajutor', points: 12, description: 'Acordat primul ajutor la incidente ușoare de sănătate pe teren', badge: '🏥 First Responder' },
+  { category: 'Evenimente Speciale', action: 'Lost & Found Manager', points: 5, description: 'Gestionat registrul obiectelor pierdute și înapoiat bunurile proprietarilor', badge: '🎒 Lost & Found' },
+  { category: 'Evenimente Speciale', action: 'Coordonator Transport & Logistică Rutieră', points: 8, description: 'Organizat rutele de microbuz și mașini pentru echipă și invitați', badge: '🚌 Transport Lead' },
 ];
 
 interface ScoringReferenceGuideProps {
@@ -120,7 +184,8 @@ export function ScoringReferenceGuide({ onSelectPreset, selectedAction }: Scorin
     'Ședințe & Guvernanță',
     'Comunitate & Mentoring',
     'Inovație & Merite',
-    'Penalizări & Conduită'
+    'Penalizări & Conduită',
+    'Evenimente Speciale'
   ];
 
   const filteredPresets = SCORING_PRESETS.filter(p => {
