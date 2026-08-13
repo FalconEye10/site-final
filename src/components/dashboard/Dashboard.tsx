@@ -17,6 +17,7 @@ import { AuroraBackground } from '../ui/AuroraBackground';
 import { CommandPalette, type CommandNavItem } from './CommandPalette';
 import { calculateDebt, calculateQualification, generateMemberLedger } from '../../utils/finance';
 import { fetchMembers, updateMemberFields, revertLatestTreasuryPayment, fetchAllTreasuryPayments } from '../../utils/supabaseService';
+import { canEditMemberPassword } from '../../utils/permissions';
 import { supabase } from '../../supabase';
 import { toast } from '../ui/Toast';
 import { AddMemberModal } from '../members/AddMemberModal';
@@ -1604,15 +1605,18 @@ const ViewProfile = ({ currentUserObj, onUpdateMember, members }: ViewProfilePro
   const handleSave = async () => {
     setIsSaving(true);
     try {
+      const allowedPasswordChange = canEditMemberPassword(currentUserObj || effectiveUser, effectiveUser.role);
+      const finalPassword = allowedPasswordChange ? password : (effectiveUser.password || '');
+
       const updated = {
         ...effectiveUser,
         nickname,
         avatar,
-        password,
+        password: finalPassword,
       };
       // Scriem doar câmpurile editate aici, ca să nu suprascriem scorul/plata
       // schimbate între timp de un admin (updateMemberFields ≠ overwrite total).
-      await updateMemberFields(effectiveUser.id, { nickname, avatar, password });
+      await updateMemberFields(effectiveUser.id, { nickname, avatar, password: finalPassword });
       onUpdateMember(updated);
       toast.success("Profilul a fost salvat cu succes!");
     } catch (err: any) {
@@ -1720,21 +1724,36 @@ const ViewProfile = ({ currentUserObj, onUpdateMember, members }: ViewProfilePro
               {/* Password Reset */}
               <div className="space-y-1">
                 <label className="text-xs font-semibold opacity-60 uppercase">Parolă Nouă</label>
-                <div className="relative">
-                  <input 
-                    type={showPassword ? 'text' : 'password'}
-                    value={password}
-                    onChange={e => setPassword(e.target.value)}
-                    placeholder="••••••••" 
-                    className="w-full px-4 py-2.5 bg-[#FAF9F5] border border-brand-muted/10 rounded-xl focus:outline-none focus:border-brand-primary font-['Manrope'] pr-10"
-                  />
-                  <button 
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 opacity-50 hover:opacity-100 transition-opacity animate-fade-in"
-                  >
-                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                  </button>
-                </div>
+                {canEditMemberPassword(currentUserObj || effectiveUser, effectiveUser.role) ? (
+                  <div className="relative">
+                    <input 
+                      type={showPassword ? 'text' : 'password'}
+                      value={password}
+                      onChange={e => setPassword(e.target.value)}
+                      placeholder="••••••••" 
+                      className="w-full px-4 py-2.5 bg-[#FAF9F5] border border-brand-muted/10 rounded-xl focus:outline-none focus:border-brand-primary font-['Manrope'] pr-10"
+                    />
+                    <button 
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 opacity-50 hover:opacity-100 transition-opacity animate-fade-in"
+                    >
+                      {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
+                  </div>
+                ) : (
+                  <div className="space-y-1">
+                    <input 
+                      type="password"
+                      value="••••••••"
+                      disabled
+                      readOnly
+                      className="w-full px-4 py-2.5 bg-slate-100 border border-slate-200 rounded-xl text-slate-500 cursor-not-allowed font-['Manrope']"
+                    />
+                    <p className="text-[11px] font-semibold text-amber-700">
+                      🔒 Schimbarea parolelor pentru conturile de Board este făcută exclusiv de Stan Ștefan.
+                    </p>
+                  </div>
+                )}
               </div>
 
               {/* Username Display */}

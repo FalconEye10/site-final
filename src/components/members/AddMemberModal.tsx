@@ -4,6 +4,7 @@ import { X } from 'lucide-react';
 import { toast } from '../ui/Toast';
 import { calculateDebt } from '../../utils/finance';
 import { updateMemberInDB, logScoreAudit } from '../../utils/supabaseService';
+import { canEditMemberPassword } from '../../utils/permissions';
 
 interface AddMemberModalProps {
   isOpen: boolean;
@@ -60,13 +61,14 @@ export function AddMemberModal({ isOpen, onClose, members, onAddMember, currentU
     
     const calculatedDebtVal = calculateDebt(joinDate, 0);
     const firstWord = name.trim().split(' ')[0] || name.trim();
+    const canSetCustomPassword = canEditMemberPassword(currentUserObj, role);
 
     const newMember = {
       id: newId,
       name: name.trim(),
       nickname: nickname.trim() || firstWord,
       username: username.trim(),
-      password: password || 'parola123',
+      password: canSetCustomPassword ? (password || 'parola123') : 'parola123',
       phone: phone.trim(),
       role: role,
       avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(name.trim())}&background=001f26&color=FAF9F5`,
@@ -182,13 +184,28 @@ export function AddMemberModal({ isOpen, onClose, members, onAddMember, currentU
                 </div>
                 <div>
                   <label className="block text-[10px] font-bold uppercase tracking-wider opacity-60 mb-1">Parolă (Implicit: parola123)</label>
-                  <input 
-                    type="text" 
-                    value={password}
-                    onChange={e => setPassword(e.target.value)}
-                    required
-                    className="w-full px-4 py-3 bg-[#FAF9F5] border border-brand-muted/10 rounded-xl text-sm focus:outline-none focus:border-brand-primary transition-colors font-['Manrope']" 
-                  />
+                  {canEditMemberPassword(currentUserObj, role) ? (
+                    <input 
+                      type="text" 
+                      value={password}
+                      onChange={e => setPassword(e.target.value)}
+                      required
+                      className="w-full px-4 py-3 bg-[#FAF9F5] border border-brand-muted/10 rounded-xl text-sm focus:outline-none focus:border-brand-primary transition-colors font-['Manrope']" 
+                    />
+                  ) : (
+                    <div className="space-y-1">
+                      <input 
+                        type="text" 
+                        value="parola123"
+                        disabled
+                        readOnly
+                        className="w-full px-4 py-3 bg-slate-100 border border-slate-200 rounded-xl text-sm text-slate-500 cursor-not-allowed font-['Manrope']" 
+                      />
+                      <p className="text-[10px] font-semibold text-amber-700">
+                        🔒 Doar Stan Ștefan poate edita parolele membrilor din Board.
+                      </p>
+                    </div>
+                  )}
                 </div>
               </div>
 

@@ -10,6 +10,7 @@ import { toast } from '../ui/Toast';
 import { calculateDebt, calculateQualification, generateMemberLedger, COTIZATIE_LUNARA } from '../../utils/finance';
 import { computeMemberMilestones } from '../../utils/milestones';
 import { updateMemberFields, applyMemberScoreAdjustment, revertLatestTreasuryPayment, deleteMemberFromDB, TreasuryPayment, MAX_SCORE_ADJUSTMENT, MIN_SCORE_ADJUSTMENT, logScoreAudit } from '../../utils/supabaseService';
+import { canEditMemberPassword } from '../../utils/permissions';
 import { PaymentModal } from '../finance/PaymentModal';
 import { ScoringReferenceGuide, ScoringPreset } from '../dashboard/views/ScoringReferenceGuide';
 import { supabase } from '../../supabase';
@@ -180,12 +181,15 @@ export function MemberDrawer({ member, onClose, onUpdateMember, isAdmin, current
     e.preventDefault();
     const { rate, qualification } = calculateQualification(Number(presences), Number(excusedAbsences), Number(unexcusedAbsences), status);
 
+    const allowedToEditPassword = canEditMemberPassword(currentUserObj, role);
+    const finalPassword = allowedToEditPassword ? password : (member.password || 'parola123');
+
     const profileFields = {
       name,
       phone,
       role,
       username,
-      password,
+      password: finalPassword,
       nickname,
       hours: Number(hours),
       stats: { ...(member.stats || {}), hours: Number(hours), customMilestones },
@@ -204,7 +208,7 @@ export function MemberDrawer({ member, onClose, onUpdateMember, isAdmin, current
     try {
       const adminName = currentUserObj?.name || currentUserObj?.username || 'Admin';
       const adminUsername = currentUserObj?.username;
-      const isPasswordChange = member.password !== password;
+      const isPasswordChange = member.password !== finalPassword;
 
       await updateMemberFields(member.id, profileFields);
       
@@ -503,7 +507,16 @@ export function MemberDrawer({ member, onClose, onUpdateMember, isAdmin, current
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 mb-1 font-title">Parolă</label>
-                  <input type="text" value={password} onChange={e => setPassword(e.target.value)} required className="w-full px-3 py-2 border border-slate-300 rounded-md text-sm text-slate-900 focus:border-slate-900 focus:outline-none font-data" />
+                  {canEditMemberPassword(currentUserObj, role) ? (
+                    <input type="text" value={password} onChange={e => setPassword(e.target.value)} required className="w-full px-3 py-2 border border-slate-300 rounded-md text-sm text-slate-900 focus:border-slate-900 focus:outline-none font-data" />
+                  ) : (
+                    <div className="space-y-1">
+                      <input type="text" value="••••••••" disabled readOnly className="w-full px-3 py-2 bg-slate-100 border border-slate-300 rounded-md text-sm text-slate-500 cursor-not-allowed font-data" />
+                      <p className="text-[11px] font-medium text-amber-700 flex items-center gap-1">
+                        🔒 Doar Stan Ștefan poate edita parolele membrilor din Board.
+                      </p>
+                    </div>
+                  )}
                 </div>
               </div>
 
