@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Bell, CheckCheck, Heart, Megaphone, CheckCircle2, XCircle, PieChart, Sparkles, ChevronRight } from 'lucide-react';
 import { supabase } from '../../supabase';
+import { PushNotificationToggle } from './PushNotificationToggle';
 
 export interface NotificationItem {
   id: string;
@@ -243,6 +244,11 @@ export const NotificationsDropdown: React.FC<NotificationsDropdownProps> = ({
                   <span>Marchează citite</span>
                 </button>
               )}
+            </div>
+
+            {/* Push Notifications Toggle Section */}
+            <div className="p-3 bg-slate-100/70 dark:bg-slate-950/40 border-b border-slate-200 dark:border-slate-800">
+              <PushNotificationToggle memberId={currentUserId || currentUsername || 'member'} />
             </div>
 
             {/* Notification Items List */}

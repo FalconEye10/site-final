@@ -2,44 +2,59 @@
 // Service Worker pentru Notificări Push (Interact Camena Piatra Neamț)
 // ==============================================================================
 
-// Listener pentru evenimentul 'push' - primește payload-ul de la server
+// Activare imediată la instalare fără a aștepta închiderea altor tab-uri
+self.addEventListener('install', (event) => {
+  self.skipWaiting();
+});
+
+self.addEventListener('activate', (event) => {
+  event.waitUntil(self.clients.claim());
+});
+
+// Listener pentru evenimentul 'push' - recepționează mesajul de la serverul Push (Google FCM/Mozilla/Apple)
 self.addEventListener('push', (event) => {
   let data = {
     title: 'Interact Camena',
-    body: 'Ai primit o notificare nouă!',
+    body: 'Ai o nouă notificare în platformă!',
     icon: '/logo.png',
     badge: '/logo.png',
-    data: { url: '/#dashboard' },
+    data: {
+      url: '/#dashboard',
+    },
   };
 
   if (event.data) {
     try {
       const payload = event.data.json();
       data = {
-        ...data,
-        ...payload,
+        title: payload.title || data.title,
+        body: payload.body || payload.message || data.body,
+        icon: payload.icon || data.icon,
+        badge: payload.badge || data.badge,
         data: {
-          url: payload.data?.url || payload.url || '/#dashboard',
+          url: payload.url || payload.data?.url || '/#dashboard',
           timestamp: Date.now(),
+          ...payload.data,
         },
       };
-    } catch (e) {
-      data.body = event.data.text();
+    } catch (err) {
+      data.body = event.data.text() || data.body;
     }
   }
 
   const options = {
     body: data.body,
-    icon: data.icon || '/logo.png',
-    badge: data.badge || '/logo.png',
-    vibrate: [100, 50, 100],
+    icon: data.icon,
+    badge: data.badge,
     data: data.data,
-    actions: [
-      { action: 'open', title: 'Deschide Aplicația' },
-      { action: 'close', title: 'Închide' },
-    ],
-    tag: data.tag || 'interact-notification',
+    vibrate: [150, 50, 150],
+    tag: data.data?.tag || 'interact-notification',
     renotify: true,
+    requireInteraction: false,
+    actions: [
+      { action: 'open_app', title: 'Deschide' },
+      { action: 'dismiss', title: 'Închide' },
+    ],
   };
 
   event.waitUntil(self.registration.showNotification(data.title, options));
@@ -49,22 +64,26 @@ self.addEventListener('push', (event) => {
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
 
-  if (event.action === 'close') {
+  if (event.action === 'dismiss') {
     return;
   }
 
   const targetUrl = event.notification.data?.url || '/#dashboard';
 
   event.waitUntil(
-    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+      // Dacă există deja o fereastră deschisă a aplicației, o focalizăm
       for (const client of clientList) {
         if (client.url.includes(self.location.origin) && 'focus' in client) {
-          client.navigate(targetUrl);
+          if ('navigate' in client) {
+            client.navigate(targetUrl);
+          }
           return client.focus();
         }
       }
-      if (clients.openWindow) {
-        return clients.openWindow(targetUrl);
+      // Altfel, deschidem o fereastră/tab nou
+      if (self.clients.openWindow) {
+        return self.clients.openWindow(targetUrl);
       }
     })
   );

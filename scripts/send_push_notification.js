@@ -2,44 +2,51 @@
  * ==============================================================================
  * SCRIPT BACKEND: TRIMITERE NOTIFICĂRI PUSH (WEB-PUSH & SUPABASE)
  * ==============================================================================
- * Instructiuni de rulare:
- * 1. Instaleaza libraria: npm install web-push @supabase/supabase-js dotenv
- * 2. Genereaza chei VAPID (daca nu le ai deja): npx web-push generate-vapid-keys
- * 3. Ruleaza scriptul: node scripts/send_push_notification.js
+ * Acest script poate fi rulat:
+ * 1. Din linia de comandă: `node scripts/send_push_notification.js`
+ * 2. Integrat într-un endpoint Express / Node.js
+ * 3. Sau într-o funcție Serverless / Supabase Edge Function
  * ==============================================================================
  */
 
 import webPush from 'web-push';
 import { createClient } from '@supabase/supabase-js';
 
-// Configuration - Configurează cu URL-ul Supabase și Cheia Service Role / Anon Key
+// 1. Supabase Project Configuration
 const SUPABASE_URL = process.env.SUPABASE_URL || 'https://vnoegytosymjnhmclgvb.supabase.co';
-const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || 'CHEIE_SUPABASE_SERVICE_ROLE';
+// În producție folosește SERVICE_ROLE_KEY pentru acces complet fără restricții RLS
+const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || 'CHEIE_SUPABASE_SERVICE_ROLE_AICI';
 
-// VAPID Keys - Trebuie sa se potriveasca cu VAPID_PUBLIC_KEY din frontend!
-const VAPID_PUBLIC_KEY = process.env.VAPID_PUBLIC_KEY || 'BEl62iUYgUivxIkv69yViEuiBIa45xVb0d2d3N5eNf-J3rBv5vW7Jt_Pz_9H9n7b8A8n8B8n8B8n8B8n8B8';
-const VAPID_PRIVATE_KEY = process.env.VAPID_PRIVATE_KEY || 'CHEIE_PRIVATA_VAPID_GENERATA';
+// 2. VAPID Keys Oficiale (P-256 Curve)
+const VAPID_PUBLIC_KEY =
+  process.env.VAPID_PUBLIC_KEY ||
+  'BLf7XPVupVvjuOUABab4F7PX4CLcyubHzA0yLdDJw03CtsW4yhYmJG-kog5_aEK5iyscTnGkwTho3WE_0ACBQUs';
+
+const VAPID_PRIVATE_KEY =
+  process.env.VAPID_PRIVATE_KEY ||
+  'poR6LA13GOWVjbhM8Z-rh0yXnPU9zwpORgVZcw3Bzvw';
+
 const VAPID_SUBJECT = 'mailto:interact.camena@gmail.com';
 
-// Initializare Web-Push
+// Configurare detalii VAPID
 webPush.setVapidDetails(
   VAPID_SUBJECT,
   VAPID_PUBLIC_KEY,
   VAPID_PRIVATE_KEY
 );
 
-// Initializare Supabase Client
+// Client Supabase
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 
 /**
- * Trimite o notificare Push catre toti membrii abonati sau catre un membru specific
- * @param {Object} payloadData - { title, body, icon, url }
- * @param {string} [targetMemberId] - (Optional) ID-ul membrului tinta
+ * Trimite o notificare Web Push către toți membrii abonați sau către un membru specific
+ * @param {Object} payload - Datele notificării: { title, body, icon, url, badge }
+ * @param {string} [targetMemberId] - (Opțional) ID-ul membrului țintă
  */
-async function sendPushNotification(payloadData, targetMemberId = null) {
+export async function sendPushNotification(payload, targetMemberId = null) {
   try {
-    console.log('🔄 Extragere abonamente din Supabase...');
-    
+    console.log('🔄 Se interoghează baza de date Supabase pentru dispozitive abonate...');
+
     let query = supabase.from('push_subscriptions').select('*');
     if (targetMemberId) {
       query = query.eq('member_id', targetMemberId);
@@ -48,30 +55,35 @@ async function sendPushNotification(payloadData, targetMemberId = null) {
     const { data: subscriptions, error } = await query;
 
     if (error) {
-      console.error('❌ Eroare la citirea abonamentelor din Supabase:', error);
-      return;
+      console.error('❌ Eroare la citirea tabelei push_subscriptions:', error.message);
+      return { success: false, error: error.message };
     }
 
     if (!subscriptions || subscriptions.length === 0) {
-      console.log('ℹ️ Nu exista abonamente Push active de trimis.');
-      return;
+      console.log('ℹ️ Nu există dispozitive abonate în baza de date.');
+      return { success: true, count: 0, message: 'Niciun abonat activ.' };
     }
 
-    console.log(`📡 Trimitere notificare catre ${subscriptions.length} dispozitiv(e)...`);
+    console.log(`📡 Se trimite notificarea către ${subscriptions.length} dispozitive...`);
 
     const notificationPayload = JSON.stringify({
-      title: payloadData.title || 'Interact Camena',
-      body: payloadData.body || 'Notificare noua!',
-      icon: payloadData.icon || '/logo.png',
-      badge: payloadData.badge || '/logo.png',
+      title: payload.title || 'Interact Camena',
+      body: payload.body || 'Ai o nouă notificare!',
+      icon: payload.icon || '/logo.png',
+      badge: payload.badge || '/logo.png',
+      url: payload.url || '/#dashboard',
       data: {
-        url: payloadData.url || '/#dashboard',
+        url: payload.url || '/#dashboard',
+        timestamp: Date.now(),
       },
     });
 
-    const results = await Promise.allSettled(
+    let successCount = 0;
+    let failureCount = 0;
+
+    await Promise.allSettled(
       subscriptions.map(async (sub) => {
-        const pushSubscriptionObject = {
+        const pushConfig = {
           endpoint: sub.endpoint,
           keys: {
             p256dh: sub.p256dh,
@@ -80,29 +92,35 @@ async function sendPushNotification(payloadData, targetMemberId = null) {
         };
 
         try {
-          await webPush.sendNotification(pushSubscriptionObject, notificationPayload);
-          console.log(`✅ Notificare trimisa cu succes catre endpoint: ${sub.endpoint.slice(0, 40)}...`);
+          await webPush.sendNotification(pushConfig, notificationPayload);
+          successCount++;
+          console.log(`✅ [OK] Notificare livrată la: ${sub.endpoint.slice(0, 35)}...`);
         } catch (err) {
+          failureCount++;
+          // Dacă statusul este 410 (Gone) sau 404 (Not Found), utilizatorul s-a dezabonat sau a resetat browserul
           if (err.statusCode === 410 || err.statusCode === 404) {
-            // Abonamentul a expirat sau a fost revocat pe browser -> stergem din baza de date
-            console.log(`🧹 Curatare abonament expirat: ${sub.endpoint.slice(0, 40)}...`);
+            console.log(`🧹 [Curățare] Ștergere abonament expirat: ${sub.endpoint.slice(0, 35)}...`);
             await supabase.from('push_subscriptions').delete().eq('endpoint', sub.endpoint);
           } else {
-            console.error(`❌ Eroare trimitere notificare (${err.statusCode}):`, err.message);
+            console.error(`❌ [Eroare ${err.statusCode}]`, err.message);
           }
         }
       })
     );
 
-    console.log('🎉 Proces de trimitere notificari Push finalizat!');
+    console.log(`🎉 Trimitere finalizată: ${successCount} reușite, ${failureCount} eșuate.`);
+    return { success: true, sent: successCount, failed: failureCount };
   } catch (err) {
-    console.error('❌ Eroare neasteptata:', err);
+    console.error('❌ Eroare generală la trimiterea notificărilor:', err);
+    return { success: false, error: err.message };
   }
 }
 
-// Exemplu de utilizare direct din linia de comanda:
-sendPushNotification({
-  title: '🎉 Proiect Nou Aprobati!',
-  body: 'O noua sedinta de voluntariat a fost adaugata in calendar.',
-  url: '/#dashboard',
-});
+// Dacă scriptul este executat direct din terminal (`node scripts/send_push_notification.js`)
+if (process.argv[1]?.includes('send_push_notification.js')) {
+  sendPushNotification({
+    title: '📢 Anunț Nou — Interact Camena',
+    body: 'O nouă ședință de voluntariat a fost adăugată în calendarul oficial.',
+    url: '/#dashboard',
+  });
+}

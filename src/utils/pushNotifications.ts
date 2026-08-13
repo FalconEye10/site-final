@@ -3,14 +3,13 @@
 // ==============================================================================
 import { supabase } from '../supabase';
 
-// VAPID Public Key - standard demo/production key
-// În producție, poți seta VITE_VAPID_PUBLIC_KEY în fișierul .env
+// Valid NIST P-256 ECDSA Public VAPID Key
 export const VAPID_PUBLIC_KEY =
   (import.meta as any).env?.VITE_VAPID_PUBLIC_KEY ||
-  'BEl62iUYgUivxIkv69yViEuiBIa45xVb0d2d3N5eNf-J3rBv5vW7Jt_Pz_9H9n7b8A8n8B8n8B8n8B8n8B8n8B8';
+  'BLf7XPVupVvjuOUABab4F7PX4CLcyubHzA0yLdDJw03CtsW4yhYmJG-kog5_aEK5iyscTnGkwTho3WE_0ACBQUs';
 
 /**
- * Convertește o cheie VAPID Base64 URL Safe într-un ArrayBuffer de Uint8 (cerut de PushManager)
+ * Convertește cheia VAPID Base64URL într-un Uint8Array compatibil cu PushManager
  */
 function urlBase64ToUint8Array(base64String: string): Uint8Array {
   const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
@@ -24,37 +23,41 @@ function urlBase64ToUint8Array(base64String: string): Uint8Array {
 }
 
 /**
- * Înregistrează Service Worker-ul public (/sw.js)
+ * Înregistrează Service Worker-ul din /sw.js
  */
 export async function registerServiceWorker(): Promise<ServiceWorkerRegistration | null> {
   if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
-    console.warn('Notificările Push nu sunt suportate pe acest browser.');
+    console.warn('⚠️ Web Push Notifications nu sunt suportate de acest browser.');
     return null;
   }
 
   try {
     const registration = await navigator.serviceWorker.register('/sw.js', { scope: '/' });
     await navigator.serviceWorker.ready;
+    console.log('✅ Service Worker înregistrat cu succes:', registration.scope);
     return registration;
   } catch (error) {
-    console.error('Eroare la înregistrarea Service Worker-ului:', error);
+    console.error('❌ Eroare la înregistrarea Service Worker:', error);
     return null;
   }
 }
 
 /**
- * Cere permisiunea utilizatorului și îl abonează la notificările Push (salvând abonamentul în Supabase)
+ * Cere permisiunea și abonează utilizatorul la notificări Push, salvând detaliile în Supabase
  */
 export async function subscribeUserToPush(memberId: string): Promise<{ success: boolean; message: string }> {
   try {
     if (!('Notification' in window)) {
-      return { success: false, message: 'Browserul dumneavoastră nu suportă notificări.' };
+      return { success: false, message: 'Browserul tău nu suportă notificări de sistem.' };
     }
 
-    // 1. Solicită permisiunea de la utilizator
+    // 1. Solicită permisiune în browser
     const permission = await Notification.requestPermission();
     if (permission !== 'granted') {
-      return { success: false, message: 'Permisiunea pentru notificări a fost refuzată de utilizator.' };
+      return {
+        success: false,
+        message: 'Permisiunea pentru notificări a fost refuzată în browser. Activează permisiunea din setările site-ului.',
+      };
     }
 
     // 2. Înregistrează Service Worker-ul
@@ -63,14 +66,14 @@ export async function subscribeUserToPush(memberId: string): Promise<{ success: 
       return { success: false, message: 'Nu s-a putut inițializa Service Worker-ul.' };
     }
 
-    // 3. Abonează utilizatorul la Push Manager
-    const applicationServerKey = urlBase64ToUint8Array(VAPID_PUBLIC_KEY);
+    // 3. Abonează prin PushManager folosind cheia publică VAPID
+    const convertedVapidKey = urlBase64ToUint8Array(VAPID_PUBLIC_KEY);
     let subscription = await registration.pushManager.getSubscription();
 
     if (!subscription) {
       subscription = await registration.pushManager.subscribe({
         userVisibleOnly: true,
-        applicationServerKey: applicationServerKey as unknown as BufferSource,
+        applicationServerKey: convertedVapidKey as unknown as BufferSource,
       });
     }
 
@@ -80,10 +83,10 @@ export async function subscribeUserToPush(memberId: string): Promise<{ success: 
     const auth = subJson.keys?.auth;
 
     if (!endpoint || !p256dh || !auth) {
-      return { success: false, message: 'Obiectul de abonament Push este incomplet.' };
+      return { success: false, message: 'Datele de abonament Push sunt incomplete de la browser.' };
     }
 
-    // 4. Salvează obiectul de abonare în baza de date Supabase (tabela push_subscriptions)
+    // 4. Salvează în baza de date Supabase (push_subscriptions)
     const subscriptionId = `sub_${memberId}_${Date.now()}`;
     const { error } = await supabase.from('push_subscriptions').upsert(
       [
@@ -101,24 +104,25 @@ export async function subscribeUserToPush(memberId: string): Promise<{ success: 
     );
 
     if (error) {
-      console.error('Eroare la salvarea abonamentului Push în Supabase:', error);
-      return { success: false, message: `Eroare Supabase: ${error.message}` };
+      console.error('❌ Eroare la salvarea abonamentului în Supabase:', error);
+      return { success: false, message: `Eroare salvare Supabase: ${error.message}` };
     }
 
+    console.log('🎉 Dispozitiv abonat cu succes la Web Push!');
     return { success: true, message: 'Notificările Push au fost activate cu succes!' };
   } catch (error: any) {
-    console.error('Eroare la abonarea la notificări:', error);
+    console.error('❌ Eroare la abonare Push:', error);
     return { success: false, message: error.message || 'Eroare neașteptată la activare.' };
   }
 }
 
 /**
- * Dezabonează utilizatorul de la notificările Push și șterge înregistrarea din Supabase
+ * Dezabonează utilizatorul de la Push Manager și șterge înregistrarea din Supabase
  */
 export async function unsubscribeUserFromPush(memberId?: string): Promise<{ success: boolean; message: string }> {
   try {
     if (!('serviceWorker' in navigator)) {
-      return { success: false, message: 'Service Worker nesuportat.' };
+      return { success: false, message: 'Service Worker nu este suportat.' };
     }
 
     const registration = await navigator.serviceWorker.ready;
@@ -128,23 +132,24 @@ export async function unsubscribeUserFromPush(memberId?: string): Promise<{ succ
       const endpoint = subscription.endpoint;
       await subscription.unsubscribe();
 
-      // Șterge din Supabase
+      // Curățare din Supabase
       if (memberId) {
-        await supabase.from('push_subscriptions').delete().eq('endpoint', endpoint);
+        await supabase.from('push_subscriptions').delete().eq('endpoint', endpoint).eq('member_id', memberId);
       } else {
         await supabase.from('push_subscriptions').delete().eq('endpoint', endpoint);
       }
     }
 
-    return { success: true, message: 'Notificările Push au fost dezactivate.' };
+    console.log('🔕 Notificările Push au fost dezactivate.');
+    return { success: true, message: 'Notificările Push au fost dezactivate cu succes.' };
   } catch (error: any) {
-    console.error('Eroare la dezabonare Push:', error);
-    return { success: false, message: error.message || 'Eroare la dezabonare.' };
+    console.error('❌ Eroare la dezabonare:', error);
+    return { success: false, message: error.message || 'Eroare la dezactivare.' };
   }
 }
 
 /**
- * Verifică starea curentă a abonamentului Push (Permisiune & Stare activă)
+ * Verifică dacă notificările sunt suportate și dacă utilizatorul este activ abonat
  */
 export async function checkPushSubscriptionStatus(): Promise<{
   supported: boolean;
@@ -166,5 +171,33 @@ export async function checkPushSubscriptionStatus(): Promise<{
     return { supported: true, permission, subscribed: !!subscription };
   } catch {
     return { supported: true, permission, subscribed: false };
+  }
+}
+
+/**
+ * Trimite o notificare locală de test direct prin Service Worker pentru verificare imediată
+ */
+export async function showLocalTestNotification(title?: string, body?: string): Promise<boolean> {
+  try {
+    if (Notification.permission !== 'granted') {
+      const perm = await Notification.requestPermission();
+      if (perm !== 'granted') return false;
+    }
+
+    const registration = await registerServiceWorker();
+    if (!registration) return false;
+
+    await registration.showNotification(title || '🎉 Test Notificare Interact Camena', {
+      body: body || 'Sistemul de notificări push funcționează perfect pe dispozitivul tău!',
+      icon: '/logo.png',
+      badge: '/logo.png',
+      data: { url: '/#dashboard' },
+      vibrate: [200, 100, 200],
+    } as any);
+
+    return true;
+  } catch (err) {
+    console.error('❌ Eroare la trimiterea notificării de test:', err);
+    return false;
   }
 }
