@@ -279,37 +279,69 @@ export function MembersView({
         })}
       </div>
 
-      {/* 2. Toolbar Adaptiv (Desktop, Tableta & Telefon) */}
-      <div className="rounded-[2px] border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-3.5 sm:p-5 shadow-xs flex flex-col gap-3.5 font-anthropic">
-        {/* Top Toolbar Row */}
-        <div className="flex flex-col md:flex-row gap-3 justify-between items-stretch md:items-center">
+      {/* 2. Toolbar Adaptiv & Filtre (Design Curat & Responsive) */}
+      <div className="rounded-[2px] border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 sm:p-5 shadow-xs space-y-4 font-anthropic">
+        
+        {/* Row 1: Search + View Toggles + Action Buttons */}
+        <div className="flex flex-col lg:flex-row gap-3 items-stretch lg:items-center justify-between">
           
-          {/* Search + View Toggle + Mobile Filter Trigger */}
-          <div className="flex items-center gap-2 w-full md:w-auto">
-            <div className="relative group flex-1 md:w-72">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-slate-900 dark:group-focus-within:text-slate-100 transition-colors" size={16} />
-              <input 
-                type="text" 
-                placeholder="Caută membru după nume, telefon..." 
-                value={searchTerm}
-                onChange={e => setSearchTerm(e.target.value)}
-                className="w-full pl-9 pr-8 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-[2px] text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:border-slate-900 dark:focus:border-slate-100 focus:bg-white dark:focus:bg-slate-800 transition-all font-anthropic"
-              />
+          {/* Căutare Principală */}
+          <div className="relative group flex-1 min-w-0">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-slate-900 dark:group-focus-within:text-slate-100 transition-colors" size={18} />
+            <input 
+              type="text" 
+              placeholder="Caută membru după nume, poreclă, username, telefon sau email..." 
+              value={searchTerm}
+              onChange={e => setSearchTerm(e.target.value)}
+              className="w-full pl-10 pr-24 py-2.5 bg-slate-50 dark:bg-slate-800/80 border border-slate-300 dark:border-slate-700 rounded-[2px] text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:border-slate-900 dark:focus:border-slate-100 focus:bg-white dark:focus:bg-slate-800 transition-all font-anthropic"
+            />
+            <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
               {searchTerm && (
                 <button
                   onClick={() => setSearchTerm('')}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 cursor-pointer"
+                  className="p-1 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 cursor-pointer"
                   title="Șterge căutarea"
                 >
                   <X size={15} />
                 </button>
               )}
+              <span className="text-xs font-bold text-slate-400 dark:text-slate-500 font-data hidden sm:inline">
+                {processedMembers.length} {processedMembers.length === 1 ? 'membru' : 'membri'}
+              </span>
+            </div>
+          </div>
+
+          {/* Action Group: View Toggle + Filter Toggle (on small screens) + Export + New Member */}
+          <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap justify-between lg:justify-end font-title">
+            
+            {/* View Mode Toggle (Tabel vs Carduri) */}
+            <div className="flex items-center bg-slate-100 dark:bg-slate-800 p-0.5 rounded-[2px] border border-slate-200 dark:border-slate-700 shrink-0">
+              <button
+                onClick={() => setViewMode('table')}
+                className={`px-2.5 py-1.5 rounded-[2px] text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                  viewMode === 'table' ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                }`}
+                title="Vizualizare Tabel"
+              >
+                <TableIcon size={15} />
+                <span className="hidden sm:inline uppercase tracking-wider">Tabel</span>
+              </button>
+              <button
+                onClick={() => setViewMode('cards')}
+                className={`px-2.5 py-1.5 rounded-[2px] text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                  viewMode === 'cards' ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                }`}
+                title="Vizualizare Carduri"
+              >
+                <LayoutGrid size={15} />
+                <span className="hidden sm:inline uppercase tracking-wider">Carduri</span>
+              </button>
             </div>
 
-            {/* Mobile Filter Sheet Trigger */}
+            {/* Mobile / Tablet Filter Toggle Button */}
             <button
               onClick={() => setIsMobileFilterOpen(!isMobileFilterOpen)}
-              className={`md:hidden flex items-center gap-1.5 px-3.5 py-2 rounded-[2px] border text-xs font-bold uppercase tracking-wider transition-all shrink-0 font-title cursor-pointer ${
+              className={`lg:hidden flex items-center gap-1.5 px-3 py-2 rounded-[2px] border text-xs font-bold uppercase tracking-wider transition-all shrink-0 cursor-pointer ${
                 activeFiltersCount > 0 || isMobileFilterOpen
                   ? 'bg-slate-900 dark:bg-sky-500 text-white dark:text-slate-950 border-slate-900 dark:border-sky-500'
                   : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 border-slate-300 dark:border-slate-700 hover:bg-slate-200 dark:hover:bg-slate-700'
@@ -318,134 +350,137 @@ export function MembersView({
               <Filter size={15} />
               <span>Filtre</span>
               {activeFiltersCount > 0 && (
-                <span className="w-4 h-4 rounded-[2px] bg-amber-500 text-slate-950 text-xs flex items-center justify-center font-bold ml-0.5 font-data">
+                <span className="w-4 h-4 rounded-full bg-amber-500 text-slate-950 text-[10px] flex items-center justify-center font-bold font-data">
                   {activeFiltersCount}
                 </span>
               )}
-              <ChevronDown size={14} className={`transition-transform ${isMobileFilterOpen ? 'rotate-180' : ''}`} />
+              <ChevronDown size={14} className={`transition-transform duration-200 ${isMobileFilterOpen ? 'rotate-180' : ''}`} />
             </button>
 
-            {/* View Mode Switcher (Tabel vs Carduri) */}
-            <div className="flex items-center bg-slate-100 dark:bg-slate-800 p-0.5 rounded-[2px] border border-slate-200 dark:border-slate-700 shrink-0 font-title">
-              <button
-                onClick={() => setViewMode('table')}
-                className={`p-2 rounded-[2px] text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
-                  viewMode === 'table' ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-                }`}
-                title="Vizualizare Tabel"
-              >
-                <TableIcon size={16} />
-                <span className="hidden sm:inline text-xs font-bold uppercase tracking-wider">Tabel</span>
-              </button>
-              <button
-                onClick={() => setViewMode('cards')}
-                className={`p-2 rounded-[2px] text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
-                  viewMode === 'cards' ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-                }`}
-                title="Vizualizare Carduri"
-              >
-                <LayoutGrid size={16} />
-                <span className="hidden sm:inline text-xs font-bold uppercase tracking-wider">Carduri</span>
-              </button>
-            </div>
-          </div>
-
-          {/* Desktop Filter Dropdowns (Inline) */}
-          <div className="hidden md:flex items-center gap-2.5 flex-wrap font-title">
-            <Filter className="text-slate-400 shrink-0" size={16} />
-            <select 
-              value={selectedRole}
-              onChange={e => {
-                setSelectedRole(e.target.value);
-                if (e.target.value === 'Board') {
-                  setSelectedStatus('Toți');
-                }
-              }}
-              className="px-3.5 py-2 bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-[2px] text-xs font-bold uppercase tracking-wider hover:bg-slate-200 dark:hover:bg-slate-700 transition-all text-slate-900 dark:text-slate-100 cursor-pointer"
-            >
-              <option className="bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100" value="Toți">Toate Rolurile</option>
-              <option className="bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100" value="Board">Board</option>
-              <option className="bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100" value="Voluntar">Voluntar</option>
-            </select>
-
-            {selectedRole !== 'Board' && (
-              <select 
-                value={selectedStatus}
-                onChange={e => setSelectedStatus(e.target.value)}
-                className="px-3.5 py-2 bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-[2px] text-xs font-bold uppercase tracking-wider hover:bg-slate-200 dark:hover:bg-slate-700 transition-all text-slate-900 dark:text-slate-100 cursor-pointer"
-              >
-                <option className="bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100" value="Toți">Orice Status</option>
-                <option className="bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100" value="ACTIV">ACTIV</option>
-                <option className="bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100" value="PASIV">PASIV</option>
-              </select>
-            )}
-
-            <select 
-              value={selectedDebtFilter}
-              onChange={e => setSelectedDebtFilter(e.target.value)}
-              className="px-3.5 py-2 bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-[2px] text-xs font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all cursor-pointer"
-            >
-              <option className="bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100" value="Toți">Orice Balanță</option>
-              <option className="bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100" value="Restanțieri">Restanțieri</option>
-              <option className="bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100" value="La Zi">La Zi (0 Datorii)</option>
-            </select>
-
-            <select 
-              value={sortOrder}
-              onChange={e => setSortOrder(e.target.value)}
-              className="px-3.5 py-2 bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-[2px] text-xs font-bold uppercase tracking-wider hover:bg-slate-200 dark:hover:bg-slate-700 transition-all text-slate-900 dark:text-slate-100 cursor-pointer"
-            >
-              <option className="bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100" value="Implicit">Sortare Nume</option>
-              <option className="bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100" value="Datorie">Cea Mai Mare Datorie</option>
-            </select>
-
-            {activeFiltersCount > 0 && (
-              <button
-                onClick={handleResetFilters}
-                className="p-2 text-slate-400 hover:text-rose-600 rounded-[2px] hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors cursor-pointer"
-                title="Resetează toate filtrele"
-              >
-                <RotateCcw size={15} />
-              </button>
-            )}
-          </div>
-
-          {/* Action Buttons (Export + Add Member) */}
-          <div className="grid grid-cols-2 md:flex md:items-center gap-2.5 w-full md:w-auto font-title">
+            {/* Export Excel Button */}
             {isAdmin && (
               <button 
                 onClick={handleExportExcel}
-                className="px-4 py-2 text-xs font-bold text-emerald-800 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 border border-emerald-300 dark:border-emerald-700 rounded-[2px] transition-all flex items-center justify-center gap-1.5 shadow-xs cursor-pointer uppercase tracking-wider"
+                className="px-3.5 py-2 text-xs font-bold text-emerald-800 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 border border-emerald-300 dark:border-emerald-700 rounded-[2px] transition-all flex items-center justify-center gap-1.5 shadow-xs cursor-pointer uppercase tracking-wider shrink-0"
                 title="Descarcă foaie de calcul Excel cu toți membrii"
               >
                 <FileSpreadsheet size={15} className="text-emerald-600 dark:text-emerald-400 shrink-0" />
-                <span className="truncate">EXPORTĂ</span>
+                <span className="hidden sm:inline">EXPORTĂ</span>
               </button>
             )}
 
+            {/* Add Member Button */}
             {isAdmin && (
               <button 
                 onClick={onAddMemberClick}
-                className="btn-civic-primary px-4 py-2 text-xs font-bold flex items-center justify-center gap-1.5 shadow-xs cursor-pointer uppercase tracking-wider"
+                className="btn-civic-primary px-3.5 py-2 text-xs font-bold flex items-center justify-center gap-1.5 shadow-xs cursor-pointer uppercase tracking-wider shrink-0"
               >
                 <UserPlus size={15} className="shrink-0" />
-                <span className="truncate">MEMBRU NOU</span>
+                <span>MEMBRU NOU</span>
               </button>
             )}
           </div>
         </div>
 
-        {/* Quick Filter Chips for Touch / Mobile */}
-        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-0.5 max-w-full font-title">
-          <span className="text-xs font-bold uppercase text-slate-400 dark:text-slate-500 tracking-wider shrink-0 mr-1">Filtre Rapide:</span>
+        {/* Row 2: Filter Controls & Sort Options (Responsive Grid) */}
+        <div className={`${isMobileFilterOpen ? 'block' : 'hidden lg:block'} pt-3 border-t border-slate-100 dark:border-slate-800`}>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 font-title">
+            
+            {/* Filter 1: Rol */}
+            <div className="space-y-1">
+              <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                Rol Membru
+              </label>
+              <select 
+                value={selectedRole}
+                onChange={e => {
+                  setSelectedRole(e.target.value);
+                  if (e.target.value === 'Board') {
+                    setSelectedStatus('Toți');
+                  }
+                }}
+                className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-[2px] text-xs font-semibold text-slate-900 dark:text-slate-100 focus:outline-none focus:border-slate-900 dark:focus:border-slate-100 cursor-pointer"
+              >
+                <option value="Toți">Toate Rolurile (Board & Voluntari)</option>
+                <option value="Board">Doar Membri Board</option>
+                <option value="Voluntar">Doar Voluntari</option>
+              </select>
+            </div>
+
+            {/* Filter 2: Status */}
+            <div className="space-y-1">
+              <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                Status Activitate
+              </label>
+              <select 
+                value={selectedStatus}
+                onChange={e => setSelectedStatus(e.target.value)}
+                disabled={selectedRole === 'Board'}
+                className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-[2px] text-xs font-semibold text-slate-900 dark:text-slate-100 focus:outline-none focus:border-slate-900 dark:focus:border-slate-100 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <option value="Toți">Orice Status (Activi & Pasivi)</option>
+                <option value="ACTIV">Doar Membri Activi</option>
+                <option value="PASIV">Doar Membri Pasivi</option>
+              </select>
+            </div>
+
+            {/* Filter 3: Balanță / Cotizații */}
+            <div className="space-y-1">
+              <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                Balanță Cotizații
+              </label>
+              <select 
+                value={selectedDebtFilter}
+                onChange={e => setSelectedDebtFilter(e.target.value)}
+                className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-[2px] text-xs font-semibold text-slate-900 dark:text-slate-100 focus:outline-none focus:border-slate-900 dark:focus:border-slate-100 cursor-pointer"
+              >
+                <option value="Toți">Orice Balanță</option>
+                <option value="Restanțieri">Restanțieri (Cu Datorii)</option>
+                <option value="La Zi">La Zi (0 RON Restanță)</option>
+              </select>
+            </div>
+
+            {/* Filter 4: Sortare & Reset */}
+            <div className="space-y-1">
+              <div className="flex justify-between items-center">
+                <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                  Ordonare
+                </label>
+                {activeFiltersCount > 0 && (
+                  <button
+                    onClick={handleResetFilters}
+                    className="text-[11px] font-bold text-rose-600 dark:text-rose-400 hover:underline flex items-center gap-1 cursor-pointer"
+                  >
+                    <RotateCcw size={12} /> Resetează ({activeFiltersCount})
+                  </button>
+                )}
+              </div>
+              <select 
+                value={sortOrder}
+                onChange={e => setSortOrder(e.target.value)}
+                className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-[2px] text-xs font-semibold text-slate-900 dark:text-slate-100 focus:outline-none focus:border-slate-900 dark:focus:border-slate-100 cursor-pointer"
+              >
+                <option value="Implicit">Alfabetic după Nume (A-Z)</option>
+                <option value="Datorie">După Datorie Descrescător</option>
+              </select>
+            </div>
+
+          </div>
+        </div>
+
+        {/* Row 3: Quick Filter Chips */}
+        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pt-2 border-t border-slate-100 dark:border-slate-800 max-w-full font-title">
+          <span className="text-xs font-bold uppercase text-slate-400 dark:text-slate-500 tracking-wider shrink-0 mr-1">
+            Filtre Rapide:
+          </span>
           {[
-            { label: 'Toți', active: selectedRole === 'Toți' && selectedDebtFilter === 'Toți' && selectedStatus === 'Toți', onClick: () => { setSelectedRole('Toți'); setSelectedDebtFilter('Toți'); setSelectedStatus('Toți'); } },
-            { label: 'Board', active: selectedRole === 'Board', onClick: () => { setSelectedRole('Board'); setSelectedStatus('Toți'); } },
-            { label: 'Voluntari', active: selectedRole === 'Voluntar', onClick: () => setSelectedRole('Voluntar') },
-            { label: 'Restanțieri', active: selectedDebtFilter === 'Restanțieri', onClick: () => setSelectedDebtFilter('Restanțieri') },
-            { label: 'La Zi (Fără Datorii)', active: selectedDebtFilter === 'La Zi', onClick: () => setSelectedDebtFilter('La Zi') },
-            { label: 'Activi', active: selectedStatus === 'ACTIV', onClick: () => { setSelectedRole('Toți'); setSelectedStatus('ACTIV'); } },
-            { label: 'Pasivi', active: selectedStatus === 'PASIV', onClick: () => { setSelectedRole('Toți'); setSelectedStatus('PASIV'); } },
+            { label: `Toți (${totalMembri})`, active: selectedRole === 'Toți' && selectedDebtFilter === 'Toți' && selectedStatus === 'Toți', onClick: () => { setSelectedRole('Toți'); setSelectedDebtFilter('Toți'); setSelectedStatus('Toți'); } },
+            { label: '👑 Board', active: selectedRole === 'Board', onClick: () => { setSelectedRole('Board'); setSelectedStatus('Toți'); } },
+            { label: '🤝 Voluntari', active: selectedRole === 'Voluntar', onClick: () => setSelectedRole('Voluntar') },
+            { label: '⚠️ Restanțieri', active: selectedDebtFilter === 'Restanțieri', onClick: () => setSelectedDebtFilter('Restanțieri') },
+            { label: '✨ La Zi', active: selectedDebtFilter === 'La Zi', onClick: () => setSelectedDebtFilter('La Zi') },
+            { label: '🟢 Activi', active: selectedStatus === 'ACTIV', onClick: () => { setSelectedRole('Toți'); setSelectedStatus('ACTIV'); } },
+            { label: '⚪ Pasivi', active: selectedStatus === 'PASIV', onClick: () => { setSelectedRole('Toți'); setSelectedStatus('PASIV'); } },
           ].map((chip, idx) => (
             <button
               key={idx}
@@ -453,13 +488,14 @@ export function MembersView({
               className={`px-3 py-1.5 rounded-[2px] text-xs font-bold uppercase tracking-wider transition-all shrink-0 cursor-pointer ${
                 chip.active
                   ? 'bg-slate-900 dark:bg-sky-500 text-white dark:text-slate-950 shadow-xs'
-                  : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-200'
+                  : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-200 dark:hover:bg-slate-700'
               }`}
             >
               {chip.label}
             </button>
           ))}
         </div>
+
       </div>
 
       {/* 3. Lista Membri: Card View (Ideal pe Mobil) sau Table View (Cu Scroll Orizontal Fluid) */}
