@@ -1602,7 +1602,7 @@ const ViewProfile = ({ currentUserObj, onUpdateMember, members }: ViewProfilePro
 
   const [nickname, setNickname] = useState(effectiveUser.nickname || '');
   const [avatar, setAvatar] = useState(effectiveUser.avatar || '');
-  const [password, setPassword] = useState(effectiveUser.password || '');
+  const [newPassword, setNewPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [tempImageSrc, setTempImageSrc] = useState<string | null>(null);
@@ -1617,7 +1617,7 @@ const ViewProfile = ({ currentUserObj, onUpdateMember, members }: ViewProfilePro
     if (effectiveUser) {
       setNickname(effectiveUser.nickname || '');
       setAvatar(effectiveUser.avatar || '');
-      setPassword(effectiveUser.password || '');
+      setNewPassword('');
     }
   }, [effectiveUser]);
 
@@ -1762,17 +1762,26 @@ const ViewProfile = ({ currentUserObj, onUpdateMember, members }: ViewProfilePro
       const allowedPasswordChange = canEditMemberPassword(currentUserObj || effectiveUser, effectiveUser.role);
 
       // Dacă s-a introdus o parolă nouă, o actualizăm prin funcția securizată RPC
-      if (allowedPasswordChange && password && password.trim().length > 0) {
+      if (allowedPasswordChange && newPassword && newPassword.trim().length > 0) {
+        if (newPassword.trim().length < 6) {
+          toast.error("Noua parolă trebuie să aibă cel puțin 6 caractere.");
+          setIsSaving(false);
+          return;
+        }
+
         const { data: passRes, error: passErr } = await supabase.rpc('admin_set_member_password', {
           p_admin_member_id: currentUserObj?.id || currentUserObj?.username || 'stan.stefan',
           p_target_member_id: effectiveUser.id,
-          p_new_password: password.trim()
+          p_new_password: newPassword.trim()
         });
 
         if (passErr || (passRes && !passRes.success)) {
           toast.error(passRes?.error || passErr?.message || "Eroare la actualizarea parolei.");
+          setIsSaving(false);
+          return;
         } else {
           toast.success("Parola a fost actualizată cu succes!");
+          setNewPassword('');
         }
       }
 
@@ -1890,17 +1899,20 @@ const ViewProfile = ({ currentUserObj, onUpdateMember, members }: ViewProfilePro
 
               {/* Password Reset */}
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider font-title">Parolă Nouă</label>
+                <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider font-title">
+                  Schimbă Parola (Opțional)
+                </label>
                 {canEditMemberPassword(currentUserObj || effectiveUser, effectiveUser.role) ? (
                   <div className="relative">
                     <input 
                       type={showPassword ? 'text' : 'password'}
-                      value={password}
-                      onChange={e => setPassword(e.target.value)}
-                      placeholder="••••••••" 
-                      className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-[2px] text-slate-900 dark:text-white text-sm font-bold focus:outline-none focus:border-sky-500 font-anthropic pr-10"
+                      value={newPassword}
+                      onChange={e => setNewPassword(e.target.value)}
+                      placeholder="Lăsați gol pentru a păstra parola actuală" 
+                      className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-[2px] text-slate-900 dark:text-white text-sm font-medium focus:outline-none focus:border-sky-500 font-anthropic pr-10"
                     />
                     <button 
+                      type="button"
                       onClick={() => setShowPassword(!showPassword)}
                       className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 transition-colors cursor-pointer"
                     >
