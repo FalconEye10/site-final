@@ -33,7 +33,12 @@ export function isBoardMember(user: any): boolean {
   );
 }
 
-export function canEditMemberPassword(currentUser: any, targetMemberRole: string): boolean {
+export function canEditMemberPassword(currentUser: any, targetMemberRole: string, targetMemberId?: string): boolean {
+  if (!currentUser) return false;
+  // Oricine își poate schimba PROPRIA parolă din profil
+  if (targetMemberId && (currentUser.id === targetMemberId || currentUser.username === targetMemberId)) {
+    return true;
+  }
   if (isStanStefan(currentUser)) {
     return true;
   }

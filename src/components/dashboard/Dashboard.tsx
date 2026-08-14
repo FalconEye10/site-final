@@ -1759,7 +1759,7 @@ const ViewProfile = ({ currentUserObj, onUpdateMember, members }: ViewProfilePro
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      const allowedPasswordChange = canEditMemberPassword(currentUserObj || effectiveUser, effectiveUser.role);
+      const allowedPasswordChange = canEditMemberPassword(currentUserObj || effectiveUser, effectiveUser.role, effectiveUser.id);
 
       // Dacă s-a introdus o parolă nouă, o actualizăm prin funcția securizată RPC
       if (allowedPasswordChange && newPassword && newPassword.trim().length > 0) {
@@ -1902,7 +1902,7 @@ const ViewProfile = ({ currentUserObj, onUpdateMember, members }: ViewProfilePro
                 <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider font-title">
                   Schimbă Parola (Opțional)
                 </label>
-                {canEditMemberPassword(currentUserObj || effectiveUser, effectiveUser.role) ? (
+                {canEditMemberPassword(currentUserObj || effectiveUser, effectiveUser.role, effectiveUser.id) ? (
                   <div className="relative">
                     <input 
                       type={showPassword ? 'text' : 'password'}

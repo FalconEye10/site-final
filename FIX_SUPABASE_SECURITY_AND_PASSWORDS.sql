@@ -140,7 +140,7 @@ BEGIN
 END;
 $$;
 
--- C. Funcție pentru resetarea parolei de către Administrator
+-- C. Funcție pentru setarea/schimbarea parolei (Proprie sau de către Administrator/Board)
 CREATE OR REPLACE FUNCTION public.admin_set_member_password(
   p_admin_member_id TEXT,
   p_target_member_id TEXT,
@@ -153,25 +153,54 @@ SET search_path = public, private, extensions, pg_temp
 AS $$
 DECLARE
   v_admin public.members%ROWTYPE;
+  v_target public.members%ROWTYPE;
+  v_is_allowed BOOLEAN := false;
 BEGIN
-  -- Căutăm adminul după ID sau username
+  -- 1. Căutăm apelantul (admin / membru)
   SELECT * INTO v_admin 
   FROM public.members 
   WHERE id = p_admin_member_id 
      OR lower(username) = lower(trim(p_admin_member_id))
      OR lower(email) = lower(trim(p_admin_member_id));
 
-  IF v_admin.id IS NULL OR (lower(coalesce(v_admin.role, '')) != 'admin' AND coalesce(v_admin.board_position, '') = '' AND v_admin.username != 'stan.stefan') THEN
-    RETURN jsonb_build_object('success', false, 'error', 'Neautorizat: Doar administratorii pot reseta parole.');
+  -- 2. Căutăm membrul țintă
+  SELECT * INTO v_target 
+  FROM public.members 
+  WHERE id = p_target_member_id 
+     OR lower(username) = lower(trim(p_target_member_id))
+     OR lower(email) = lower(trim(p_target_member_id));
+
+  IF v_admin.id IS NULL OR v_target.id IS NULL THEN
+    RETURN jsonb_build_object('success', false, 'error', 'Utilizatorul sau membrul nu a fost găsit.');
   END IF;
 
+  -- 3. Verificare permisiuni:
+  -- Caz A: Utilizatorul își modifică PROPRIA parolă din "Profilul Meu" -> Permis pentru orice membru / voluntar!
+  IF v_admin.id = v_target.id THEN
+    v_is_allowed := true;
+  -- Caz B: Utilizatorul modifică parola ALTUI membru -> Permis doar pentru Board / Admini!
+  ELSIF lower(coalesce(v_admin.role, '')) = 'admin'
+     OR (v_admin."boardPosition" IS NOT NULL AND length(trim(v_admin."boardPosition")) > 0)
+     OR lower(coalesce(v_admin.committee, '')) LIKE '%board%'
+     OR lower(coalesce(v_admin.username, '')) IN ('stan.stefan', 'admin')
+     OR v_admin.id = 'M061'
+  THEN
+    v_is_allowed := true;
+  END IF;
+
+  IF NOT v_is_allowed THEN
+    RETURN jsonb_build_object('success', false, 'error', 'Neautorizat: Doar membrii din Board / Administratorii pot modifica parolele altor membri.');
+  END IF;
+
+  -- 4. Validare lungime parolă (minim 6 caractere)
   IF length(trim(p_new_password)) < 6 THEN
     RETURN jsonb_build_object('success', false, 'error', 'Parola trebuie să aibă cel puțin 6 caractere.');
   END IF;
 
+  -- 5. Salvare parolă criptată
   INSERT INTO private.member_credentials (member_id, password_hash, temp_password, must_change_password, updated_at)
   VALUES (
-    p_target_member_id,
+    v_target.id,
     crypt(p_new_password, gen_salt('bf', 10)),
     p_new_password,
     false,
@@ -183,7 +212,7 @@ BEGIN
     must_change_password = false,
     updated_at = NOW();
 
-  RETURN jsonb_build_object('success', true, 'message', 'Parola a fost setată cu succes!');
+  RETURN jsonb_build_object('success', true, 'message', 'Parola a fost actualizată cu succes!');
 END;
 $$;
 
