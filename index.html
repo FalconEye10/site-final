@@ -1017,11 +1017,16 @@
         })();
 
         /* ================================================================
-           CUSTOM CURSOR
+           CUSTOM CURSOR (Desktop pointer devices only)
            ================================================================ */
+        const isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || window.matchMedia('(hover: none), (pointer: coarse)').matches;
         const cursorDot = document.getElementById('cursor-dot');
         const cursorRing = document.getElementById('cursor-ring');
-        if (cursorDot && cursorRing) {
+        
+        if (isTouchDevice) {
+            if (cursorDot) cursorDot.style.display = 'none';
+            if (cursorRing) cursorRing.style.display = 'none';
+        } else if (cursorDot && cursorRing) {
             const xTo = gsap.quickTo(cursorRing, "left", {duration: 0.15, ease: "power2.out"});
             const yTo = gsap.quickTo(cursorRing, "top", {duration: 0.15, ease: "power2.out"});
 

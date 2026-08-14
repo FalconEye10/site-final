@@ -247,48 +247,60 @@ html.lenis, html.lenis body {
 }
 
 /* ============================================
-   CUSTOM CURSOR - Enhanced with cyan
+   CUSTOM CURSOR - Desktop mouse devices only
    ============================================ */
-/* Hide the native cursor only on the landing page. Inside the admin app
-   (body.app-active) the native cursor is restored so forms and tables work. */
-body:not(.app-active) * {
-    cursor: none !important;
+/* Default: hide custom cursor elements on mobile & touch devices */
+#cursor-dot,
+#cursor-ring {
+    display: none !important;
 }
-/* When the React admin app is active, hide the landing custom cursor entirely. */
+
+/* Only enable custom cursor on devices that actually have a precise pointer (mouse) and support hover */
+@media (hover: hover) and (pointer: fine) {
+    body:not(.app-active) * {
+        cursor: none !important;
+    }
+    
+    body:not(.app-active) #cursor-dot,
+    body:not(.app-active) #cursor-ring {
+        display: block !important;
+        position: fixed;
+        top: 0;
+        left: 0;
+        pointer-events: none;
+        z-index: 10000;
+        border-radius: 50%;
+        transform: translate(-50%, -50%);
+    }
+    
+    #cursor-dot {
+        width: 8px;
+        height: 8px;
+        background-color: #101D34;
+        transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.1);
+    }
+    
+    #cursor-ring {
+        width: 40px;
+        height: 40px;
+        border: 1px solid rgba(16, 29, 52, 0.4);
+        transition: width 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.1),
+                    height 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.1);
+    }
+    
+    body.cursor-hover #cursor-ring {
+        width: 60px;
+        height: 60px;
+        border-color: #A0D8EF;
+        background-color: rgba(160, 216, 239, 0.1);
+        backdrop-filter: blur(2px);
+    }
+}
+
+/* When the React admin app is active, ensure cursor is normal */
 body.app-active #cursor-dot,
 body.app-active #cursor-ring {
     display: none !important;
-}
-#cursor-dot,
-#cursor-ring {
-    position: fixed;
-    top: 0;
-    left: 0;
-    pointer-events: none;
-    z-index: 10000;
-    border-radius: 50%;
-    transform: translate(-50%, -50%);
-}
-#cursor-dot {
-    width: 8px;
-    height: 8px;
-    background-color: #101D34;
-    transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.1);
-}
-#cursor-ring {
-    width: 40px;
-    height: 40px;
-    border: 1px solid rgba(16, 29, 52, 0.4);
-    transition: width 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.1),
-                height 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.1);
-}
-
-body.cursor-hover #cursor-ring {
-    width: 60px;
-    height: 60px;
-    border-color: #A0D8EF;
-    background-color: rgba(160, 216, 239, 0.1);
-    backdrop-filter: blur(2px);
 }
 
 /* ============================================
