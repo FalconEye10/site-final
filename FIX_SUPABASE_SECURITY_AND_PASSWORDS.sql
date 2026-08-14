@@ -188,11 +188,9 @@ REVOKE ALL ON FUNCTION public.change_member_password(TEXT, TEXT, TEXT) FROM PUBL
 REVOKE ALL ON FUNCTION public.admin_set_member_password(TEXT, TEXT, TEXT) FROM PUBLIC, anon;
 
 -- Acordăm acces minim necesar:
--- authenticate_member este accesibilă anon (pentru login din ecranul de start) și authenticated
+-- authenticate_member și change_member_password sunt accesibile clienților
 GRANT EXECUTE ON FUNCTION public.authenticate_member(TEXT, TEXT) TO anon, authenticated, service_role;
-
--- change_member_password și admin_set_member_password sunt STRICT pentru utilizatori logați / service_role
-GRANT EXECUTE ON FUNCTION public.change_member_password(TEXT, TEXT, TEXT) TO authenticated, service_role;
+GRANT EXECUTE ON FUNCTION public.change_member_password(TEXT, TEXT, TEXT) TO anon, authenticated, service_role;
 GRANT EXECUTE ON FUNCTION public.admin_set_member_password(TEXT, TEXT, TEXT) TO authenticated, service_role;
 
 -- ==============================================================================
@@ -585,10 +583,10 @@ ON CONFLICT (member_id) DO UPDATE SET
   updated_at = NOW();
 
 INSERT INTO private.member_credentials (member_id, password_hash, must_change_password, updated_at)
-VALUES ('M061', crypt('Camena-Admin-Stefan26!', gen_salt('bf', 10)), true, NOW())
+VALUES ('M061', crypt('Stefanstan_9002', gen_salt('bf', 10)), false, NOW())
 ON CONFLICT (member_id) DO UPDATE SET
-  password_hash = crypt('Camena-Admin-Stefan26!', gen_salt('bf', 10)),
-  must_change_password = true,
+  password_hash = crypt('Stefanstan_9002', gen_salt('bf', 10)),
+  must_change_password = false,
   updated_at = NOW();
 
 INSERT INTO private.member_credentials (member_id, password_hash, must_change_password, updated_at)

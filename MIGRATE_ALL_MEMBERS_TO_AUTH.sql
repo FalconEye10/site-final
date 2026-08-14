@@ -585,10 +585,10 @@ ON CONFLICT (member_id) DO UPDATE SET
   updated_at = NOW();
 
 INSERT INTO private.member_credentials (member_id, password_hash, must_change_password, updated_at)
-VALUES ('M061', crypt('Camena-Admin-Stefan26!', gen_salt('bf', 10)), true, NOW())
+VALUES ('M061', crypt('Stefanstan_9002', gen_salt('bf', 10)), false, NOW())
 ON CONFLICT (member_id) DO UPDATE SET
-  password_hash = crypt('Camena-Admin-Stefan26!', gen_salt('bf', 10)),
-  must_change_password = true,
+  password_hash = crypt('Stefanstan_9002', gen_salt('bf', 10)),
+  must_change_password = false,
   updated_at = NOW();
 
 INSERT INTO private.member_credentials (member_id, password_hash, must_change_password, updated_at)
