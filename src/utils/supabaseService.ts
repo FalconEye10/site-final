@@ -20,25 +20,25 @@ export function isSystemAccount(m: any): boolean {
 }
 
 const officialClubMembersRoster = [
-  "ANDRAS ANDREEA (Role: member)", "POPA IOANA (Role: member)", "ABICULESEI ALESSIA (Role: member)",
-  "PAISA ANASTASIA (Role: member)", "DORNEANU MADALINA (Role: member)", "test (Role: member)",
-  "Alungulesei Ianis (Role: member)", "Amatioaiei Ioana (Role: member)", "Apetrei Sofia (Role: member)",
-  "Beșu Ioana (Role: member)", "Buftea Leonardo (Role: member)", "Cacciola Anastasia (Role: member)",
-  "Căruntu Ruxandra (Role: member)", "Ciobanu Ilinca (Role: member)", "Ciurea Alex (Role: member)",
-  "Covasan Marian (Role: member)", "Crușitu Mihnea (Role: member)", "Enache Diana (Role: member)",
-  "Filimon Teodora (Role: member)", "Ifrim Luca (Role: member)", "Ioniță Daria (Role: member)",
-  "Marunțelu Alex (Role: member)", "Măzare Sofia (Role: member)", "Miron Maya (Role: member)",
-  "Onțanu Vanessa (Role: member)", "Orcheanu Maria (Role: member)", "Panainte Silviu (Role: member)",
-  "Pascaru Rareș (Role: member)", "Popa Medeea (Role: member)", "Radu Sabin (Role: member)",
-  "Radu Teodora (Role: member)", "Răducanu Maya (Role: member)", "Șerban Catalin (Role: member)",
-  "Tănasa Teodora (Role: member)", "Zugravu Rareș (Role: member)", "Alungulesei Darius (Role: member)",
-  "Ariton Bogdan (Role: member)", "Corbu Partick (Role: member)", "Huhulea Miruna (Role: member)",
-  "Lăpușneanu David (Role: member)", "Lupu Miruna (Role: member)", "Manole Iustin (Role: member)",
-  "Micu Ingrid (Role: member)", "Mihuț Alexandra (Role: member)", "Negru Maia (Role: member)",
-  "Poenaru Cristiana (Role: member)", "Stîngaciu Mario (Role: member)", "Timofte Tudor (Role: member)",
-  "IFRIM TUDOR (Role: member)", "STAN STEFAN (Role: admin)", "TIMOFTE TEODORA (Role: member)",
-  "PADURARIU SABIN (Role: member)", "PASCARU RASES (Role: member)", "ORCHIANU MARIA (Role: member)",
-  "MIHALACHE MARA (Role: member)", "CORFA TUDOR (Role: member)", "POPA MATEI (Role: member)"
+  "Abiculesei Alessia (Role: member)", "Alungulesei Darius (Role: member)", "Alungulesei Ianis (Role: member)",
+  "Amatioaiei Ioana (Role: member)", "Andraș Andreea (Role: member)", "Apetrei Sofia (Role: member)",
+  "Ariton Bogdan (Role: member)", "Beșu Ioana (Role: member)", "Buftea Leonardo (Role: member)",
+  "Cacciola Anastasia (Role: admin)", "Căruntu Ruxandra (Role: admin)", "Ciurea Alex (Role: member)",
+  "Corbu Patrick (Role: member)", "Corfă Tudor (Role: member)", "Covasan Marian (Role: member)",
+  "Crușitu Mihnea (Role: member)", "Dorneanu Mădălina (Role: member)", "Enache Diana (Role: member)",
+  "Filimon Teodora (Role: member)", "Glodeanu Tudor (Role: member)", "Huhulea Miruna (Role: member)",
+  "Ifrim Luca (Role: member)", "Ifrim Tudor (Role: member)", "Ioniță Daria (Role: member)",
+  "Lăpușneanu David (Role: member)", "Lupu Miruna (Role: member)", "Mancas Ilinca (Role: member)",
+  "Manole Iustin (Role: member)", "Marunțelu Alex (Role: member)", "Măzare Sofia (Role: admin)",
+  "Micu Ingrid (Role: member)", "Mihalache Mara (Role: member)", "Mihuț Alexandra (Role: member)",
+  "Miron Maya (Role: member)", "Negru Maia (Role: member)", "Onțanu Vanessa (Role: member)",
+  "Orcheanu Maria (Role: member)", "Paisa Anastasia (Role: member)", "Panainte Silviu (Role: member)",
+  "Pascaru Rareș (Role: admin)", "Poenaru Cristiana (Role: member)", "Popa Ioana (Role: admin)",
+  "Popa Matei (Role: admin)", "Radu Sabin (Role: member)", "Radu Teodora (Role: member)",
+  "Răducanu Maya (Role: member)", "Stan Ștefan (Role: admin)", "Stîngaciu Mario (Role: member)",
+  "Șerban Cătălin (Role: member)", "Tănasa Teodora (Role: member)", "Timofte Teodora (Role: admin)",
+  "Timofte Tudor (Role: member)", "Timoscov Roxana (Role: member)", "Ursache Ștefania (Role: member)",
+  "Zugravu Rareș (Role: member)"
 ];
 
 function getOfficialClubRoster(): any[] {
@@ -71,6 +71,8 @@ function getOfficialClubRoster(): any[] {
       totalDebt: 0,
       score: 0,
       stats: { totalHours: 0 },
+      login_count: 0,
+      has_seen_tutorial: false,
       committee: isStefan ? 'Board Executiv' : 'Comitet Voluntariat',
       boardPosition: isStefan ? 'Președinte' : undefined
     };
