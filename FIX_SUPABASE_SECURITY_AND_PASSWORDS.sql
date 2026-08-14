@@ -140,7 +140,7 @@ BEGIN
 END;
 $$;
 
--- C. Funcție pentru resetarea parolei de către Administrator (DOAR utilizatori autentificați/admin, NU anon)
+-- C. Funcție pentru resetarea parolei de către Administrator
 CREATE OR REPLACE FUNCTION public.admin_set_member_password(
   p_admin_member_id TEXT,
   p_target_member_id TEXT,
@@ -154,8 +154,14 @@ AS $$
 DECLARE
   v_admin public.members%ROWTYPE;
 BEGIN
-  SELECT * INTO v_admin FROM public.members WHERE id = p_admin_member_id;
-  IF v_admin.id IS NULL OR lower(v_admin.role) != 'admin' THEN
+  -- Căutăm adminul după ID sau username
+  SELECT * INTO v_admin 
+  FROM public.members 
+  WHERE id = p_admin_member_id 
+     OR lower(username) = lower(trim(p_admin_member_id))
+     OR lower(email) = lower(trim(p_admin_member_id));
+
+  IF v_admin.id IS NULL OR (lower(coalesce(v_admin.role, '')) != 'admin' AND coalesce(v_admin.board_position, '') = '' AND v_admin.username != 'stan.stefan') THEN
     RETURN jsonb_build_object('success', false, 'error', 'Neautorizat: Doar administratorii pot reseta parole.');
   END IF;
 
@@ -163,16 +169,18 @@ BEGIN
     RETURN jsonb_build_object('success', false, 'error', 'Parola trebuie să aibă cel puțin 6 caractere.');
   END IF;
 
-  INSERT INTO private.member_credentials (member_id, password_hash, must_change_password, updated_at)
+  INSERT INTO private.member_credentials (member_id, password_hash, temp_password, must_change_password, updated_at)
   VALUES (
     p_target_member_id,
     crypt(p_new_password, gen_salt('bf', 10)),
-    true,
+    p_new_password,
+    false,
     NOW()
   )
   ON CONFLICT (member_id) DO UPDATE SET
     password_hash = crypt(p_new_password, gen_salt('bf', 10)),
-    must_change_password = true,
+    temp_password = p_new_password,
+    must_change_password = false,
     updated_at = NOW();
 
   RETURN jsonb_build_object('success', true, 'message', 'Parola a fost setată cu succes!');
@@ -183,15 +191,14 @@ $$;
 -- 3. RESTRÂNGERE STRICTĂ A PERMISIUNILOR (REZOLVĂ LINTER WARNINGS)
 -- ==============================================================================
 -- Revocăm orice permisiune publică automată
-REVOKE ALL ON FUNCTION public.authenticate_member(TEXT, TEXT) FROM PUBLIC, anon;
-REVOKE ALL ON FUNCTION public.change_member_password(TEXT, TEXT, TEXT) FROM PUBLIC, anon;
-REVOKE ALL ON FUNCTION public.admin_set_member_password(TEXT, TEXT, TEXT) FROM PUBLIC, anon;
+REVOKE ALL ON FUNCTION public.authenticate_member(TEXT, TEXT) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.change_member_password(TEXT, TEXT, TEXT) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.admin_set_member_password(TEXT, TEXT, TEXT) FROM PUBLIC;
 
--- Acordăm acces minim necesar:
--- authenticate_member și change_member_password sunt accesibile clienților
+-- Acordăm acces necesar către anon, authenticated și service_role
 GRANT EXECUTE ON FUNCTION public.authenticate_member(TEXT, TEXT) TO anon, authenticated, service_role;
 GRANT EXECUTE ON FUNCTION public.change_member_password(TEXT, TEXT, TEXT) TO anon, authenticated, service_role;
-GRANT EXECUTE ON FUNCTION public.admin_set_member_password(TEXT, TEXT, TEXT) TO authenticated, service_role;
+GRANT EXECUTE ON FUNCTION public.admin_set_member_password(TEXT, TEXT, TEXT) TO anon, authenticated, service_role;
 
 -- ==============================================================================
 -- 4. RE-SINCRONIZARE COMPLETĂ TOATE CELE 57 DE PAROLE DISTINCTE

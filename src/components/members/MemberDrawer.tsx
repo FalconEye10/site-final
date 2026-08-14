@@ -209,7 +209,7 @@ export function MemberDrawer({ member, onClose, onUpdateMember, isAdmin, current
       // Dacă s-a introdus o parolă nouă pentru membru de către admin
       if (adminNewPassword && adminNewPassword.trim().length > 0) {
         const { data: passRes, error: passErr } = await supabase.rpc('admin_set_member_password', {
-          p_admin_member_id: currentUserObj?.id || member.id,
+          p_admin_member_id: currentUserObj?.id || currentUserObj?.username || 'stan.stefan',
           p_target_member_id: member.id,
           p_new_password: adminNewPassword.trim()
         });

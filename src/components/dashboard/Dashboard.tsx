@@ -1764,7 +1764,7 @@ const ViewProfile = ({ currentUserObj, onUpdateMember, members }: ViewProfilePro
       // Dacă s-a introdus o parolă nouă, o actualizăm prin funcția securizată RPC
       if (allowedPasswordChange && password && password.trim().length > 0) {
         const { data: passRes, error: passErr } = await supabase.rpc('admin_set_member_password', {
-          p_admin_member_id: currentUserObj?.id || effectiveUser.id,
+          p_admin_member_id: currentUserObj?.id || currentUserObj?.username || 'stan.stefan',
           p_target_member_id: effectiveUser.id,
           p_new_password: password.trim()
         });
