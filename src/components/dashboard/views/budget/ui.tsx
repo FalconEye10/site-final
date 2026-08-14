@@ -27,9 +27,9 @@ export const Panel: React.FC<{
         style={{ borderBottom: '1px solid var(--adm-border)' }}
       >
         <div>
-          {title && <h3 className="adm-meta-label" style={{ color: 'var(--adm-ink-dim)' }}>{title}</h3>}
+          {title && <h3 className="adm-meta-label text-xs sm:text-sm" style={{ color: 'var(--adm-ink-dim)' }}>{title}</h3>}
           {subtitle && (
-            <p className="mt-1 text-xs font-medium" style={{ color: 'var(--adm-ink-faint)' }}>
+            <p className="mt-1 text-xs sm:text-sm font-medium" style={{ color: 'var(--adm-ink-faint)' }}>
               {subtitle}
             </p>
           )}
@@ -56,20 +56,20 @@ export const KpiCard: React.FC<{
     <span className="adm-accent-bar" style={{ background: accent }} />
     <div className="flex items-start justify-between gap-3 pl-3">
       <div className="min-w-0">
-        <div className="adm-meta-label">{label}</div>
+        <div className="adm-meta-label text-xs sm:text-sm">{label}</div>
         <div className="mt-3 flex items-baseline gap-1.5">
           <span
-            className="adm-editorial-number text-3xl leading-none"
+            className="adm-editorial-number text-3xl sm:text-4xl leading-none"
             style={{ color: emphasis ? accent : 'var(--adm-ink)' }}
           >
             {value}
           </span>
-          <span className="text-xs font-bold" style={{ color: 'var(--adm-ink-faint)' }}>
+          <span className="text-xs sm:text-sm font-bold" style={{ color: 'var(--adm-ink-faint)' }}>
             {unit}
           </span>
         </div>
         {hint && (
-          <p className="mt-2 text-[11px] font-medium leading-snug" style={{ color: 'var(--adm-ink-faint)' }}>
+          <p className="mt-2 text-xs sm:text-sm font-medium leading-snug" style={{ color: 'var(--adm-ink-faint)' }}>
             {hint}
           </p>
         )}
@@ -88,7 +88,7 @@ export const Badge: React.FC<{
   icon?: React.ReactNode;
 }> = ({ label, color, bg, icon }) => (
   <span
-    className="inline-flex items-center gap-1.5 whitespace-nowrap px-2 py-1 text-[10px] font-bold uppercase tracking-[0.08em]"
+    className="inline-flex items-center gap-1.5 whitespace-nowrap px-2.5 py-1 text-xs font-bold uppercase tracking-[0.08em]"
     style={{
       borderRadius: 2,
       color,
@@ -112,18 +112,18 @@ export const Field: React.FC<{
   children: React.ReactNode;
 }> = ({ label, hint, error, required, className = '', children }) => (
   <label className={`flex flex-col gap-1.5 ${className}`}>
-    <span className="adm-meta-label">
+    <span className="adm-meta-label text-xs sm:text-sm">
       {label}
       {required && <span style={{ color: 'var(--adm-acc-rose)' }}> *</span>}
     </span>
     {children}
     {error ? (
-      <span className="text-[11px] font-semibold" style={{ color: 'var(--adm-acc-rose)' }}>
+      <span className="text-xs font-semibold" style={{ color: 'var(--adm-acc-rose)' }}>
         {error}
       </span>
     ) : (
       hint && (
-        <span className="text-[11px] font-medium" style={{ color: 'var(--adm-ink-faint)' }}>
+        <span className="text-xs font-medium" style={{ color: 'var(--adm-ink-faint)' }}>
           {hint}
         </span>
       )
@@ -236,7 +236,7 @@ export const Th: React.FC<{
   className?: string;
 }> = ({ children, align = 'left', className = '' }) => (
   <th
-    className={`adm-meta-label whitespace-nowrap px-4 py-3 ${className}`}
+    className={`adm-meta-label whitespace-nowrap px-4 py-3.5 text-xs sm:text-sm font-bold uppercase tracking-wider font-title ${className}`}
     style={{ textAlign: align, color: 'var(--adm-ink-dim)' }}
   >
     {children}
@@ -251,7 +251,7 @@ export const Td: React.FC<{
   style?: React.CSSProperties;
 }> = ({ children, align = 'left', className = '', numeric, style }) => (
   <td
-    className={`px-4 py-3 ${numeric ? 'tabular-nums font-semibold' : 'font-medium'} ${className}`}
+    className={`px-4 py-3.5 text-xs sm:text-sm ${numeric ? 'tabular-nums font-semibold font-data' : 'font-medium font-anthropic'} ${className}`}
     style={{ textAlign: align, color: 'var(--adm-ink)', ...style }}
   >
     {children}

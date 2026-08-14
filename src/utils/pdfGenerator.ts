@@ -11,7 +11,7 @@ export interface ExportMemberData {
 
 export interface PDFGenerationOptions {
   month: string;
-  year: number;
+  year: number | string;
   members: ExportMemberData[];
 }
 

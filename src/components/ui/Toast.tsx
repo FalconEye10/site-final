@@ -45,29 +45,29 @@ export function Toaster() {
   };
 
   return (
-    <div className="fixed bottom-6 right-6 z-[300] flex flex-col gap-3 pointer-events-none">
+    <div className="fixed bottom-6 right-6 z-[300] flex flex-col gap-2.5 pointer-events-none font-anthropic">
       <AnimatePresence>
         {toasts.map((t) => (
           <motion.div
             key={t.id}
             layout
-            initial={{ opacity: 0, y: 50, scale: 0.9 }}
+            initial={{ opacity: 0, y: 16, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.9, transition: { duration: 0.2 } }}
-            transition={{ type: 'spring', damping: 20, stiffness: 300 }}
-            className="bg-white/95 backdrop-blur-xl border border-brand-primary/10 shadow-[0_8px_30px_rgba(0,31,38,0.08),0_0_0_1px_rgba(40,250,252,0.04)] rounded-2xl p-4 flex items-center gap-3 w-80 pointer-events-auto"
+            exit={{ opacity: 0, scale: 0.98, transition: { duration: 0.15 } }}
+            transition={{ duration: 0.2, ease: 'easeOut' }}
+            className="bg-white dark:bg-[#161B22] border border-slate-300 dark:border-slate-700 shadow-xl rounded-[2px] p-3.5 flex items-center gap-3 w-80 pointer-events-auto text-slate-900 dark:text-slate-100 font-anthropic"
           >
-            {t.type === 'success' && <CheckCircle2 className="text-emerald-500 shrink-0" size={20} />}
-            {t.type === 'error' && <AlertCircle className="text-red-500 shrink-0" size={20} />}
-            {t.type === 'info' && <Info className="text-blue-500 shrink-0" size={20} />}
+            {t.type === 'success' && <CheckCircle2 className="text-emerald-600 dark:text-emerald-400 shrink-0" size={18} />}
+            {t.type === 'error' && <AlertCircle className="text-rose-600 dark:text-rose-400 shrink-0" size={18} />}
+            {t.type === 'info' && <Info className="text-blue-600 dark:text-blue-400 shrink-0" size={18} />}
             
-            <p className="text-sm font-semibold text-brand-accent flex-1 font-['Manrope']">{t.message}</p>
+            <p className="text-xs font-semibold text-slate-800 dark:text-slate-200 flex-1 font-anthropic leading-snug">{t.message}</p>
             
             <button 
               onClick={() => removeToast(t.id)}
-              className="p-1 rounded-full hover:bg-[#FAF9F5] text-brand-accent/40 hover:text-brand-accent transition-colors"
+              className="p-1 rounded-[2px] hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors cursor-pointer"
             >
-              <X size={16} />
+              <X size={14} />
             </button>
           </motion.div>
         ))}

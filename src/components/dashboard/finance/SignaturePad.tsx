@@ -121,7 +121,7 @@ export function SignaturePad({ onSave, onClearCallback, heightClass, widthClass 
   };
 
   return (
-    <div className={`relative border border-brand-muted/10 rounded-2xl overflow-hidden bg-[#FAF9F5] ${widthClass || 'w-full'}`}>
+    <div className={`relative border border-slate-300 dark:border-slate-700 rounded-[2px] overflow-hidden bg-slate-50 dark:bg-slate-900 ${widthClass || 'w-full'} font-anthropic`}>
       <canvas
         ref={canvasRef}
         onMouseDown={startDrawing}
@@ -137,12 +137,12 @@ export function SignaturePad({ onSave, onClearCallback, heightClass, widthClass 
         type="button"
         onClick={clear}
         disabled={isEmpty}
-        className="absolute top-2 right-2 p-2 bg-white rounded-lg border border-brand-muted/5 shadow-sm text-xs font-bold text-brand-accent/60 hover:text-brand-accent disabled:opacity-50 transition-colors flex items-center gap-2"
+        className="absolute top-2 right-2 px-2.5 py-1 bg-white dark:bg-slate-800 rounded-[2px] border border-slate-300 dark:border-slate-700 shadow-xs text-xs font-bold text-slate-700 dark:text-slate-200 hover:text-slate-900 dark:hover:text-white disabled:opacity-40 transition-colors flex items-center gap-1.5 font-title cursor-pointer"
       >
-        <RefreshCcw size={12} /> Curăță
+        <RefreshCcw size={11} /> Curăță
       </button>
       {isEmpty && (
-        <div className="absolute inset-0 pointer-events-none flex items-center justify-center text-brand-accent/20 font-bold uppercase tracking-widest text-xs">
+        <div className="absolute inset-0 pointer-events-none flex items-center justify-center text-slate-400 dark:text-slate-600 font-bold uppercase tracking-widest text-xs font-title">
           Semnează Aici
         </div>
       )}

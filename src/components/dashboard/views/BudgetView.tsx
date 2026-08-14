@@ -194,19 +194,19 @@ export const BudgetView: React.FC<BudgetViewProps> = ({ isAdmin = false, current
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
-          <button type="button" className="adm-btn-ghost" onClick={() => setArchiveOpen(true)}>
-            <Archive className="h-3.5 w-3.5" /> Arhivează Mandatul
+        <div className="flex flex-wrap items-center gap-2.5 font-title">
+          <button type="button" className="adm-btn-ghost text-xs sm:text-sm font-bold uppercase tracking-wider py-2 px-3.5" onClick={() => setArchiveOpen(true)}>
+            <Archive className="h-4 w-4" /> Arhivează Mandatul
           </button>
-          <button type="button" className="adm-btn-primary" onClick={handleExport}>
-            <FileSpreadsheet className="h-3.5 w-3.5" /> Exportă Buget (.XLSX)
+          <button type="button" className="adm-btn-primary text-xs sm:text-sm font-bold uppercase tracking-wider py-2 px-3.5" onClick={handleExport}>
+            <FileSpreadsheet className="h-4 w-4" /> Exportă Buget (.XLSX)
           </button>
         </div>
       </header>
 
       {data.error && (
         <div
-          className="px-4 py-3 text-xs font-semibold"
+          className="px-4 py-3 text-xs sm:text-sm font-semibold font-anthropic"
           style={{
             background: 'color-mix(in srgb, var(--adm-acc-rose) 10%, transparent)',
             border: '1px solid color-mix(in srgb, var(--adm-acc-rose) 30%, transparent)',
@@ -220,7 +220,7 @@ export const BudgetView: React.FC<BudgetViewProps> = ({ isAdmin = false, current
 
       {/* Sub-navigation */}
       <nav
-        className="flex gap-1 overflow-x-auto no-scrollbar whitespace-nowrap"
+        className="flex gap-1 overflow-x-auto no-scrollbar whitespace-nowrap font-title"
         style={{ borderBottom: '1px solid var(--adm-border)' }}
         role="tablist"
       >
@@ -234,10 +234,10 @@ export const BudgetView: React.FC<BudgetViewProps> = ({ isAdmin = false, current
               role="tab"
               aria-selected={isActive}
               onClick={() => setActiveTab(tab.id)}
-              className="relative flex shrink-0 items-center gap-2 px-4 py-3 text-[11px] font-bold uppercase tracking-[0.1em] transition-colors"
+              className="relative flex shrink-0 items-center gap-2 px-4 py-3.5 text-xs sm:text-sm font-bold uppercase tracking-[0.1em] transition-colors cursor-pointer"
               style={{ color: isActive ? 'var(--adm-ink)' : 'var(--adm-ink-faint)' }}
             >
-              <Icon className="h-3.5 w-3.5" />
+              <Icon className="h-4 w-4" />
               {tab.label}
               {isActive && (
                 <motion.span

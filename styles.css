@@ -10,163 +10,155 @@ body {
 }
 
 /* ============================================
-   TYPOGRAPHY CLASSES (Google Sans & Satoshi/Data)
+   TYPOGRAPHY CLASSES (Google Sans & Anthropic Satoshi/Newsreader)
    ============================================ */
 .font-title {
     font-family: 'Google Sans', 'Plus Jakarta Sans', sans-serif !important;
 }
 
 .font-data {
-    font-family: 'Satoshi', 'Inter', system-ui, sans-serif !important;
+    font-family: 'Satoshi', 'Google Sans', 'Inter', system-ui, sans-serif !important;
+}
+
+.font-anthropic {
+    font-family: 'Satoshi', 'Google Sans', system-ui, sans-serif !important;
+}
+
+.font-anthropicSerif {
+    font-family: 'Newsreader', 'Cormorant Garamond', Georgia, serif !important;
 }
 
 /* ============================================
-   CUSTOM CURSOR STYLES
+   NORDIC CIVIC MONOLITH - SYSTEM DESIGN TOKENS
    ============================================ */
-#cursor-dot,
-#cursor-ring {
-    pointer-events: none;
-    position: fixed;
-    top: 0;
-    left: 0;
-    transform: translate(-50%, -50%);
-    border-radius: 50%;
-    z-index: 999999;
-    will-change: transform, left, top;
+:root {
+  --civic-bg: #F8F9FA;
+  --civic-surface: #FFFFFF;
+  --civic-surface-subtle: #F3F4F6;
+  --civic-border: #E1E4E8;
+  --civic-border-subtle: #ECEEF1;
+  --civic-ink: #111827;
+  --civic-ink-secondary: #4B5563;
+  --civic-ink-subtle: #6B7280;
+  --civic-primary: #0969DA;
+  --civic-primary-hover: #0854B2;
+  --civic-emerald: #1A7F37;
+  --civic-amber: #9A6700;
+  --civic-crimson: #CF222E;
 }
 
-#cursor-dot {
-    width: 8px;
-    height: 8px;
-    background-color: #101D34;
-    transition: background-color 0.3s ease, opacity 0.3s ease, transform 0.2s ease;
+html.dark,
+[data-theme="dark"] {
+  --civic-bg: #0D1117;
+  --civic-surface: #161B22;
+  --civic-surface-subtle: #1C2128;
+  --civic-border: #30363D;
+  --civic-border-subtle: #21262D;
+  --civic-ink: #F0F6FC;
+  --civic-ink-secondary: #8B949E;
+  --civic-ink-subtle: #6E7681;
+  --civic-primary: #58A6FF;
+  --civic-primary-hover: #79B8FF;
+  --civic-emerald: #3FB950;
+  --civic-amber: #D29922;
+  --civic-crimson: #F85149;
 }
 
-#cursor-ring {
-    width: 36px;
-    height: 36px;
-    border: 1.5px solid rgba(16, 29, 52, 0.4);
-    transition: width 0.3s ease, height 0.3s ease, border-color 0.3s ease, background-color 0.3s ease;
+/* Reduced Motion Enforcement */
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
-body.cursor-hover #cursor-ring {
-    width: 52px;
-    height: 52px;
-    background-color: rgba(160, 216, 239, 0.2);
-    border-color: rgba(160, 216, 239, 0.8);
+/* Base Civic Panel */
+.civic-card {
+  background-color: var(--civic-surface);
+  border: 1px solid var(--civic-border);
+  border-radius: 2px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
 }
 
-body.cursor-hover #cursor-dot {
-    transform: translate(-50%, -50%) scale(1.4);
-    background-color: #0077B6;
+.civic-card-header {
+  border-bottom: 1px solid var(--civic-border);
+  padding: 12px 16px;
 }
 
-@media (hover: none) and (pointer: coarse) {
-    #cursor-dot,
-    #cursor-ring {
-        display: none !important;
-    }
+/* Accessible focus ring for keyboard navigation */
+.focus-ring:focus-visible {
+  outline: 2px solid var(--civic-primary);
+  outline-offset: 2px;
 }
 
-/* Dark mode overrides */
-html.dark body {
-    background-color: #121212;
-    color: #E0E0E0;
+/* Civic Standardized Button System */
+.btn-civic-primary,
+.btn-stitch-primary {
+  background-color: var(--civic-ink);
+  color: var(--civic-surface);
+  border: 1px solid var(--civic-ink);
+  border-radius: 2px;
+  font-family: 'Google Sans', sans-serif;
+  font-weight: 600;
+  transition: background-color 150ms ease-out, opacity 150ms ease-out, transform 100ms ease-out;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.btn-civic-primary:hover,
+.btn-stitch-primary:hover {
+  opacity: 0.92;
+}
+.btn-civic-primary:active,
+.btn-stitch-primary:active {
+  transform: scale(0.985);
 }
 
-
-
-/* ============================================
-   GLASS PANELS - Enhanced with cyan tinting
-   ============================================ */
-.glass-panel {
-    background: rgba(255, 255, 255, 0.6);
-    border: 1px solid rgba(0, 31, 38, 0.08);
+.btn-civic-secondary,
+.btn-stitch-secondary {
+  background-color: var(--civic-surface);
+  color: var(--civic-ink);
+  border: 1px solid var(--civic-border);
+  border-radius: 2px;
+  font-family: 'Google Sans', sans-serif;
+  font-weight: 600;
+  transition: background-color 150ms ease-out, border-color 150ms ease-out, transform 100ms ease-out;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.btn-civic-secondary:hover,
+.btn-stitch-secondary:hover {
+  background-color: var(--civic-surface-subtle);
+  border-color: var(--civic-border);
+}
+.btn-civic-secondary:active,
+.btn-stitch-secondary:active {
+  transform: scale(0.985);
 }
 
-.liquid-glass {
-    background: linear-gradient(
-      195deg,
-      rgba(40, 250, 252, 0.03) 0%,
-      rgba(255, 255, 255, 0.65) 40%,
-      rgba(250, 249, 245, 0.5) 100%
-    );
-    border: 1px solid rgba(40, 250, 252, 0.08);
-    box-shadow: 0 1px 3px rgba(0, 31, 38, 0.03), 0 4px 24px rgba(0, 31, 38, 0.03);
+.btn-civic-danger,
+.btn-stitch-danger {
+  background-color: transparent;
+  color: var(--civic-crimson);
+  border: 1px solid var(--civic-crimson);
+  border-radius: 2px;
+  font-family: 'Google Sans', sans-serif;
+  font-weight: 600;
+  transition: background-color 150ms ease-out, color 150ms ease-out;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
-
-.liquid-card {
-    background: linear-gradient(
-      135deg,
-      #ffffff 0%,
-      #FAF9F5 100%
-    );
-    border: 1px solid rgba(0, 31, 38, 0.08);
-    box-shadow: 
-      0 1px 3px rgba(0, 31, 38, 0.04),
-      0 8px 24px rgba(0, 31, 38, 0.05),
-      inset 0 1px 0 rgba(255, 255, 255, 0.7);
-    position: relative;
-    overflow: hidden;
-    transition: box-shadow 0.4s cubic-bezier(0.23, 1, 0.32, 1), 
-                transform 0.4s cubic-bezier(0.23, 1, 0.32, 1),
-                border-color 0.3s ease;
-}
-
-html.dark .liquid-card {
-    background: linear-gradient(
-      135deg,
-      #1a1d20 0%,
-      #0d0f11 100%
-    );
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    box-shadow: 
-      0 1px 3px rgba(0, 0, 0, 0.2),
-      0 8px 24px rgba(0, 0, 0, 0.3),
-      inset 0 1px 0 rgba(255, 255, 255, 0.05);
-}
-
-.liquid-card:hover {
-    border-color: rgba(40, 250, 252, 0.15);
-    box-shadow: 
-      0 4px 12px rgba(0, 31, 38, 0.04),
-      0 20px 48px rgba(0, 31, 38, 0.07),
-      0 0 24px rgba(40, 250, 252, 0.06),
-      inset 0 1px 0 rgba(255, 255, 255, 0.8);
-}
-
-/* ============================================
-   SPRING TRANSITION & FADE OUT
-   ============================================ */
-.spring-transition {
-    transition: all 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.1);
-}
-
-.executive-fade-out {
-    animation: fadeOut 600ms cubic-bezier(0.4, 0, 0.2, 1) forwards;
-}
-
-@keyframes fadeOut {
-    from { opacity: 1; transform: scale(1); }
-    to { opacity: 0; transform: scale(0.96); }
-}
-
-/* Marquee */
-.marquee-container {
-    overflow: hidden;
-    white-space: nowrap;
-    position: absolute;
-    width: 100%;
-}
-
-.marquee-content {
-    display: inline-block;
-    animation: marquee 30s linear infinite;
-}
-
-@keyframes marquee {
-    0% { transform: translateX(0); }
-    100% { transform: translateX(-50%); }
+.btn-civic-danger:hover,
+.btn-stitch-danger:hover {
+  background-color: var(--civic-crimson);
+  color: #FFFFFF;
 }
 
 /* ============================================
@@ -1858,6 +1850,7 @@ input:focus, textarea:focus, select:focus {
   --adm-grid-line: rgba(255,255,255,0.035);
   --adm-vignette: radial-gradient(ellipse 130% 90% at 50% -10%, transparent 0%, rgba(10,12,16,0.5) 60%, rgba(10,12,16,0.94) 100%);
   color: var(--adm-ink);
+  font-family: 'Satoshi', 'Google Sans', system-ui, sans-serif;
   color-scheme: dark;
 }
 
@@ -2189,352 +2182,138 @@ html[data-theme="light"] .dashboard-shell {
   border-color: color-mix(in srgb, var(--theme-color, #89cff0) 55%, transparent) !important;
   box-shadow: 0 0 0 4px color-mix(in srgb, var(--theme-color, #89cff0) 16%, transparent) !important;
 }
+/* Dashboard Shell Specific Component Styles */
 .dashboard-shell .glass-header,
 .dashboard-shell .glass-panel {
-  background: var(--adm-panel) !important;
-  border-color: var(--adm-border) !important;
+  background: var(--adm-panel);
+  border-color: var(--adm-border);
 }
 .dashboard-shell .sidebar-nav {
   background: transparent !important;
   border-right: none !important;
   box-shadow: none !important;
 }
-.dashboard-shell .table-header-row { background: var(--adm-surface) !important; }
-.dashboard-shell .table-row-hover:hover { background-color: var(--adm-surface-hover) !important; }
+.dashboard-shell .table-header-row { background: var(--adm-surface); }
+.dashboard-shell .table-row-hover:hover { background-color: var(--adm-surface-hover); }
 .dashboard-shell ::-webkit-scrollbar-thumb { background: var(--adm-border-strong); }
 .dashboard-shell ::-webkit-scrollbar-thumb:hover { background: color-mix(in srgb, var(--theme-color, #89cff0) 55%, transparent); }
 
-/* ============================================
-   ROBUST DARK RE-THEME (attribute selectors)
-   Tailwind's CDN generates opacity variants as separate
-   classes (.bg-white\/70, .text-slate-800\/50 ...), so we
-   match on substrings to catch every variant at once. This
-   guarantees contrast without editing all 13 view files.
-   ============================================ */
-
-/* Surfaces: any white / near-white / light-slate card -> opaque dark panel */
-.dashboard-shell [class*="bg-white"],
-.dashboard-shell [class*="bg-[#FAF9F5]"],
-.dashboard-shell [class*="bg-[#faf9f5]"],
-.dashboard-shell [class*="bg-slate-50"],
-.dashboard-shell [class*="bg-slate-100"],
-.dashboard-shell [class*="bg-slate-200"],
-.dashboard-shell [class*="bg-gray-50"],
-.dashboard-shell [class*="bg-gray-100"],
-.dashboard-shell [class*="bg-neutral-50"],
-.dashboard-shell [class*="bg-neutral-100"],
-.dashboard-shell [class*="bg-neutral-200"],
-.dashboard-shell [class*="bg-zinc-50"],
-.dashboard-shell [class*="bg-zinc-100"],
-.dashboard-shell [class*="bg-stone-50"],
-.dashboard-shell [class*="bg-stone-100"] {
-  background-color: var(--adm-panel) !important;
-}
-
-/* Small translucent "highlight" chips should stay subtle, not become full panels */
-.dashboard-shell [class*="bg-white/5"],
-.dashboard-shell [class*="bg-white/10"],
-.dashboard-shell [class*="bg-white/[0.0"] {
-  background-color: var(--adm-hover-tint) !important;
-}
-
-/* Text: dark families -> light ink */
-.dashboard-shell [class*="text-slate-6"],
-.dashboard-shell [class*="text-slate-7"],
-.dashboard-shell [class*="text-slate-8"],
-.dashboard-shell [class*="text-slate-9"],
-.dashboard-shell [class*="text-gray-6"],
-.dashboard-shell [class*="text-gray-7"],
-.dashboard-shell [class*="text-gray-8"],
-.dashboard-shell [class*="text-gray-9"],
-.dashboard-shell [class*="text-neutral-6"],
-.dashboard-shell [class*="text-neutral-7"],
-.dashboard-shell [class*="text-neutral-8"],
-.dashboard-shell [class*="text-neutral-9"],
-.dashboard-shell [class*="text-zinc-6"],
-.dashboard-shell [class*="text-zinc-7"],
-.dashboard-shell [class*="text-zinc-8"],
-.dashboard-shell [class*="text-zinc-9"],
-.dashboard-shell [class*="text-stone-6"],
-.dashboard-shell [class*="text-stone-7"],
-.dashboard-shell [class*="text-stone-8"],
-.dashboard-shell [class*="text-stone-9"],
-.dashboard-shell [class*="text-brand-accent"],
-.dashboard-shell [class*="text-[#0F172A]"],
-.dashboard-shell [class*="text-[#101D34]"] {
-  color: var(--adm-ink) !important;
-}
-/* Text: mid grays -> dimmed light (labels, captions) */
-.dashboard-shell [class*="text-slate-2"],
-.dashboard-shell [class*="text-slate-4"],
-.dashboard-shell [class*="text-slate-5"],
-.dashboard-shell [class*="text-gray-2"],
-.dashboard-shell [class*="text-gray-4"],
-.dashboard-shell [class*="text-gray-5"],
-.dashboard-shell [class*="text-neutral-2"],
-.dashboard-shell [class*="text-neutral-4"],
-.dashboard-shell [class*="text-neutral-5"],
-.dashboard-shell [class*="text-zinc-2"],
-.dashboard-shell [class*="text-zinc-4"],
-.dashboard-shell [class*="text-zinc-5"],
-.dashboard-shell [class*="text-stone-2"],
-.dashboard-shell [class*="text-stone-4"],
-.dashboard-shell [class*="text-stone-5"],
-.dashboard-shell [class*="text-brand-muted"] {
-  color: var(--adm-ink-dim) !important;
-}
-/* Text: light grays -> faint light */
-.dashboard-shell [class*="text-slate-1"],
-.dashboard-shell [class*="text-slate-3"],
-.dashboard-shell [class*="text-slate-50"],
-.dashboard-shell [class*="text-gray-1"],
-.dashboard-shell [class*="text-gray-3"],
-.dashboard-shell [class*="text-gray-50"],
-.dashboard-shell [class*="text-neutral-1"],
-.dashboard-shell [class*="text-neutral-3"],
-.dashboard-shell [class*="text-zinc-1"],
-.dashboard-shell [class*="text-zinc-3"],
-.dashboard-shell [class*="text-stone-1"],
-.dashboard-shell [class*="text-stone-3"] {
-  color: var(--adm-ink-faint) !important;
-}
-
-/* Borders: slate/gray/neutral/muted -> soft light hairline */
-.dashboard-shell [class*="border-slate-"],
-.dashboard-shell [class*="border-gray-"],
-.dashboard-shell [class*="border-neutral-"],
-.dashboard-shell [class*="border-zinc-"],
-.dashboard-shell [class*="border-stone-"],
-.dashboard-shell [class*="border-brand-muted"],
-.dashboard-shell [class*="border-brand-primary"] {
-  border-color: var(--adm-border) !important;
-}
-
-/* Accent TEXT colors: collapse EVERY shade (300-900) of a color family onto
-   one theme-aware, always-readable var — so it doesn't matter whether a view
-   happened to use emerald-300 or emerald-800, light mode and dark mode both
-   stay AA-contrast-safe on their respective panel color. */
-.dashboard-shell [class*="text-emerald-"], .dashboard-shell [class*="text-green-"] { color: var(--adm-acc-emerald) !important; }
-.dashboard-shell [class*="text-rose-"], .dashboard-shell [class*="text-red-"] { color: var(--adm-acc-rose) !important; }
-.dashboard-shell [class*="text-amber-"], .dashboard-shell [class*="text-yellow-"], .dashboard-shell [class*="text-orange-"] { color: var(--adm-acc-amber) !important; }
-.dashboard-shell [class*="text-indigo-"], .dashboard-shell [class*="text-violet-"], .dashboard-shell [class*="text-purple-"] { color: var(--adm-acc-indigo) !important; }
-.dashboard-shell [class*="text-blue-"], .dashboard-shell [class*="text-sky-"], .dashboard-shell [class*="text-cyan-"] { color: var(--adm-acc-blue) !important; }
-.dashboard-shell [class*="text-teal-"] { color: var(--adm-acc-teal) !important; }
-.dashboard-shell [class*="text-pink-"], .dashboard-shell [class*="text-fuchsia-"] { color: var(--adm-acc-pink) !important; }
-
-/* Pale colored badge/pill backgrounds ONLY (50/100/200 — the "light chip"
-   shades) -> a matching low-alpha tint of the SAME theme-aware accent.
-   Deliberately excludes 400-900 solid shades: those are real functional
-   fills (status dots, solid buttons like bg-emerald-600) that already look
-   correct as vivid true color in both themes and must stay solid. */
-.dashboard-shell [class*="bg-emerald-50"], .dashboard-shell [class*="bg-emerald-100"], .dashboard-shell [class*="bg-emerald-200"],
-.dashboard-shell [class*="bg-green-50"], .dashboard-shell [class*="bg-green-100"], .dashboard-shell [class*="bg-green-200"] { background-color: var(--adm-acc-emerald-bg) !important; }
-.dashboard-shell [class*="bg-rose-50"], .dashboard-shell [class*="bg-rose-100"], .dashboard-shell [class*="bg-rose-200"],
-.dashboard-shell [class*="bg-red-50"], .dashboard-shell [class*="bg-red-100"], .dashboard-shell [class*="bg-red-200"] { background-color: var(--adm-acc-rose-bg) !important; }
-.dashboard-shell [class*="bg-amber-50"], .dashboard-shell [class*="bg-amber-100"], .dashboard-shell [class*="bg-amber-200"],
-.dashboard-shell [class*="bg-yellow-50"], .dashboard-shell [class*="bg-yellow-100"], .dashboard-shell [class*="bg-yellow-200"],
-.dashboard-shell [class*="bg-orange-50"], .dashboard-shell [class*="bg-orange-100"], .dashboard-shell [class*="bg-orange-200"] { background-color: var(--adm-acc-amber-bg) !important; }
-.dashboard-shell [class*="bg-indigo-50"], .dashboard-shell [class*="bg-indigo-100"], .dashboard-shell [class*="bg-indigo-200"],
-.dashboard-shell [class*="bg-purple-50"], .dashboard-shell [class*="bg-purple-100"], .dashboard-shell [class*="bg-purple-200"],
-.dashboard-shell [class*="bg-violet-50"], .dashboard-shell [class*="bg-violet-100"], .dashboard-shell [class*="bg-violet-200"] { background-color: var(--adm-acc-indigo-bg) !important; }
-.dashboard-shell [class*="bg-blue-50"], .dashboard-shell [class*="bg-blue-100"], .dashboard-shell [class*="bg-blue-200"],
-.dashboard-shell [class*="bg-sky-50"], .dashboard-shell [class*="bg-sky-100"], .dashboard-shell [class*="bg-sky-200"],
-.dashboard-shell [class*="bg-cyan-50"], .dashboard-shell [class*="bg-cyan-100"], .dashboard-shell [class*="bg-cyan-200"] { background-color: var(--adm-acc-blue-bg) !important; }
-.dashboard-shell [class*="border-emerald-"], .dashboard-shell [class*="border-green-"] { border-color: color-mix(in srgb, var(--adm-acc-emerald) 40%, transparent) !important; }
-.dashboard-shell [class*="border-rose-"], .dashboard-shell [class*="border-red-"] { border-color: color-mix(in srgb, var(--adm-acc-rose) 40%, transparent) !important; }
-.dashboard-shell [class*="border-amber-"], .dashboard-shell [class*="border-yellow-"], .dashboard-shell [class*="border-orange-"] { border-color: color-mix(in srgb, var(--adm-acc-amber) 40%, transparent) !important; }
-.dashboard-shell [class*="border-indigo-"], .dashboard-shell [class*="border-purple-"], .dashboard-shell [class*="border-violet-"] { border-color: color-mix(in srgb, var(--adm-acc-indigo) 40%, transparent) !important; }
-.dashboard-shell [class*="border-blue-"], .dashboard-shell [class*="border-sky-"], .dashboard-shell [class*="border-cyan-"] { border-color: color-mix(in srgb, var(--adm-acc-blue) 40%, transparent) !important; }
-
-/* Solid brand accents used as backgrounds -> translucent theme tint so the
-   now-light foreground text keeps good contrast (active tabs, pills, badges).
-   Attribute selectors catch the /10 /20 /30 opacity variants too. */
-.dashboard-shell [class*="bg-brand-primary"] {
-  background-color: color-mix(in srgb, var(--theme-color, #89cff0) 22%, transparent) !important;
-}
-.dashboard-shell [class*="bg-brand-secondary"] {
-  background-color: rgba(255, 234, 205, 0.16) !important;
-}
-/* bg-brand-accent (#0F172A) as a SOLID button -> nudged lighter than the panel
-   so dark CTAs read as distinct, with their white text intact. */
-.dashboard-shell .bg-brand-accent {
-  background-color: #1c2540 !important;
-}
-/* bg-brand-accent/40..60 are modal backdrops -> proper dim overlay */
+/* Modal Backdrops */
 .dashboard-shell [class*="bg-brand-accent/40"],
 .dashboard-shell [class*="bg-brand-accent/50"],
 .dashboard-shell [class*="bg-brand-accent/60"],
 .dashboard-shell [class*="bg-brand-accent/70"] {
   background-color: rgba(6, 9, 16, 0.7) !important;
 }
-/* keep true accent fills vivid where needed */
-.dashboard-shell .adm-btn-primary { background: var(--theme-color, #89cff0) !important; color: #05070D !important; }
+/* Primary buttons */
+.dashboard-shell .adm-btn-primary { background: #0f172a !important; color: #ffffff !important; border: 1px solid rgba(255,255,255,0.15) !important; }
+.dark .dashboard-shell .adm-btn-primary,
+html[data-theme="dark"] .dashboard-shell .adm-btn-primary,
+.dashboard-shell.dark .adm-btn-primary { background: #38bdf8 !important; color: #020617 !important; }
 
-/* Legacy button family re-themed for dark (used across many views/modals) */
+/* Legacy button family re-themed with high contrast and sharp editorial edges */
 .dashboard-shell .btn-stitch-primary {
-  background: var(--theme-color, #89cff0) !important;
-  color: #05070D !important;
-  border-color: transparent !important;
-}
-.dashboard-shell .btn-stitch-primary::before { display: none !important; }
-.dashboard-shell .btn-stitch-primary:hover { filter: brightness(1.08); }
-.dashboard-shell .btn-stitch-secondary {
-  background: var(--adm-surface) !important;
-  color: var(--adm-ink) !important;
-  border-color: var(--adm-border) !important;
-}
-.dashboard-shell .btn-stitch-secondary:hover { background: var(--adm-surface-hover) !important; color: var(--adm-ink) !important; }
-.dashboard-shell .btn-stitch-theme { background: var(--theme-color, #89cff0) !important; color: #05070D !important; }
-.dashboard-shell .btn-stitch-danger { background: color-mix(in srgb, var(--adm-danger-fill) 16%, transparent) !important; color: var(--adm-danger-fill) !important; border: 1px solid color-mix(in srgb, var(--adm-danger-fill) 40%, transparent) !important; }
-.dashboard-shell .btn-stitch-danger:hover { background: color-mix(in srgb, var(--adm-danger-fill) 26%, transparent) !important; }
-/* ios26 capsule keeps its dark elevated look (fixed dark-navy bg regardless
-   of theme) but ensure text stays light */
-.dashboard-shell .ios26-btn { color: #ffffff !important; }
-
-/* ============================================
-   "text-white" SAFETY NET
-   Most `text-white` in these views sits on a themed panel
-   (.adm-glass / header / sidebar / dropdown) that turns WHITE
-   in light mode — literal white text there would vanish. Remap
-   it to the theme-aware ink color by default...
-   ============================================ */
-.dashboard-shell [class*="text-white"] { color: var(--adm-ink) !important; }
-
-/* ...EXCEPT when text-white is paired with a real solid/vivid color fill
-   (alert banners, RSVP-active buttons, medal badges, avatar initials,
-   image-hover overlays) — those backgrounds don't change with the theme,
-   so the white text must stay white. Two attribute selectors on one element
-   outrank the single-attribute rule above regardless of source order. */
-.dashboard-shell [class*="bg-black"][class*="text-white"],
-.dashboard-shell [class*="bg-brand-accent"][class*="text-white"],
-.dashboard-shell [class*="bg-red-4"][class*="text-white"],
-.dashboard-shell [class*="bg-red-5"][class*="text-white"],
-.dashboard-shell [class*="bg-red-6"][class*="text-white"],
-.dashboard-shell [class*="bg-red-7"][class*="text-white"],
-.dashboard-shell [class*="bg-red-8"][class*="text-white"],
-.dashboard-shell [class*="bg-rose-4"][class*="text-white"],
-.dashboard-shell [class*="bg-rose-5"][class*="text-white"],
-.dashboard-shell [class*="bg-rose-6"][class*="text-white"],
-.dashboard-shell [class*="bg-rose-7"][class*="text-white"],
-.dashboard-shell [class*="bg-rose-8"][class*="text-white"],
-.dashboard-shell [class*="bg-emerald-4"][class*="text-white"],
-.dashboard-shell [class*="bg-emerald-5"][class*="text-white"],
-.dashboard-shell [class*="bg-emerald-6"][class*="text-white"],
-.dashboard-shell [class*="bg-emerald-7"][class*="text-white"],
-.dashboard-shell [class*="bg-emerald-8"][class*="text-white"],
-.dashboard-shell [class*="bg-green-4"][class*="text-white"],
-.dashboard-shell [class*="bg-green-5"][class*="text-white"],
-.dashboard-shell [class*="bg-green-6"][class*="text-white"],
-.dashboard-shell [class*="bg-green-7"][class*="text-white"],
-.dashboard-shell [class*="bg-green-8"][class*="text-white"],
-.dashboard-shell [class*="bg-amber-4"][class*="text-white"],
-.dashboard-shell [class*="bg-amber-5"][class*="text-white"],
-.dashboard-shell [class*="bg-amber-6"][class*="text-white"],
-.dashboard-shell [class*="bg-amber-7"][class*="text-white"],
-.dashboard-shell [class*="bg-amber-8"][class*="text-white"],
-.dashboard-shell [class*="bg-orange-4"][class*="text-white"],
-.dashboard-shell [class*="bg-orange-5"][class*="text-white"],
-.dashboard-shell [class*="bg-orange-6"][class*="text-white"],
-.dashboard-shell [class*="bg-orange-7"][class*="text-white"],
-.dashboard-shell [class*="bg-orange-8"][class*="text-white"],
-.dashboard-shell [class*="bg-yellow-4"][class*="text-white"],
-.dashboard-shell [class*="bg-yellow-5"][class*="text-white"],
-.dashboard-shell [class*="bg-yellow-6"][class*="text-white"],
-.dashboard-shell [class*="bg-yellow-7"][class*="text-white"],
-.dashboard-shell [class*="bg-yellow-8"][class*="text-white"],
-.dashboard-shell [class*="bg-indigo-4"][class*="text-white"],
-.dashboard-shell [class*="bg-indigo-5"][class*="text-white"],
-.dashboard-shell [class*="bg-indigo-6"][class*="text-white"],
-.dashboard-shell [class*="bg-indigo-7"][class*="text-white"],
-.dashboard-shell [class*="bg-indigo-8"][class*="text-white"],
-.dashboard-shell [class*="bg-purple-4"][class*="text-white"],
-.dashboard-shell [class*="bg-purple-5"][class*="text-white"],
-.dashboard-shell [class*="bg-purple-6"][class*="text-white"],
-.dashboard-shell [class*="bg-purple-7"][class*="text-white"],
-.dashboard-shell [class*="bg-purple-8"][class*="text-white"],
-.dashboard-shell [class*="bg-violet-4"][class*="text-white"],
-.dashboard-shell [class*="bg-violet-5"][class*="text-white"],
-.dashboard-shell [class*="bg-violet-6"][class*="text-white"],
-.dashboard-shell [class*="bg-violet-7"][class*="text-white"],
-.dashboard-shell [class*="bg-violet-8"][class*="text-white"],
-.dashboard-shell [class*="bg-sky-4"][class*="text-white"],
-.dashboard-shell [class*="bg-sky-5"][class*="text-white"],
-.dashboard-shell [class*="bg-sky-6"][class*="text-white"],
-.dashboard-shell [class*="bg-sky-7"][class*="text-white"],
-.dashboard-shell [class*="bg-sky-8"][class*="text-white"],
-.dashboard-shell [class*="bg-blue-4"][class*="text-white"],
-.dashboard-shell [class*="bg-blue-5"][class*="text-white"],
-.dashboard-shell [class*="bg-blue-6"][class*="text-white"],
-.dashboard-shell [class*="bg-blue-7"][class*="text-white"],
-.dashboard-shell [class*="bg-blue-8"][class*="text-white"],
-.dashboard-shell [class*="bg-cyan-4"][class*="text-white"],
-.dashboard-shell [class*="bg-cyan-5"][class*="text-white"],
-.dashboard-shell [class*="bg-cyan-6"][class*="text-white"],
-.dashboard-shell [class*="bg-cyan-7"][class*="text-white"],
-.dashboard-shell [class*="bg-cyan-8"][class*="text-white"],
-.dashboard-shell [class*="bg-teal-4"][class*="text-white"],
-.dashboard-shell [class*="bg-teal-5"][class*="text-white"],
-.dashboard-shell [class*="bg-teal-6"][class*="text-white"],
-.dashboard-shell [class*="bg-teal-7"][class*="text-white"],
-.dashboard-shell [class*="bg-teal-8"][class*="text-white"],
-.dashboard-shell [class*="bg-pink-4"][class*="text-white"],
-.dashboard-shell [class*="bg-pink-5"][class*="text-white"],
-.dashboard-shell [class*="bg-pink-6"][class*="text-white"],
-.dashboard-shell [class*="bg-pink-7"][class*="text-white"],
-.dashboard-shell [class*="bg-pink-8"][class*="text-white"],
-.dashboard-shell [class*="bg-fuchsia-4"][class*="text-white"],
-.dashboard-shell [class*="bg-fuchsia-5"][class*="text-white"],
-.dashboard-shell [class*="bg-fuchsia-6"][class*="text-white"],
-.dashboard-shell [class*="bg-fuchsia-7"][class*="text-white"],
-.dashboard-shell [class*="bg-fuchsia-8"][class*="text-white"],
-.dashboard-shell [class*="bg-slate-"][class*="text-white"],
-.dashboard-shell [class*="bg-zinc-"][class*="text-white"],
-.dashboard-shell [class*="bg-gray-"][class*="text-white"],
-.dashboard-shell [class*="bg-neutral-"][class*="text-white"]
-{ color: #ffffff !important; }
-
-
-/* ============================================
-   KILL THE GENERIC "AI DASHBOARD" RADIUS LANGUAGE
-   Every view still carries Tailwind rounded-2xl/3xl/full
-   classes from the old light design. Rather than hand-edit
-   every file, flatten radius everywhere inside the shell —
-   this alone removes most of the "template" signature.
-   Small pills (badges, dots, avatars) are explicitly exempt.
-   ============================================ */
-.dashboard-shell [class*="rounded-3xl"],
-.dashboard-shell [class*="rounded-2xl"],
-.dashboard-shell [class*="rounded-xl"],
-.dashboard-shell [class*="rounded-t-"],
-.dashboard-shell [class*="rounded-b-"],
-.dashboard-shell [class*="rounded-[2"],
-.dashboard-shell [class*="rounded-[3"],
-.dashboard-shell [class*="rounded-lg"] {
+  background: #0f172a !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
   border-radius: 2px !important;
 }
-/* Full pills used for real chips/badges/avatars/status-dots keep a small,
-   deliberate radius instead of true 9999px capsule shape */
-.dashboard-shell [class*="rounded-full"] {
-  border-radius: 3px !important;
+.dark .dashboard-shell .btn-stitch-primary,
+html[data-theme="dark"] .dashboard-shell .btn-stitch-primary,
+.dashboard-shell.dark .btn-stitch-primary {
+  background: #38bdf8 !important;
+  color: #020617 !important;
 }
-/* ...except tiny circular elements (dots, avatar initials, spinners) which
-   should stay round — anything explicitly sized small via w-1.5/w-2/w-2.5/w-6/w-7/w-8 */
-.dashboard-shell .w-1\.5.rounded-full, .dashboard-shell .w-2.rounded-full,
-.dashboard-shell .h-1\.5.rounded-full, .dashboard-shell .h-2.rounded-full,
-.dashboard-shell [class*="animate-spin"][class*="rounded-full"],
-.dashboard-shell [class*="animate-ping"] {
-  border-radius: 50% !important;
+.dashboard-shell .btn-stitch-primary::before { display: none !important; }
+.dashboard-shell .btn-stitch-primary:hover { filter: brightness(1.15); }
+
+.dashboard-shell .btn-stitch-secondary {
+  background: #ffffff !important;
+  color: #0f172a !important;
+  border: 1px solid #cbd5e1 !important;
+  border-radius: 2px !important;
+}
+.dark .dashboard-shell .btn-stitch-secondary,
+html[data-theme="dark"] .dashboard-shell .btn-stitch-secondary,
+.dashboard-shell.dark .btn-stitch-secondary {
+  background: #1e293b !important;
+  color: #f8fafc !important;
+  border: 1px solid #334155 !important;
+}
+.dashboard-shell .btn-stitch-secondary:hover { filter: brightness(0.95); }
+.dark .dashboard-shell .btn-stitch-secondary:hover,
+html[data-theme="dark"] .dashboard-shell .btn-stitch-secondary:hover,
+.dashboard-shell.dark .btn-stitch-secondary:hover { filter: brightness(1.2); }
+
+.dashboard-shell .btn-stitch-theme {
+  background: #0f172a !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(255,255,255,0.15) !important;
+  border-radius: 2px !important;
+}
+.dark .dashboard-shell .btn-stitch-theme,
+html[data-theme="dark"] .dashboard-shell .btn-stitch-theme,
+.dashboard-shell.dark .btn-stitch-theme {
+  background: #38bdf8 !important;
+  color: #020617 !important;
 }
 
-/* Drop the glow/blur theatrics that read as "generic AI glassmorphism" */
-.dashboard-shell [class*="shadow-glow"],
-.dashboard-shell [class*="backdrop-blur"] {
-  box-shadow: none !important;
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
+.dashboard-shell .btn-stitch-danger {
+  background: #fef2f2 !important;
+  color: #dc2626 !important;
+  border: 1px solid #fca5a5 !important;
+  border-radius: 2px !important;
 }
-.dashboard-shell [class*="shadow-"] {
+.dark .dashboard-shell .btn-stitch-danger,
+html[data-theme="dark"] .dashboard-shell .btn-stitch-danger,
+.dashboard-shell.dark .btn-stitch-danger {
+  background: rgba(220, 38, 38, 0.2) !important;
+  color: #f87171 !important;
+  border: 1px solid rgba(220, 38, 38, 0.4) !important;
+}
+.dashboard-shell .btn-stitch-danger:hover {
+  background: #fee2e2 !important;
+}
+
+/* ios26 capsule converted to clean sharp editorial button */
+.dashboard-shell .ios26-btn {
+  background: #0f172a !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  border-radius: 2px !important;
   box-shadow: none !important;
+}
+.dark .dashboard-shell .ios26-btn,
+html[data-theme="dark"] .dashboard-shell .ios26-btn,
+.dashboard-shell.dark .ios26-btn {
+  background: #38bdf8 !important;
+  color: #020617 !important;
+  box-shadow: none !important;
+}
+.dashboard-shell .ios26-btn:hover {
+  background: #1e293b !important;
+  color: #ffffff !important;
+}
+
+/* High Contrast Toggle Switch Helpers */
+.toggle-switch-track {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  width: 3.5rem;
+  height: 2rem;
+  border-radius: 9999px !important;
+  transition: all 0.25s ease;
+  cursor: pointer;
+}
+.toggle-switch-thumb {
+  position: absolute;
+  width: 1.5rem;
+  height: 1.5rem;
+  background-color: #ffffff;
+  border-radius: 9999px !important;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.25);
+  transition: transform 0.25s ease;
 }
 
 /* Native form controls — ensure high contrast in all themes */
@@ -2542,7 +2321,6 @@ html[data-theme="light"] .dashboard-shell {
 .dashboard-shell select,
 .dashboard-shell textarea {
   color: var(--adm-ink, #0f172a);
-  background-color: var(--adm-surface, #ffffff);
 }
 .dashboard-shell input::placeholder,
 .dashboard-shell textarea::placeholder { color: var(--adm-ink-faint, #94a3b8) !important; }
@@ -2564,15 +2342,42 @@ html.dark select option,
   color: #f8fafc !important; 
 }
 
-/* Global Select & Input Contrast Protection */
-select {
+/* Global Universal High-Contrast Guarantee for Inputs, Selects & Textareas */
+input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="button"]):not([type="submit"]),
+select,
+textarea {
   color: #0f172a;
 }
+
+html.dark input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="button"]):not([type="submit"]),
 html.dark select,
-.dark select {
+html.dark textarea,
+[data-theme="dark"] input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="button"]):not([type="submit"]),
+[data-theme="dark"] select,
+[data-theme="dark"] textarea,
+.dark input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="button"]):not([type="submit"]),
+.dark select,
+.dark textarea {
   color: #f8fafc !important;
-  background-color: #1e293b !important;
-  border-color: #334155 !important;
+}
+
+html.dark input::placeholder,
+html.dark textarea::placeholder,
+.dark input::placeholder,
+.dark textarea::placeholder {
+  color: #94a3b8 !important;
+}
+
+html.dark input[type="number"],
+html.dark input[type="text"],
+html.dark input[type="password"],
+html.dark input[type="email"],
+.dark input[type="number"],
+.dark input[type="text"],
+.dark input[type="password"],
+.dark input[type="email"] {
+  color: #ffffff !important;
+  caret-color: #38bdf8 !important;
 }
 
 /* Safety net: ensure proper background and text */

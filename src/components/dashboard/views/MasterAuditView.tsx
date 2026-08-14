@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
   ShieldAlert, Search, RefreshCw, UserX, UserPlus, Key, ArrowUpRight, 
   ArrowDownRight, RotateCcw, Lock, Eye, FileSpreadsheet, Activity, X,
-  ShieldCheck
+  ShieldCheck, Lightbulb, MessageSquare, Heart, Calendar, UserCheck
 } from 'lucide-react';
 import { fetchScoreAuditLogs, ScoreAuditLog } from '../../../utils/supabaseService';
 import { downloadXlsx } from '../../../utils/xlsx';
@@ -19,23 +19,24 @@ export function MasterAuditView({ currentUserObj }: MasterAuditViewProps) {
   const [logs, setLogs] = useState<ScoreAuditLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<'ALL' | 'DELETE' | 'CREATE' | 'PASSWORD' | 'SCORE' | 'PAYMENT'>('ALL');
+  const [selectedCategory, setSelectedCategory] = useState<'ALL' | 'SCORE' | 'PAYMENT' | 'MEMBER' | 'ABSENCE' | 'PROJECT' | 'SUGGESTION' | 'KUDOS'>('ALL');
   const [selectedAdmin, setSelectedAdmin] = useState<string>('ALL');
   const [selectedTimeRange, setSelectedTimeRange] = useState<'ALL' | 'TODAY' | 'WEEK' | 'MONTH'>('ALL');
   const [viewMode, setViewMode] = useState<'table' | 'timeline'>('table');
   const [inspectedLog, setInspectedLog] = useState<ScoreAuditLog | null>(null);
 
-  // Check Master Authorization: Stefan Stan or Trezorier
+  // Check Master Authorization: EXCLUSIVELY Stefan Stan
   const isMasterAuthorized = useMemo(() => {
     if (!currentUserObj) return false;
     const username = (currentUserObj.username || '').toLowerCase().trim();
     const name = (currentUserObj.name || '').toLowerCase().trim();
-    const boardPos = (currentUserObj.boardPosition || '').toLowerCase().trim();
+    const id = (currentUserObj.id || '').toUpperCase().trim();
     return (
       username === 'stan.stefan' ||
       name.includes('stefan stan') ||
       name.includes('stan stefan') ||
-      boardPos.includes('trezorier') ||
+      id === 'M053' ||
+      id === 'M061' ||
       username === 'admin'
     );
   }, [currentUserObj]);
@@ -76,11 +77,13 @@ export function MasterAuditView({ currentUserObj }: MasterAuditViewProps) {
       const act = (log.action || '').toUpperCase();
 
       // Category filter
-      if (selectedCategory === 'DELETE' && act !== 'MEMBER_DELETE') return false;
-      if (selectedCategory === 'CREATE' && act !== 'MEMBER_CREATE') return false;
-      if (selectedCategory === 'PASSWORD' && act !== 'PASSWORD_CHANGE') return false;
       if (selectedCategory === 'SCORE' && !['ADDED', 'SUBTRACTED', 'REVERTED'].includes(act)) return false;
       if (selectedCategory === 'PAYMENT' && !act.includes('PAYMENT')) return false;
+      if (selectedCategory === 'MEMBER' && !(act.startsWith('MEMBER_') || act === 'PASSWORD_CHANGE' || act.includes('ROLE') || act.includes('PROFILE'))) return false;
+      if (selectedCategory === 'ABSENCE' && !(act.startsWith('ABSENCE') || act.includes('ATTENDANCE') || act.includes('MOTIV'))) return false;
+      if (selectedCategory === 'PROJECT' && !(act.startsWith('PROJECT') || act.includes('PROPOSAL'))) return false;
+      if (selectedCategory === 'SUGGESTION' && !act.startsWith('SUGGESTION')) return false;
+      if (selectedCategory === 'KUDOS' && !act.startsWith('KUDOS')) return false;
 
       // Admin filter
       if (selectedAdmin !== 'ALL' && log.adminName !== selectedAdmin) return false;
@@ -108,28 +111,34 @@ export function MasterAuditView({ currentUserObj }: MasterAuditViewProps) {
 
   // Statistics calculation
   const stats = useMemo(() => {
-    let deleteCount = 0;
-    let createCount = 0;
-    let passwordCount = 0;
     let scoreCount = 0;
     let paymentCount = 0;
+    let memberCount = 0;
+    let absenceCount = 0;
+    let projectCount = 0;
+    let suggestionCount = 0;
+    let kudosCount = 0;
 
     logs.forEach(l => {
       const act = (l.action || '').toUpperCase();
-      if (act === 'MEMBER_DELETE') deleteCount++;
-      else if (act === 'MEMBER_CREATE') createCount++;
-      else if (act === 'PASSWORD_CHANGE') passwordCount++;
-      else if (['ADDED', 'SUBTRACTED', 'REVERTED'].includes(act)) scoreCount++;
+      if (['ADDED', 'SUBTRACTED', 'REVERTED'].includes(act)) scoreCount++;
       else if (act.includes('PAYMENT')) paymentCount++;
+      else if (act.startsWith('MEMBER_') || act === 'PASSWORD_CHANGE' || act.includes('ROLE') || act.includes('PROFILE')) memberCount++;
+      else if (act.startsWith('ABSENCE') || act.includes('ATTENDANCE') || act.includes('MOTIV')) absenceCount++;
+      else if (act.startsWith('PROJECT') || act.includes('PROPOSAL')) projectCount++;
+      else if (act.startsWith('SUGGESTION')) suggestionCount++;
+      else if (act.startsWith('KUDOS')) kudosCount++;
     });
 
     return {
       total: logs.length,
-      deleteCount,
-      createCount,
-      passwordCount,
       scoreCount,
-      paymentCount
+      paymentCount,
+      memberCount,
+      absenceCount,
+      projectCount,
+      suggestionCount,
+      kudosCount
     };
   }, [logs]);
 
@@ -153,175 +162,143 @@ export function MasterAuditView({ currentUserObj }: MasterAuditViewProps) {
       l.reason || '—'
     ]);
 
-    downloadXlsx(`Registru_Audit_Master_Stefan_Stan_${new Date().toISOString().split('T')[0]}`, [
+    downloadXlsx(`Registru_Audit_Master_${new Date().toISOString().split('T')[0]}`, [
       {
         name: 'Registru Audit Master',
         header: [
           'Nr. Crt',
           'ID Înregistrare',
           'Dată & Oră',
-          'Admin Responsabil',
+          'Admin / Autor',
           'Username Admin',
           'Membru Vizat',
           'ID Membru',
           'Tip Acțiune',
-          'Puncte',
+          'Puncte / Valoare',
           'Motiv / Justificare'
         ],
         rows,
-        widths: [8, 25, 20, 22, 18, 22, 12, 18, 10, 40]
+        widths: [8, 25, 20, 22, 18, 22, 12, 18, 12, 40]
       }
     ]);
 
-    toast.success("Registrul de audit a fost exportat cu succes în format Excel!");
+    toast.success("Registrul de audit master a fost exportat cu succes în format Excel!");
   };
 
   // If not authorized as Trezorier / Stefan Stan
   if (!isMasterAuthorized) {
     return (
-      <div className="p-8 max-w-3xl mx-auto text-center font-data">
-        <div className="bg-white border border-slate-300 rounded-3xl p-10 shadow-xl space-y-4">
-          <div className="w-16 h-16 bg-rose-100 border border-rose-300 rounded-2xl flex items-center justify-center mx-auto text-rose-700">
-            <Lock size={32} />
-          </div>
-          <h2 className="text-xl font-black text-slate-900 font-title">Acces Restricționat — Trezorerie Master</h2>
-          <p className="text-sm text-slate-600 leading-relaxed max-w-md mx-auto">
-            Acest modul conține registrul master complet de securitate și este rezervat exclusiv <strong>Trezorierului (Ștefan Stan)</strong>.
-          </p>
-          <div className="pt-2">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 border border-slate-300 text-xs font-mono font-bold text-slate-700">
-              Cont curent: @{currentUserObj?.username || 'vizitator'}
-            </span>
-          </div>
+      <div className="p-8 text-center bg-white dark:bg-[#161B22] border border-slate-300 dark:border-slate-800 rounded-[2px] shadow-xs space-y-3 font-anthropic">
+        <div className="w-12 h-12 rounded-[2px] bg-rose-100 dark:bg-rose-950/40 text-rose-700 dark:text-rose-400 mx-auto flex items-center justify-center">
+          <Lock size={24} />
         </div>
+        <h2 className="text-xl font-bold font-title text-slate-900 dark:text-white">Acces Restricționat la Registrul de Audit</h2>
+        <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 max-w-md mx-auto">
+          Jurnalul Master de Audit este un registru legal și securizat disponibil exclusiv membrilor autorizați din conducerea clubului.
+        </p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto pb-12 font-data score-audit-modal">
-      {/* 1. Header & Master Status Banner */}
-      <div className="bg-white border border-slate-300 rounded-3xl p-6 sm:p-8 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6">
-        <div className="space-y-2">
-          <div className="flex items-center gap-3 flex-wrap">
-            <div className="p-3 bg-amber-500/10 border border-amber-500/30 rounded-2xl text-amber-800">
-              <ShieldAlert size={26} />
+    <div className="space-y-6 font-anthropic">
+      {/* 1. Header Banner */}
+      <div className="bg-white dark:bg-[#161B22] border border-slate-300 dark:border-slate-800 rounded-[2px] p-5 sm:p-6 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="flex items-start gap-4">
+          <div className="p-3 bg-amber-500/15 border border-amber-500/30 rounded-[2px] text-amber-800 dark:text-amber-300 shrink-0">
+            <ShieldAlert size={26} />
+          </div>
+          <div>
+            <div className="flex items-center gap-2.5 flex-wrap">
+              <h1 className="text-xl sm:text-2xl font-black font-title text-slate-900 dark:text-white">
+                Jurnal Master de Audit & Guvernanță
+              </h1>
+              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-[2px] bg-emerald-100 dark:bg-emerald-950/50 text-emerald-900 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 text-xs font-bold font-data uppercase tracking-wider">
+                <ShieldCheck size={12} /> Criptat & Ne-ștergibil
+              </span>
             </div>
-            <div>
-              <div className="flex items-center gap-2.5 flex-wrap">
-                <h1 className="text-2xl font-black text-slate-900 tracking-tight font-title">
-                  🛡️ Master Audit Log — Panou Trezorerie
-                </h1>
-                <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-black bg-amber-400 text-slate-950 border border-amber-300 shadow-xs">
-                  <ShieldCheck size={13} /> Ștefan Stan (Master Access)
-                </span>
-              </div>
-              <p className="text-xs text-slate-600 mt-1 font-medium">
-                Registrul oficial permanent și imutabil al tuturor operațiunilor administrative (Ștergeri, Adăugări, Modificări Parolă, Punctaje, Plăți).
-              </p>
-            </div>
+            <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mt-1">
+              Monitorizare 360° a tuturor evenimentelor din platformă (Punctaje, Cotizații, Membri, Învoiri, Proiecte, Sugestii, Kudos).
+            </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-2.5 flex-wrap">
+        {/* Action Controls */}
+        <div className="flex items-center gap-2.5 self-start md:self-center shrink-0 font-title">
           <button
             onClick={loadLogs}
             disabled={loading}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white hover:bg-slate-100 border border-slate-300 text-xs font-bold text-slate-800 shadow-xs transition-colors disabled:opacity-50"
-            title="Reîmprospătează datele"
+            className="px-3.5 py-2 rounded-[2px] bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 transition-colors border border-slate-300 dark:border-slate-700 disabled:opacity-50 cursor-pointer"
+            title="Reîmprospătează datele de audit"
           >
-            <RefreshCw size={15} className={loading ? 'animate-spin text-amber-600' : ''} />
-            <span>Reîmprospătează</span>
+            <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
+            <span>Sincronizează</span>
           </button>
-
           <button
             onClick={handleExportXLSX}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold shadow-md shadow-slate-900/15 transition-colors"
+            disabled={filteredLogs.length === 0}
+            className="px-3.5 py-2 rounded-[2px] bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 transition-colors shadow-xs disabled:opacity-50 cursor-pointer"
           >
-            <FileSpreadsheet size={15} className="text-emerald-400" />
-            <span>Exportă Raport Excel</span>
+            <FileSpreadsheet size={14} />
+            <span>Export Excel</span>
           </button>
         </div>
       </div>
 
-      {/* 2. Top Metric Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3.5">
-        <div className="bg-white border border-slate-300 rounded-2xl p-4 shadow-xs">
-          <div className="flex items-center justify-between text-slate-600 text-xs font-bold">
-            <span>Total Evenimente</span>
-            <Activity size={16} className="text-slate-400" />
-          </div>
-          <div className="mt-2 text-2xl font-black text-slate-900 font-title">{stats.total}</div>
-          <div className="text-[11px] text-slate-500 mt-0.5">Înregistrări în sistem</div>
+      {/* 2. Top Summary Metrics */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5 font-anthropic">
+        <div className="bg-white dark:bg-[#161B22] border border-slate-300 dark:border-slate-800 rounded-[2px] p-4 shadow-xs">
+          <div className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 font-title">Total Evenimente</div>
+          <div className="text-2xl font-black font-data text-slate-900 dark:text-white mt-1">{stats.total}</div>
+          <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Înregistrate în sistem</div>
         </div>
 
-        <div className="bg-white border border-rose-200 rounded-2xl p-4 shadow-xs">
-          <div className="flex items-center justify-between text-rose-700 text-xs font-bold">
-            <span>Ștergeri Membri</span>
-            <UserX size={16} className="text-rose-600" />
-          </div>
-          <div className="mt-2 text-2xl font-black text-rose-700 font-title">{stats.deleteCount}</div>
-          <div className="text-[11px] text-rose-600/80 mt-0.5">Acțiuni ireversibile</div>
+        <div className="bg-white dark:bg-[#161B22] border border-slate-300 dark:border-slate-800 rounded-[2px] p-4 shadow-xs">
+          <div className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 font-title">Punctaje & Penalizări</div>
+          <div className="text-2xl font-black font-data text-amber-700 dark:text-amber-400 mt-1">{stats.scoreCount}</div>
+          <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Ajustări și revert-uri</div>
         </div>
 
-        <div className="bg-white border border-sky-200 rounded-2xl p-4 shadow-xs">
-          <div className="flex items-center justify-between text-sky-700 text-xs font-bold">
-            <span>Membri Înregistrați</span>
-            <UserPlus size={16} className="text-sky-600" />
-          </div>
-          <div className="mt-2 text-2xl font-black text-sky-800 font-title">{stats.createCount}</div>
-          <div className="text-[11px] text-sky-600/80 mt-0.5">Conturi create noi</div>
+        <div className="bg-white dark:bg-[#161B22] border border-slate-300 dark:border-slate-800 rounded-[2px] p-4 shadow-xs">
+          <div className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 font-title">Cotizații Încasate</div>
+          <div className="text-2xl font-black font-data text-emerald-700 dark:text-emerald-400 mt-1">{stats.paymentCount}</div>
+          <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Chitanțe electronice</div>
         </div>
 
-        <div className="bg-white border border-purple-200 rounded-2xl p-4 shadow-xs">
-          <div className="flex items-center justify-between text-purple-700 text-xs font-bold">
-            <span>Schimbări Parolă</span>
-            <Key size={16} className="text-purple-600" />
-          </div>
-          <div className="mt-2 text-2xl font-black text-purple-800 font-title">{stats.passwordCount}</div>
-          <div className="text-[11px] text-purple-600/80 mt-0.5">Editări securitate</div>
-        </div>
-
-        <div className="bg-white border border-emerald-200 rounded-2xl p-4 shadow-xs col-span-2 sm:col-span-1">
-          <div className="flex items-center justify-between text-emerald-700 text-xs font-bold">
-            <span>Punctaje & Revert</span>
-            <ArrowUpRight size={16} className="text-emerald-600" />
-          </div>
-          <div className="mt-2 text-2xl font-black text-emerald-800 font-title">{stats.scoreCount}</div>
-          <div className="text-[11px] text-emerald-600/80 mt-0.5">Acordări / Anulări</div>
+        <div className="bg-white dark:bg-[#161B22] border border-slate-300 dark:border-slate-800 rounded-[2px] p-4 shadow-xs">
+          <div className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 font-title">Gestiune Membri</div>
+          <div className="text-2xl font-black font-data text-indigo-700 dark:text-indigo-400 mt-1">{stats.memberCount}</div>
+          <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Adăugări / Ștergeri / Parole</div>
         </div>
       </div>
 
       {/* 3. Filters & Search Bar */}
-      <div className="bg-white border border-slate-300 rounded-3xl p-5 shadow-sm space-y-4">
-        <div className="flex flex-col md:flex-row items-center justify-between gap-3">
-          {/* Search Input */}
+      <div className="bg-white dark:bg-[#161B22] border border-slate-300 dark:border-slate-800 rounded-[2px] p-4 sm:p-5 shadow-xs space-y-3.5 font-anthropic">
+        <div className="flex flex-col md:flex-row items-center justify-between gap-3.5 font-anthropic">
           <div className="relative w-full md:w-96">
-            <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
             <input
               type="text"
               placeholder="Caută după admin, membru, motiv sau ID..."
               value={search}
               onChange={e => setSearch(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-amber-500 focus:bg-white transition-colors"
+              className="w-full pl-9 pr-3.5 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-[2px] text-xs sm:text-sm font-medium text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:border-amber-500 focus:bg-white dark:focus:bg-slate-950 transition-colors"
             />
             {search && (
               <button
                 onClick={() => setSearch('')}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
               >
-                <X size={14} />
+                <X size={15} />
               </button>
             )}
           </div>
 
-          {/* Controls: Admin Selector & Time Range */}
-          <div className="flex items-center gap-2.5 w-full md:w-auto flex-wrap">
-            {/* Admin Filter */}
+          <div className="flex items-center gap-2.5 w-full md:w-auto flex-wrap font-title">
             <select
               value={selectedAdmin}
               onChange={e => setSelectedAdmin(e.target.value)}
-              className="px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold text-slate-800 focus:outline-none focus:border-amber-500"
+              className="px-3.5 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-[2px] text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200 focus:outline-none focus:border-amber-500 cursor-pointer"
             >
               <option value="ALL">👤 Toți Administratorii ({uniqueAdmins.length})</option>
               {uniqueAdmins.map(admin => (
@@ -331,11 +308,10 @@ export function MasterAuditView({ currentUserObj }: MasterAuditViewProps) {
               ))}
             </select>
 
-            {/* Time Range Filter */}
             <select
               value={selectedTimeRange}
               onChange={e => setSelectedTimeRange(e.target.value as any)}
-              className="px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold text-slate-800 focus:outline-none focus:border-amber-500"
+              className="px-3.5 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-[2px] text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200 focus:outline-none focus:border-amber-500 cursor-pointer"
             >
               <option value="ALL">📅 Toate perioadele</option>
               <option value="TODAY">Astăzi (ultimele 24h)</option>
@@ -343,20 +319,19 @@ export function MasterAuditView({ currentUserObj }: MasterAuditViewProps) {
               <option value="MONTH">Ultima lună</option>
             </select>
 
-            {/* View Mode Toggle */}
-            <div className="flex items-center bg-slate-100 p-1 rounded-xl border border-slate-300">
+            <div className="flex items-center bg-slate-100 dark:bg-slate-800 p-0.5 rounded-[2px] border border-slate-300 dark:border-slate-700">
               <button
                 onClick={() => setViewMode('table')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                  viewMode === 'table' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'
+                className={`px-3.5 py-1.5 rounded-[2px] text-xs sm:text-sm font-bold uppercase tracking-wider transition-all cursor-pointer ${
+                  viewMode === 'table' ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                 }`}
               >
                 Tabel
               </button>
               <button
                 onClick={() => setViewMode('timeline')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                  viewMode === 'timeline' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'
+                className={`px-3.5 py-1.5 rounded-[2px] text-xs sm:text-sm font-bold uppercase tracking-wider transition-all cursor-pointer ${
+                  viewMode === 'timeline' ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                 }`}
               >
                 Cronologie
@@ -366,27 +341,29 @@ export function MasterAuditView({ currentUserObj }: MasterAuditViewProps) {
         </div>
 
         {/* Category Pills */}
-        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pt-1 border-t border-slate-200">
+        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pt-1.5 border-t border-slate-200 dark:border-slate-800 font-title">
           {[
             { id: 'ALL', label: 'Toate Acțiunile', count: stats.total },
-            { id: 'DELETE', label: 'Ștergeri Membri', count: stats.deleteCount },
-            { id: 'CREATE', label: 'Adăugări Membri', count: stats.createCount },
-            { id: 'PASSWORD', label: 'Schimbări Parolă', count: stats.passwordCount },
-            { id: 'SCORE', label: 'Punctaje & Revert', count: stats.scoreCount },
-            { id: 'PAYMENT', label: 'Plăți Cotizație', count: stats.paymentCount },
+            { id: 'SCORE', label: 'Punctaje & Penalizări', count: stats.scoreCount },
+            { id: 'PAYMENT', label: 'Cotizații & Plăți', count: stats.paymentCount },
+            { id: 'MEMBER', label: 'Gestiune Membri', count: stats.memberCount },
+            { id: 'ABSENCE', label: 'Învoiri & Prezențe', count: stats.absenceCount },
+            { id: 'PROJECT', label: 'Proiecte & Bugete', count: stats.projectCount },
+            { id: 'SUGGESTION', label: 'Casetă Sugestii', count: stats.suggestionCount },
+            { id: 'KUDOS', label: 'Kudos & Aprecieri', count: stats.kudosCount },
           ].map(cat => (
             <button
               key={cat.id}
               onClick={() => setSelectedCategory(cat.id as any)}
-              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all border flex items-center gap-1.5 ${
+              className={`px-3 py-1.5 rounded-[2px] text-xs sm:text-sm font-bold uppercase tracking-wider whitespace-nowrap transition-all border flex items-center gap-2 cursor-pointer ${
                 selectedCategory === cat.id
-                  ? 'bg-slate-900 text-white border-slate-900 shadow-sm'
-                  : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-100'
+                  ? 'bg-slate-900 dark:bg-amber-500 text-white dark:text-slate-950 border-slate-900 dark:border-amber-500 shadow-xs'
+                  : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800'
               }`}
             >
               <span>{cat.label}</span>
-              <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono ${
-                selectedCategory === cat.id ? 'bg-slate-700 text-white' : 'bg-slate-200 text-slate-700'
+              <span className={`text-xs px-1.5 py-0.5 rounded-[2px] font-data ${
+                selectedCategory === cat.id ? 'bg-slate-700 dark:bg-amber-600 text-white dark:text-slate-950' : 'bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300'
               }`}>
                 {cat.count}
               </span>
@@ -397,119 +374,99 @@ export function MasterAuditView({ currentUserObj }: MasterAuditViewProps) {
 
       {/* 4. Table or Timeline Display */}
       {loading ? (
-        <div className="bg-white border border-slate-300 rounded-3xl p-16 text-center text-slate-700 font-semibold flex flex-col items-center gap-3 shadow-sm">
-          <RefreshCw size={28} className="animate-spin text-amber-600" />
-          <span>Se sincronizează datele de audit master din Supabase...</span>
+        <div className="bg-white dark:bg-[#161B22] border border-slate-300 dark:border-slate-800 rounded-[2px] p-12 text-center text-slate-700 dark:text-slate-300 font-medium flex flex-col items-center gap-2 shadow-xs text-xs sm:text-sm font-anthropic">
+          <RefreshCw size={24} className="animate-spin text-amber-600 dark:text-amber-400" />
+          <span>Se sincronizează datele de audit master...</span>
         </div>
       ) : filteredLogs.length === 0 ? (
-        <div className="bg-white border border-slate-300 rounded-3xl p-16 text-center text-slate-500 font-semibold shadow-sm">
-          Nicio înregistrare găsită conform filtrelor sau căutării selectate.
+        <div className="bg-white dark:bg-[#161B22] border border-slate-300 dark:border-slate-800 rounded-[2px] p-12 text-center text-slate-500 dark:text-slate-400 font-medium shadow-xs text-xs sm:text-sm font-anthropic">
+          Nicio înregistrare găsită.
         </div>
       ) : viewMode === 'table' ? (
-        <div className="bg-white border border-slate-300 rounded-3xl shadow-sm overflow-hidden">
+        <div className="bg-white dark:bg-[#161B22] border border-slate-300 dark:border-slate-800 rounded-[2px] shadow-xs overflow-hidden font-anthropic">
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs text-slate-900 font-data">
-              <thead className="bg-slate-100 text-slate-800 font-black uppercase tracking-wider border-b border-slate-300">
+            <table className="w-full text-left text-xs sm:text-sm text-slate-900 dark:text-slate-100 font-anthropic">
+              <thead className="bg-slate-100 dark:bg-slate-900/90 text-slate-800 dark:text-slate-200 font-bold uppercase tracking-wider border-b border-slate-300 dark:border-slate-800 font-title text-xs">
                 <tr>
-                  <th className="py-3.5 px-4">Dată & Oră</th>
-                  <th className="py-3.5 px-4">Admin Responsabil</th>
-                  <th className="py-3.5 px-4">Membru Vizat</th>
-                  <th className="py-3.5 px-4">Tip Acțiune</th>
-                  <th className="py-3.5 px-4">Motiv / Justificare</th>
-                  <th className="py-3.5 px-4 text-right">Detalii</th>
+                  <th className="py-3 px-3.5">Dată & Oră</th>
+                  <th className="py-3 px-3.5">Admin / Autor</th>
+                  <th className="py-3 px-3.5">Membru Vizat</th>
+                  <th className="py-3 px-3.5">Tip Acțiune</th>
+                  <th className="py-3 px-3.5">Motiv / Justificare</th>
+                  <th className="py-3 px-3.5 text-right">Detalii</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-200 bg-white">
+              <tbody className="divide-y divide-slate-200 dark:divide-slate-800 bg-white dark:bg-[#161B22] font-anthropic">
                 {filteredLogs.map(log => {
                   const act = (log.action || '').toUpperCase();
                   const isPositive = log.points ? log.points > 0 : false;
-
                   return (
-                    <tr key={log.id} className="hover:bg-slate-50 transition-colors">
-                      {/* Date & Time */}
-                      <td className="py-3.5 px-4 font-mono text-[11px] text-slate-600 font-semibold whitespace-nowrap">
-                        {new Date(log.createdAt).toLocaleDateString('ro-RO', {
-                          day: '2-digit',
-                          month: 'short',
-                          year: 'numeric',
-                          hour: '2-digit',
-                          minute: '2-digit',
-                          second: '2-digit'
-                        })}
-                      </td>
-
-                      {/* Admin Info */}
-                      <td className="py-3.5 px-4 font-black text-slate-900 whitespace-nowrap">
-                        <div className="flex items-center gap-2">
-                          <div className="w-6 h-6 rounded-full bg-slate-900 text-white font-black text-[10px] flex items-center justify-center">
-                            {(log.adminName || 'A')[0]}
-                          </div>
-                          <div>
-                            <div className="text-slate-900 font-bold">{log.adminName || 'Admin'}</div>
-                            {log.adminUsername && (
-                              <div className="text-[10px] font-mono text-slate-500 font-normal">@{log.adminUsername}</div>
-                            )}
-                          </div>
-                        </div>
-                      </td>
-
-                      {/* Target Member */}
-                      <td className="py-3.5 px-4 font-black text-slate-900 whitespace-nowrap">
-                        <div>
-                          <span className="text-slate-900 font-bold">{log.targetMemberName || '—'}</span>
-                          {log.targetMemberId && (
-                            <span className="ml-1.5 text-[10px] font-mono text-slate-500">[{log.targetMemberId}]</span>
+                    <tr key={log.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors">
+                      <td className="py-3 px-3.5 font-data text-xs text-slate-600 dark:text-slate-400">{new Date(log.createdAt).toLocaleString('ro-RO')}</td>
+                      <td className="py-3 px-3.5 font-bold text-slate-900 dark:text-white font-title">
+                        <div className="flex items-center gap-1.5">
+                          <span className="w-2 h-2 rounded-[2px] bg-amber-500 shrink-0" />
+                          <span className="text-slate-900 dark:text-white font-bold">{log.adminName || 'Admin'}</span>
+                          {log.adminUsername && (
+                            <span className="text-xs font-normal text-slate-500 dark:text-slate-400 font-data">(@{log.adminUsername})</span>
                           )}
                         </div>
                       </td>
-
-                      {/* Action Badge */}
-                      <td className="py-3.5 px-4 whitespace-nowrap">
+                      <td className="py-3 px-3.5 font-bold text-slate-900 dark:text-white">{log.targetMemberName || '—'}</td>
+                      <td className="py-3 px-3.5 whitespace-nowrap font-title">
                         {act === 'MEMBER_DELETE' ? (
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg font-black text-xs bg-rose-100 text-rose-900 border border-rose-300 shadow-xs">
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-[2px] font-bold text-xs uppercase tracking-wider bg-rose-100 dark:bg-rose-950/50 text-rose-900 dark:text-rose-300 border border-rose-300 dark:border-rose-800 shadow-xs">
                             <UserX size={13} /> ȘTERGERE MEMBRU
                           </span>
                         ) : act === 'MEMBER_CREATE' ? (
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg font-black text-xs bg-sky-100 text-sky-900 border border-sky-300 shadow-xs">
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-[2px] font-bold text-xs uppercase tracking-wider bg-sky-100 dark:bg-sky-950/50 text-sky-900 dark:text-sky-300 border border-sky-300 dark:border-sky-800 shadow-xs">
                             <UserPlus size={13} /> MEMBRU NOU
                           </span>
                         ) : act === 'PASSWORD_CHANGE' ? (
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg font-black text-xs bg-purple-100 text-purple-900 border border-purple-300 shadow-xs">
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-[2px] font-bold text-xs uppercase tracking-wider bg-purple-100 dark:bg-purple-950/50 text-purple-900 dark:text-purple-300 border border-purple-300 dark:border-purple-800 shadow-xs">
                             <Key size={13} /> PAROLĂ SCHIMBATĂ
                           </span>
+                        ) : act.includes('PROFILE') || act.includes('ROLE') ? (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-[2px] font-bold text-xs uppercase tracking-wider bg-indigo-100 dark:bg-indigo-950/50 text-indigo-900 dark:text-indigo-300 border border-indigo-300 dark:border-indigo-800 shadow-xs">
+                            <UserCheck size={13} /> EDITARE PROFIL
+                          </span>
                         ) : act === 'REVERTED' ? (
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg font-black text-xs bg-amber-100 text-amber-900 border border-amber-300 shadow-xs">
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-[2px] font-bold text-xs uppercase tracking-wider bg-amber-100 dark:bg-amber-950/50 text-amber-900 dark:text-amber-300 border border-amber-300 dark:border-amber-800 shadow-xs font-data">
                             <RotateCcw size={13} /> REVERT ({log.points} pct)
                           </span>
                         ) : act.includes('PAYMENT') ? (
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg font-black text-xs bg-indigo-100 text-indigo-900 border border-indigo-300 shadow-xs">
-                            <Activity size={13} /> COTIZAȚIE
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-[2px] font-bold text-xs uppercase tracking-wider bg-emerald-100 dark:bg-emerald-950/50 text-emerald-900 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 shadow-xs font-data">
+                            <Activity size={13} /> COTIZAȚIE ({log.points} RON)
+                          </span>
+                        ) : act.startsWith('ABSENCE') ? (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-[2px] font-bold text-xs uppercase tracking-wider bg-blue-100 dark:bg-blue-950/50 text-blue-900 dark:text-blue-300 border border-blue-300 dark:border-blue-800 shadow-xs">
+                            <Calendar size={13} /> ÎNVOIRE
+                          </span>
+                        ) : act.startsWith('PROJECT') ? (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-[2px] font-bold text-xs uppercase tracking-wider bg-amber-100 dark:bg-amber-950/50 text-amber-900 dark:text-amber-300 border border-amber-300 dark:border-amber-800 shadow-xs">
+                            <Lightbulb size={13} /> PROIECT NOU
+                          </span>
+                        ) : act.startsWith('SUGGESTION') ? (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-[2px] font-bold text-xs uppercase tracking-wider bg-violet-100 dark:bg-violet-950/50 text-violet-900 dark:text-violet-300 border border-violet-300 dark:border-violet-800 shadow-xs">
+                            <MessageSquare size={13} /> SUGESTIE
+                          </span>
+                        ) : act.startsWith('KUDOS') ? (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-[2px] font-bold text-xs uppercase tracking-wider bg-pink-100 dark:bg-pink-950/50 text-pink-900 dark:text-pink-300 border border-pink-300 dark:border-pink-800 shadow-xs">
+                            <Heart size={13} /> KUDOS
                           </span>
                         ) : isPositive ? (
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg font-black text-xs bg-emerald-100 text-emerald-900 border border-emerald-300 shadow-xs">
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-[2px] font-bold text-xs uppercase tracking-wider bg-emerald-100 dark:bg-emerald-950/50 text-emerald-900 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 shadow-xs font-data">
                             <ArrowUpRight size={13} /> +{log.points} pct
                           </span>
                         ) : (
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg font-black text-xs bg-rose-100 text-rose-900 border border-rose-300 shadow-xs">
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-[2px] font-bold text-xs uppercase tracking-wider bg-rose-100 dark:bg-rose-950/50 text-rose-900 dark:text-rose-300 border border-rose-300 dark:border-rose-800 shadow-xs font-data">
                             <ArrowDownRight size={13} /> {log.points} pct
                           </span>
                         )}
                       </td>
-
-                      {/* Reason */}
-                      <td className="py-3.5 px-4 text-slate-800 font-semibold max-w-xs md:max-w-md truncate" title={log.reason}>
-                        {log.reason}
-                      </td>
-
-                      {/* Inspect Button */}
-                      <td className="py-3.5 px-4 text-right whitespace-nowrap">
-                        <button
-                          onClick={() => setInspectedLog(log)}
-                          className="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 hover:text-slate-900 transition-colors"
-                          title="Inspectează detaliile evenimentului"
-                        >
-                          <Eye size={15} />
-                        </button>
+                      <td className="py-3.5 px-4 text-slate-900 dark:text-slate-100">{log.reason || '—'}</td>
+                      <td className="py-3 px-3.5 text-right">
+                        <button onClick={() => setInspectedLog(log)} className="p-2 bg-slate-100 dark:bg-slate-800 rounded-[2px] text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white cursor-pointer"><Eye size={15} /></button>
                       </td>
                     </tr>
                   );
@@ -519,62 +476,44 @@ export function MasterAuditView({ currentUserObj }: MasterAuditViewProps) {
           </div>
         </div>
       ) : (
-        /* Timeline Feed View */
-        <div className="space-y-3">
+        <div className="space-y-3 font-anthropic">
           {filteredLogs.map(log => {
             const act = (log.action || '').toUpperCase();
-
             return (
-              <div
-                key={log.id}
-                className="bg-white border border-slate-300 rounded-2xl p-4.5 shadow-xs hover:border-slate-400 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-4"
-              >
-                <div className="flex items-start gap-3.5">
-                  <div className={`p-2.5 rounded-2xl shrink-0 mt-0.5 ${
-                    act === 'MEMBER_DELETE' ? 'bg-rose-100 text-rose-700 border border-rose-300' :
-                    act === 'MEMBER_CREATE' ? 'bg-sky-100 text-sky-700 border border-sky-300' :
-                    act === 'PASSWORD_CHANGE' ? 'bg-purple-100 text-purple-700 border border-purple-300' :
-                    act === 'REVERTED' ? 'bg-amber-100 text-amber-800 border border-amber-300' :
-                    'bg-emerald-100 text-emerald-800 border border-emerald-300'
+              <div key={log.id} className="bg-white dark:bg-[#161B22] border border-slate-300 dark:border-slate-800 rounded-[2px] p-4 shadow-xs flex items-center justify-between">
+                <div className="flex items-center gap-3.5">
+                  <div className={`p-2.5 rounded-[2px] ${
+                    act === 'MEMBER_DELETE' ? 'bg-rose-100 dark:bg-rose-950/50 text-rose-700 dark:text-rose-300 border border-rose-300 dark:border-rose-800' :
+                    act === 'MEMBER_CREATE' ? 'bg-sky-100 dark:bg-sky-950/50 text-sky-700 dark:text-sky-300 border border-sky-300 dark:border-sky-800' :
+                    act === 'PASSWORD_CHANGE' ? 'bg-purple-100 dark:bg-purple-950/50 text-purple-700 dark:text-purple-300 border border-purple-300 dark:border-purple-800' :
+                    act === 'REVERTED' ? 'bg-amber-100 dark:bg-amber-950/50 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-800' :
+                    act.startsWith('PROJECT') ? 'bg-amber-100 dark:bg-amber-950/50 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-800' :
+                    act.startsWith('SUGGESTION') ? 'bg-violet-100 dark:bg-violet-950/50 text-violet-800 dark:text-violet-300 border border-violet-300 dark:border-violet-800' :
+                    act.startsWith('KUDOS') ? 'bg-pink-100 dark:bg-pink-950/50 text-pink-800 dark:text-pink-300 border border-pink-300 dark:border-pink-800' :
+                    'bg-emerald-100 dark:bg-emerald-950/50 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800'
                   }`}>
-                    {act === 'MEMBER_DELETE' && <UserX size={20} />}
-                    {act === 'MEMBER_CREATE' && <UserPlus size={20} />}
-                    {act === 'PASSWORD_CHANGE' && <Key size={20} />}
-                    {act === 'REVERTED' && <RotateCcw size={20} />}
-                    {act !== 'MEMBER_DELETE' && act !== 'MEMBER_CREATE' && act !== 'PASSWORD_CHANGE' && act !== 'REVERTED' && <Activity size={20} />}
+                    {act === 'MEMBER_DELETE' && <UserX size={18} />}
+                    {act === 'MEMBER_CREATE' && <UserPlus size={18} />}
+                    {act === 'PASSWORD_CHANGE' && <Key size={18} />}
+                    {act === 'REVERTED' && <RotateCcw size={18} />}
+                    {act.startsWith('PROJECT') && <Lightbulb size={18} />}
+                    {act.startsWith('SUGGESTION') && <MessageSquare size={18} />}
+                    {act.startsWith('KUDOS') && <Heart size={18} />}
+                    {!['MEMBER_DELETE', 'MEMBER_CREATE', 'PASSWORD_CHANGE', 'REVERTED'].includes(act) && !act.startsWith('PROJECT') && !act.startsWith('SUGGESTION') && !act.startsWith('KUDOS') && <Activity size={18} />}
                   </div>
-
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-black text-slate-900 text-sm">{log.adminName}</span>
+                  <div>
+                    <div className="text-sm font-bold text-slate-900 dark:text-white font-title flex items-center gap-1.5 flex-wrap">
+                      <span>{log.adminName || 'Admin'}</span>
                       {log.adminUsername && (
-                        <span className="text-xs font-mono text-slate-500 font-semibold">(@{log.adminUsername})</span>
+                        <span className="text-xs font-normal text-slate-500 dark:text-slate-400 font-data">(@{log.adminUsername})</span>
                       )}
-                      <span className="text-slate-400 text-xs">•</span>
-                      <span className="text-xs font-mono text-slate-600 font-semibold">
-                        {new Date(log.createdAt).toLocaleString('ro-RO')}
-                      </span>
+                      <span className="text-slate-400 font-normal">•</span> 
+                      <span className="text-xs font-data text-slate-500 dark:text-slate-400">{new Date(log.createdAt).toLocaleString('ro-RO')}</span>
                     </div>
-
-                    <p className="text-xs text-slate-800 font-bold">
-                      {log.reason}
-                    </p>
-
-                    <div className="flex items-center gap-2 text-[11px] text-slate-500 pt-0.5">
-                      <span>Membru vizat: <strong className="text-slate-800">{log.targetMemberName || '—'}</strong></span>
-                      {log.targetMemberId && <span>[{log.targetMemberId}]</span>}
-                    </div>
+                    <div className="text-xs sm:text-sm text-slate-700 dark:text-slate-300 mt-0.5">{log.reason}</div>
                   </div>
                 </div>
-
-                <div className="flex items-center gap-2.5 self-end sm:self-center shrink-0">
-                  <button
-                    onClick={() => setInspectedLog(log)}
-                    className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold transition-colors flex items-center gap-1.5"
-                  >
-                    <Eye size={13} /> Inspectează
-                  </button>
-                </div>
+                <button onClick={() => setInspectedLog(log)} className="px-3 py-1 bg-slate-100 dark:bg-slate-800 rounded-[2px] text-xs font-bold hover:bg-slate-200 cursor-pointer">Inspectează</button>
               </div>
             );
           })}
@@ -584,7 +523,7 @@ export function MasterAuditView({ currentUserObj }: MasterAuditViewProps) {
       {/* 5. Inspection Modal */}
       <AnimatePresence>
         {inspectedLog && (
-          <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-md font-data">
+          <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm font-anthropic">
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -597,69 +536,69 @@ export function MasterAuditView({ currentUserObj }: MasterAuditViewProps) {
               initial={{ opacity: 0, scale: 0.96, y: 16 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.96, y: 16 }}
-              className="relative w-full max-w-lg bg-white border border-slate-300 rounded-3xl shadow-2xl overflow-hidden z-[201] text-slate-900"
+              className="relative w-full max-w-lg bg-white dark:bg-[#161B22] border border-slate-300 dark:border-slate-800 rounded-[2px] shadow-2xl overflow-hidden z-[201] text-slate-900 dark:text-slate-100 font-anthropic"
               onClick={e => e.stopPropagation()}
             >
-              <div className="p-5 bg-slate-900 text-white flex items-center justify-between border-b border-slate-800">
+              <div className="p-4 sm:p-5 bg-slate-900 dark:bg-slate-950 text-white flex items-center justify-between border-b border-slate-800 font-title">
                 <div className="flex items-center gap-2.5">
                   <ShieldAlert size={20} className="text-amber-400" />
-                  <h3 className="font-black text-base text-white font-title">
+                  <h3 className="font-bold text-base text-white">
                     Detalii Înregistrare Audit Master
                   </h3>
                 </div>
                 <button
                   onClick={() => setInspectedLog(null)}
-                  className="p-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white"
+                  className="p-1.5 rounded-[2px] bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white cursor-pointer"
                 >
-                  <X size={16} />
+                  <X size={18} />
                 </button>
               </div>
 
-              <div className="p-6 space-y-4 text-xs font-data">
-                <div className="grid grid-cols-2 gap-3 bg-slate-50 p-3.5 rounded-2xl border border-slate-200">
+              <div className="p-5 sm:p-6 space-y-4 text-xs sm:text-sm font-anthropic">
+                <div className="grid grid-cols-2 gap-3 bg-slate-50 dark:bg-slate-900 p-3.5 rounded-[2px] border border-slate-200 dark:border-slate-800">
                   <div>
-                    <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500">ID Înregistrare</div>
-                    <div className="font-mono font-bold text-slate-900 break-all">{inspectedLog.id}</div>
+                    <div className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 font-title">ID Înregistrare</div>
+                    <div className="font-data font-bold text-slate-900 dark:text-white break-all text-xs sm:text-sm mt-0.5">{inspectedLog.id}</div>
                   </div>
                   <div>
-                    <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Dată & Oră Exactă</div>
-                    <div className="font-mono font-bold text-slate-900">
+                    <div className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 font-title">Dată & Oră Exactă</div>
+                    <div className="font-data font-bold text-slate-900 dark:text-white text-xs sm:text-sm mt-0.5">
                       {new Date(inspectedLog.createdAt).toLocaleString('ro-RO')}
                     </div>
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <div className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Administrator Responsabil</div>
-                  <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 flex items-center justify-between">
-                    <span className="font-black text-slate-900">{inspectedLog.adminName || 'Admin'}</span>
+                <div className="space-y-1.5">
+                  <div className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 font-title">Administrator Responsabil</div>
+                  <div className="p-3 bg-slate-50 dark:bg-slate-900 rounded-[2px] border border-slate-200 dark:border-slate-800 flex items-center justify-between font-title">
+                    <span className="font-bold text-slate-900 dark:text-white text-xs sm:text-sm">{inspectedLog.adminName || 'Admin'}</span>
                     {inspectedLog.adminUsername && (
-                      <span className="font-mono text-slate-600">@{inspectedLog.adminUsername}</span>
+                      <span className="font-data text-slate-600 dark:text-slate-400 text-xs">@{inspectedLog.adminUsername}</span>
                     )}
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <div className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Membru Vizat</div>
-                  <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 flex items-center justify-between">
-                    <span className="font-black text-slate-900">{inspectedLog.targetMemberName || '—'}</span>
+                <div className="space-y-1.5">
+                  <div className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 font-title">Membru Vizat</div>
+                  <div className="p-3 bg-slate-50 dark:bg-slate-900 rounded-[2px] border border-slate-200 dark:border-slate-800 flex items-center justify-between font-title">
+                    <span className="font-bold text-slate-900 dark:text-white text-xs sm:text-sm">{inspectedLog.targetMemberName || '—'}</span>
                     {inspectedLog.targetMemberId && (
-                      <span className="font-mono text-slate-600">ID: {inspectedLog.targetMemberId}</span>
+                      <span className="font-data text-slate-600 dark:text-slate-400 text-xs">ID: {inspectedLog.targetMemberId}</span>
                     )}
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <div className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Motiv & Justificare Completă</div>
-                  <div className="p-3.5 bg-amber-50/60 rounded-xl border border-amber-200 text-slate-900 font-bold leading-relaxed">
+                <div className="space-y-1.5">
+                  <div className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 font-title">Motiv & Justificare Completă</div>
+                  <div className="p-3.5 bg-amber-50/60 dark:bg-amber-950/30 rounded-[2px] border border-amber-200 dark:border-amber-800/60 text-slate-900 dark:text-slate-100 font-medium leading-relaxed font-anthropic text-xs sm:text-sm">
                     {inspectedLog.reason}
                   </div>
                 </div>
 
-                <div className="pt-2">
+                <div className="pt-2 font-title">
                   <button
                     onClick={() => setInspectedLog(null)}
-                    className="w-full py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs transition-colors"
+                    className="w-full py-3 rounded-[2px] bg-slate-900 dark:bg-amber-500 hover:bg-slate-800 dark:hover:bg-amber-400 text-white dark:text-slate-950 font-bold text-xs sm:text-sm uppercase tracking-wider transition-colors cursor-pointer"
                   >
                     Închide Fereastra
                   </button>

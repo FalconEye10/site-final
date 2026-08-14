@@ -59,85 +59,81 @@ export const PushNotificationPromptModal: React.FC<PushNotificationPromptModalPr
   if (!isVisible) return null;
 
   return (
-    <div className="fixed inset-0 z-[99999] flex items-end sm:items-center justify-center p-4 sm:p-6 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
-      <div className="relative w-full max-w-lg bg-slate-900 border border-white/15 rounded-3xl p-6 sm:p-8 shadow-2xl text-white overflow-hidden animate-in zoom-in-95 duration-300">
+    <div className="fixed inset-0 z-[99999] flex items-end sm:items-center justify-center p-4 sm:p-6 bg-slate-950/60 backdrop-blur-sm animate-in fade-in duration-300 font-anthropic">
+      <div className="relative w-full max-w-lg bg-slate-900 border border-slate-800 rounded-[2px] p-6 sm:p-7 shadow-2xl text-white overflow-hidden animate-in zoom-in-95 duration-300 font-anthropic">
         
-        {/* Ambient background glow */}
-        <div className="absolute top-0 right-0 w-48 h-48 bg-[#A0D8EF]/15 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute bottom-0 left-0 w-48 h-48 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
-
         {/* Close button */}
         <button
           onClick={handleDismiss}
-          className="absolute top-4 right-4 p-2 text-slate-400 hover:text-white rounded-full hover:bg-white/5 transition-colors"
+          className="absolute top-4 right-4 p-1.5 text-slate-400 hover:text-white rounded-[2px] hover:bg-white/5 transition-colors cursor-pointer"
           title="Închide"
         >
-          <X size={18} />
+          <X size={16} />
         </button>
 
         {success ? (
-          <div className="py-8 text-center space-y-3 animate-in zoom-in-95 duration-300">
-            <div className="w-16 h-16 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 flex items-center justify-center mx-auto shadow-lg">
-              <CheckCircle2 size={36} />
+          <div className="py-6 text-center space-y-2.5 animate-in zoom-in-95 duration-300 font-anthropic">
+            <div className="w-12 h-12 rounded-[2px] bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 flex items-center justify-center mx-auto shadow-xs">
+              <CheckCircle2 size={28} />
             </div>
-            <h3 className="text-xl font-bold text-white">Notificări Activate cu Succes!</h3>
-            <p className="text-sm text-slate-300">
+            <h3 className="text-lg font-bold text-white font-anthropicSerif">Notificări Activate cu Succes!</h3>
+            <p className="text-xs text-slate-300 font-anthropic">
               Vei primi alerte instant pe dispozitiv pentru evenimente, voturi și motivări.
             </p>
           </div>
         ) : (
-          <div className="space-y-6">
+          <div className="space-y-4 font-anthropic">
             {/* Header Icon & Title */}
-            <div className="flex items-start gap-4">
-              <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-amber-500 to-amber-600 text-slate-950 flex items-center justify-center shrink-0 shadow-lg shadow-amber-500/20">
-                <Bell size={24} className="animate-bounce" />
+            <div className="flex items-start gap-3.5">
+              <div className="w-10 h-10 rounded-[2px] bg-amber-500 text-slate-950 flex items-center justify-center shrink-0 shadow-xs">
+                <Bell size={20} />
               </div>
               <div className="space-y-1">
-                <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-300 text-[10px] font-bold uppercase tracking-wider">
-                  <Sparkles size={11} /> Recomandat pentru Membri
+                <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-[2px] bg-amber-500/15 border border-amber-500/30 text-amber-300 text-[9px] font-bold uppercase tracking-wider font-title">
+                  <Sparkles size={10} /> Recomandat pentru Membri
                 </div>
-                <h3 className="text-lg sm:text-xl font-bold text-white leading-tight">
+                <h3 className="text-lg font-bold text-white leading-tight font-anthropicSerif">
                   Fii la curent cu activitatea Clubului
                 </h3>
               </div>
             </div>
 
             {/* Description & Benefits */}
-            <p className="text-sm text-slate-300 leading-relaxed">
+            <p className="text-xs text-slate-300 leading-relaxed font-anthropic">
               Pentru a nu rata nicio întâlnire sau decizie importantă, activează alertele directe pe telefon sau PC:
             </p>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs text-slate-300">
-              <div className="flex items-center gap-2 bg-white/5 border border-white/10 p-2.5 rounded-xl">
-                <CheckCircle2 size={16} className="text-[#A0D8EF] shrink-0" />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-slate-300 font-anthropic">
+              <div className="flex items-center gap-2 bg-white/5 border border-white/10 p-2 rounded-[2px]">
+                <CheckCircle2 size={14} className="text-sky-400 shrink-0" />
                 <span>Ședințe & Proiecte noi</span>
               </div>
-              <div className="flex items-center gap-2 bg-white/5 border border-white/10 p-2.5 rounded-xl">
-                <CheckCircle2 size={16} className="text-[#A0D8EF] shrink-0" />
+              <div className="flex items-center gap-2 bg-white/5 border border-white/10 p-2 rounded-[2px]">
+                <CheckCircle2 size={14} className="text-sky-400 shrink-0" />
                 <span>Răspunsuri la motivări</span>
               </div>
-              <div className="flex items-center gap-2 bg-white/5 border border-white/10 p-2.5 rounded-xl">
-                <CheckCircle2 size={16} className="text-[#A0D8EF] shrink-0" />
+              <div className="flex items-center gap-2 bg-white/5 border border-white/10 p-2 rounded-[2px]">
+                <CheckCircle2 size={14} className="text-sky-400 shrink-0" />
                 <span>Voturi & Sondaje oficiale</span>
               </div>
-              <div className="flex items-center gap-2 bg-white/5 border border-white/10 p-2.5 rounded-xl">
-                <CheckCircle2 size={16} className="text-[#A0D8EF] shrink-0" />
+              <div className="flex items-center gap-2 bg-white/5 border border-white/10 p-2 rounded-[2px]">
+                <CheckCircle2 size={14} className="text-sky-400 shrink-0" />
                 <span>Aprecieri & Kudos primite</span>
               </div>
             </div>
 
             {/* Action Buttons */}
-            <div className="pt-2 flex flex-col sm:flex-row gap-3">
+            <div className="pt-1.5 flex flex-col sm:flex-row gap-2.5 font-title">
               <button
                 onClick={handleEnable}
                 disabled={loading}
-                className="flex-1 inline-flex items-center justify-center gap-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:brightness-110 text-slate-950 font-bold text-sm py-3.5 px-6 rounded-2xl shadow-lg shadow-amber-500/25 transition-all duration-300"
+                className="flex-1 inline-flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs py-2.5 px-4 rounded-[2px] shadow-xs transition-all cursor-pointer"
               >
                 {loading ? (
-                  <Loader2 size={18} className="animate-spin" />
+                  <Loader2 size={16} className="animate-spin" />
                 ) : (
                   <>
-                    <Bell size={18} />
+                    <Bell size={16} />
                     Activează Notificările
                   </>
                 )}
@@ -146,14 +142,14 @@ export const PushNotificationPromptModal: React.FC<PushNotificationPromptModalPr
               <button
                 onClick={handleDismiss}
                 disabled={loading}
-                className="inline-flex items-center justify-center text-xs font-semibold text-slate-400 hover:text-white py-3 px-4 rounded-2xl hover:bg-white/5 transition-colors"
+                className="inline-flex items-center justify-center text-xs font-bold text-slate-400 hover:text-white py-2 px-3 rounded-[2px] hover:bg-white/5 transition-colors cursor-pointer"
               >
                 Amintește-mi mai târziu
               </button>
             </div>
 
-            <div className="flex items-center justify-center gap-1.5 text-[11px] text-slate-500">
-              <ShieldCheck size={13} />
+            <div className="flex items-center justify-center gap-1 text-[10px] text-slate-500 font-anthropic">
+              <ShieldCheck size={12} />
               <span>Poți modifica sau dezactiva oricând permisiunea din browser.</span>
             </div>
           </div>

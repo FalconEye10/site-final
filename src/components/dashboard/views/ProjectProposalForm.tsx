@@ -85,14 +85,14 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({ curren
 
   if (submitted) {
     return (
-      <div className="max-w-2xl mx-auto">
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-8 text-center">
-          <div className="w-16 h-16 bg-emerald-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-            <CheckCircle2 className="w-8 h-8 text-emerald-600" />
+      <div className="max-w-2xl mx-auto font-anthropic">
+        <div className="bg-white dark:bg-[#161B22] rounded-[2px] shadow-xs border border-slate-200 dark:border-slate-800 p-8 text-center">
+          <div className="w-12 h-12 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 rounded-[2px] flex items-center justify-center mx-auto mb-4 text-emerald-700 dark:text-emerald-400">
+            <CheckCircle2 className="w-6 h-6" />
           </div>
-          <h2 className="text-xl font-bold text-slate-800 mb-2">Propunerea a fost trimisă!</h2>
-          <p className="text-slate-500 mb-6">
-            Echipa de administrare va analiza propunerea ta. Vei fi notificat când statusul se schimbă.
+          <h2 className="text-xl font-bold font-anthropicSerif text-slate-900 dark:text-slate-100 mb-2">Propunerea a fost înregistrată</h2>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mb-6 font-anthropic">
+            Echipa de administrare va analiza propunerea ta de proiect. Vei fi notificat când statusul se schimbă.
           </p>
           <button
             onClick={() => {
@@ -104,7 +104,7 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({ curren
               setIncludeUsername(false);
               if (onClose) onClose();
             }}
-            className="px-6 py-2.5 btn-stitch-primary text-xs font-bold"
+            className="px-6 py-2.5 btn-civic-primary text-xs font-title uppercase tracking-wider"
           >
             Trimite altă propunere
           </button>
@@ -114,56 +114,56 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({ curren
   }
 
   return (
-    <div className="max-w-2xl mx-auto">
-      <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-        <div className="p-6 border-b border-slate-100 bg-slate-50/50">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-indigo-100 text-indigo-600 rounded-lg">
+    <div className="max-w-2xl mx-auto font-anthropic">
+      <div className="bg-white dark:bg-[#161B22] rounded-[2px] shadow-xs border border-slate-200 dark:border-slate-800 overflow-hidden">
+        <div className="p-5 sm:p-6 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50">
+          <div className="flex items-center gap-3.5">
+            <div className="p-2.5 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-[2px] border border-slate-200 dark:border-slate-700">
               <FileText className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-lg font-semibold text-slate-800">Propunere Proiect Nou</h2>
-              <p className="text-sm text-slate-500">Completează detaliile proiectului tău</p>
+              <h2 className="text-lg sm:text-xl font-bold font-anthropicSerif text-slate-900 dark:text-slate-100">Propunere Proiect Nou</h2>
+              <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-anthropic">Formular oficial de înaintare inițiative comunitare</p>
             </div>
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-5">
+        <form onSubmit={handleSubmit} className="p-5 sm:p-6 space-y-4 font-anthropic">
           {error && (
-            <div className="flex items-center gap-2 p-3 bg-rose-50 border border-rose-200 rounded-xl text-sm text-rose-700">
+            <div className="flex items-center gap-2 p-3.5 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 rounded-[2px] text-xs sm:text-sm text-rose-700 dark:text-rose-300 font-anthropic">
               <AlertCircle className="w-4 h-4 shrink-0" />
               {error}
             </div>
           )}
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1.5">Titlul Proiectului *</label>
+            <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5 font-title">Titlul Proiectului *</label>
             <input
               type="text"
               value={title}
               onChange={e => setTitle(e.target.value)}
-              placeholder="Ex: Amenajare spațiu de recreere"
-              className="w-full rounded-xl border border-slate-200 shadow-sm px-4 py-2.5 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all"
+              placeholder="Ex: Amenajare spațiu de recreere comunitar"
+              className="w-full rounded-[2px] border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-4 py-2.5 text-sm font-semibold text-slate-900 dark:text-slate-100 focus:outline-none focus:border-blue-600 font-anthropic"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1.5">Descrierea Proiectului *</label>
+            <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5 font-title">Descrierea Proiectului *</label>
             <textarea
               value={description}
               onChange={e => setDescription(e.target.value)}
               placeholder="Descrie în detaliu scopul, obiectivele și planul de implementare..."
-              rows={5}
-              className="w-full rounded-xl border border-slate-200 shadow-sm px-4 py-2.5 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all resize-none"
+              rows={4}
+              className="w-full rounded-[2px] border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-4 py-2.5 text-sm font-medium text-slate-900 dark:text-slate-100 focus:outline-none focus:border-blue-600 resize-none font-anthropic"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1.5">Comitet Recomandat</label>
+            <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5 font-title">Comitet Recomandat</label>
             <select
               value={recommendedCommittee}
               onChange={e => setRecommendedCommittee(e.target.value)}
-              className="w-full rounded-xl border border-slate-200 shadow-sm px-4 py-2.5 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all bg-white text-slate-800"
+              className="w-full rounded-[2px] border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-4 py-2.5 text-sm font-semibold text-slate-900 dark:text-slate-100 focus:outline-none focus:border-blue-600 font-anthropic cursor-pointer"
             >
               <option value="Servicii Comunitare & Proiecte">🤝 Servicii Comunitare & Proiecte</option>
               <option value="Imagine Publică & PR">🎨 Imagine Publică & PR</option>
@@ -174,23 +174,23 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({ curren
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1.5">Buget Estimat (opțional)</label>
+            <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5 font-title">Buget Estimat (opțional)</label>
             <input
               type="text"
               value={budget}
               onChange={e => setBudget(e.target.value)}
               placeholder="Ex: 500 Lei sau Fără buget necesar"
-              className="w-full rounded-xl border border-slate-200 shadow-sm px-4 py-2.5 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all"
+              className="w-full rounded-[2px] border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-4 py-2.5 text-sm font-semibold text-slate-900 dark:text-slate-100 focus:outline-none focus:border-blue-600 font-anthropic"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1.5">Atașament PDF (opțional, max 500KB)</label>
+            <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5 font-title">Atașament PDF (opțional, max 500KB)</label>
             <div className="relative">
-              <label className="flex items-center gap-3 cursor-pointer w-full p-4 border-2 border-dashed border-slate-200 hover:border-indigo-300 rounded-xl transition-colors bg-slate-50/50 hover:bg-indigo-50/30">
-                <Upload className="w-5 h-5 text-slate-400" />
-                <span className="text-sm text-slate-600">
-                  {pdfFile ? pdfFile.name : 'Click pentru a încărca un plan PDF'}
+              <label className="flex items-center gap-3.5 cursor-pointer w-full p-4 border border-dashed border-slate-300 dark:border-slate-700 hover:border-slate-500 rounded-[2px] transition-colors bg-slate-50 dark:bg-slate-900/60">
+                <Upload className="w-4 h-4 text-slate-400" />
+                <span className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 font-anthropic">
+                  {pdfFile ? pdfFile.name : 'Click pentru a încărca document PDF'}
                 </span>
                 <input
                   type="file"
@@ -203,7 +203,7 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({ curren
                 <button
                   type="button"
                   onClick={() => setPdfFile(null)}
-                  className="absolute top-2 right-2 text-xs text-slate-400 hover:text-rose-600 transition-colors"
+                  className="absolute top-2.5 right-2.5 text-xs text-slate-400 hover:text-rose-600 transition-colors p-1.5 cursor-pointer"
                 >
                   ✕
                 </button>
@@ -211,19 +211,19 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({ curren
             </div>
           </div>
 
-          <div className="bg-indigo-50/50 p-4 rounded-xl border border-indigo-100/50 space-y-3">
+          <div className="bg-slate-50 dark:bg-slate-900 p-4 rounded-[2px] border border-slate-200 dark:border-slate-800 space-y-2">
             <label className="flex items-start gap-3 cursor-pointer select-none">
               <input
                 type="checkbox"
                 checked={includeUsername}
                 onChange={(e) => setIncludeUsername(e.target.checked)}
-                className="mt-1 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 h-4 w-4"
+                className="mt-1 rounded-[1px] border-slate-300 dark:border-slate-700 text-blue-600 focus:ring-0 cursor-pointer"
               />
-              <div className="text-sm">
-                <span className="font-semibold text-slate-800 block">Semnează propunerea cu numele meu</span>
-                <span className="text-slate-500 text-xs block mt-0.5">
-                  Dacă bifezi, adminii vor vedea că propunerea îți aparține (<strong>{currentUsername || 'tu'}</strong>).
-                  Propunerile semnate și aplicabile pot primi o <strong>mărire de punctaj (puncte bonus)</strong>! Necompletat, propunerea rămâne 100% anonimă.
+              <div className="text-xs sm:text-sm font-anthropic">
+                <span className="font-bold text-slate-900 dark:text-slate-100 block">Semnează propunerea cu numele meu</span>
+                <span className="text-slate-500 dark:text-slate-400 text-xs block mt-1 leading-relaxed">
+                  Dacă bifezi, adminii vor vedea autorul propunerii (<strong>{currentUsername || 'tu'}</strong>).
+                  Propunerile semnate și aplicabile pot primi <strong>puncte bonus</strong> la clasament.
                 </span>
               </div>
             </label>
@@ -232,11 +232,11 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({ curren
           <button
             type="submit"
             disabled={isSubmitting || !title.trim() || !description.trim()}
-            className="flex items-center justify-center gap-2 w-full py-2.5 btn-stitch-primary text-xs font-bold disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex items-center justify-center gap-2 w-full py-3 btn-civic-primary text-xs sm:text-sm font-title uppercase tracking-wider disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
           >
             {isSubmitting ? (
               <>
-                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-[1px] animate-spin" />
                 Se trimite...
               </>
             ) : (

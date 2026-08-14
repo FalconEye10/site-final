@@ -128,11 +128,11 @@ const SignatureCanvas = ({ title, onSign }: { title: string, onSign: (b64: strin
   };
 
   return (
-    <div className="flex flex-col items-center w-full">
+    <div className="flex flex-col items-center w-full font-anthropic">
       <div className="flex justify-between items-center w-full mb-1">
-        <label className="text-sm font-semibold text-brand-accent/70">{title}</label>
+        <label className="text-xs font-bold text-slate-700 font-title">{title}</label>
         {hasSignature && (
-          <button type="button" onClick={clear} className="text-xs flex items-center gap-1 text-red-500 hover:text-red-600 transition-colors">
+          <button type="button" onClick={clear} className="text-xs flex items-center gap-1 text-red-500 hover:text-red-600 transition-colors cursor-pointer font-title">
             <Eraser size={12} /> Șterge
           </button>
         )}
@@ -148,7 +148,7 @@ const SignatureCanvas = ({ title, onSign }: { title: string, onSign: (b64: strin
         onTouchStart={startDrawing}
         onTouchEnd={endDrawing}
         onTouchMove={draw}
-        className="border-2 border-dashed border-brand-muted/20 rounded-xl bg-white w-full max-w-[400px] h-[150px] touch-none cursor-crosshair hover:border-brand-primary/50 transition-colors"
+        className="border-2 border-dashed border-slate-300 rounded-[2px] bg-white w-full max-w-[400px] h-[150px] touch-none cursor-crosshair hover:border-slate-400 transition-colors"
       />
     </div>
   );
@@ -178,59 +178,61 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({ memberId, memberName
         month: targetMonth,
         date: new Date().toISOString(),
         memberSignature: memberSig,
-        treasurerSignature: treasurerSig
+        treasurerSignature: treasurerSig,
       };
 
-      const { newTotalPaid, newStatus } = await processTreasuryPayment(memberId, paymentDoc);
-      toast.success(`Cotizația pentru ${targetMonth} a fost încasată cu succes!`);
-      onSuccess(newTotalPaid, newStatus);
-    } catch (err) {
-      console.error(err);
-      toast.error("Eroare la procesarea plății. Încearcă din nou.");
+      const result = await processTreasuryPayment(memberId, paymentDoc);
+      toast.success(`Cotizația pentru ${targetMonth} a fost înregistrată!`);
+      // Update UI with the authoritative values from the transaction
+      onSuccess(result.newTotalPaid, result.newStatus);
+      onClose();
+    } catch (e: any) {
+      console.error(e);
+      toast.error(e.message || "Eroare la procesarea plății");
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <div className="fixed inset-0 z-[300] flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 font-anthropic">
       <motion.div 
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="absolute inset-0 bg-brand-accent/60 backdrop-blur-sm"
+        className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm"
         onClick={onClose}
       />
       <motion.div 
         initial={{ opacity: 0, scale: 0.95, y: 20 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95, y: 20 }}
-        className="relative w-full max-w-lg bg-white rounded-3xl p-8 overflow-hidden shadow-2xl"
+        className="relative w-full max-w-lg bg-white border border-slate-300 rounded-[2px] p-6 sm:p-7 overflow-hidden shadow-2xl font-anthropic"
       >
         <div className="absolute top-0 right-0 p-4">
-          <button onClick={onClose} className="p-2 hover:bg-brand-accent/5 rounded-full transition-all">
-            <X size={20} className="text-brand-accent/40" />
+          <button onClick={onClose} className="p-1 hover:bg-slate-100 rounded-[2px] transition-all text-slate-400 hover:text-slate-700 cursor-pointer">
+            <X size={18} />
           </button>
         </div>
 
-        <div className="mb-6">
-          <h2 className="text-2xl font-bold text-brand-accent">Încasare Cotizație</h2>
-          <p className="text-sm opacity-60 font-medium">Tranzacție securizată • ID: {transactionId}</p>
+        <div className="mb-5">
+          <h2 className="text-xl font-bold font-anthropicSerif text-slate-900">Încasare Cotizație</h2>
+          <p className="text-xs text-slate-500 font-data">Tranzacție securizată • ID: {transactionId}</p>
         </div>
 
-        <div className="bg-brand-primary/10 border border-brand-primary/30 rounded-2xl p-4 mb-6 flex flex-col items-center">
-          <span className="text-xs uppercase tracking-wider font-bold text-brand-accent/60 mb-1">Cotizație Acoperită</span>
-          <span className="text-xl font-bold text-brand-accent mb-2">{targetMonth}</span>
-          <div className="bg-white rounded-xl px-6 py-2 shadow-sm flex items-center gap-2">
-            <span className="text-3xl font-black text-emerald-600">15 RON</span>
+        <div className="bg-slate-50 border border-slate-200 rounded-[2px] p-4 mb-5 flex flex-col items-center font-anthropic">
+          <span className="text-[10px] uppercase tracking-wider font-bold text-slate-500 mb-1 font-title">Cotizație Acoperită</span>
+          <span className="text-lg font-bold text-slate-900 mb-2 font-title">{targetMonth}</span>
+          <div className="bg-white border border-slate-200 rounded-[2px] px-5 py-1.5 shadow-xs flex items-center gap-2">
+            <span className="text-2xl font-black text-emerald-600 font-data">15 RON</span>
           </div>
-          <div className="mt-3 flex items-start gap-2 text-xs text-brand-accent/70">
-            <AlertTriangle size={14} className="text-brand-primary shrink-0 mt-0.5" />
+          <div className="mt-2.5 flex items-start gap-2 text-xs text-slate-600 font-anthropic">
+            <AlertTriangle size={13} className="text-amber-500 shrink-0 mt-0.5" />
             <p>Conform regulamentului, plățile se fac strict per lună (15 RON). Sumele în avans sau parțiale nu sunt permise.</p>
           </div>
         </div>
 
-        <div className="space-y-6">
+        <div className="space-y-4">
           <SignatureCanvas title={`Semnătură Membru: ${memberName}`} onSign={setMemberSig} />
           <SignatureCanvas title="Semnătură Trezorier" onSign={setTreasurerSig} />
         </div>
@@ -238,13 +240,13 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({ memberId, memberName
         <button
           onClick={handleSubmit}
           disabled={!memberSig || !treasurerSig || isSubmitting}
-          className="w-full mt-8 btn-stitch-primary py-3 font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 disabled:opacity-50"
+          className="w-full mt-6 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-[2px] font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 disabled:opacity-50 font-title cursor-pointer shadow-xs"
         >
           {isSubmitting ? (
             <span className="animate-pulse">Se procesează tranzacția...</span>
           ) : (
             <>
-              <CheckCircle size={20} /> Confirmă Încasarea (15 RON)
+              <CheckCircle size={16} /> Confirmă Încasarea (15 RON)
             </>
           )}
         </button>

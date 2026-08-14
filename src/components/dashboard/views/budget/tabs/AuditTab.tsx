@@ -205,13 +205,13 @@ export const AuditTab: React.FC<{ entries: AuditEntry[]; duesPayments: TreasuryP
                       {row.txCode || '—'}
                     </span>
                   </Td>
-                  <Td className="max-w-[180px] truncate text-xs" style={{ color: 'var(--adm-ink-faint)' }}>
+                  <Td className="min-w-[160px] whitespace-normal break-words text-xs sm:text-sm" style={{ color: 'var(--adm-ink-faint)' }}>
                     {row.oldValue || '—'}
                   </Td>
-                  <Td className="max-w-[180px] truncate text-xs" style={{ color: 'var(--adm-ink)' }}>
+                  <Td className="min-w-[160px] whitespace-normal break-words text-xs sm:text-sm" style={{ color: 'var(--adm-ink)' }}>
                     {row.newValue || '—'}
                   </Td>
-                  <Td className="max-w-[240px] text-xs" style={{ color: 'var(--adm-ink-dim)' }}>
+                  <Td className="min-w-[240px] whitespace-normal break-words text-xs sm:text-sm" style={{ color: 'var(--adm-ink-dim)' }}>
                     {row.details || '—'}
                   </Td>
                   <Td align="center">
@@ -235,10 +235,10 @@ export const AuditTab: React.FC<{ entries: AuditEntry[]; duesPayments: TreasuryP
                   <Td className="text-xs" style={{ color: 'var(--adm-ink-faint)' }}>
                     —
                   </Td>
-                  <Td numeric className="text-xs" style={{ color: 'var(--adm-acc-emerald)' }}>
+                  <Td numeric className="text-xs font-bold" style={{ color: 'var(--adm-acc-emerald)' }}>
                     +{row.amount} RON
                   </Td>
-                  <Td className="max-w-[240px] text-xs" style={{ color: 'var(--adm-ink-dim)' }}>
+                  <Td className="min-w-[240px] whitespace-normal break-words text-xs sm:text-sm" style={{ color: 'var(--adm-ink-dim)' }}>
                     Cotizație {row.month} — {row.memberName}
                   </Td>
                   <Td align="center">

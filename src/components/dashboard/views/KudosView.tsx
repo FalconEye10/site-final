@@ -141,58 +141,58 @@ export const KudosView: React.FC<KudosViewProps> = ({ currentUserId, currentUser
   }, [kudosList, currentUserId, currentUsername]);
 
   return (
-    <div className="space-y-8 font-anthropic">
+    <div className="space-y-6 font-anthropic">
       {/* Header & Hero */}
-      <div className="rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 md:p-8 shadow-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+      <div className="rounded-[2px] border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 md:p-6 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-5">
         <div>
-          <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 rounded-xl bg-rose-50 dark:bg-rose-950/30 text-rose-600 dark:text-rose-400 flex items-center justify-center font-bold">
+          <div className="flex items-center gap-2.5 mb-1.5">
+            <div className="w-10 h-10 rounded-[2px] bg-rose-50 dark:bg-rose-950/30 text-rose-600 dark:text-rose-400 flex items-center justify-center font-bold">
               <Heart size={22} className="fill-rose-500 text-rose-500" />
             </div>
-            <h1 className="text-2xl md:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">Kudos & Recunoaștere</h1>
+            <h1 className="text-2xl md:text-3xl font-bold font-anthropicSerif text-slate-900 dark:text-white tracking-tight">Kudos & Recunoaștere</h1>
           </div>
-          <p className="text-sm font-semibold text-slate-500 dark:text-slate-400 font-['Manrope']">
+          <p className="text-xs sm:text-sm font-medium text-slate-500 dark:text-slate-400 font-anthropic mt-1">
             Trimite aprecieri și mulțumește colegilor pentru implicarea și energia lor în club!
           </p>
         </div>
 
         <button
           onClick={() => setShowSendModal(true)}
-          className="ios26-btn px-6 py-3 text-sm md:text-[15px] font-bold flex items-center justify-center gap-2 shadow-lg shrink-0"
+          className="px-5 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-[2px] text-xs sm:text-sm font-bold font-title uppercase tracking-wider flex items-center justify-center gap-2 shadow-xs shrink-0 cursor-pointer"
         >
           <Sparkles size={16} /> TRIMITE UN KUDOS
         </button>
       </div>
 
       {/* Top Stat Badges */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="rounded-2xl border-2 border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-sm border-t-4 border-t-blue-600">
-          <span className="text-xs font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">Toate Aprecierile</span>
-          <div className="text-4xl font-extrabold text-slate-900 dark:text-white mt-1">{stats.total}</div>
-          <div className="text-xs font-semibold text-slate-500 dark:text-slate-400 mt-1">Kudos trimise în comunitate</div>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5">
+        <div className="rounded-[2px] border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 sm:p-5 shadow-xs border-t-2 border-t-blue-600">
+          <span className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 font-title">Toate Aprecierile</span>
+          <div className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white mt-1 font-data">{stats.total}</div>
+          <div className="text-xs sm:text-sm font-medium text-slate-500 dark:text-slate-400 mt-1">Kudos trimise în comunitate</div>
         </div>
 
-        <div className="rounded-2xl border-2 border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-sm border-t-4 border-t-rose-500">
-          <span className="text-xs font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">Aprecieri Primite</span>
-          <div className="text-4xl font-extrabold text-rose-600 dark:text-rose-400 mt-1">{stats.receivedCount}</div>
-          <div className="text-xs font-semibold text-slate-500 dark:text-slate-400 mt-1">Kudos primite de tine</div>
+        <div className="rounded-[2px] border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 sm:p-5 shadow-xs border-t-2 border-t-rose-500">
+          <span className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 font-title">Aprecieri Primite</span>
+          <div className="text-3xl sm:text-4xl font-black text-rose-600 dark:text-rose-400 mt-1 font-data">{stats.receivedCount}</div>
+          <div className="text-xs sm:text-sm font-medium text-slate-500 dark:text-slate-400 mt-1">Kudos primite de tine</div>
         </div>
 
-        <div className="rounded-2xl border-2 border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-sm border-t-4 border-t-emerald-600">
-          <span className="text-xs font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">Aprecieri Trimise</span>
-          <div className="text-4xl font-extrabold text-emerald-600 dark:text-emerald-400 mt-1">{stats.sentCount}</div>
-          <div className="text-xs font-semibold text-slate-500 dark:text-slate-400 mt-1">Mulțumiri oferite colegilor</div>
+        <div className="rounded-[2px] border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 sm:p-5 shadow-xs border-t-2 border-t-emerald-600">
+          <span className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 font-title">Aprecieri Trimise</span>
+          <div className="text-3xl sm:text-4xl font-black text-emerald-600 dark:text-emerald-400 mt-1 font-data">{stats.sentCount}</div>
+          <div className="text-xs sm:text-sm font-medium text-slate-500 dark:text-slate-400 mt-1">Mulțumiri oferite colegilor</div>
         </div>
       </div>
 
       {/* Toolbar & Filters */}
-      <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 shadow-lg flex flex-col md:flex-row gap-3 justify-between items-center">
-        <div className="flex flex-wrap gap-2 w-full md:w-auto">
+      <div className="rounded-[2px] border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-3.5 sm:p-4 shadow-xs flex flex-col md:flex-row gap-3 justify-between items-center font-anthropic">
+        <div className="flex flex-wrap gap-2 w-full md:w-auto font-title">
           <button
             onClick={() => setActiveFilter('all')}
-            className={`px-4 py-2 rounded-xl text-xs md:text-sm font-bold transition-all ${
+            className={`px-4 py-2 rounded-[2px] text-xs sm:text-sm font-bold uppercase tracking-wider transition-all cursor-pointer ${
               activeFilter === 'all' 
-                ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-md' 
+                ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-xs' 
                 : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700'
             }`}
           >
@@ -200,9 +200,9 @@ export const KudosView: React.FC<KudosViewProps> = ({ currentUserId, currentUser
           </button>
           <button
             onClick={() => setActiveFilter('received')}
-            className={`px-4 py-2 rounded-xl text-xs md:text-sm font-bold transition-all ${
+            className={`px-4 py-2 rounded-[2px] text-xs sm:text-sm font-bold uppercase tracking-wider transition-all cursor-pointer ${
               activeFilter === 'received' 
-                ? 'bg-rose-600 text-white shadow-md' 
+                ? 'bg-rose-600 text-white shadow-xs' 
                 : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700'
             }`}
           >
@@ -210,9 +210,9 @@ export const KudosView: React.FC<KudosViewProps> = ({ currentUserId, currentUser
           </button>
           <button
             onClick={() => setActiveFilter('sent')}
-            className={`px-4 py-2 rounded-xl text-xs md:text-sm font-bold transition-all ${
+            className={`px-4 py-2 rounded-[2px] text-xs sm:text-sm font-bold uppercase tracking-wider transition-all cursor-pointer ${
               activeFilter === 'sent' 
-                ? 'bg-emerald-600 text-white shadow-md' 
+                ? 'bg-emerald-600 text-white shadow-xs' 
                 : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700'
             }`}
           >
@@ -220,26 +220,26 @@ export const KudosView: React.FC<KudosViewProps> = ({ currentUserId, currentUser
           </button>
         </div>
 
-        <div className="relative w-full md:w-72">
-          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+        <div className="relative w-full md:w-80">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
           <input
             type="text"
             placeholder="Caută după membru sau mesaj..."
             value={searchMember}
             onChange={e => setSearchMember(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:border-slate-400 focus:bg-white dark:focus:bg-slate-900 dark:text-white transition-all font-['Manrope']"
+            className="w-full pl-9 pr-3.5 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-[2px] text-xs sm:text-sm focus:outline-none focus:border-indigo-500 focus:bg-white dark:focus:bg-slate-900 dark:text-white transition-all font-anthropic"
           />
         </div>
       </div>
 
       {/* Feed List */}
       {loading ? (
-        <div className="p-12 text-center text-slate-500 dark:text-slate-400 font-bold">Se încarcă aprecierile...</div>
+        <div className="p-10 text-center text-slate-500 dark:text-slate-400 text-xs sm:text-sm font-bold">Se încarcă aprecierile...</div>
       ) : filteredKudos.length === 0 ? (
-        <div className="rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-12 text-center shadow-lg">
-          <Award className="w-12 h-12 mx-auto text-slate-300 dark:text-slate-700 mb-3" />
-          <h3 className="text-lg font-bold text-slate-800 dark:text-white">Nu a fost găsită nicio apreciere</h3>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 font-['Manrope']">Fii primul care trimite un Kudos unui coleg din club!</p>
+        <div className="rounded-[2px] border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-10 text-center shadow-xs">
+          <Award className="w-10 h-10 mx-auto text-slate-300 dark:text-slate-700 mb-2" />
+          <h3 className="text-base sm:text-lg font-bold font-title text-slate-800 dark:text-white">Nu a fost găsită nicio apreciere</h3>
+          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1 font-anthropic">Fii primul care trimite un Kudos unui coleg din club!</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -254,32 +254,32 @@ export const KudosView: React.FC<KudosViewProps> = ({ currentUserId, currentUser
             return (
               <div
                 key={item.id}
-                className="rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-md hover:shadow-xl transition-all duration-300 flex flex-col justify-between"
+                className="rounded-[2px] border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 sm:p-6 shadow-xs hover:shadow-md transition-all flex flex-col justify-between"
               >
                 <div>
                   {/* Category & Date */}
-                  <div className="flex items-center justify-between gap-2 mb-4">
-                    <span className={`px-3 py-1 rounded-full text-xs font-black border ${cat.color} dark:bg-slate-800 dark:text-slate-200 dark:border-slate-700`}>
+                  <div className="flex items-center justify-between gap-2 mb-3 font-title">
+                    <span className={`px-3 py-1 rounded-[2px] text-xs font-bold border ${cat.color} dark:bg-slate-800 dark:text-slate-200 dark:border-slate-700 uppercase tracking-wider`}>
                       {cat.label}
                     </span>
-                    <span className="text-xs font-semibold text-slate-400 dark:text-slate-500">{dateStr}</span>
+                    <span className="text-xs font-medium text-slate-400 dark:text-slate-500 font-data">{dateStr}</span>
                   </div>
 
                   {/* Message */}
-                  <p className="text-base font-semibold text-slate-800 dark:text-slate-100 leading-relaxed font-['Manrope'] mb-6 italic">
+                  <p className="text-sm sm:text-base font-normal text-slate-800 dark:text-slate-100 leading-relaxed font-anthropic mb-4 italic">
                     "{item.message}"
                   </p>
                 </div>
 
                 {/* Sender & Recipient bar */}
-                <div className="pt-4 border-t border-slate-100 dark:border-slate-850 flex items-center justify-between text-xs font-bold text-slate-600 dark:text-slate-400">
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-slate-400 dark:text-slate-500 font-normal">De la:</span>
-                    <span className="text-slate-900 dark:text-white bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-md">{item.fromName}</span>
+                <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs sm:text-sm font-bold text-slate-600 dark:text-slate-400 font-title">
+                  <div className="flex items-center gap-2">
+                    <span className="text-slate-400 dark:text-slate-500 font-normal text-xs">De la:</span>
+                    <span className="text-slate-900 dark:text-white bg-slate-100 dark:bg-slate-800 px-2.5 py-1 rounded-[2px] text-xs sm:text-sm font-bold">{item.fromName}</span>
                   </div>
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-slate-400 dark:text-slate-500 font-normal">Pentru:</span>
-                    <span className="text-rose-700 dark:text-rose-300 bg-rose-50 dark:bg-rose-950/20 border border-rose-200 dark:border-rose-900/50 px-2.5 py-0.5 rounded-md font-extrabold">
+                  <div className="flex items-center gap-2">
+                    <span className="text-slate-400 dark:text-slate-500 font-normal text-xs">Pentru:</span>
+                    <span className="text-rose-700 dark:text-rose-300 bg-rose-50 dark:bg-rose-950/20 border border-rose-200 dark:border-rose-900/50 px-2.5 py-1 rounded-[2px] text-xs sm:text-sm font-bold">
                       {item.toName}
                     </span>
                   </div>
@@ -292,33 +292,33 @@ export const KudosView: React.FC<KudosViewProps> = ({ currentUserId, currentUser
 
       {/* Modal Send Kudos */}
       {showSendModal && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
-          <div className="bg-white dark:bg-slate-900 rounded-2xl sm:rounded-3xl max-w-lg w-full p-5 sm:p-8 shadow-2xl border border-slate-200 dark:border-slate-800 space-y-6 animate-in zoom-in-95">
+        <div className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 font-anthropic">
+          <div className="bg-white dark:bg-slate-900 rounded-[2px] max-w-lg w-full p-5 sm:p-6 shadow-2xl border border-slate-200 dark:border-slate-800 space-y-4 animate-in zoom-in-95">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-rose-50 dark:bg-rose-950/30 text-rose-600 dark:text-rose-400 flex items-center justify-center font-bold">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-[2px] bg-rose-50 dark:bg-rose-950/30 text-rose-600 dark:text-rose-400 flex items-center justify-center font-bold">
                   <Sparkles size={20} />
                 </div>
-                <h3 className="text-xl font-bold text-slate-900 dark:text-white">Trimite un Kudos</h3>
+                <h3 className="text-lg sm:text-xl font-bold font-title text-slate-900 dark:text-white">Trimite un Kudos</h3>
               </div>
               <button
                 onClick={() => setShowSendModal(false)}
-                className="p-1.5 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
+                className="p-1.5 rounded-[2px] hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors cursor-pointer"
               >
                 ✕
               </button>
             </div>
 
-            <form onSubmit={handleSendKudos} className="space-y-4 font-['Manrope']">
+            <form onSubmit={handleSendKudos} className="space-y-4 font-anthropic">
               <div>
-                <label className="block text-xs font-black uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5 font-title">
                   Alege Destinatarul
                 </label>
                 <select
                   value={selectedRecipientId}
                   onChange={e => setSelectedRecipientId(e.target.value)}
                   required
-                  className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-bold text-slate-900 dark:text-white focus:outline-none focus:border-slate-400"
+                  className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-[2px] text-sm font-medium text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 cursor-pointer"
                 >
                   <option value="">-- Selectează un coleg din club --</option>
                   {members
@@ -333,18 +333,18 @@ export const KudosView: React.FC<KudosViewProps> = ({ currentUserId, currentUser
               </div>
 
               <div>
-                <label className="block text-xs font-black uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5 font-title">
                   Categorie
                 </label>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 font-title">
                   {KUDOS_CATEGORIES.map(cat => (
                     <button
                       key={cat.id}
                       type="button"
                       onClick={() => setSelectedCategory(cat.id)}
-                      className={`p-2.5 rounded-xl border text-left text-xs font-bold transition-all ${
+                      className={`p-2.5 rounded-[2px] border text-left text-xs sm:text-sm font-bold uppercase tracking-wider transition-all cursor-pointer ${
                         selectedCategory === cat.id
-                          ? 'border-slate-900 dark:border-white bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-md'
+                          ? 'border-slate-900 dark:border-white bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-xs'
                           : 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700'
                       }`}
                     >
@@ -355,7 +355,7 @@ export const KudosView: React.FC<KudosViewProps> = ({ currentUserId, currentUser
               </div>
 
               <div>
-                <label className="block text-xs font-black uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5 font-title">
                   Mesaj Personalizat
                 </label>
                 <textarea
@@ -364,25 +364,25 @@ export const KudosView: React.FC<KudosViewProps> = ({ currentUserId, currentUser
                   onChange={e => setKudosMessage(e.target.value)}
                   required
                   placeholder="Scrie câteva cuvinte frumoase sau mulțumește-i pentru sprijin..."
-                  className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-900 dark:text-white focus:outline-none focus:border-slate-400 font-['Manrope']"
+                  className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-[2px] text-sm text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 font-anthropic resize-none"
                 />
               </div>
 
               {/* Actions */}
-              <div className="flex gap-3 pt-2">
+              <div className="flex gap-3 pt-2 font-title">
                 <button
                   type="button"
                   onClick={() => setShowSendModal(false)}
-                  className="flex-1 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 font-bold text-sm hover:bg-slate-50 dark:hover:bg-slate-800"
+                  className="flex-1 py-2.5 rounded-[2px] border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 font-bold text-xs sm:text-sm uppercase tracking-wider hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer"
                 >
                   Anulează
                 </button>
                 <button
                   type="submit"
                   disabled={sending}
-                  className="flex-1 ios26-btn py-2.5 text-sm font-bold flex items-center justify-center gap-2"
+                  className="flex-1 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-[2px] text-xs sm:text-sm font-bold uppercase tracking-wider flex items-center justify-center gap-2 shadow-xs cursor-pointer"
                 >
-                  <Send size={15} /> {sending ? 'Se trimite...' : 'Trimite Kudos'}
+                  <Send size={16} /> {sending ? 'Se trimite...' : 'Trimite Kudos'}
                 </button>
               </div>
             </form>

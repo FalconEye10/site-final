@@ -36,9 +36,12 @@ function MainApp() {
   // Not Logged In View (Strict JWT verification check - no raw localStorage fallback)
   if (!session || !user) {
     return (
-      <div className="animate-in fade-in zoom-in-95 duration-1000">
-        <WelcomeLogin onLoginSuccess={() => {}} />
-      </div>
+      <>
+        <div className="animate-in fade-in zoom-in-95 duration-1000">
+          <WelcomeLogin onLoginSuccess={() => {}} />
+        </div>
+        <Toaster />
+      </>
     );
   }
 
@@ -69,4 +72,3 @@ export default function App() {
     </AuthProvider>
   );
 }
-

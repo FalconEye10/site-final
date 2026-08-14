@@ -10,25 +10,25 @@ interface BadgeProps {
 }
 
 const variants: Record<BadgeVariant, string> = {
-  success: 'bg-emerald-400/10 text-emerald-300 border-emerald-400/25',
-  warning: 'bg-amber-400/10 text-amber-300 border-amber-400/25',
-  danger: 'bg-red-400/10 text-red-300 border-red-400/25',
-  neutral: 'bg-white/5 text-white/60 border-white/10',
-  admin: 'bg-blue-400/10 text-blue-300 border-blue-400/25',
+  success: 'bg-emerald-100 text-emerald-900 border-emerald-300 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-800',
+  warning: 'bg-amber-100 text-amber-900 border-amber-300 dark:bg-amber-950/60 dark:text-amber-300 dark:border-amber-800',
+  danger: 'bg-rose-100 text-rose-900 border-rose-300 dark:bg-rose-950/60 dark:text-rose-300 dark:border-rose-800',
+  neutral: 'bg-slate-200 text-slate-900 border-slate-300 dark:bg-slate-800 dark:text-slate-100 dark:border-slate-700',
+  admin: 'bg-sky-100 text-sky-900 border-sky-300 dark:bg-sky-950/60 dark:text-sky-300 dark:border-sky-800',
 };
 
 const dotColors: Record<BadgeVariant, string> = {
-  success: 'bg-emerald-400',
-  warning: 'bg-amber-400',
-  danger: 'bg-red-400',
-  neutral: 'bg-white/40',
-  admin: 'bg-[#89cff0]',
+  success: 'bg-emerald-500',
+  warning: 'bg-amber-500',
+  danger: 'bg-rose-500',
+  neutral: 'bg-slate-500 dark:bg-slate-300',
+  admin: 'bg-sky-500',
 };
 
 export function Badge({ children, variant = 'neutral', className = '', showDot = false }: BadgeProps) {
   return (
     <span 
-      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-xs font-bold tracking-wide transition-colors ${variants[variant]} ${className}`}
+      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[2px] border text-xs font-bold tracking-wide transition-colors ${variants[variant]} ${className}`}
     >
       {showDot && (
         <span className="relative flex h-2 w-2">

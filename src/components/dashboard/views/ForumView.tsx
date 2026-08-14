@@ -161,86 +161,86 @@ export const ForumView: React.FC<ForumViewProps> = ({ isAdmin, currentUserId, cu
   }
 
   return (
-    <div className="p-6 space-y-8 max-w-4xl mx-auto">
+    <div className="p-4 sm:p-6 space-y-6 max-w-4xl mx-auto font-anthropic">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-800">Forum</h1>
-          <p className="text-slate-500">Discuții deschise și feedback între membrii clubului</p>
+          <h1 className="text-2xl md:text-3xl font-bold font-anthropicSerif text-slate-900 dark:text-slate-100">Forum & Dialog</h1>
+          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1 font-anthropic">Discuții deschise, inițiative și schimb de opinii între membri</p>
         </div>
         <button
           onClick={() => setShowNewPost(!showNewPost)}
-          className="flex items-center gap-2 px-4 py-2.5 btn-stitch-primary text-xs font-bold"
+          className="flex items-center gap-2 px-4 py-2.5 btn-civic-primary text-xs sm:text-sm font-title uppercase tracking-wider cursor-pointer"
         >
           {showNewPost ? 'Anulează' : 'Postare Nouă'}
         </button>
       </div>
 
       {showNewPost && (
-        <form onSubmit={handleCreatePost} className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 space-y-4">
+        <form onSubmit={handleCreatePost} className="bg-white dark:bg-[#161B22] rounded-[2px] shadow-xs border border-slate-200 dark:border-slate-800 p-5 sm:p-6 space-y-3.5 font-anthropic">
           <input
             type="text"
             value={newPostTitle}
             onChange={e => setNewPostTitle(e.target.value)}
-            placeholder="Titlul postării..."
-            className="w-full rounded-xl border border-slate-200 shadow-sm px-4 py-2.5 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all font-medium"
+            placeholder="Titlul subiectului de discuție..."
+            className="w-full rounded-[2px] border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-4 py-2.5 text-sm font-semibold text-slate-900 dark:text-slate-100 focus:outline-none focus:border-blue-600 font-anthropic"
           />
           <textarea
             value={newPostContent}
             onChange={e => setNewPostContent(e.target.value)}
-            placeholder="Ce ai vrea să discuți?"
+            placeholder="Descrie ideea sau întrebarea ta pentru colegi..."
             rows={4}
-            className="w-full rounded-xl border border-slate-200 shadow-sm px-4 py-2.5 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all resize-none"
+            className="w-full rounded-[2px] border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-4 py-2.5 text-sm font-medium text-slate-900 dark:text-slate-100 focus:outline-none focus:border-blue-600 resize-none font-anthropic"
           />
           <button
             type="submit"
             disabled={isSubmitting || !newPostTitle.trim() || !newPostContent.trim()}
-            className="flex items-center gap-2 px-6 py-2.5 btn-stitch-primary text-xs font-bold disabled:opacity-50"
+            className="flex items-center gap-2 px-5 py-2.5 btn-civic-primary text-xs sm:text-sm font-title uppercase tracking-wider disabled:opacity-50 cursor-pointer"
           >
             <Send className="w-4 h-4" />
-            {isSubmitting ? 'Se publică...' : 'Publică'}
+            {isSubmitting ? 'Se publică...' : 'Publică Subiect'}
           </button>
         </form>
       )}
 
       {posts.length === 0 ? (
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-12 text-center">
-          <MessageSquare className="w-12 h-12 mx-auto text-slate-300 mb-4" />
-          <p className="text-slate-500">Nu există postări pe forum încă. Fii primul care pornește o discuție!</p>
+        <div className="bg-white dark:bg-[#161B22] rounded-[2px] shadow-xs border border-slate-200 dark:border-slate-800 p-12 text-center">
+          <MessageSquare className="w-10 h-10 mx-auto text-slate-300 dark:text-slate-600 mb-3" />
+          <p className="text-sm text-slate-500 dark:text-slate-400 font-anthropic">Nu există postări pe forum încă. Deschide tu prima temă de dezbatere!</p>
         </div>
       ) : (
         <div className="space-y-4">
           {posts.map(post => (
-            <div key={post.id} className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 group hover:shadow-md transition-shadow">
+            <div key={post.id} className="bg-white dark:bg-[#161B22] rounded-[2px] shadow-xs border border-slate-200 dark:border-slate-800 p-5 sm:p-6 group hover:border-slate-300 dark:hover:border-slate-700 transition-all font-anthropic">
               {editingPostId === post.id ? (
-                <div className="space-y-3">
+                <div className="space-y-3.5 font-anthropic">
                   <input
                     type="text"
                     value={editTitle}
                     onChange={e => setEditTitle(e.target.value)}
-                    className="w-full rounded-xl border border-slate-200 px-4 py-2 font-medium focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none"
+                    className="w-full rounded-[2px] border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-4 py-2.5 text-sm font-semibold text-slate-900 dark:text-slate-100 focus:outline-none focus:border-blue-600"
                   />
                   <textarea
                     value={editContent}
                     onChange={e => setEditContent(e.target.value)}
                     rows={4}
-                    className="w-full rounded-xl border border-slate-200 px-4 py-2 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none resize-none"
+                    className="w-full rounded-[2px] border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-4 py-2.5 text-sm font-medium text-slate-900 dark:text-slate-100 focus:outline-none focus:border-blue-600 resize-none"
                   />
                   <div className="flex gap-2">
-                    <button onClick={handleSaveEdit} className="flex items-center gap-1 px-4 py-2 btn-stitch-primary text-xs font-bold">
+                    <button onClick={handleSaveEdit} className="flex items-center gap-1.5 px-4 py-2 btn-civic-primary text-xs sm:text-sm font-title uppercase tracking-wider">
                       <Check className="w-4 h-4" /> Salvează
                     </button>
-                    <button onClick={() => setEditingPostId(null)} className="flex items-center gap-1 px-4 py-2 btn-stitch-secondary text-xs font-bold">
+                    <button onClick={() => setEditingPostId(null)} className="flex items-center gap-1.5 px-4 py-2 btn-civic-secondary text-xs sm:text-sm font-title uppercase tracking-wider">
                       <X className="w-4 h-4" /> Anulează
                     </button>
                   </div>
                 </div>
               ) : (
                 <>
-                  <div className="flex items-start justify-between">
+                  <div className="flex items-start justify-between mb-3">
                     <div className="flex-1">
-                      <h3 className="text-lg font-bold text-slate-800 mb-1">{post.title}</h3>
-                      <div className="flex items-center gap-2 text-xs text-slate-400 mb-3">
-                        <span className="font-medium text-slate-600">{post.authorName}</span>
+                      <h3 className="text-lg sm:text-xl font-bold font-anthropicSerif text-slate-900 dark:text-slate-100 mb-1">{post.title}</h3>
+                      <div className="flex items-center gap-2 text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-data">
+                        <span className="font-bold text-slate-700 dark:text-slate-300 font-title">{post.authorName}</span>
                         <span>•</span>
                         <span>
                           {post.createdAt ? new Date(post.createdAt).toLocaleDateString('ro-RO', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : ''}
@@ -248,19 +248,19 @@ export const ForumView: React.FC<ForumViewProps> = ({ isAdmin, currentUserId, cu
                       </div>
                     </div>
                     {isAdmin && (
-                      <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button onClick={() => handleStartEdit(post)} className="p-1.5 hover:bg-slate-150 rounded-full transition-all text-slate-400 hover:text-slate-700">
+                      <div className="flex gap-1.5">
+                        <button onClick={() => handleStartEdit(post)} className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-[2px] transition-all text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 cursor-pointer" title="Editează">
                           <Edit3 className="w-4 h-4" />
                         </button>
-                        <button onClick={() => handleDeletePost(post.id)} className="p-1.5 hover:bg-rose-50 rounded-full transition-all text-slate-400 hover:text-rose-600">
+                        <button onClick={() => handleDeletePost(post.id)} className="p-1.5 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-[2px] transition-all text-slate-400 hover:text-rose-600 cursor-pointer" title="Șterge">
                           <Trash2 className="w-4 h-4" />
                         </button>
                       </div>
                     )}
                   </div>
-                  <p className="text-sm text-slate-600 whitespace-pre-wrap leading-relaxed">{post.content}</p>
+                  <p className="text-sm sm:text-base text-slate-700 dark:text-slate-300 whitespace-pre-wrap leading-relaxed font-anthropic mb-4">{post.content}</p>
 
-                  <div className="mt-4 pt-3 border-t border-slate-100 flex items-center gap-3">
+                  <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center gap-2 flex-wrap">
                     {REACTION_CONFIG.map(reaction => {
                       const list: string[] = (post.reactions || {})[reaction.key] || [];
                       const hasReacted = list.includes(currentUserId);
@@ -268,14 +268,14 @@ export const ForumView: React.FC<ForumViewProps> = ({ isAdmin, currentUserId, cu
                         <button
                           key={reaction.key}
                           onClick={() => handleToggleReaction(post.id, reaction.key)}
-                          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${
+                          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-[2px] text-xs sm:text-sm font-medium border transition-all cursor-pointer font-data ${
                             hasReacted
-                              ? 'bg-indigo-50 border-indigo-200 text-indigo-700'
-                              : 'bg-slate-50 border-slate-200 text-slate-500 hover:bg-slate-100'
+                              ? 'bg-blue-50 dark:bg-blue-950/50 border-blue-300 dark:border-blue-700 text-blue-800 dark:text-blue-300'
+                              : 'bg-slate-50 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-100'
                           }`}
                         >
                           {reaction.label}
-                          {list.length > 0 && <span>{list.length}</span>}
+                          {list.length > 0 && <span className="font-bold">{list.length}</span>}
                         </button>
                       );
                     })}

@@ -5,7 +5,7 @@
 // Set MAINTENANCE_MODE to false to resume normal operations.
 // ==============================================================================
 
-export const MAINTENANCE_MODE = true;
+export const MAINTENANCE_MODE = false;
 
 export const MAINTENANCE_INFO = {
   title: 'Platformă în Mentenanță',

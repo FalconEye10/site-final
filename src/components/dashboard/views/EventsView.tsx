@@ -92,6 +92,115 @@ export function EventsView({ isAdmin, members = [], currentUserId, onUpdateMembe
     }));
   };
 
+  // Shifts editing state
+  const [isShiftBased, setIsShiftBased] = useState(false);
+  const [formShifts, setFormShifts] = useState<{
+    id: string;
+    name: string;
+    date: string;
+    startTime: string;
+    endTime: string;
+    hours: number;
+    maxVolunteers: number;
+    assignedMembers: string[];
+  }[]>([]);
+
+  // State for member searching in each shift card
+  const [shiftSearchQueries, setShiftSearchQueries] = useState<Record<string, string>>({});
+
+  const handleAddShift = () => {
+    const newId = `shift_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
+    const shiftCount = formShifts.length + 1;
+    setFormShifts(prev => [...prev, {
+      id: newId,
+      name: `Tura ${shiftCount}`,
+      date: date || new Date().toISOString().split('T')[0],
+      startTime: `${hour.padStart(2, '0')}:${minute.padStart(2, '0')}`,
+      endTime: `${endHour.padStart(2, '0')}:${endMinute.padStart(2, '0')}`,
+      hours: computePlannedDurationHours(),
+      maxVolunteers: 6,
+      assignedMembers: []
+    }]);
+  };
+
+  const handleRemoveShift = (shiftId: string) => {
+    setFormShifts(prev => prev.filter(s => s.id !== shiftId));
+  };
+
+  const handleUpdateShiftField = (shiftId: string, field: string, value: any) => {
+    setFormShifts(prev => prev.map(s => {
+      if (s.id === shiftId) {
+        const updated = { ...s, [field]: value };
+        if (field === 'startTime' || field === 'endTime') {
+          const st = field === 'startTime' ? value : s.startTime;
+          const et = field === 'endTime' ? value : s.endTime;
+          const [sh, sm] = (st || '10:00').split(':').map(Number);
+          const [eh, em] = (et || '14:00').split(':').map(Number);
+          const duration = Math.max(0.5, ((eh * 60 + em) - (sh * 60 + sm)) / 60);
+          updated.hours = Math.round(duration * 10) / 10;
+        }
+        return updated;
+      }
+      return s;
+    }));
+  };
+
+  const handleToggleShiftMember = (shiftId: string, memberId: string) => {
+    setFormShifts(prev => prev.map(s => {
+      if (s.id === shiftId) {
+        const exists = s.assignedMembers.includes(memberId);
+        const assignedMembers = exists
+          ? s.assignedMembers.filter(id => id !== memberId)
+          : [...s.assignedMembers, memberId];
+        return { ...s, assignedMembers };
+      }
+      return s;
+    }));
+  };
+
+  const handleVolunteerShiftSignUp = async (event: EventData, shiftId: string) => {
+    if (!currentUserId) {
+      toast.error('Trebuie să fii conectat pentru a te înscrie pe tură.');
+      return;
+    }
+    const shifts = event.shifts || [];
+    const targetShift = shifts.find(s => s.id === shiftId);
+    if (!targetShift) return;
+
+    const isAlreadyAssigned = targetShift.assignedMembers.includes(currentUserId);
+
+    if (!isAlreadyAssigned && targetShift.assignedMembers.length >= targetShift.maxVolunteers) {
+      toast.error('Această tură a atins capacitatea maximă de voluntari.');
+      return;
+    }
+
+    const updatedShifts = shifts.map(s => {
+      if (s.id === shiftId) {
+        return {
+          ...s,
+          assignedMembers: isAlreadyAssigned
+            ? s.assignedMembers.filter(id => id !== currentUserId)
+            : [...s.assignedMembers, currentUserId]
+        };
+      }
+      return s;
+    });
+
+    const updatedEvent: EventData = {
+      ...event,
+      shifts: updatedShifts
+    };
+
+    try {
+      await saveEvent(updatedEvent);
+      setEvents(prev => prev.map(e => e.id === event.id ? updatedEvent : e));
+      toast.success(isAlreadyAssigned ? 'Te-ai retras de pe această tură.' : 'Te-ai înscris cu succes pe această tură!');
+    } catch (err) {
+      console.error(err);
+      toast.error('Eroare la actualizarea turei.');
+    }
+  };
+
   useEffect(() => {
     loadEvents();
   }, []);
@@ -120,8 +229,11 @@ export function EventsView({ isAdmin, members = [], currentUserId, onUpdateMembe
     setLocation('');
     setType('meeting');
     setDescription('');
+    setIsShiftBased(false);
+    setFormShifts([]);
     setFormCommittees([]);
     setMemberSearchQueries({});
+    setShiftSearchQueries({});
     setIsModalOpen(true);
   };
 
@@ -139,6 +251,8 @@ export function EventsView({ isAdmin, members = [], currentUserId, onUpdateMembe
     setLocation(e.location || '');
     setType(e.type);
     setDescription(e.description || '');
+    setIsShiftBased(e.isShiftBased || false);
+    setFormShifts(e.shifts || []);
     if (e.committees) {
       const list = Object.entries(e.committees).map(([id, data]) => ({
         id,
@@ -153,6 +267,7 @@ export function EventsView({ isAdmin, members = [], currentUserId, onUpdateMembe
       setFormCommittees([]);
     }
     setMemberSearchQueries({});
+    setShiftSearchQueries({});
     setIsModalOpen(true);
   };
 
@@ -334,8 +449,8 @@ export function EventsView({ isAdmin, members = [], currentUserId, onUpdateMembe
     const min = parseInt(minute, 10);
     const selectedDateTime = new Date(yr, mo - 1, dy, hr, min).getTime();
     
-    if (selectedDateTime < Date.now()) {
-      toast.error('Nu poți programa un eveniment în trecut (înainte de data și ora curentă).');
+    if (!editingEvent && selectedDateTime < Date.now()) {
+      toast.error('Nu poți programa un eveniment nou în trecut (înainte de data și ora curentă).');
       return;
     }
 
@@ -355,6 +470,18 @@ export function EventsView({ isAdmin, members = [], currentUserId, onUpdateMembe
       const hasInvalidHours = formCommittees.some(c => !Number.isFinite(c.hours) || c.hours <= 0);
       if (hasInvalidHours) {
         toast.error('Fiecare departament trebuie să aibă un număr de ore mai mare decât 0.');
+        return;
+      }
+    }
+
+    if (isShiftBased) {
+      if (formShifts.length === 0) {
+        toast.error('Adaugă cel puțin o tură pentru evenimentul pe ture.');
+        return;
+      }
+      const hasEmptyShiftName = formShifts.some(s => !s.name.trim());
+      if (hasEmptyShiftName) {
+        toast.error('Numele fiecărei ture este obligatoriu.');
         return;
       }
     }
@@ -390,6 +517,8 @@ export function EventsView({ isAdmin, members = [], currentUserId, onUpdateMembe
       type,
       description: description.trim(),
       rsvps: editingEvent ? editingEvent.rsvps : {},
+      isShiftBased,
+      shifts: isShiftBased ? formShifts : [],
       committees: committeesRecord
     };
 
@@ -473,287 +602,403 @@ export function EventsView({ isAdmin, members = [], currentUserId, onUpdateMembe
   };
 
   return (
-    <div className="space-y-8 relative">
+    <div className="space-y-6 relative font-anthropic">
       {/* Action Bar & Next Action Widget */}
-      <div className="flex flex-col md:flex-row gap-6">
+      <div className="flex flex-col lg:flex-row gap-5 items-stretch font-anthropic">
         
         {/* Next Action Widget */}
-        <div className="flex-1 bg-white border border-brand-muted/10 rounded-t-[3.5rem] rounded-b-xl p-6 shadow-xl relative overflow-hidden font-anthropic">
-          <div className="absolute top-[-20%] right-[-10%] w-64 h-64 bg-brand-primary/10 blur-[40px] rounded-full pointer-events-none" />
-          <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-6 flex items-center gap-2 relative z-10 font-anthropicSerif">
-            <Clock size={16} /> Proxima Acțiune
-          </h3>
+        <div className="flex-1 bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-[2px] p-5 sm:p-6 shadow-xs relative overflow-hidden flex flex-col justify-between font-anthropic">
+          <div className="flex items-center justify-between pb-3.5 mb-3.5 border-b border-slate-100 dark:border-slate-800 font-title">
+            <h3 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 flex items-center gap-2">
+              <Clock size={16} className="text-indigo-600 dark:text-indigo-400" /> Proxima Acțiune
+            </h3>
+            {nextEvent && (
+              <span className={`px-2.5 py-1 rounded-[2px] text-xs font-bold uppercase tracking-wider ${getTypeColor(nextEvent.type)} text-slate-900 font-title`}>
+                {getTypeText(nextEvent.type)}
+              </span>
+            )}
+          </div>
           
-          <div className="relative z-10">
+          <div>
             {nextEvent ? (
-              <div className="flex items-center gap-6">
-                <div className="text-center min-w-[80px]">
-                  <div className="text-5xl font-black tracking-tighter text-brand-accent leading-none mb-1">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-5">
+                <div className="text-center sm:text-left bg-slate-50 dark:bg-slate-800/80 p-4 rounded-[2px] border border-slate-200/70 dark:border-slate-700/60 min-w-[110px] shrink-0">
+                  <div className="text-4xl sm:text-5xl font-black tracking-tight text-slate-900 dark:text-white leading-none mb-1 font-data">
                     {nextEventDaysRemaining}
                   </div>
-                  <div className="text-xs font-bold uppercase text-brand-primary">Zile</div>
+                  <div className="text-xs font-bold uppercase text-indigo-600 dark:text-indigo-400 font-title">Zile Rămase</div>
                 </div>
-                <div className="w-px h-16 bg-brand-accent/10" />
-                <div>
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className={`w-2.5 h-2.5 rounded-full ${getTypeColor(nextEvent.type)}`} />
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
-                      {getTypeText(nextEvent.type)}
-                    </span>
-                  </div>
-                  <h4 className="text-xl font-anthropicSerif font-semibold text-slate-800 mb-1">{nextEvent.title}</h4>
-                  <div className="text-sm font-semibold text-brand-accent/70 flex items-center gap-2">
-                    {new Intl.DateTimeFormat('ro-RO', { weekday: 'long', day: 'numeric', month: 'long' }).format(new Date(nextEvent.date))} la {nextEvent.time}
+                
+                <div className="space-y-1.5 flex-1 font-anthropic">
+                  <h4 className="text-lg sm:text-xl font-bold font-title text-slate-900 dark:text-white leading-snug">{nextEvent.title}</h4>
+                  <div className="text-xs sm:text-sm font-medium text-slate-600 dark:text-slate-300 flex flex-wrap items-center gap-x-3.5 gap-y-1">
+                    <span>📅 {new Intl.DateTimeFormat('ro-RO', { weekday: 'long', day: 'numeric', month: 'long' }).format(new Date(nextEvent.date))}</span>
+                    <span>⏰ {nextEvent.time}</span>
+                    {nextEvent.location && <span>📍 {nextEvent.location}</span>}
                   </div>
                 </div>
               </div>
             ) : (
-              <div className="text-brand-accent/40 font-semibold py-4">Nu există evenimente viitoare programate.</div>
+              <div className="text-slate-400 font-medium py-3 text-center text-sm">Nu există evenimente viitoare programate.</div>
             )}
           </div>
         </div>
 
         {/* Action Button */}
         {isAdmin && (
-          <div className="flex items-end shrink-0">
+          <div className="flex items-center shrink-0">
             <button 
               onClick={openAddModal}
-              className="ios26-btn px-6 py-4 text-sm font-bold uppercase tracking-wider flex items-center gap-3 w-full md:w-auto justify-center"
+              className="btn-civic-primary px-5 py-3.5 text-xs sm:text-sm font-bold font-title uppercase tracking-wider flex items-center gap-2 w-full lg:w-auto justify-center shadow-xs cursor-pointer"
             >
-              <Plus size={20} /> Eveniment Nou
+              <Plus size={16} /> Creează Eveniment Nou
             </button>
           </div>
         )}
       </div>
+
       {/* View Tabs */}
-      <div className="flex gap-4 border-b border-brand-muted/5 pb-1">
+      <div className="flex gap-2.5 border-b border-slate-200 dark:border-slate-800 pb-2.5 font-title">
         <button 
+          type="button"
           onClick={() => setActiveViewTab('upcoming')}
-          className={`px-5 py-2.5 rounded-full text-sm font-bold transition-all ${activeViewTab === 'upcoming' ? 'bg-brand-primary/20 text-brand-accent shadow-sm' : 'text-brand-accent/65 hover:bg-black/5'}`}
+          className={`px-4 py-2.5 rounded-[2px] text-xs sm:text-sm font-bold uppercase tracking-wider transition-all cursor-pointer shadow-xs ${
+            activeViewTab === 'upcoming' 
+              ? 'bg-slate-900 text-white dark:bg-sky-500 dark:text-slate-950 border border-slate-900 dark:border-sky-500' 
+              : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700'
+          }`}
         >
           Evenimente Planificate
         </button>
         <button 
+          type="button"
           onClick={() => setActiveViewTab('history')}
-          className={`px-5 py-2.5 rounded-full text-sm font-bold transition-all ${activeViewTab === 'history' ? 'bg-brand-primary/20 text-brand-accent shadow-sm' : 'text-brand-accent/65 hover:bg-black/5'}`}
+          className={`px-4 py-2.5 rounded-[2px] text-xs sm:text-sm font-bold uppercase tracking-wider transition-all cursor-pointer shadow-xs ${
+            activeViewTab === 'history' 
+              ? 'bg-slate-900 text-white dark:bg-sky-500 dark:text-slate-950 border border-slate-900 dark:border-sky-500' 
+              : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700'
+          }`}
         >
           Istoric / Arhivă
         </button>
       </div>
+
       {/* Events List Grouped by Month */}
       {loading ? (
         <div className="flex justify-center p-12">
-          <div className="w-8 h-8 border-4 border-brand-primary border-t-transparent rounded-full animate-spin"></div>
+          <div className="w-8 h-8 border-3 border-indigo-600 border-t-transparent rounded-[2px] animate-spin"></div>
         </div>
       ) : events.length === 0 ? (
-        <div className="text-center p-12 bg-white rounded-3xl border border-brand-muted/5 shadow-sm text-brand-accent/40 font-semibold">
-          Niciun eveniment înregistrat.
+        <div className="text-center p-10 bg-white dark:bg-slate-900 rounded-[2px] border border-slate-200 dark:border-slate-800 shadow-xs text-slate-400 font-medium text-sm font-anthropic">
+          Niciun eveniment înregistrat în această secțiune.
         </div>
       ) : (
-        <div className="space-y-10 relative">
-          {/* Vertical timeline line */}
-          <div className="absolute left-6 top-8 bottom-0 w-px bg-brand-accent/10 hidden md:block z-0" />
-          
+        <div className="space-y-8 font-anthropic">
           {Object.entries(groupedEvents).map(([monthYear, monthEvents]) => (
-            <div key={monthYear} className="relative z-10">
-              <h3 className="text-sm font-bold uppercase tracking-widest text-brand-accent/50 mb-6 bg-transparent inline-block md:ml-12">
-                {monthYear}
-              </h3>
+            <div key={monthYear} className="space-y-4">
+              <div className="flex items-center gap-3 font-title">
+                <span className="text-xs sm:text-sm font-bold uppercase tracking-widest text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-3.5 py-1.5 rounded-[2px] border border-slate-200/80 dark:border-slate-700">
+                  📅 {monthYear}
+                </span>
+                <div className="flex-1 h-px bg-slate-200 dark:border-slate-800" />
+              </div>
               
-              <div className="space-y-4 md:ml-12">
+              <div className="space-y-4">
                 {monthEvents.length === 0 ? (
-                  <div className="bg-white rounded-none border-2 border-dashed border-slate-350 p-6 text-brand-accent/40 text-center font-semibold text-xs">
+                  <div className="bg-white dark:bg-slate-900 rounded-[2px] border border-dashed border-slate-200 dark:border-slate-800 p-5 text-slate-400 text-center font-medium text-sm font-anthropic">
                     Nu sunt evenimente planificate în această lună.
                   </div>
                 ) : (
-                  monthEvents.map((event, eventIdx) => {
-                    const cardStyle = eventIdx % 2 === 0
-                      ? "bg-white border-2 border-slate-900 rounded-none shadow-[6px_6px_0px_#0F172A] hover:shadow-[10px_10px_0px_#0F172A]"
-                      : "bg-[#FAF9F5]/80 border border-brand-muted/10 rounded-[2.5rem_0.5rem_2.5rem_0.5rem] shadow-lg hover:scale-[1.01]";
-                    
+                  monthEvents.map((event) => {
                     return (
                       <div 
                         key={event.id}
-                        className={`p-5 md:p-6 transition-all duration-300 group flex flex-col md:flex-row gap-6 relative font-anthropic ${cardStyle}`}
+                        className="bg-white dark:bg-slate-900 rounded-[2px] border border-slate-200/90 dark:border-slate-800 p-5 sm:p-6 shadow-xs hover:shadow-sm transition-all space-y-4 font-anthropic"
                       >
-                    {/* Timeline dot */}
-                    <div className="absolute -left-[54px] top-8 w-4 h-4 rounded-full border-4 border-white shadow-sm hidden md:block" style={{ backgroundColor: 'var(--color, #28FAFC)' }} />
-
-                    {/* Date/Time Left Column */}
-                    <div className="md:w-32 shrink-0">
-                      <div className="text-brand-accent/60 text-xs font-bold uppercase mb-1">
-                        {new Intl.DateTimeFormat('ro-RO', { weekday: 'short' }).format(new Date(event.date))}
-                      </div>
-                      <div className="text-3xl font-black text-brand-accent leading-none mb-2">
-                        {new Date(event.date).getDate()}
-                      </div>
-                      <div className="flex items-center gap-1.5 text-sm font-bold text-brand-primary">
-                        <Clock size={14} /> {event.time}
-                      </div>
-                    </div>
-
-                    {/* Content */}
-                    <div className="flex-1">
-                      <div className="flex items-start justify-between gap-4">
-                        <div>
-                          <div className="flex items-center gap-2 mb-2">
-                            <span className={`w-2.5 h-2.5 rounded-full ${getTypeColor(event.type)}`} />
-                            <span className="text-[10px] font-bold uppercase tracking-wider text-brand-accent/60">
-                              {getTypeText(event.type)}
-                            </span>
-                          </div>
-                          <h4 className="text-lg font-anthropicSerif font-semibold text-slate-800 mb-2">{event.title}</h4>
-                          
-                          {event.location && (
-                            <div className="flex items-center gap-1.5 text-brand-accent/60 text-sm font-medium mb-3">
-                              <MapPin size={14} /> {event.location}
-                            </div>
-                          )}
-
-                          {event.type === 'project' && event.endDate && event.endTime && (
-                            <div className="flex items-center gap-1.5 text-brand-accent/60 text-sm font-medium mb-3">
-                              <Clock size={14} /> Până la {new Date(event.endDate).toLocaleDateString('ro-RO', { day: '2-digit', month: 'short' })}, {event.endTime}
-                            </div>
-                          )}
-
-                          {event.description && (
-                            <p className="text-sm text-brand-accent/70 leading-relaxed font-['Manrope'] mb-4 whitespace-pre-line">
-                              {event.description}
-                            </p>
-                          )}
-
-                          <div className="flex items-center gap-2">
-                            <div className="flex -space-x-2">
-                              {/* Dummy RSVPs visual for now */}
-                              <div className="w-6 h-6 rounded-full border-2 border-white bg-slate-200" />
-                              <div className="w-6 h-6 rounded-full border-2 border-white bg-slate-300" />
-                              <div className="w-6 h-6 rounded-full border-2 border-white bg-slate-400" />
-                            </div>
-                            <span className="text-xs font-semibold text-brand-accent/40 ml-2">
-                              {Object.keys(event.rsvps || {}).length} participanți (în curând)
-                            </span>
-                          </div>
-
-                          {/* Working Committees section */}
-                          {event.committees && Object.keys(event.committees).length > 0 && (
-                            <div className="mt-5 border-t border-brand-muted/5 pt-4 space-y-3">
-                              <h5 className="text-xs font-bold uppercase tracking-wider text-brand-accent/60">Comitete de Lucru</h5>
-                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                {Object.entries(event.committees).map(([comId, com]) => {
-                                  const isMyCommittee = currentUserId && com.members?.includes(currentUserId);
-                                  return (
-                                    <div 
-                                      key={comId}
-                                      className={`p-4 rounded-xl border transition-all ${
-                                        isMyCommittee 
-                                          ? 'border-brand-primary bg-brand-primary/5 shadow-sm relative' 
-                                          : 'border-brand-muted/5 bg-[#FAF9F5]'
-                                      }`}
-                                    >
-                                      {isMyCommittee && (
-                                        <span className="absolute top-3 right-3 bg-brand-primary text-brand-accent font-bold text-[8px] uppercase tracking-wider px-2 py-0.5 rounded-full shadow-sm">
-                                          Comitetul Tău
-                                        </span>
-                                      )}
-                                      
-                                      <div className="flex items-center gap-2 mb-1 pr-16">
-                                        <h6 className="font-bold text-sm text-brand-accent">{com.name}</h6>
-                                        {Number.isFinite(com.hours) && (com.hours as number) > 0 && (
-                                          <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-brand-accent/5 text-brand-accent/60 shrink-0">
-                                            {com.hours}h
-                                          </span>
-                                        )}
-                                      </div>
-                                      {com.description && (
-                                        <p className="text-xs text-brand-accent/60 leading-relaxed mb-3">{com.description}</p>
-                                      )}
-                                      
-                                      {/* Members inside committee card */}
-                                      <div className="space-y-1.5">
-                                        <span className="text-[9px] font-bold uppercase tracking-wider text-brand-accent/40 block">Membri:</span>
-                                        <div className="flex flex-wrap gap-2">
-                                          {com.members && com.members.length > 0 ? (
-                                            com.members.map(memberId => {
-                                              const mObj = members?.find(m => m.id === memberId);
-                                              const isCoordinator = com.coordinatorId === memberId;
-                                              return (
-                                                <div 
-                                                  key={memberId} 
-                                                  className={`flex items-center gap-1.5 px-2 py-1 rounded-full text-[10px] font-semibold bg-white border border-brand-muted/5 shadow-sm`}
-                                                >
-                                                  <img 
-                                                    src={mObj?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(mObj?.name || 'User')}`} 
-                                                    alt={mObj?.name || 'Membru'} 
-                                                    className="w-4 h-4 rounded-full" 
-                                                  />
-                                                  <span className="text-brand-accent/80">{mObj?.name || 'Membru'}</span>
-                                                  {isCoordinator && (
-                                                    <span className="bg-brand-primary text-brand-accent font-extrabold text-[8px] uppercase px-1.5 py-0.5 rounded-full">
-                                                      Responsabil
-                                                    </span>
-                                                  )}
-                                                </div>
-                                              );
-                                            })
-                                          ) : (
-                                            <span className="text-xs text-brand-accent/40 italic">Fără membri</span>
-                                          )}
-                                        </div>
-                                      </div>
-                                    </div>
-                                  );
-                                })}
+                        {/* Event Header Row */}
+                        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 pb-4 border-b border-slate-100 dark:border-slate-800">
+                          <div className="flex items-start gap-3.5">
+                            {/* Date Badge Box */}
+                            <div className="bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 p-3 rounded-[2px] text-center min-w-[85px] shrink-0 font-title">
+                              <div className="text-xs font-bold uppercase text-slate-500 dark:text-slate-400 mb-0.5">
+                                {new Intl.DateTimeFormat('ro-RO', { weekday: 'short' }).format(new Date(event.date))}
+                              </div>
+                              <div className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white leading-none font-data">
+                                {new Date(event.date).getDate()}
+                              </div>
+                              <div className="text-xs font-bold text-indigo-600 dark:text-indigo-400 mt-1 font-data">
+                                {event.time}
                               </div>
                             </div>
-                          )}
-                        </div>
 
-                        {/* Admin Controls */}
-                        {isAdmin && (
-                          <div className="flex items-center gap-2 shrink-0 self-start">
-                            {event.attendanceClosed ? (
-                              <span className="px-2.5 py-1.5 rounded-lg bg-slate-100 text-slate-600 border border-slate-200 text-xs font-bold uppercase tracking-wider flex items-center gap-1">
-                                <Lock size={12} /> Finalizat
-                              </span>
-                            ) : (
-                              <button 
-                                onClick={() => handleFinalize(event)}
-                                className="px-4 py-1.5 rounded-full bg-rose-50 hover:bg-rose-100 text-rose-600 font-bold text-xs transition-colors border border-rose-200/50 flex items-center gap-1 shadow-sm"
-                                title="Finalizează prezența definitiv"
+                            {/* Title & Metadata */}
+                            <div className="space-y-1.5">
+                              <div className="flex flex-wrap items-center gap-2 font-title">
+                                <span className={`px-2.5 py-0.5 rounded-[2px] text-xs font-bold uppercase tracking-wider ${getTypeColor(event.type)} text-slate-900`}>
+                                  {getTypeText(event.type)}
+                                </span>
+                                {event.isShiftBased && (
+                                  <span className="px-2.5 py-0.5 rounded-[2px] text-xs font-bold uppercase tracking-wider bg-purple-100 text-purple-900 border border-purple-200 font-data">
+                                    Pe Ture ({event.shifts?.length || 0})
+                                  </span>
+                                )}
+                              </div>
+                              <h4 className="text-base sm:text-lg font-bold font-title text-slate-900 dark:text-white">{event.title}</h4>
+                              <div className="flex flex-wrap items-center gap-x-3.5 gap-y-1 text-xs sm:text-sm font-medium text-slate-500 dark:text-slate-400 font-anthropic">
+                                {event.location && <span className="flex items-center gap-1"><MapPin size={14} className="text-slate-400" /> {event.location}</span>}
+                                {event.type === 'project' && event.endDate && event.endTime && (
+                                  <span className="flex items-center gap-1 font-data">
+                                    <Clock size={14} className="text-slate-400" /> Până la {new Date(event.endDate).toLocaleDateString('ro-RO', { day: '2-digit', month: 'short' })}, {event.endTime}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Action Controls */}
+                          <div className="flex items-center gap-2 self-start sm:self-auto shrink-0 font-title">
+                            {isAdmin && (
+                              <>
+                                {event.attendanceClosed ? (
+                                  <span className="px-3 py-1.5 rounded-[2px] bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 text-xs font-bold flex items-center gap-1.5">
+                                    <Lock size={14} /> Sesiune Închisă
+                                  </span>
+                                ) : (
+                                  <button 
+                                    onClick={() => handleFinalize(event)}
+                                    className="px-3.5 py-1.5 rounded-[2px] bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-xs transition-colors border border-rose-200 flex items-center gap-1.5 shadow-xs cursor-pointer uppercase tracking-wider"
+                                    title="Finalizează prezența"
+                                  >
+                                    <Lock size={14} /> Finalizează
+                                  </button>
+                                )}
+                                <button 
+                                  onClick={() => openEditModal(event)}
+                                  className="p-2 rounded-[2px] bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition-all cursor-pointer"
+                                  title="Editează"
+                                >
+                                  <Edit2 size={15} />
+                                </button>
+                                <button 
+                                  onClick={() => handleDelete(event.id)}
+                                  className="p-2 rounded-[2px] bg-rose-50 hover:bg-rose-500 hover:text-white text-rose-600 transition-all cursor-pointer"
+                                  title="Șterge"
+                                >
+                                  <Trash2 size={15} />
+                                </button>
+                              </>
+                            )}
+
+                            {!isAdmin && event.type === 'meeting' && !event.attendanceClosed && currentUserId && new Date(`${event.date}T${event.time}`).getTime() > Date.now() && (
+                              <button
+                                onClick={() => setRequestingAbsenceFor(event)}
+                                className="px-3.5 py-1.5 rounded-[2px] bg-amber-50 hover:bg-amber-100 text-amber-800 font-bold text-xs border border-amber-200 shadow-xs transition-colors cursor-pointer uppercase tracking-wider"
                               >
-                                <Lock size={12} /> Finalizează
+                                Cere Învoire
                               </button>
                             )}
-                            <button 
-                              onClick={() => openEditModal(event)}
-                              className="w-8 h-8 flex items-center justify-center rounded-full bg-brand-accent/5 text-brand-accent/60 hover:bg-brand-primary hover:text-brand-accent transition-all duration-300"
-                              title="Editează"
-                            >
-                              <Edit2 size={14} />
-                            </button>
-                            <button 
-                              onClick={() => handleDelete(event.id)}
-                              className="w-8 h-8 flex items-center justify-center rounded-full bg-brand-accent/5 text-brand-accent/60 hover:bg-red-500 hover:text-white transition-all duration-300"
-                              title="Șterge"
-                            >
-                              <Trash2 size={14} />
-                            </button>
+                          </div>
+                        </div>
+
+                        {/* Event Description if any */}
+                        {event.description && (
+                          <p className="text-xs sm:text-sm text-slate-700 dark:text-slate-300 leading-relaxed font-anthropic whitespace-pre-line bg-slate-50/60 dark:bg-slate-800/40 p-3.5 rounded-[2px] border border-slate-100 dark:border-slate-800">
+                            {event.description}
+                          </p>
+                        )}
+
+                        {/* Shifts Section for Multi-Shift Projects/Events */}
+                        {event.isShiftBased && event.shifts && event.shifts.length > 0 && (
+                          <div className="bg-purple-50/50 dark:bg-purple-950/20 border border-purple-100 dark:border-purple-900/40 rounded-[2px] p-4 sm:p-5 space-y-3.5 font-anthropic">
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 pb-2.5 border-b border-purple-200/50 dark:border-purple-800/40 font-title">
+                              <div className="flex items-center gap-2">
+                                <span className="w-2.5 h-2.5 rounded-[2px] bg-purple-600" />
+                                <h5 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-purple-950 dark:text-purple-200">
+                                  Ture de Voluntariat ({event.shifts.length} Ture Configurate)
+                                </h5>
+                              </div>
+                              <span className="text-xs font-medium text-purple-800 dark:text-purple-300">
+                                Înscrie-te la tura în care ești disponibil
+                              </span>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 font-anthropic">
+                              {event.shifts.map((shift) => {
+                                const isAssigned = currentUserId && shift.assignedMembers?.includes(currentUserId);
+                                const enrolledCount = shift.assignedMembers?.length || 0;
+                                const maxCount = shift.maxVolunteers || 6;
+                                const isFull = enrolledCount >= maxCount;
+                                const capacityPercent = Math.min(100, Math.round((enrolledCount / maxCount) * 100));
+
+                                return (
+                                  <div
+                                    key={shift.id}
+                                    className={`p-4 rounded-[2px] border transition-all space-y-3 ${
+                                      isAssigned
+                                        ? 'bg-white dark:bg-purple-950/40 border-purple-400 dark:border-purple-600 shadow-xs'
+                                        : 'bg-white dark:bg-slate-900 border-purple-200/70 dark:border-purple-900/40 hover:border-purple-300 shadow-xs'
+                                    }`}
+                                  >
+                                    <div className="flex items-start justify-between gap-3 font-anthropic">
+                                      <div>
+                                        <div className="flex items-center gap-2 font-title">
+                                          <span className="font-bold text-sm sm:text-base text-slate-900 dark:text-white">{shift.name}</span>
+                                          {isAssigned && (
+                                            <span className="px-2 py-0.5 rounded-[2px] bg-purple-600 text-white font-bold text-[10px] uppercase tracking-wider">
+                                              Tura Ta
+                                            </span>
+                                          )}
+                                        </div>
+                                        <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs font-medium text-slate-600 dark:text-slate-300 mt-1 font-data">
+                                          <span>📅 {new Date(shift.date).toLocaleDateString('ro-RO', { weekday: 'short', day: 'numeric', month: 'short' })}</span>
+                                          <span>·</span>
+                                          <span>⏰ {shift.startTime} - {shift.endTime}</span>
+                                          <span>·</span>
+                                          <span className="font-bold text-purple-700 dark:text-purple-300 bg-purple-100 dark:bg-purple-900/50 px-2 py-0.5 rounded-[2px]">
+                                            +{shift.hours} ore
+                                          </span>
+                                        </div>
+                                      </div>
+
+                                      {/* Action Button for Volunteer */}
+                                      {!isAdmin && !event.attendanceClosed && currentUserId && (
+                                        <button
+                                          type="button"
+                                          onClick={() => handleVolunteerShiftSignUp(event, shift.id)}
+                                          className={`px-3.5 py-1.5 rounded-[2px] text-xs font-bold uppercase tracking-wider transition-all shadow-xs cursor-pointer shrink-0 font-title ${
+                                            isAssigned
+                                              ? 'bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200'
+                                              : isFull
+                                              ? 'bg-slate-100 text-slate-400 cursor-not-allowed border border-slate-200'
+                                              : 'bg-purple-600 hover:bg-purple-700 text-white'
+                                          }`}
+                                          disabled={!isAssigned && isFull}
+                                        >
+                                          {isAssigned ? 'Renunță' : isFull ? 'Tură Plină' : 'Înscrie-te'}
+                                        </button>
+                                      )}
+                                    </div>
+
+                                    {/* Capacity Meter */}
+                                    <div className="space-y-1.5 pt-0.5 font-anthropic">
+                                      <div className="flex items-center justify-between text-xs font-medium text-slate-600 dark:text-slate-400 font-data">
+                                        <span>Grad ocupare:</span>
+                                        <span className={`font-bold ${isFull ? 'text-rose-600' : 'text-slate-800 dark:text-slate-200'}`}>
+                                          {enrolledCount} / {maxCount} voluntari
+                                        </span>
+                                      </div>
+                                      <div className="w-full bg-slate-100 dark:bg-slate-800 h-2 rounded-[2px] overflow-hidden">
+                                        <div
+                                          className={`h-full rounded-[2px] transition-all ${
+                                            isFull ? 'bg-rose-500' : capacityPercent > 70 ? 'bg-amber-500' : 'bg-purple-600'
+                                          }`}
+                                          style={{ width: `${capacityPercent}%` }}
+                                        />
+                                      </div>
+                                    </div>
+
+                                    {/* Assigned Volunteers Chips */}
+                                    <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex flex-wrap items-center gap-1.5 font-title">
+                                      <span className="text-xs font-bold uppercase text-slate-400 mr-0.5">Echipa:</span>
+                                      {shift.assignedMembers && shift.assignedMembers.length > 0 ? (
+                                        shift.assignedMembers.map(mId => {
+                                          const mObj = members?.find(m => m.id === mId);
+                                          return (
+                                            <div
+                                              key={mId}
+                                              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[2px] bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-800 dark:text-slate-200"
+                                            >
+                                              <img
+                                                src={mObj?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(mObj?.name || 'User')}`}
+                                                alt={mObj?.name || 'User'}
+                                                className="w-4 h-4 rounded-[2px] object-cover"
+                                              />
+                                              <span>{mObj?.name?.split(' ')[0] || mId}</span>
+                                            </div>
+                                          );
+                                        })
+                                      ) : (
+                                        <span className="text-xs text-slate-400 italic">0 voluntari înscriși</span>
+                                      )}
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
                           </div>
                         )}
-                        {/* Member Controls */}
-                        {!isAdmin && event.type === 'meeting' && !event.attendanceClosed && currentUserId && new Date(`${event.date}T${event.time}`).getTime() > Date.now() && (
-                          <div className="flex gap-2 shrink-0 self-start">
-                            <button
-                              onClick={() => setRequestingAbsenceFor(event)}
-                              className="px-4 py-1.5 rounded-full bg-orange-50 hover:bg-orange-100 text-orange-600 font-bold text-xs border border-orange-200/50 shadow-sm transition-colors"
-                            >
-                              Cere Învoire
-                            </button>
+
+                        {/* Working Committees section */}
+                        {event.committees && Object.keys(event.committees).length > 0 && (
+                          <div className="bg-slate-50/60 dark:bg-slate-800/30 border border-slate-200/80 dark:border-slate-800 rounded-[2px] p-4 sm:p-5 space-y-3.5 font-anthropic">
+                            <h5 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 pb-2 border-b border-slate-200/60 dark:border-slate-800 font-title">
+                              Comitete de Lucru
+                            </h5>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 font-anthropic">
+                              {Object.entries(event.committees).map(([comId, com]) => {
+                                const isMyCommittee = currentUserId && com.members?.includes(currentUserId);
+                                return (
+                                  <div 
+                                    key={comId}
+                                    className={`p-4 rounded-[2px] border transition-all space-y-3 ${
+                                      isMyCommittee 
+                                        ? 'border-indigo-400 bg-indigo-50/30 dark:bg-indigo-950/30 shadow-xs' 
+                                        : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs'
+                                    }`}
+                                  >
+                                    <div className="flex items-start justify-between gap-2 font-title">
+                                      <div>
+                                        <div className="flex items-center gap-2">
+                                          <span className="font-bold text-sm sm:text-base text-slate-900 dark:text-white">{com.name}</span>
+                                          {isMyCommittee && (
+                                            <span className="px-2 py-0.5 rounded-[2px] bg-indigo-600 text-white font-bold text-[10px] uppercase tracking-wider">
+                                              Comitetul Tău
+                                            </span>
+                                          )}
+                                        </div>
+                                        <span className="inline-block mt-1 text-xs font-bold px-2 py-0.5 rounded-[2px] bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-data">
+                                          +{com.hours} ore / membru
+                                        </span>
+                                      </div>
+                                    </div>
+
+                                    {com.description && (
+                                      <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 font-anthropic italic">{com.description}</p>
+                                    )}
+
+                                    {/* Committee Members */}
+                                    <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex flex-wrap items-center gap-1.5 font-title">
+                                      <span className="text-xs font-bold uppercase text-slate-400 mr-0.5">Echipa:</span>
+                                      {com.members && com.members.length > 0 ? (
+                                        com.members.map(mId => {
+                                          const mObj = members?.find(m => m.id === mId);
+                                          const isCoord = com.coordinatorId === mId;
+                                          return (
+                                            <div
+                                              key={mId}
+                                              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[2px] text-xs font-medium bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700"
+                                            >
+                                              <img
+                                                src={mObj?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(mObj?.name || 'User')}`}
+                                                alt={mObj?.name || 'User'}
+                                                className="w-4 h-4 rounded-[2px] object-cover"
+                                              />
+                                              <span>{mObj?.name?.split(' ')[0] || mId}</span>
+                                              {isCoord && <span className="bg-amber-100 text-amber-900 font-bold text-[9px] uppercase px-1.5 py-0.5 rounded-[2px]">Coord</span>}
+                                            </div>
+                                          );
+                                        })
+                                      ) : (
+                                        <span className="text-xs text-slate-400 italic">0 membri</span>
+                                      )}
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
                           </div>
                         )}
                       </div>
-                    </div>
-                  </div>
                     );
                   })
                 )}
@@ -766,42 +1011,42 @@ export function EventsView({ isAdmin, members = [], currentUserId, onUpdateMembe
       {/* Add / Edit Event Modal */}
       <AnimatePresence>
         {isModalOpen && (
-          <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+          <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 font-anthropic">
             <motion.div 
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="absolute inset-0 bg-brand-accent/60 backdrop-blur-md"
+              className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm"
               onClick={() => setIsModalOpen(false)}
             />
             <motion.div 
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              transition={{ duration: 0.3, ease: easeOut }}
-              className="relative w-full max-w-lg bg-white rounded-3xl shadow-2xl p-8 overflow-y-auto overflow-x-hidden max-h-[92vh] scrollbar-thin"
+              transition={{ duration: 0.2, ease: easeOut }}
+              className="relative w-full max-w-lg bg-white rounded-[2px] shadow-2xl p-6 sm:p-7 overflow-y-auto overflow-x-hidden max-h-[92vh] scrollbar-thin font-anthropic"
             >
-              <div className="absolute top-[-20%] right-[-10%] w-[50%] h-[50%] bg-brand-primary/30 blur-[60px] rounded-full pointer-events-none" />
-              
-              <div className="flex justify-between items-center mb-6 relative z-10 border-b border-brand-muted/5 pb-4">
-                <h2 className="text-2xl font-bold text-brand-accent">
+              <div className="flex justify-between items-center mb-5 relative z-10 border-b border-slate-200 pb-3.5">
+                <h2 className="text-xl sm:text-2xl font-bold font-anthropicSerif text-slate-900">
                   {editingEvent ? 'Editează Eveniment' : 'Eveniment Nou'}
                 </h2>
-                <button onClick={() => setIsModalOpen(false)} className="p-2 hover:bg-[#FAF9F5] rounded-full transition-colors active:scale-90">
+                <button onClick={() => setIsModalOpen(false)} className="p-1.5 hover:bg-slate-100 text-slate-400 hover:text-slate-700 rounded-[2px] transition-colors cursor-pointer">
                   <X size={20} />
                 </button>
               </div>
               
-              <form className="space-y-4 relative z-10" onSubmit={handleSubmit}>
+              <form className="space-y-4 relative z-10 font-anthropic" onSubmit={handleSubmit}>
                 {/* Title */}
                 <div>
-                  <label className="block text-[10px] font-bold uppercase tracking-wider opacity-60 mb-1">Titlu Eveniment (Obligatoriu)</label>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5 font-title">
+                    Titlu Eveniment (Obligatoriu)
+                  </label>
                   <input 
                     type="text" 
                     value={title}
                     onChange={e => setTitle(e.target.value)}
                     required
-                    className="w-full px-4 py-3 bg-[#FAF9F5] border border-brand-muted/10 rounded-xl text-sm focus:outline-none focus:border-brand-primary transition-colors font-['Manrope']" 
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-300 rounded-[2px] text-sm font-bold text-slate-900 focus:outline-none focus:border-indigo-500 transition-colors font-anthropic" 
                     placeholder="Ex: Întâlnire Proiect Camena" 
                   />
                 </div>
@@ -809,34 +1054,38 @@ export function EventsView({ isAdmin, members = [], currentUserId, onUpdateMembe
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {/* Date */}
                   <div>
-                    <label className="block text-[10px] font-bold uppercase tracking-wider opacity-60 mb-1">Data (Obligatorie)</label>
+                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5 font-title">
+                      Data (Obligatorie)
+                    </label>
                     <input 
                       type="date" 
                       value={date}
                       onChange={e => setDate(e.target.value)}
                       required
-                      className="w-full px-4 py-3 bg-[#FAF9F5] border border-brand-muted/10 rounded-xl text-sm focus:outline-none focus:border-brand-primary transition-colors font-['Manrope']" 
+                      className="w-full px-4 py-2.5 bg-slate-50 border border-slate-300 rounded-[2px] text-sm font-medium text-slate-900 focus:outline-none focus:border-indigo-500 transition-colors font-anthropic" 
                     />
                   </div>
 
                   {/* Time */}
                   <div>
-                    <label className="block text-[10px] font-bold uppercase tracking-wider opacity-60 mb-1">Ora (Format 24h)</label>
-                    <div className="flex gap-2">
+                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5 font-title">
+                      Ora (Format 24h)
+                    </label>
+                    <div className="flex gap-2 font-data">
                       <select 
                         value={hour}
                         onChange={e => setHour(e.target.value)}
-                        className="flex-1 px-4 py-3 bg-[#FAF9F5] border border-brand-muted/10 rounded-xl text-sm focus:outline-none focus:border-brand-primary transition-colors font-['Manrope'] appearance-none"
+                        className="flex-1 px-3 py-2.5 bg-slate-50 border border-slate-300 rounded-[2px] text-sm font-bold text-slate-900 focus:outline-none focus:border-indigo-500 transition-colors cursor-pointer"
                       >
                         {Array.from({length: 24}, (_, i) => i.toString().padStart(2, '0')).map(h => (
                           <option key={h} value={h}>{h}</option>
                         ))}
                       </select>
-                      <span className="flex items-center font-bold text-brand-accent/40">:</span>
+                      <span className="flex items-center font-bold text-slate-400 text-base">:</span>
                       <select 
                         value={minute}
                         onChange={e => setMinute(e.target.value)}
-                        className="flex-1 px-4 py-3 bg-[#FAF9F5] border border-brand-muted/10 rounded-xl text-sm focus:outline-none focus:border-brand-primary transition-colors font-['Manrope'] appearance-none"
+                        className="flex-1 px-3 py-2.5 bg-slate-50 border border-slate-300 rounded-[2px] text-sm font-bold text-slate-900 focus:outline-none focus:border-indigo-500 transition-colors cursor-pointer"
                       >
                         {['00', '05', '10', '15', '20', '25', '30', '35', '40', '45', '50', '55'].map(m => (
                           <option key={m} value={m}>{m}</option>
@@ -848,39 +1097,39 @@ export function EventsView({ isAdmin, members = [], currentUserId, onUpdateMembe
 
                 {/* Project planned window (De la - Până la) */}
                 {type === 'project' && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-sky-50/50 border border-sky-100 rounded-xl">
-                    <div className="md:col-span-2 -mt-1 mb-1">
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-sky-700">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 p-4 bg-sky-50/60 border border-sky-200 rounded-[2px]">
+                    <div className="md:col-span-2">
+                      <span className="text-xs font-bold uppercase tracking-wider text-sky-900 font-title">
                         Durata Proiectului · folosită pentru orele de voluntariat
                       </span>
                     </div>
                     <div>
-                      <label className="block text-[10px] font-bold uppercase tracking-wider opacity-60 mb-1">Până la data</label>
+                      <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5 font-title">Până la data</label>
                       <input
                         type="date"
                         value={endDate}
                         onChange={e => setEndDate(e.target.value)}
                         required={type === 'project'}
-                        className="w-full px-4 py-3 bg-white border border-brand-muted/10 rounded-xl text-sm focus:outline-none focus:border-brand-primary transition-colors font-['Manrope']"
+                        className="w-full px-3.5 py-2 bg-white border border-slate-300 rounded-[2px] text-sm font-medium text-slate-900 focus:outline-none focus:border-indigo-500 font-anthropic"
                       />
                     </div>
                     <div>
-                      <label className="block text-[10px] font-bold uppercase tracking-wider opacity-60 mb-1">Până la ora</label>
-                      <div className="flex gap-2">
+                      <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5 font-title">Până la ora</label>
+                      <div className="flex gap-2 font-data">
                         <select
                           value={endHour}
                           onChange={e => setEndHour(e.target.value)}
-                          className="flex-1 px-4 py-3 bg-white border border-brand-muted/10 rounded-xl text-sm focus:outline-none focus:border-brand-primary transition-colors font-['Manrope'] appearance-none"
+                          className="flex-1 px-3 py-2 bg-white border border-slate-300 rounded-[2px] text-sm font-bold text-slate-900 focus:outline-none focus:border-indigo-500 cursor-pointer"
                         >
                           {Array.from({length: 24}, (_, i) => i.toString().padStart(2, '0')).map(h => (
                             <option key={h} value={h}>{h}</option>
                           ))}
                         </select>
-                        <span className="flex items-center font-bold text-brand-accent/40">:</span>
+                        <span className="flex items-center font-bold text-slate-400 text-base">:</span>
                         <select
                           value={endMinute}
                           onChange={e => setEndMinute(e.target.value)}
-                          className="flex-1 px-4 py-3 bg-white border border-brand-muted/10 rounded-xl text-sm focus:outline-none focus:border-brand-primary transition-colors font-['Manrope'] appearance-none"
+                          className="flex-1 px-3 py-2 bg-white border border-slate-300 rounded-[2px] text-sm font-bold text-slate-900 focus:outline-none focus:border-indigo-500 cursor-pointer"
                         >
                           {['00', '05', '10', '15', '20', '25', '30', '35', '40', '45', '50', '55'].map(m => (
                             <option key={m} value={m}>{m}</option>
@@ -888,7 +1137,7 @@ export function EventsView({ isAdmin, members = [], currentUserId, onUpdateMembe
                         </select>
                       </div>
                     </div>
-                    <div className="md:col-span-2 text-[11px] font-semibold text-sky-700/80">
+                    <div className="md:col-span-2 text-xs font-bold text-sky-800 font-data">
                       Durată totală planificată: {computePlannedDurationHours()} ore. Fiecare departament poate avea propriul număr de ore mai jos.
                     </div>
                   </div>
@@ -896,23 +1145,27 @@ export function EventsView({ isAdmin, members = [], currentUserId, onUpdateMembe
 
                 {/* Location */}
                 <div>
-                  <label className="block text-[10px] font-bold uppercase tracking-wider opacity-60 mb-1">Locație (Opțională)</label>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5 font-title">
+                    Locație (Opțională)
+                  </label>
                   <input 
                     type="text" 
                     value={location}
                     onChange={e => setLocation(e.target.value)}
-                    className="w-full px-4 py-3 bg-[#FAF9F5] border border-brand-muted/10 rounded-xl text-sm focus:outline-none focus:border-brand-primary transition-colors font-['Manrope']" 
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-300 rounded-[2px] text-sm font-medium text-slate-900 focus:outline-none focus:border-indigo-500 transition-colors font-anthropic" 
                     placeholder="Ex: Sediul Central sau Online - Zoom" 
                   />
                 </div>
 
                 {/* Type */}
                 <div>
-                  <label className="block text-[10px] font-bold uppercase tracking-wider opacity-60 mb-1">Tip Eveniment</label>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5 font-title">
+                    Tip Eveniment
+                  </label>
                   <select 
                     value={type}
                     onChange={e => setType(e.target.value as any)}
-                    className="w-full px-4 py-3 bg-[#FAF9F5] border border-brand-muted/10 rounded-xl text-sm focus:outline-none focus:border-brand-primary transition-colors font-['Manrope'] appearance-none"
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-300 rounded-[2px] text-sm font-bold text-slate-900 focus:outline-none focus:border-indigo-500 transition-colors font-anthropic cursor-pointer"
                   >
                     <option value="meeting">Întâlnire</option>
                     <option value="project">Proiect / Acțiune</option>
@@ -923,76 +1176,321 @@ export function EventsView({ isAdmin, members = [], currentUserId, onUpdateMembe
 
                 {/* Description */}
                 <div>
-                  <label className="block text-[10px] font-bold uppercase tracking-wider opacity-60 mb-1">Descriere (Opțională)</label>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5 font-title">
+                    Descriere (Opțională)
+                  </label>
                   <textarea 
                     value={description}
                     onChange={e => setDescription(e.target.value)}
                     rows={3}
-                    className="w-full px-4 py-3 bg-[#FAF9F5] border border-brand-muted/10 rounded-xl text-sm focus:outline-none focus:border-brand-primary transition-colors font-['Manrope'] resize-none" 
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-300 rounded-[2px] text-sm font-medium text-slate-900 focus:outline-none focus:border-indigo-500 transition-colors font-anthropic resize-none" 
                     placeholder="Detalii suplimentare, agenda discuției..." 
                   />
                 </div>
 
+                {/* Shifts Organization Section */}
+                <div className="border-t border-slate-200 pt-4 space-y-3.5 font-anthropic">
+                  <div className={`p-4 rounded-[2px] border transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
+                    isShiftBased
+                      ? 'bg-emerald-50/90 border-emerald-500 shadow-xs'
+                      : 'bg-slate-50 border-slate-300'
+                  }`}>
+                    <div className="pr-2 space-y-1">
+                      <div className="flex items-center gap-2 font-title">
+                        <span className="font-bold text-xs sm:text-sm text-slate-900">
+                          Organizare pe Ture de Voluntariat (Shifts)
+                        </span>
+                        <span className={`px-2 py-0.5 rounded-[2px] text-[10px] font-black uppercase tracking-wider shadow-xs ${
+                          isShiftBased
+                            ? 'bg-emerald-600 text-white'
+                            : 'bg-slate-900 text-white'
+                        }`}>
+                          {isShiftBased ? '● ON / ACTIVAT' : '○ OFF / DEZACTIVAT'}
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-600">
+                        Activează pentru evenimente cu mai multe zile sau intervale orare diferite. Voluntarii aleg tura dorită, iar la prezențe vor fi evaluați doar cei repartizați.
+                      </p>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const next = !isShiftBased;
+                        setIsShiftBased(next);
+                        if (next && formShifts.length === 0) {
+                          handleAddShift();
+                        }
+                      }}
+                      className={`relative inline-flex h-7 w-14 shrink-0 cursor-pointer rounded-[2px] border p-0.5 transition-colors duration-200 ease-in-out focus:outline-none shadow-xs ${
+                        isShiftBased
+                          ? 'bg-emerald-600 border-emerald-700'
+                          : 'bg-slate-900 border-black'
+                      }`}
+                    >
+                      <span
+                        className={`pointer-events-none inline-block h-5.5 w-6 rounded-[2px] bg-white shadow-xs transform transition duration-200 ease-in-out ${
+                          isShiftBased ? 'translate-x-7' : 'translate-x-0'
+                        }`}
+                      />
+                    </button>
+                  </div>
+
+                  {isShiftBased && (
+                    <div className="space-y-3 pt-1.5 font-anthropic">
+                      <div className="flex items-center justify-between font-title">
+                        <span className="text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-900 flex items-center gap-2">
+                          <span className="w-2.5 h-2.5 rounded-[2px] bg-emerald-500" />
+                          Ture de Voluntariat Configurate ({formShifts.length})
+                        </span>
+                        <button
+                          type="button"
+                          onClick={handleAddShift}
+                          className="text-xs font-bold uppercase tracking-wider text-white bg-emerald-600 hover:bg-emerald-700 border border-emerald-700 px-3.5 py-1.5 rounded-[2px] transition-all flex items-center gap-1 cursor-pointer shadow-xs"
+                        >
+                          <Plus size={14} /> + Adaugă Tură
+                        </button>
+                      </div>
+
+                      {formShifts.length === 0 ? (
+                        <p className="text-xs sm:text-sm text-emerald-800 italic py-3 text-center bg-emerald-50/50 rounded-[2px] border border-dashed border-emerald-300">
+                          Apasă butonul <strong>"+ Adaugă Tură"</strong> de mai sus pentru a configura prima tură.
+                        </p>
+                      ) : (
+                        <div className="space-y-3.5">
+                          {formShifts.map((shift, sIdx) => (
+                            <div key={shift.id} className="p-4 bg-white border border-slate-300 rounded-[2px] space-y-3.5 relative shadow-xs">
+                              <div className="flex items-center justify-between border-b border-slate-100 pb-2.5 font-title">
+                                <span className="text-xs font-bold uppercase tracking-wider text-slate-900 bg-slate-100 px-2.5 py-1 rounded-[2px]">
+                                  Configurare Tură #{sIdx + 1}
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() => handleRemoveShift(shift.id)}
+                                  className="text-red-500 hover:text-red-700 hover:bg-red-50 px-2.5 py-1 rounded-[2px] transition-colors cursor-pointer flex items-center gap-1 text-xs font-bold uppercase tracking-wider"
+                                  title="Elimină Tura"
+                                >
+                                  <Trash2 size={14} /> Elimină
+                                </button>
+                              </div>
+
+                              <div>
+                                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5 font-title">
+                                  Nume Tură (Obligatoriu)
+                                </label>
+                                <input
+                                  type="text"
+                                  value={shift.name}
+                                  onChange={e => handleUpdateShiftField(shift.id, 'name', e.target.value)}
+                                  required={isShiftBased}
+                                  placeholder="Ex: Tura 1 - Vineri După-amiază"
+                                  className="w-full px-3.5 py-2 bg-slate-50 border border-slate-300 rounded-[2px] text-sm font-bold text-slate-900 focus:outline-none focus:border-indigo-500 transition-colors font-anthropic"
+                                />
+                              </div>
+
+                              {/* Row 1: Data & Capacitate Maxima */}
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                                <div>
+                                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5 font-title">
+                                    Data Turei
+                                  </label>
+                                  <input
+                                    type="date"
+                                    value={shift.date}
+                                    onChange={e => handleUpdateShiftField(shift.id, 'date', e.target.value)}
+                                    required={isShiftBased}
+                                    className="w-full px-3.5 py-2 bg-slate-50 border border-slate-300 rounded-[2px] text-sm font-medium text-slate-900 font-anthropic"
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5 font-title">
+                                    Capacitate Maximă (Voluntari)
+                                  </label>
+                                  <input
+                                    type="number"
+                                    min="1"
+                                    max="100"
+                                    value={shift.maxVolunteers}
+                                    onChange={e => handleUpdateShiftField(shift.id, 'maxVolunteers', parseInt(e.target.value, 10) || 1)}
+                                    className="w-full px-3.5 py-2 bg-slate-50 border border-slate-300 rounded-[2px] text-sm font-bold text-slate-900 font-data"
+                                  />
+                                </div>
+                              </div>
+
+                              {/* Row 2: Interval Orar (De la -> Pana la) */}
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                                <div>
+                                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5 font-title">
+                                    De la Ora (Început Tură)
+                                  </label>
+                                  <input
+                                    type="time"
+                                    value={shift.startTime}
+                                    onChange={e => handleUpdateShiftField(shift.id, 'startTime', e.target.value)}
+                                    className="w-full px-3.5 py-2 bg-slate-50 border border-slate-300 rounded-[2px] text-sm font-bold text-slate-900 font-data"
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5 font-title">
+                                    Până la Ora (Sfârșit Tură)
+                                  </label>
+                                  <input
+                                    type="time"
+                                    value={shift.endTime}
+                                    onChange={e => handleUpdateShiftField(shift.id, 'endTime', e.target.value)}
+                                    className="w-full px-3.5 py-2 bg-slate-50 border border-slate-300 rounded-[2px] text-sm font-bold text-slate-900 font-data"
+                                  />
+                                </div>
+                              </div>
+
+                              <div className="text-xs sm:text-sm font-bold text-slate-900 bg-slate-50 p-3 rounded-[2px] border border-slate-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 font-anthropic">
+                                <span>Durată calculată: <strong className="text-emerald-600 font-data">{shift.hours} ore</strong> de voluntariat / membru</span>
+                                <span>Voluntari înscriși: <strong className="text-emerald-600 font-data">{shift.assignedMembers.length}</strong> / {shift.maxVolunteers}</span>
+                              </div>
+
+                              {/* Member Assignment checklist */}
+                              <div className="space-y-1.5 font-anthropic">
+                                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 font-title">
+                                  Repartizare Membri (Opțional - voluntarii se pot înscrie și direct din lista de evenimente)
+                                </label>
+                                <div className="border border-slate-200 rounded-[2px] p-3 bg-slate-50/50 space-y-2.5">
+                                  <div className="flex flex-wrap gap-1.5 font-title">
+                                    {shift.assignedMembers.length === 0 ? (
+                                      <span className="text-xs text-slate-400 italic">Niciun voluntar selectat manual</span>
+                                    ) : (
+                                      shift.assignedMembers.map(mId => {
+                                        const mObj = members?.find(m => m.id === mId);
+                                        return (
+                                          <span key={mId} className="inline-flex items-center gap-1.5 bg-purple-100 text-purple-950 text-xs font-bold px-2.5 py-1 rounded-[2px] border border-purple-200 shadow-xs">
+                                            {mObj?.name || mId}
+                                            <button
+                                              type="button"
+                                              onClick={() => handleToggleShiftMember(shift.id, mId)}
+                                              className="hover:text-red-600 font-bold ml-1 cursor-pointer text-sm"
+                                            >
+                                              ×
+                                            </button>
+                                          </span>
+                                        );
+                                      })
+                                    )}
+                                  </div>
+
+                                  <input
+                                    type="text"
+                                    placeholder="Caută voluntar pentru această tură..."
+                                    value={shiftSearchQueries[shift.id] || ''}
+                                    onChange={e => setShiftSearchQueries(prev => ({ ...prev, [shift.id]: e.target.value }))}
+                                    className="w-full px-3 py-2 bg-white border border-slate-200 rounded-[2px] text-xs sm:text-sm font-medium text-slate-900 font-anthropic"
+                                  />
+
+                                  <div className="max-h-36 overflow-y-auto border-t border-slate-200 pt-2 space-y-1 scrollbar-thin">
+                                    {members
+                                      ?.filter(m => m.role !== 'admin')
+                                      .filter(m => {
+                                        const q = (shiftSearchQueries[shift.id] || '').toLowerCase();
+                                        return m.name?.toLowerCase().includes(q) || m.username?.toLowerCase().includes(q);
+                                      })
+                                      .map(m => {
+                                        const isSelected = shift.assignedMembers.includes(m.id);
+                                        return (
+                                          <button
+                                            key={m.id}
+                                            type="button"
+                                            onClick={() => handleToggleShiftMember(shift.id, m.id)}
+                                            className={`w-full flex items-center justify-between p-2 rounded-[2px] text-xs sm:text-sm font-medium transition-colors cursor-pointer font-anthropic ${
+                                              isSelected
+                                                ? 'bg-purple-100 text-purple-950 border border-purple-300'
+                                                : 'hover:bg-slate-100 text-slate-700'
+                                            }`}
+                                          >
+                                            <span className="flex items-center gap-2">
+                                              <img
+                                                src={m.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(m.name)}`}
+                                                alt=""
+                                                className="w-4 h-4 rounded-[2px]"
+                                              />
+                                              {m.name}
+                                            </span>
+                                            {isSelected ? (
+                                              <span className="text-purple-700 font-bold font-title text-xs">✓ Înscris</span>
+                                            ) : (
+                                              <span className="text-slate-400 font-medium font-title text-xs">+ Înscrie</span>
+                                            )}
+                                          </button>
+                                        );
+                                      })}
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+
                 {/* Working Committees Section */}
                 {type === 'project' && (
-                  <div className="border-t border-brand-muted/5 pt-5 space-y-4">
-                    <div className="flex items-center justify-between">
-                      <h3 className="text-xs font-bold uppercase tracking-wider text-brand-accent/70">Comitete de Lucru</h3>
+                  <div className="border-t border-slate-200 pt-4 space-y-3.5 font-anthropic">
+                    <div className="flex items-center justify-between font-title">
+                      <h3 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-900">Comitete de Lucru</h3>
                       <button
                         type="button"
                         onClick={handleAddCommittee}
-                        className="text-xs font-bold uppercase tracking-wider text-brand-primary hover:text-brand-primary/80 border border-brand-primary/30 hover:border-brand-primary/50 px-4 py-1.5 rounded-full bg-brand-primary/5 active:scale-95 transition-all flex items-center gap-1.5"
+                        className="text-xs font-bold uppercase tracking-wider text-white bg-indigo-600 hover:bg-indigo-700 border border-indigo-700 px-3.5 py-1.5 rounded-[2px] transition-all flex items-center gap-1 cursor-pointer shadow-xs"
                       >
                         <Plus size={14} /> Adaugă Comitet
                       </button>
                     </div>
 
                     {formCommittees.length === 0 ? (
-                      <p className="text-xs text-brand-accent/40 italic py-2.5 text-center bg-[#FAF9F5] rounded-xl border border-dashed border-brand-muted/10">
+                      <p className="text-xs sm:text-sm text-slate-500 italic py-3 text-center bg-slate-50 rounded-[2px] border border-dashed border-slate-300">
                         Nu a fost adăugat niciun comitet. Apasă butonul de mai sus pentru a crea unul.
                       </p>
                     ) : (
-                      <div className="space-y-4">
+                      <div className="space-y-3.5 font-anthropic">
                         {formCommittees.map((c) => (
-                          <div key={c.id} className="relative p-5 bg-[#FAF9F5] border border-brand-muted/10 rounded-2xl space-y-3 shadow-sm">
+                          <div key={c.id} className="relative p-4 bg-white border border-slate-300 rounded-[2px] space-y-3.5 shadow-xs">
                             <button
                               type="button"
                               onClick={() => handleRemoveCommittee(c.id)}
-                              className="absolute top-4 right-4 text-red-500 hover:text-red-700 p-1.5 hover:bg-red-50 rounded-full transition-colors"
+                              className="absolute top-3.5 right-3.5 text-red-500 hover:text-red-700 hover:bg-red-50 p-1.5 rounded-[2px] transition-colors cursor-pointer"
                               title="Elimină Comitet"
                             >
                               <Trash2 size={16} />
                             </button>
 
-                            <div className="pr-8 space-y-3">
+                            <div className="pr-6 space-y-3.5">
                               {/* Committee Name */}
                               <div>
-                                <label className="block text-[9px] font-bold uppercase tracking-wider opacity-60 mb-1">Nume Comitet (Obligatoriu)</label>
+                                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5 font-title">Nume Comitet (Obligatoriu)</label>
                                 <input
                                   type="text"
                                   value={c.name}
                                   onChange={e => handleUpdateCommitteeField(c.id, 'name', e.target.value)}
                                   required
                                   placeholder="Ex: Logistică, Decor, Sponsori..."
-                                  className="w-full px-3 py-2 bg-white border border-brand-muted/10 rounded-lg text-xs focus:outline-none focus:border-brand-primary transition-colors"
+                                  className="w-full px-3.5 py-2 bg-slate-50 border border-slate-300 rounded-[2px] text-sm font-bold text-slate-900 focus:outline-none focus:border-indigo-500 transition-colors font-anthropic"
                                 />
                               </div>
 
                               {/* Committee Description */}
                               <div>
-                                <label className="block text-[9px] font-bold uppercase tracking-wider opacity-60 mb-1">Descriere Comitet (Opțională)</label>
+                                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5 font-title">Descriere Comitet (Opțională)</label>
                                 <textarea
                                   value={c.description}
                                   onChange={e => handleUpdateCommitteeField(c.id, 'description', e.target.value)}
                                   rows={2}
                                   placeholder="Sarcini specifice, agenda..."
-                                  className="w-full px-3 py-2 bg-white border border-brand-muted/10 rounded-lg text-xs focus:outline-none focus:border-brand-primary transition-colors resize-none"
+                                  className="w-full px-3.5 py-2 bg-slate-50 border border-slate-300 rounded-[2px] text-sm font-medium text-slate-900 focus:outline-none focus:border-indigo-500 transition-colors resize-none font-anthropic"
                                 />
                               </div>
 
-                              {/* Committee Hours — independent per department, not the overall project duration */}
+                              {/* Committee Hours */}
                               <div>
-                                <label className="block text-[9px] font-bold uppercase tracking-wider opacity-60 mb-1">
+                                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5 font-title">
                                   Ore Voluntariat (acest departament)
                                 </label>
                                 <input
@@ -1003,26 +1501,26 @@ export function EventsView({ isAdmin, members = [], currentUserId, onUpdateMembe
                                   onChange={e => handleUpdateCommitteeField(c.id, 'hours', parseFloat(e.target.value) || 0)}
                                   required
                                   placeholder="Ex: 4"
-                                  className="w-full px-3 py-2 bg-white border border-brand-muted/10 rounded-lg text-xs focus:outline-none focus:border-brand-primary transition-colors"
+                                  className="w-full px-3.5 py-2 bg-slate-50 border border-slate-300 rounded-[2px] text-sm font-bold text-slate-900 focus:outline-none focus:border-indigo-500 transition-colors font-data"
                                 />
-                                <p className="text-[9px] text-brand-accent/40 mt-1">
-                                  Fiecare membru din acest comitet primește exact aceste ore la finalizare — diferit de la un departament la altul.
+                                <p className="text-xs font-medium text-slate-500 mt-1">
+                                  Fiecare membru din acest comitet primește exact aceste ore la finalizare.
                                 </p>
                               </div>
 
                               {/* Committee Members Multi-Select Dropdown */}
                               <div>
-                                <label className="block text-[9px] font-bold uppercase tracking-wider opacity-60 mb-1">Membri Comitet</label>
-                                <div className="border border-brand-muted/10 rounded-xl p-3 bg-white space-y-3">
+                                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5 font-title">Membri Comitet</label>
+                                <div className="border border-slate-200 rounded-[2px] p-3 bg-slate-50/50 space-y-2.5 font-anthropic">
                                   {/* Selected members badges */}
-                                  <div className="flex flex-wrap gap-1.5">
+                                  <div className="flex flex-wrap gap-1.5 font-title">
                                     {c.members.length === 0 ? (
-                                      <span className="text-[11px] text-brand-accent/40 italic">Niciun membru selectat</span>
+                                      <span className="text-xs text-slate-400 italic">Niciun membru selectat</span>
                                     ) : (
                                       c.members.map(memberId => {
                                         const mObj = members?.find(m => m.id === memberId);
                                         return (
-                                          <span key={memberId} className="inline-flex items-center gap-1 bg-brand-primary/10 text-brand-accent border border-brand-primary/30 text-xs font-semibold px-2.5 py-1 rounded-full">
+                                          <span key={memberId} className="inline-flex items-center gap-1.5 bg-indigo-100 text-indigo-950 text-xs font-bold px-2.5 py-1 rounded-[2px] border border-indigo-200 shadow-xs">
                                             {mObj?.name || memberId}
                                             <button
                                               type="button"
@@ -1030,7 +1528,7 @@ export function EventsView({ isAdmin, members = [], currentUserId, onUpdateMembe
                                                 const updatedMembers = c.members.filter(id => id !== memberId);
                                                 handleUpdateCommitteeField(c.id, 'members', updatedMembers);
                                               }}
-                                              className="hover:text-red-500 font-bold ml-1 text-[10px] w-3.5 h-3.5 flex items-center justify-center rounded-full bg-brand-accent/5"
+                                              className="hover:text-red-600 font-bold ml-1 text-sm cursor-pointer"
                                             >
                                               ×
                                             </button>
@@ -1040,19 +1538,16 @@ export function EventsView({ isAdmin, members = [], currentUserId, onUpdateMembe
                                     )}
                                   </div>
 
-                                  {/* Search input */}
-                                  <div className="pt-1">
-                                    <input
-                                      type="text"
-                                      placeholder="Caută membru..."
-                                      value={memberSearchQueries[c.id] || ''}
-                                      onChange={e => setMemberSearchQueries(prev => ({ ...prev, [c.id]: e.target.value }))}
-                                      className="w-full px-3 py-1.5 bg-[#FAF9F5] border border-brand-muted/10 rounded-lg text-xs focus:outline-none focus:border-brand-primary font-['Manrope']"
-                                    />
-                                  </div>
+                                  <input
+                                    type="text"
+                                    placeholder="Caută membru..."
+                                    value={memberSearchQueries[c.id] || ''}
+                                    onChange={e => setMemberSearchQueries(prev => ({ ...prev, [c.id]: e.target.value }))}
+                                    className="w-full px-3 py-2 bg-white border border-slate-200 rounded-[2px] text-xs sm:text-sm font-medium text-slate-900 font-anthropic"
+                                  />
 
                                   {/* Scrollable checklist of members */}
-                                  <div className="h-32 overflow-y-auto border-t border-brand-muted/5 pt-2 space-y-1 scrollbar-thin">
+                                  <div className="max-h-36 overflow-y-auto border-t border-slate-200 pt-2 space-y-1 scrollbar-thin">
                                     {members
                                       ?.filter(m => {
                                         const q = (memberSearchQueries[c.id] || '').toLowerCase();
@@ -1070,21 +1565,21 @@ export function EventsView({ isAdmin, members = [], currentUserId, onUpdateMembe
                                                 : [...c.members, m.id];
                                               handleUpdateCommitteeField(c.id, 'members', updatedMembers);
                                             }}
-                                            className={`w-full flex items-center justify-between p-2 rounded-lg text-xs font-semibold transition-all ${
+                                            className={`w-full flex items-center justify-between p-2 rounded-[2px] text-xs sm:text-sm font-medium transition-all cursor-pointer font-anthropic ${
                                               isSelected
-                                                ? 'bg-brand-primary/10 border border-brand-primary/40 text-brand-accent'
-                                                : 'hover:bg-brand-accent/5 border border-transparent text-brand-accent/70'
+                                                ? 'bg-indigo-100 border border-indigo-300 text-indigo-950'
+                                                : 'hover:bg-slate-100 border border-transparent text-slate-700'
                                             }`}
                                           >
                                             <div className="flex items-center gap-2">
                                               <img
                                                 src={m.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(m.name)}`}
                                                 alt={m.name}
-                                                className="w-5 h-5 rounded-full"
+                                                className="w-4 h-4 rounded-[2px]"
                                               />
                                               <span>{m.name}</span>
                                             </div>
-                                            {isSelected && <span className="w-1.5 h-1.5 rounded-full bg-brand-primary" />}
+                                            {isSelected && <span className="text-indigo-600 font-bold font-title text-xs">✓</span>}
                                           </button>
                                         );
                                       })}
@@ -1092,14 +1587,16 @@ export function EventsView({ isAdmin, members = [], currentUserId, onUpdateMembe
                                 </div>
                               </div>
 
-                              {/* Coordinator Selector (Single Select populated STRICTLY with selected members) */}
+                              {/* Coordinator Selector */}
                               <div>
-                                <label className="block text-[9px] font-bold uppercase tracking-wider opacity-60 mb-1">Coordonator (Șef Comitet) - Opțional</label>
-                                <div className="relative">
+                                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5 font-title">
+                                  Coordonator (Șef Comitet) - Opțional
+                                </label>
+                                <div className="relative font-anthropic">
                                   <select
                                     value={c.coordinatorId || ''}
                                     onChange={e => handleUpdateCommitteeField(c.id, 'coordinatorId', e.target.value || null)}
-                                    className="w-full px-3 py-2 bg-white border border-brand-muted/10 rounded-lg text-xs focus:outline-none focus:border-brand-primary transition-colors font-['Manrope'] appearance-none"
+                                    className="w-full px-3.5 py-2 bg-white border border-slate-300 rounded-[2px] text-sm font-medium text-slate-900 focus:outline-none focus:border-indigo-500 transition-colors font-anthropic cursor-pointer"
                                   >
                                     <option value="">Niciunul / Fără Coordonator</option>
                                     {c.members.map(memberId => {
@@ -1111,7 +1608,6 @@ export function EventsView({ isAdmin, members = [], currentUserId, onUpdateMembe
                                       );
                                     })}
                                   </select>
-                                  <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-brand-accent/40 text-[10px]">▼</div>
                                 </div>
                               </div>
                             </div>
@@ -1122,8 +1618,8 @@ export function EventsView({ isAdmin, members = [], currentUserId, onUpdateMembe
                   </div>
                 )}
 
-                <div className="pt-6">
-                  <button type="submit" className="w-full ios26-btn py-4 font-bold uppercase tracking-wider text-sm">
+                <div className="pt-4 font-title">
+                  <button type="submit" className="w-full py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-[2px] font-bold uppercase tracking-wider text-xs sm:text-sm shadow-xs cursor-pointer">
                     {editingEvent ? 'Salvează Modificările' : 'Creează Eveniment'}
                   </button>
                 </div>
@@ -1136,39 +1632,39 @@ export function EventsView({ isAdmin, members = [], currentUserId, onUpdateMembe
       {/* Request Absence Member Modal */}
       <AnimatePresence>
         {requestingAbsenceFor && (
-          <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+          <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 font-anthropic">
             <motion.div 
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              className="absolute inset-0 bg-brand-accent/60 backdrop-blur-md"
+              className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm"
               onClick={() => setRequestingAbsenceFor(null)}
             />
             <motion.div 
               initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="relative w-full max-w-sm bg-white rounded-3xl shadow-2xl p-6"
+              className="relative w-full max-w-sm bg-white rounded-[2px] shadow-2xl p-5 sm:p-6 font-anthropic border border-slate-200"
             >
-              <div className="flex justify-between items-start mb-4">
-                <h3 className="text-xl font-bold text-brand-accent">Cere Învoire</h3>
-                <button onClick={() => setRequestingAbsenceFor(null)} className="p-1 hover:bg-[#FAF9F5] rounded-full">
-                  <X size={16} />
+              <div className="flex justify-between items-start mb-3.5 font-title">
+                <h3 className="text-base sm:text-lg font-bold text-slate-900">Cere Învoire</h3>
+                <button onClick={() => setRequestingAbsenceFor(null)} className="p-1.5 hover:bg-slate-100 text-slate-400 hover:text-slate-700 rounded-[2px] cursor-pointer">
+                  <X size={18} />
                 </button>
               </div>
-              <p className="text-xs text-brand-accent/60 font-semibold mb-6">
-                Te rugăm să motivezi absența pentru <span className="font-bold text-brand-accent">{requestingAbsenceFor.title}</span>. Cererea va fi analizată de administratori.
+              <p className="text-xs sm:text-sm text-slate-600 font-medium mb-4 font-anthropic leading-relaxed">
+                Te rugăm să motivezi absența pentru <span className="font-bold text-slate-900">{requestingAbsenceFor.title}</span>. Cererea va fi analizată de administratori.
               </p>
               
-              <form onSubmit={handleAbsenceSubmit} className="space-y-4">
+              <form onSubmit={handleAbsenceSubmit} className="space-y-3.5 font-anthropic">
                 <div>
-                  <label className="block text-[10px] font-bold uppercase tracking-wider opacity-60 mb-1">Motiv Învoire</label>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5 font-title">Motiv Învoire</label>
                   <textarea 
                     required
                     rows={4}
                     value={absenceReason}
                     onChange={e => setAbsenceReason(e.target.value)}
-                    className="w-full px-4 py-3 bg-[#FAF9F5] border border-brand-muted/10 rounded-xl text-sm focus:outline-none focus:border-brand-primary resize-none"
+                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-[2px] text-sm focus:outline-none focus:border-indigo-500 resize-none text-slate-900 font-anthropic"
                     placeholder="Scrie aici motivul absenței..."
                   />
                 </div>
-                <button type="submit" className="w-full btn-stitch-theme py-3 text-xs font-bold uppercase tracking-wider">
+                <button type="submit" className="w-full py-3 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-[2px] text-xs sm:text-sm uppercase tracking-wider transition-all shadow-xs cursor-pointer font-title">
                   Trimite Cererea
                 </button>
               </form>

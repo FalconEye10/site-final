@@ -102,7 +102,8 @@ export const SCORING_PRESETS: ScoringPreset[] = [
   { category: 'Management & Proiecte', action: 'Conflict Resolution Mediator', points: 8, description: 'Aplanat cu succes neînțelegerile din echipă', badge: '🕊️ Mediator' },
 
   // ── 6. ȘEDINȚE & GUVERNANȚĂ ──
-  { category: 'Ședințe & Guvernanță', action: 'Prezență Ședință Ordinară Săptămânală', points: 2, description: 'Participare activă și vot la ședința săptămânală', badge: 'Standard' },
+  { category: 'Ședințe & Guvernanță', action: 'Prezență Ședință Ordinară / Activitate', points: 1, description: 'Participare confirmată (+1 punct per prezență conform regulamentului)', badge: '✅ Prezență (+1 pct)' },
+  { category: 'Ședințe & Guvernanță', action: 'Absență Motivată (Cerere / WhatsApp)', points: 0, description: 'Absență justificată aprobată (0 puncte conform regulamentului)', badge: '⚪ Motivată (0 pct)' },
   { category: 'Ședințe & Guvernanță', action: 'Prezență Ședință Extraordinară / Strategică de Board', points: 3, description: 'Participare la decizii urgente și planificări mari' },
   { category: 'Ședințe & Guvernanță', action: 'Ceas Elvețian (Punctualitate Perfectă & Ordine de Zi Pregătită)', points: 2, description: 'Sosire cu 10 minute înainte, agendă notată și focus total', badge: '⏰ Ceas Elvețian' },
   { category: 'Ședințe & Guvernanță', action: 'Scrib de Aur (Redactare & Trimitere Proces-Verbal în 24h)', points: 4, description: 'Minute de ședință redactate curat cu deciziile și taskurile alocate', badge: '📜 Scrib de Aur' },
@@ -142,7 +143,7 @@ export const SCORING_PRESETS: ScoringPreset[] = [
   { category: 'Penalizări & Conduită', action: 'Ghosting / Abandonat Post pe Teren Fără Înlocuitor', points: -10, description: 'Plecare prematură sau dispariție din tură fără anunțare prealabilă', badge: '❌ Ghosting' },
   { category: 'Penalizări & Conduită', action: 'Lăsat Echipa la Greu (Task Critic Asumat Nefăcut)', points: -6, description: 'Nerealizarea unui angajament promis fără justificare sau delegare' },
   { category: 'Penalizări & Conduită', action: 'Deteriorat sau Pierdut Materiale / Inventar Club', points: -6, description: 'Neglijență în manipularea echipamentelor sau bunurilor clubului' },
-  { category: 'Penalizări & Conduită', action: 'Absență Nemotivată la Ședință sau Proiect Asumat', points: -3, description: 'Neprezentare fără cerere de învoire transmisă la timp' },
+  { category: 'Penalizări & Conduită', action: 'Absență Nemotivată la Ședință sau Activitate', points: -2, description: 'Neprezentare nemotivată fără cerere de învoire transmisă la timp (-2 puncte)', badge: '❌ Nemotivată (-2 pct)' },
   { category: 'Penalizări & Conduită', action: 'Adormit / Întârziat Masiv la Acțiune de Dimineață (>30 min)', points: -2, description: 'Sosire tardivă care a întârziat debutul acțiunii' },
   { category: 'Penalizări & Conduită', action: 'Întârziere Predare Decont / Chitanțe Financiare (>7 zile)', points: -2, description: 'Blocarea evidenței contabile a trezorierului' },
   { category: 'Penalizări & Conduită', action: 'Comunicare Agresivă sau Inadecvată în Echipă', points: -8, description: 'Limbaj agresiv, disrespect sau tensiuni provocate gratuit', badge: '😠 Conductă Inadecvată' },
@@ -197,47 +198,47 @@ export function ScoringReferenceGuide({ onSelectPreset, selectedAction }: Scorin
   });
 
   return (
-    <div className="rounded-2xl border border-amber-500/20 bg-amber-50/50 dark:bg-amber-950/15 overflow-hidden font-anthropic">
+    <div className="rounded-[2px] border border-amber-500/20 bg-amber-50/50 dark:bg-amber-950/15 overflow-hidden font-anthropic">
       {/* Header Accordion Toggle */}
       <button
         type="button"
         onClick={() => setIsExpanded(v => !v)}
-        className="w-full px-4 py-3 bg-amber-100/70 dark:bg-amber-950/40 hover:bg-amber-100 dark:hover:bg-amber-950/60 transition-colors flex items-center justify-between text-left cursor-pointer"
+        className="w-full px-4 py-3.5 bg-amber-100/70 dark:bg-amber-950/40 hover:bg-amber-100 dark:hover:bg-amber-950/60 transition-colors flex items-center justify-between text-left cursor-pointer"
       >
-        <div className="flex items-center gap-2">
-          <Trophy size={16} className="text-amber-600 dark:text-amber-400" />
-          <span className="text-xs font-black uppercase tracking-wider text-amber-950 dark:text-amber-200">
+        <div className="flex items-center gap-2.5">
+          <Trophy size={18} className="text-amber-600 dark:text-amber-400" />
+          <span className="text-xs sm:text-sm font-black uppercase tracking-wider text-amber-950 dark:text-amber-200 font-title">
             📖 Master Ghid Punctaj & Roluri Voluntariat ({SCORING_PRESETS.length} Criterii & Badge-uri)
           </span>
         </div>
-        <div className="flex items-center gap-2 text-xs font-bold text-amber-800 dark:text-amber-300">
+        <div className="flex items-center gap-2 text-xs sm:text-sm font-bold text-amber-800 dark:text-amber-300 font-title">
           <span>{isExpanded ? 'Restrânge Ghidul' : 'Deschide Ghidul (Autofill cu 1 Click)'}</span>
-          {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+          {isExpanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
         </div>
       </button>
 
       {/* Expandable Content */}
       {isExpanded && (
-        <div className="p-4 space-y-3">
+        <div className="p-4 space-y-3.5">
           {/* Search & Category Pills */}
           <div className="flex flex-col sm:flex-row gap-2.5">
             <div className="relative flex-1">
-              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+              <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
               <input
                 type="text"
                 placeholder="Caută orice rol sau activitate (ex: salahor, constructor, afiș, sponsor, mc, cabluri)..."
                 value={search}
                 onChange={e => setSearch(e.target.value)}
-                className="w-full pl-8 pr-3 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:border-amber-400"
+                className="w-full pl-9 pr-3.5 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[2px] text-xs sm:text-sm text-slate-800 dark:text-slate-200 focus:outline-none focus:border-amber-400 font-anthropic"
               />
             </div>
-            <div className="flex gap-1 overflow-x-auto pb-1 max-w-full">
+            <div className="flex gap-1.5 overflow-x-auto pb-1 max-w-full font-title">
               {categories.map(cat => (
                 <button
                   key={cat}
                   type="button"
                   onClick={() => setSelectedCategory(cat)}
-                  className={`px-2.5 py-1 rounded-lg text-[11px] font-bold whitespace-nowrap transition-colors cursor-pointer ${
+                  className={`px-3 py-1.5 rounded-[2px] text-xs font-bold whitespace-nowrap uppercase tracking-wider transition-colors cursor-pointer ${
                     selectedCategory === cat
                       ? 'bg-amber-500 text-white shadow-xs'
                       : 'bg-white/80 dark:bg-slate-900/80 text-slate-600 dark:text-slate-400 hover:bg-amber-100 dark:hover:bg-amber-950/40 border border-slate-200 dark:border-slate-800'
@@ -250,9 +251,9 @@ export function ScoringReferenceGuide({ onSelectPreset, selectedAction }: Scorin
           </div>
 
           {/* Reference Table / List */}
-          <div className="max-h-80 overflow-y-auto space-y-1.5 pr-1 custom-scrollbar">
+          <div className="max-h-80 overflow-y-auto space-y-2 pr-1 custom-scrollbar">
             {filteredPresets.length === 0 ? (
-              <div className="p-4 text-center text-xs text-slate-400 italic">Nicio activitate găsită pentru căutarea ta.</div>
+              <div className="p-4 text-center text-xs sm:text-sm text-slate-400 italic font-anthropic">Nicio activitate găsită pentru căutarea ta.</div>
             ) : (
               filteredPresets.map((preset, idx) => {
                 const isSelected = selectedAction === preset.action;
@@ -261,28 +262,28 @@ export function ScoringReferenceGuide({ onSelectPreset, selectedAction }: Scorin
                   <div
                     key={idx}
                     onClick={() => onSelectPreset?.(preset)}
-                    className={`p-2.5 rounded-xl border transition-all cursor-pointer flex items-center justify-between gap-3 ${
+                    className={`p-3 rounded-[2px] border transition-all cursor-pointer flex items-center justify-between gap-3.5 ${
                       isSelected
                         ? 'bg-amber-500/20 border-amber-500 text-slate-900 dark:text-white shadow-xs'
                         : 'bg-white/90 dark:bg-slate-900/80 hover:bg-amber-100/50 dark:hover:bg-amber-950/30 border-slate-200/80 dark:border-slate-800'
                     }`}
                   >
                     <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        <span className="text-xs font-black text-slate-900 dark:text-white">{preset.action}</span>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white font-anthropic">{preset.action}</span>
                         {preset.badge && (
-                          <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-md bg-amber-500/15 text-amber-800 dark:text-amber-300 border border-amber-500/20">
+                          <span className="text-xs font-bold uppercase px-2 py-0.5 rounded-[2px] bg-amber-500/15 text-amber-800 dark:text-amber-300 border border-amber-500/20 font-title">
                             {preset.badge}
                           </span>
                         )}
-                        <span className="text-[10px] text-slate-400 dark:text-slate-500 font-medium">({preset.category})</span>
+                        <span className="text-xs text-slate-400 dark:text-slate-500 font-medium font-data">({preset.category})</span>
                       </div>
-                      <div className="text-[11px] text-slate-500 dark:text-slate-400 truncate mt-0.5">{preset.description}</div>
+                      <div className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 truncate mt-0.5 font-anthropic">{preset.description}</div>
                     </div>
 
                     <div className="flex items-center gap-2 shrink-0">
                       <span
-                        className={`text-xs font-black px-2.5 py-1 rounded-lg tabular-nums ${
+                        className={`text-xs sm:text-sm font-black font-data px-2.5 py-1 rounded-[2px] tabular-nums ${
                           isPositive
                             ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30'
                             : 'bg-rose-500/15 text-rose-700 dark:text-rose-300 border border-rose-500/30'
@@ -291,8 +292,8 @@ export function ScoringReferenceGuide({ onSelectPreset, selectedAction }: Scorin
                         {isPositive ? `+${preset.points}` : preset.points} pct
                       </span>
                       {onSelectPreset && (
-                        <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-md hidden sm:inline-block">
-                          {isSelected ? <Check size={12} className="inline mr-1" /> : null} Alege
+                        <span className="text-xs font-bold font-title text-amber-600 dark:text-amber-400 bg-amber-500/10 px-2.5 py-1 rounded-[2px] hidden sm:inline-block">
+                          {isSelected ? <Check size={14} className="inline mr-1" /> : null} Alege
                         </span>
                       )}
                     </div>
@@ -302,9 +303,9 @@ export function ScoringReferenceGuide({ onSelectPreset, selectedAction }: Scorin
             )}
           </div>
 
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-2 text-[10px] text-slate-400 font-medium pt-1 border-t border-amber-500/15">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-slate-400 font-medium pt-2 border-t border-amber-500/15">
             <span>💡 Click pe oricare rând completează automat punctajul și justificarea pentru orice voluntar.</span>
-            <span className="flex items-center gap-1"><Sparkles size={11} className="text-amber-500" /> Poți oricând introduce și punctaje custom manual</span>
+            <span className="flex items-center gap-1"><Sparkles size={13} className="text-amber-500" /> Poți oricând introduce și punctaje custom manual</span>
           </div>
         </div>
       )}

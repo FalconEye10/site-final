@@ -196,21 +196,21 @@ export interface ScoreAuditLog {
 }
 
 /**
- * Salvează un buștean de audit (Audit Log) în Supabase
+ * Salvează un log de audit în tabela 'members' (sub documentul SYS_AUDIT_LOGS)
  */
-export async function logScoreAudit(log: Omit<ScoreAuditLog, 'id' | 'createdAt'>): Promise<void> {
+export async function logScoreAudit(log: Partial<ScoreAuditLog> & { action: string; reason: string }): Promise<void> {
   try {
     const auditEntry: ScoreAuditLog = {
-      id: `audit_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+      id: log.id || `audit_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
       adminId: log.adminId || undefined,
       adminName: log.adminName || 'Admin',
       adminUsername: log.adminUsername || undefined,
       targetMemberId: log.targetMemberId || '',
       targetMemberName: log.targetMemberName || 'Sistem',
-      action: log.action,
+      action: log.action as any,
       points: log.points || 0,
       reason: log.reason,
-      createdAt: new Date().toISOString()
+      createdAt: log.createdAt || new Date().toISOString()
     };
 
     const { data: sysSnap } = await supabase
@@ -219,7 +219,22 @@ export async function logScoreAudit(log: Omit<ScoreAuditLog, 'id' | 'createdAt'>
       .eq('id', 'SYS_AUDIT_LOGS')
       .single();
 
-    const currentLogs = Array.isArray(sysSnap?.stats?.logs) ? sysSnap.stats.logs : [];
+    const currentLogs: ScoreAuditLog[] = Array.isArray(sysSnap?.stats?.logs) ? sysSnap.stats.logs : [];
+    
+    // Prevent inserting exact duplicates into SYS_AUDIT_LOGS
+    const isDuplicate = currentLogs.some(l => 
+      l.id === auditEntry.id || 
+      (l.targetMemberId === auditEntry.targetMemberId && 
+       l.action === auditEntry.action && 
+       l.points === auditEntry.points && 
+       l.reason === auditEntry.reason &&
+       Math.abs(new Date(l.createdAt).getTime() - new Date(auditEntry.createdAt).getTime()) < 3000)
+    );
+
+    if (isDuplicate) {
+      return;
+    }
+
     const updatedLogs = [auditEntry, ...currentLogs].slice(0, 1000);
 
     await supabase.from('members').upsert({
@@ -235,7 +250,7 @@ export async function logScoreAudit(log: Omit<ScoreAuditLog, 'id' | 'createdAt'>
 }
 
 /**
- * Preia toate jurnalele de audit pentru punctaj (doar pentru admini)
+ * Preia toate jurnalele de audit din întreg sistemul (Punctaje, Plăți, Membri, Învoiri, Proiecte, Sugestii, Kudos)
  */
 export async function fetchScoreAuditLogs(): Promise<ScoreAuditLog[]> {
   try {
@@ -249,37 +264,239 @@ export async function fetchScoreAuditLogs(): Promise<ScoreAuditLog[]> {
 
     const { data: membersData } = await supabase
       .from('members')
-      .select('id, name, scoreAdjustments')
+      .select('id, name, nickname, username, role, boardPosition, scoreAdjustments')
       .neq('id', 'SYS_AUDIT_LOGS');
 
-    const compiledMap = new Map<string, ScoreAuditLog>();
-    sysLogs.forEach(l => compiledMap.set(l.id, l));
+    // Build comprehensive lookup for real admin names and nicknames
+    const memberLookup = new Map<string, { name: string; nickname?: string; username?: string }>();
+    if (membersData) {
+      membersData.forEach((m: any) => {
+        const info = { name: m.name, nickname: m.nickname, username: m.username };
+        if (m.id) memberLookup.set(m.id.toLowerCase(), info);
+        if (m.username) memberLookup.set(m.username.toLowerCase(), info);
+        if (m.name) memberLookup.set(m.name.toLowerCase(), info);
+      });
+    }
 
+    const resolveAdmin = (rawAdminName?: string, adminId?: string, adminUsername?: string): { name: string; username?: string } => {
+      if (adminId && memberLookup.has(adminId.toLowerCase())) {
+        const m = memberLookup.get(adminId.toLowerCase())!;
+        return { name: m.nickname || m.name, username: m.username || adminUsername };
+      }
+      if (adminUsername && memberLookup.has(adminUsername.toLowerCase())) {
+        const m = memberLookup.get(adminUsername.toLowerCase())!;
+        return { name: m.nickname || m.name, username: m.username || adminUsername };
+      }
+      if (rawAdminName && memberLookup.has(rawAdminName.toLowerCase())) {
+        const m = memberLookup.get(rawAdminName.toLowerCase())!;
+        return { name: m.nickname || m.name, username: m.username || adminUsername };
+      }
+      if (rawAdminName && rawAdminName !== 'Admin' && rawAdminName !== 'Sistem' && rawAdminName !== 'Trezorier' && rawAdminName !== 'Board') {
+        return { name: rawAdminName, username: adminUsername };
+      }
+      return { name: 'Ștefan Stan', username: 'stan.stefan' };
+    };
+
+    // Fetch payments to ensure financial transactions always appear in master audit
+    const { data: paymentsData } = await supabase
+      .from('payments')
+      .select('*')
+      .order('date', { ascending: false });
+
+    // Fetch absence requests
+    const { data: absenceData } = await supabase
+      .from('absence_requests')
+      .select('*');
+
+    // Fetch project proposals
+    const { data: proposalData } = await supabase
+      .from('project_proposals')
+      .select('*');
+
+    // Fetch suggestions
+    const { data: suggestionData } = await supabase
+      .from('suggestions')
+      .select('*');
+
+    // Fetch kudos
+    const { data: kudosData } = await supabase
+      .from('kudos')
+      .select('*');
+
+    const compiledMap = new Map<string, ScoreAuditLog>();
+    
+    // 1. Add system audit records (Authoritative) with resolved admin names
+    sysLogs.forEach(l => {
+      if (l && l.id) {
+        const resolved = resolveAdmin(l.adminName, l.adminId, l.adminUsername);
+        compiledMap.set(l.id, {
+          ...l,
+          adminName: resolved.name,
+          adminUsername: resolved.username || l.adminUsername
+        });
+      }
+    });
+
+    // Helper to check if duplicate already exists in compiledMap
+    const isAlreadyPresent = (targetId: string, action: string, points: number, reason: string, timeIso: string) => {
+      const targetTime = new Date(timeIso).getTime();
+      for (const existing of compiledMap.values()) {
+        if (
+          existing.targetMemberId === targetId &&
+          existing.action === action &&
+          existing.points === points &&
+          (existing.reason === reason || existing.reason?.includes(reason) || reason?.includes(existing.reason)) &&
+          Math.abs(new Date(existing.createdAt).getTime() - targetTime) < 5000
+        ) {
+          return true;
+        }
+      }
+      return false;
+    };
+
+    // 2. Add score adjustments from members (only if not already logged in sysLogs)
     if (membersData) {
       membersData.forEach((m: any) => {
         const adjustments = m.scoreAdjustments || [];
         adjustments.forEach((adj: any) => {
           if (adj.id && !compiledMap.has(adj.id)) {
-            compiledMap.set(adj.id, {
-              id: adj.id,
-              adminId: adj.adminId,
-              adminName: adj.adminName || 'Admin',
-              adminUsername: adj.adminUsername,
-              targetMemberId: m.id,
-              targetMemberName: m.name || 'Membru',
-              action: adj.action || (adj.points >= 0 ? 'ADDED' : 'SUBTRACTED'),
-              points: adj.points || 0,
-              reason: adj.reason || 'Fără motiv',
-              createdAt: adj.date || new Date().toISOString()
-            });
+            const time = adj.date || new Date().toISOString();
+            const act = adj.action || (adj.points >= 0 ? 'ADDED' : 'SUBTRACTED');
+            if (!isAlreadyPresent(m.id, act, adj.points || 0, adj.reason || '', time)) {
+              const resolved = resolveAdmin(adj.adminName, adj.adminId, adj.adminUsername);
+              compiledMap.set(adj.id, {
+                id: adj.id,
+                adminId: adj.adminId,
+                adminName: resolved.name,
+                adminUsername: resolved.username || adj.adminUsername,
+                targetMemberId: m.id,
+                targetMemberName: m.nickname || m.name || 'Membru',
+                action: act,
+                points: adj.points || 0,
+                reason: adj.reason || 'Ajustare punctaj',
+                createdAt: time
+              });
+            }
           }
         });
       });
     }
 
+    // 3. Add payments (Dues / Cotizații)
+    if (paymentsData) {
+      paymentsData.forEach((p: any) => {
+        const payId = `pay_${p.id}`;
+        if (!compiledMap.has(payId)) {
+          const time = p.date || p.createdAt || new Date().toISOString();
+          if (!isAlreadyPresent(p.memberId, 'PAYMENT', p.amount || 0, p.month, time)) {
+            const resolved = resolveAdmin(p.recordedBy || 'Mădălina Dorneanu', p.treasurerId, 'dorneanu.madalina');
+            compiledMap.set(payId, {
+              id: payId,
+              adminName: resolved.name,
+              adminUsername: resolved.username || 'dorneanu.madalina',
+              targetMemberId: p.memberId,
+              targetMemberName: p.memberName || 'Membru',
+              action: 'PAYMENT',
+              points: p.amount || 0,
+              reason: `Cotizație achitată: ${p.month} — ${p.amount} RON (Chitanță: ${p.id})`,
+              createdAt: time
+            });
+          }
+        }
+      });
+    }
+
+    // 4. Add absence requests
+    if (absenceData) {
+      absenceData.forEach((a: any) => {
+        const absId = `abs_${a.id}`;
+        if (!compiledMap.has(absId)) {
+          const time = a.timestamp || new Date().toISOString();
+          const resolved = resolveAdmin(a.reviewedBy, undefined, undefined);
+          compiledMap.set(absId, {
+            id: absId,
+            adminName: resolved.name,
+            adminUsername: resolved.username,
+            targetMemberId: a.memberId,
+            targetMemberName: a.memberName || 'Membru',
+            action: a.status === 'approved' ? 'ABSENCE_APPROVED' : a.status === 'rejected' ? 'ABSENCE_REJECTED' : 'ABSENCE_REQUEST',
+            points: 0,
+            reason: `Cerere învoire (${a.status || 'în așteptare'}): ${a.reason || 'Fără motiv specificat'}`,
+            createdAt: time
+          });
+        }
+      });
+    }
+
+    // 5. Add Project Proposals
+    if (proposalData) {
+      proposalData.forEach((pr: any) => {
+        const prId = `prop_${pr.id}`;
+        if (!compiledMap.has(prId)) {
+          const time = pr.createdAt || new Date().toISOString();
+          const resolved = resolveAdmin(pr.authorName, pr.authorId, undefined);
+          compiledMap.set(prId, {
+            id: prId,
+            adminName: resolved.name,
+            adminUsername: resolved.username,
+            targetMemberId: pr.authorId,
+            targetMemberName: pr.authorName,
+            action: 'PROJECT_PROPOSAL',
+            points: 0,
+            reason: `Propunere Proiect (${pr.status || 'în analiză'}): "${pr.title}" - Buget: ${pr.budget || 0} RON`,
+            createdAt: time
+          });
+        }
+      });
+    }
+
+    // 6. Add Suggestions
+    if (suggestionData) {
+      suggestionData.forEach((s: any) => {
+        const sugId = `sug_${s.id}`;
+        if (!compiledMap.has(sugId)) {
+          const time = s.created_at || s.createdAt || new Date().toISOString();
+          const resolved = s.is_anonymous ? { name: 'Anonim' } : resolveAdmin(s.member_name, s.member_id, undefined);
+          compiledMap.set(sugId, {
+            id: sugId,
+            adminName: resolved.name,
+            adminUsername: resolved.username,
+            targetMemberId: s.member_id,
+            targetMemberName: s.is_anonymous ? 'Anonim' : s.member_name,
+            action: 'SUGGESTION',
+            points: 0,
+            reason: `Casetă Sugestii (${s.category || 'general'}): "${s.content?.substring(0, 80)}${s.content?.length > 80 ? '...' : ''}"`,
+            createdAt: time
+          });
+        }
+      });
+    }
+
+    // 7. Add Kudos
+    if (kudosData) {
+      kudosData.forEach((k: any) => {
+        const kId = `kudos_${k.id}`;
+        if (!compiledMap.has(kId)) {
+          const time = k.created_at || k.createdAt || new Date().toISOString();
+          const resolved = resolveAdmin(k.from_name, undefined, undefined);
+          compiledMap.set(kId, {
+            id: kId,
+            adminName: resolved.name,
+            adminUsername: resolved.username,
+            targetMemberId: k.recipient_id || k.to_id,
+            targetMemberName: k.recipient_name || k.to_name,
+            action: 'KUDOS',
+            points: 0,
+            reason: `Kudos (${k.badge_type || 'Apreciere'}): "${k.message?.substring(0, 80)}" de la ${k.from_name}`,
+            createdAt: time
+          });
+        }
+      });
+    }
+
     return Array.from(compiledMap.values()).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   } catch (err) {
-    console.error("Error fetching audit logs:", err);
+    console.error("Error fetching master audit logs:", err);
     return [];
   }
 }
@@ -340,9 +557,10 @@ export async function applyMemberScoreAdjustment(
 
     if (updateErr) throw updateErr;
 
-    // Logăm în Audit Log pentru fiecare ajustare
-    for (const adj of list) {
+    // Logăm în Audit Log pentru fiecare ajustare cu ACELAȘI ID pentru a preveni duplicatele
+    for (const adj of newItems) {
       await logScoreAudit({
+        id: adj.id,
         adminId: adj.adminId,
         adminName: adj.adminName || 'Admin',
         adminUsername: adj.adminUsername,
@@ -350,7 +568,8 @@ export async function applyMemberScoreAdjustment(
         targetMemberName: member.name || 'Membru',
         action: pointsDelta >= 0 ? 'ADDED' : 'SUBTRACTED',
         points: pointsDelta,
-        reason: adj.reason
+        reason: adj.reason,
+        createdAt: adj.date || new Date().toISOString()
       });
     }
   } catch (error) {
@@ -397,8 +616,10 @@ export async function revertMemberScoreAdjustment(
 
     if (updateErr) throw updateErr;
 
-    // Înregistrăm acțiunea de REVERT în jurnalul de audit
+    // Înregistrăm acțiunea de REVERT în jurnalul de audit cu un ID determinist
+    const revertAuditId = `revert_${adjustmentId}`;
     await logScoreAudit({
+      id: revertAuditId,
       adminId: adminInfo.id,
       adminName: adminInfo.name || 'Admin',
       adminUsername: adminInfo.username,
@@ -562,6 +783,17 @@ export async function revertLatestTreasuryPayment(
 // EVENTS OPERATIONS
 // ==========================================
 
+export interface EventShift {
+  id: string;
+  name: string;
+  date: string;
+  startTime: string;
+  endTime: string;
+  hours: number;
+  maxVolunteers: number;
+  assignedMembers: string[];
+}
+
 export interface EventData {
   id: string;
   title: string;
@@ -574,6 +806,8 @@ export interface EventData {
   description: string;
   rsvps: Record<string, string>;
   attendanceClosed?: boolean;
+  isShiftBased?: boolean;
+  shifts?: EventShift[];
   committees?: Record<string, {
     name: string;
     description: string;

@@ -37,9 +37,14 @@ import { SuggestionsView } from './views/SuggestionsView';
 import { MasterAuditView } from './views/MasterAuditView';
 import { PlatformTutorialModal } from './PlatformTutorialModal';
 import { NotificationsDropdown } from './NotificationsDropdown';
+import { MemberActivityHub } from './hubs/MemberActivityHub';
+import { MemberCommunityHub } from './hubs/MemberCommunityHub';
+import { AdminTeamHub } from './hubs/AdminTeamHub';
+import { AdminFinanceHub } from './hubs/AdminFinanceHub';
+import { AdminCommunityHub } from './hubs/AdminCommunityHub';
 import { VolunteerSpotlightCard } from './VolunteerSpotlightCard';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
-import { ShieldAlert } from 'lucide-react';
+import { ShieldAlert, Zap, Sparkles } from 'lucide-react';
 
 interface DashboardProps {
   username: string;
@@ -51,9 +56,13 @@ const easeOut: [number, number, number, number] = [0.23, 1, 0.32, 1];
 const Card = ({ children, className = '', onClick }: { children: React.ReactNode, className?: string, onClick?: () => void }) => (
   <div
     onClick={onClick}
-    className={`adm-glass p-7 ${className}`}
+    className={`civic-card bg-white dark:bg-[#161B22] border border-slate-200 dark:border-slate-800 p-5 rounded-[2px] transition-colors ${
+      onClick ? 'cursor-pointer hover:border-slate-300 dark:hover:border-slate-700 focus-ring' : ''
+    } ${className}`}
+    tabIndex={onClick ? 0 : undefined}
+    onKeyDown={onClick ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick(); } } : undefined}
+    role={onClick ? 'button' : undefined}
   >
-    <div className="adm-accent-bar" />
     {children}
   </div>
 );
@@ -94,33 +103,33 @@ function ClockWidget({ events }: { events: any[] }) {
 
   if (ongoingEvent) {
     return (
-      <div className="hidden sm:flex items-center gap-2 md:gap-3 px-2.5 md:px-4 py-1 md:py-2 bg-red-600/90 text-white border border-red-700/80 rounded-xl animate-pulse transition-all shrink-0">
+      <div className="hidden sm:flex items-center gap-2.5 px-3 py-1.5 bg-rose-50 dark:bg-rose-950/40 text-rose-800 dark:text-rose-200 border border-rose-200 dark:border-rose-800/80 rounded-[2px] transition-colors shrink-0">
         <div className="flex flex-col text-left">
-          <span className="text-[9px] font-black uppercase tracking-widest text-red-100 flex items-center gap-1.5">
-            <span className="w-1.5 h-1.5 rounded-full bg-white animate-ping" />
-            Live
+          <span className="text-[10px] font-title font-bold uppercase tracking-wider text-rose-700 dark:text-rose-400 flex items-center gap-1.5">
+            <span className="w-1.5 h-1.5 rounded-[1px] bg-rose-600" />
+            Activ
           </span>
-          <span className="text-xs font-extrabold truncate max-w-[80px] md:max-w-[150px]" title={ongoingEvent.title}>
+          <span className="text-xs font-semibold truncate max-w-[120px] md:max-w-[160px] font-anthropic" title={ongoingEvent.title}>
             {ongoingEvent.title}
           </span>
         </div>
-        <div className="w-px h-6 md:h-8 bg-white/20" />
-        <div className="flex flex-col text-right shrink-0">
-          <span className="text-xs md:text-sm font-black font-mono tracking-tight">{formatTime(time)}</span>
-          <span className="text-[9px] font-bold opacity-90">{formatDay(time)}</span>
+        <div className="w-px h-6 bg-rose-200 dark:bg-rose-800" />
+        <div className="flex flex-col text-right shrink-0 font-data">
+          <span className="text-xs md:text-sm font-bold tracking-tight">{formatTime(time)}</span>
+          <span className="text-[10px] font-title uppercase text-rose-600 dark:text-rose-400">{formatDay(time)}</span>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="hidden lg:flex items-center gap-3 px-4 py-2 bg-white/[0.02] border border-white/10 rounded-xl transition-all hover:bg-white/5 shrink-0">
+    <div className="hidden lg:flex items-center gap-3 px-3 py-1.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[2px] transition-colors shrink-0">
       <div className="flex flex-col text-left">
-        <span className="text-[9px] font-bold uppercase tracking-wider text-white/35">{formatDay(time)}</span>
-        <span className="text-xs font-extrabold text-white/70">{formatDate(time)}</span>
+        <span className="text-[10px] font-title font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">{formatDay(time)}</span>
+        <span className="text-xs font-semibold text-slate-900 dark:text-slate-100 font-anthropic">{formatDate(time)}</span>
       </div>
-      <div className="w-px h-8 bg-white/10" />
-      <div className="text-sm font-black font-mono tracking-tight text-white shrink-0">
+      <div className="w-px h-6 bg-slate-200 dark:bg-slate-800" />
+      <div className="text-xs md:text-sm font-bold font-data text-slate-900 dark:text-slate-100 shrink-0">
         {formatTime(time)}
       </div>
     </div>
@@ -378,108 +387,193 @@ const ViewDashboard = ({ members, currentUserObj, isAdmin, onNavigateToSection, 
   );
 
   return (
-    <div className="space-y-8 animate-fade-in pb-12 font-['Hanken_Grotesk']">
-      {/* 0. Personalized Welcome Banner */}
-      <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 pb-1">
+    <div className="space-y-6 animate-fade-in pb-12 font-anthropic">
+      {/* 0. Executive Header Banner */}
+      <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 pb-2 border-b border-slate-200 dark:border-slate-800">
         <div>
-          <p className="text-sm font-anthropicSerif italic text-slate-400 mb-0.5">
-            {(() => { const h = new Date().getHours(); return h < 12 ? 'Bună dimineața' : h < 18 ? 'Bună ziua' : 'Bună seara'; })()},
+          <p className="text-xs font-title uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-1">
+            {(() => { const h = new Date().getHours(); return h < 12 ? 'Bună dimineața' : h < 18 ? 'Bună ziua' : 'Bună seara'; })()} • Portal Guvernanță
           </p>
-          <h1 className="text-3xl md:text-4xl font-anthropicSerif font-bold text-brand-accent capitalize leading-tight">
-            {isAdmin ? 'Administrator' : (currentUserObj?.nickname || currentUserObj?.name || 'Voluntar')}
-            <span className="text-brand-primary"> · </span>
-            <span className="text-slate-300 font-normal not-italic text-2xl md:text-3xl">Camena</span>
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-anthropicSerif font-bold text-slate-900 dark:text-slate-100 leading-tight">
+            {isAdmin ? 'Panou Administrativ' : (currentUserObj?.name || currentUserObj?.nickname || 'Voluntar')}
+            <span className="text-blue-600 dark:text-blue-400 font-light mx-2">/</span>
+            <span className="text-slate-500 dark:text-slate-400 font-normal text-xl sm:text-2xl">Interact Camena</span>
           </h1>
         </div>
-        <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-widest text-slate-400 shrink-0">
-          <span className="w-1.5 h-1.5 rounded-full bg-brand-primary" />
+        <div className="flex items-center gap-2 text-xs font-title font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-3 py-1.5 rounded-[2px] border border-slate-200 dark:border-slate-700 shrink-0">
+          <span className="w-2 h-2 rounded-[1px] bg-emerald-500" />
           {new Date().toLocaleDateString('ro-RO', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
         </div>
       </div>
 
-      {/* 1. Header Cards Grid */}
-      <div className={`grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 ${!isAdmin ? 'xl:grid-cols-4' : ''} gap-3.5 sm:gap-6 items-center font-anthropic`}>
+      {/* 1. Primary Metrics Grid (High Legibility & Strict Contrast) */}
+      <div className={`grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 ${!isAdmin ? 'xl:grid-cols-4' : ''} gap-4`}>
         {isAdmin ? (
           <>
-            <Card className="stat-hero group relative overflow-hidden cursor-pointer border border-brand-muted/10 bg-white shadow-md !p-4 sm:!p-6 flex items-center gap-4 sm:gap-5 !rounded-2xl sm:!rounded-3xl" onClick={() => onNavigateToSection('membri')}>
-              <span className="stat-hero-bar bg-gradient-to-r from-[#89cff0] to-transparent" />
-              <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-brand-primary/10 flex items-center justify-center text-brand-primary shrink-0"><Users size={24} className="sm:w-[26px] sm:h-[26px]" /></div>
-              <div className="flex-1 min-w-0">
-                <span className="text-[10px] font-bold uppercase tracking-wider opacity-40 block">Membri</span>
-                <div className="text-3xl sm:text-4xl font-extrabold leading-none text-brand-accent my-1">{membersCount}</div>
-                <div className="text-[11px] opacity-60 truncate">Voluntari înregistrați</div>
+            <Card
+              className="cursor-pointer hover:border-blue-500 dark:hover:border-blue-500 group"
+              onClick={() => onNavigateToSection('membri')}
+            >
+              <div className="flex items-start justify-between">
+                <div>
+                  <span className="text-xs font-title font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 block mb-1.5">
+                    Registru Membri
+                  </span>
+                  <div className="text-2xl sm:text-3xl lg:text-4xl font-bold font-data text-slate-900 dark:text-slate-100">
+                    {membersCount}
+                  </div>
+                </div>
+                <div className="w-10 h-10 rounded-[2px] bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0 border border-blue-200/60 dark:border-blue-800/60">
+                  <Users size={20} />
+                </div>
+              </div>
+              <div className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-3 flex items-center justify-between border-t border-slate-100 dark:border-slate-800/80 pt-2">
+                <span>Voluntari activi înregistrați</span>
+                <span className="text-blue-600 dark:text-blue-400 font-title font-bold group-hover:translate-x-0.5 transition-transform">Deschide →</span>
               </div>
             </Card>
 
-            <Card className="stat-hero group relative overflow-hidden cursor-pointer border border-emerald-600/20 bg-white shadow-md !p-4 sm:!p-6 flex items-center gap-4 sm:gap-5 !rounded-2xl sm:!rounded-3xl" onClick={() => onNavigateToSection('istoric')}>
-              <span className="stat-hero-bar bg-gradient-to-r from-emerald-500 to-transparent" />
-              <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-emerald-500/10 flex items-center justify-center text-emerald-600 shrink-0"><Wallet size={24} className="sm:w-[26px] sm:h-[26px]" /></div>
-              <div className="flex-1 min-w-0">
-                <span className="text-[10px] font-bold uppercase tracking-wider opacity-40 block">Fonduri</span>
-                <div className="text-3xl sm:text-4xl font-extrabold leading-none text-emerald-600 my-1">{totalCollected} <span className="text-lg sm:text-xl">Lei</span></div>
-                <div className="text-[11px] opacity-60 truncate">Total cotizații încasate</div>
+            <Card
+              className="cursor-pointer hover:border-emerald-500 dark:hover:border-emerald-500 group"
+              onClick={() => onNavigateToSection('istoric')}
+            >
+              <div className="flex items-start justify-between">
+                <div>
+                  <span className="text-xs font-title font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 block mb-1.5">
+                    Fonduri Încasate
+                  </span>
+                  <div className="text-2xl sm:text-3xl lg:text-4xl font-bold font-data text-emerald-700 dark:text-emerald-400">
+                    {totalCollected} <span className="text-base font-medium">Lei</span>
+                  </div>
+                </div>
+                <div className="w-10 h-10 rounded-[2px] bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 flex items-center justify-center shrink-0 border border-emerald-200/60 dark:border-emerald-800/60">
+                  <Wallet size={20} />
+                </div>
+              </div>
+              <div className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-3 flex items-center justify-between border-t border-slate-100 dark:border-slate-800/80 pt-2">
+                <span>Cotizații procesate trezorerie</span>
+                <span className="text-emerald-700 dark:text-emerald-400 font-title font-bold group-hover:translate-x-0.5 transition-transform">Registru →</span>
               </div>
             </Card>
 
-            <Card className="stat-hero group relative overflow-hidden cursor-pointer border border-rose-200 bg-white shadow-md !p-4 sm:!p-6 flex items-center gap-4 sm:gap-5 !rounded-2xl sm:!rounded-3xl" onClick={() => onNavigateToSection('istoric')}>
-              <span className="stat-hero-bar bg-gradient-to-r from-rose-500 to-transparent" />
-              <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-rose-500/10 flex items-center justify-center text-rose-600 shrink-0"><AlertCircle size={24} className="sm:w-[26px] sm:h-[26px]" /></div>
-              <div className="flex-1 min-w-0">
-                <span className="text-[10px] font-bold uppercase tracking-wider opacity-40 block text-rose-600">Restanțe</span>
-                <div className="text-3xl sm:text-4xl font-extrabold leading-none text-rose-600 my-1">{totalGlobalDebt} <span className="text-lg sm:text-xl">Lei</span></div>
-                <div className="text-[11px] opacity-60 truncate">Total datorat de recuperat</div>
+            <Card
+              className="cursor-pointer hover:border-rose-500 dark:hover:border-rose-500 group"
+              onClick={() => onNavigateToSection('istoric')}
+            >
+              <div className="flex items-start justify-between">
+                <div>
+                  <span className="text-xs font-title font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 block mb-1.5">
+                    Restanțe de Încasat
+                  </span>
+                  <div className="text-2xl sm:text-3xl lg:text-4xl font-bold font-data text-rose-700 dark:text-rose-400">
+                    {totalGlobalDebt} <span className="text-base font-medium">Lei</span>
+                  </div>
+                </div>
+                <div className="w-10 h-10 rounded-[2px] bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-400 flex items-center justify-center shrink-0 border border-rose-200/60 dark:border-rose-800/60">
+                  <AlertCircle size={20} />
+                </div>
+              </div>
+              <div className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-3 flex items-center justify-between border-t border-slate-100 dark:border-slate-800/80 pt-2">
+                <span>Obligații restante club</span>
+                <span className="text-rose-700 dark:text-rose-400 font-title font-bold group-hover:translate-x-0.5 transition-transform">Detalii →</span>
               </div>
             </Card>
           </>
         ) : (
           <>
-            <Card className="stat-hero group relative overflow-hidden border border-brand-muted/10 bg-white shadow-md !p-4 sm:!p-6 flex items-center gap-4 sm:gap-5 !rounded-2xl sm:!rounded-3xl">
-              <span className="stat-hero-bar bg-gradient-to-r from-[#89cff0] to-transparent" />
-              <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-brand-primary/10 flex items-center justify-center text-brand-primary shrink-0"><CreditCard size={24} className="sm:w-[26px] sm:h-[26px]" /></div>
-              <div className="flex-1 min-w-0">
-                <span className="text-[10px] font-bold uppercase tracking-wider opacity-40 block">Cotizație</span>
-                <div className="text-2xl sm:text-3xl font-extrabold leading-none text-brand-accent my-1">
-                  {personalDebt === 0 ? (
-                    <span className="text-emerald-600 text-lg sm:text-xl font-bold">La zi!</span>
-                  ) : (
-                    <span>{personalDebt} <span className="text-sm sm:text-base font-bold">Lei datorați</span></span>
-                  )}
+            <Card
+              className="cursor-pointer hover:border-blue-500 dark:hover:border-blue-500 group"
+              onClick={() => onNavigateToSection('profil')}
+            >
+              <div className="flex items-start justify-between">
+                <div>
+                  <span className="text-xs font-title font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 block mb-1.5">
+                    Situație Cotizație
+                  </span>
+                  <div className="text-xl sm:text-2xl lg:text-3xl font-bold font-data text-slate-900 dark:text-slate-100">
+                    {personalDebt === 0 ? (
+                      <span className="text-emerald-700 dark:text-emerald-400 font-semibold">La zi</span>
+                    ) : (
+                      <span className="text-rose-700 dark:text-rose-400">{personalDebt} Lei <span className="text-xs font-normal">restanță</span></span>
+                    )}
+                  </div>
                 </div>
-                <div className="text-[11px] opacity-60 truncate">Datoria ta curentă</div>
+                <div className="w-10 h-10 rounded-[2px] bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0 border border-blue-200/60 dark:border-blue-800/60">
+                  <CreditCard size={20} />
+                </div>
+              </div>
+              <div className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-3 flex items-center justify-between border-t border-slate-100 dark:border-slate-800/80 pt-2">
+                <span>15 Lei / lună calendaristică</span>
+                <span className="text-blue-600 dark:text-blue-400 font-title font-bold group-hover:translate-x-0.5 transition-transform">Fișă →</span>
               </div>
             </Card>
 
-            <Card className="stat-hero group relative overflow-hidden cursor-pointer border border-amber-200 bg-white shadow-md !p-4 sm:!p-6 flex items-center gap-4 sm:gap-5 !rounded-2xl sm:!rounded-3xl" onClick={() => onNavigateToSection('clasament')}>
-              <span className="stat-hero-bar bg-gradient-to-r from-amber-500 to-transparent" />
-              <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-amber-500/10 flex items-center justify-center text-amber-600 shrink-0"><Trophy size={24} className="sm:w-[26px] sm:h-[26px]" /></div>
-              <div className="flex-1 min-w-0">
-                <span className="text-[10px] font-bold uppercase tracking-wider opacity-40 block">Activitate</span>
-                <div className="text-3xl sm:text-4xl font-extrabold leading-none text-brand-accent my-1">{personalHours} <span className="text-lg sm:text-xl">ore</span></div>
-                <div className="text-[11px] opacity-60 truncate">Ore voluntariat înregistrate</div>
+            <Card
+              className="cursor-pointer hover:border-amber-500 dark:hover:border-amber-500 group"
+              onClick={() => onNavigateToSection('clasament')}
+            >
+              <div className="flex items-start justify-between">
+                <div>
+                  <span className="text-xs font-title font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 block mb-1.5">
+                    Ore Voluntariat
+                  </span>
+                  <div className="text-2xl sm:text-3xl lg:text-4xl font-bold font-data text-slate-900 dark:text-slate-100">
+                    {personalHours} <span className="text-base font-normal text-slate-500">ore</span>
+                  </div>
+                </div>
+                <div className="w-10 h-10 rounded-[2px] bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 flex items-center justify-center shrink-0 border border-amber-200/60 dark:border-amber-800/60">
+                  <Clock size={20} />
+                </div>
+              </div>
+              <div className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-3 flex items-center justify-between border-t border-slate-100 dark:border-slate-800/80 pt-2">
+                <span>Timp investit în acțiuni</span>
+                <span className="text-amber-700 dark:text-amber-400 font-title font-bold group-hover:translate-x-0.5 transition-transform">Clasament →</span>
               </div>
             </Card>
 
-            <Card className="stat-hero group relative overflow-hidden cursor-pointer border border-emerald-200 bg-white shadow-md !p-4 sm:!p-6 flex items-center gap-4 sm:gap-5 !rounded-2xl sm:!rounded-3xl" onClick={() => onNavigateToSection('clasament')}>
-              <span className="stat-hero-bar bg-gradient-to-r from-emerald-500 to-transparent" />
-              <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-emerald-500/10 flex items-center justify-center text-emerald-600 shrink-0"><Trophy size={24} className="sm:w-[26px] sm:h-[26px]" /></div>
-              <div className="flex-1 min-w-0">
-                <span className="text-[10px] font-bold uppercase tracking-wider opacity-40 block">Clasament</span>
-                <div className="text-3xl sm:text-4xl font-extrabold leading-none text-brand-accent my-1">
-                  {myTopPercent !== null ? <>Top {myTopPercent}<span className="text-lg sm:text-xl">%</span></> : '—'}
+            <Card
+              className="cursor-pointer hover:border-emerald-500 dark:hover:border-emerald-500 group"
+              onClick={() => onNavigateToSection('clasament')}
+            >
+              <div className="flex items-start justify-between">
+                <div>
+                  <span className="text-xs font-title font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 block mb-1.5">
+                    Poziție Clasament
+                  </span>
+                  <div className="text-2xl sm:text-3xl lg:text-4xl font-bold font-data text-slate-900 dark:text-slate-100">
+                    {myTopPercent !== null ? <>Top {myTopPercent}%</> : '—'}
+                  </div>
                 </div>
-                <div className="text-[11px] opacity-60 truncate">
-                  {myRank !== null ? `Locul #${myRank} din ${rankableMembers.length} membri` : 'Fără punctaj înregistrat încă'}
+                <div className="w-10 h-10 rounded-[2px] bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 flex items-center justify-center shrink-0 border border-emerald-200/60 dark:border-emerald-800/60">
+                  <Trophy size={20} />
                 </div>
+              </div>
+              <div className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-3 flex items-center justify-between border-t border-slate-100 dark:border-slate-800/80 pt-2">
+                <span>{myRank !== null ? `Locul #${myRank} din ${rankableMembers.length} membri` : 'Fără punctaj'}</span>
+                <span className="text-emerald-700 dark:text-emerald-400 font-title font-bold group-hover:translate-x-0.5 transition-transform">Top →</span>
               </div>
             </Card>
 
-            <Card className="stat-hero group relative overflow-hidden cursor-pointer border border-indigo-200 bg-white shadow-md !p-4 sm:!p-6 flex items-center gap-4 sm:gap-5 !rounded-2xl sm:!rounded-3xl" onClick={() => onNavigateToSection('idei')}>
-              <span className="stat-hero-bar bg-gradient-to-r from-indigo-500 to-transparent" />
-              <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-indigo-500/10 flex items-center justify-center text-indigo-600 shrink-0"><Lightbulb size={24} className="sm:w-[26px] sm:h-[26px]" /></div>
-              <div className="flex-1 min-w-0">
-                <span className="text-[10px] font-bold uppercase tracking-wider opacity-40 block">Proiecte</span>
-                <div className="text-3xl sm:text-4xl font-extrabold leading-none text-brand-accent my-1">{personalProjects}</div>
-                <div className="text-[11px] opacity-60 truncate">Propuneri active în sistem</div>
+            <Card
+              className="cursor-pointer hover:border-blue-500 dark:hover:border-blue-500 group"
+              onClick={() => onNavigateToSection('proiecte')}
+            >
+              <div className="flex items-start justify-between">
+                <div>
+                  <span className="text-xs font-title font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 block mb-1.5">
+                    Proiecte & Comitete
+                  </span>
+                  <div className="text-2xl sm:text-3xl lg:text-4xl font-bold font-data text-slate-900 dark:text-slate-100">
+                    {personalProjects}
+                  </div>
+                </div>
+                <div className="w-10 h-10 rounded-[2px] bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0 border border-blue-200/60 dark:border-blue-800/60">
+                  <Lightbulb size={20} />
+                </div>
+              </div>
+              <div className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-3 flex items-center justify-between border-t border-slate-100 dark:border-slate-800/80 pt-2">
+                <span>Propuneri active înregistrate</span>
+                <span className="text-blue-600 dark:text-blue-400 font-title font-bold group-hover:translate-x-0.5 transition-transform">Inițiative →</span>
               </div>
             </Card>
           </>
@@ -493,95 +587,110 @@ const ViewDashboard = ({ members, currentUserObj, isAdmin, onNavigateToSection, 
         onNavigateToLeaderboard={() => onNavigateToSection('clasament')}
       />
 
-      {/* 2. News Banner / Alert Area */}
+      {/* 2. Official News Dispatch (Clean Civic Panel) */}
       {latestNews && (
         <div
           onClick={() => onNavigateToSection('stiri')}
-          className="adm-glass p-6 md:p-7 flex flex-col md:flex-row items-center gap-6 cursor-pointer relative overflow-hidden"
-          style={{ background: 'linear-gradient(120deg, #161d31 0%, #0c1120 100%)' }}
+          className="bg-slate-900 text-white p-5 md:p-6 rounded-[2px] border border-slate-800 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 cursor-pointer hover:border-slate-700 transition-colors focus-ring"
+          tabIndex={0}
+          role="button"
+          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onNavigateToSection('stiri'); } }}
         >
-          <div className="absolute top-[-30%] right-[-5%] w-96 h-96 blur-[90px] rounded-full pointer-events-none" style={{ background: 'color-mix(in srgb, var(--theme-color, #89cff0) 30%, transparent)' }} />
-          <div className="w-14 h-14 rounded-2xl bg-white/8 flex items-center justify-center shrink-0 border border-white/10">
-            <Megaphone className="animate-pulse adm-theme-icon" size={26} />
+          <div className="flex items-start gap-4">
+            <div className="w-11 h-11 rounded-[2px] bg-white/10 text-white flex items-center justify-center shrink-0 border border-white/15">
+              <Megaphone size={22} />
+            </div>
+            <div>
+              <div className="inline-block text-xs font-title font-bold uppercase tracking-wider px-2.5 py-1 rounded-[2px] bg-white/10 text-slate-200 border border-white/15 mb-1.5">
+                Comunicat Oficial
+              </div>
+              <h3 className="text-xl sm:text-2xl font-anthropicSerif font-bold text-white leading-snug">
+                {latestNews.title}
+              </h3>
+              <p className="text-xs sm:text-sm text-slate-300 line-clamp-1 font-anthropic mt-1 max-w-3xl">
+                {latestNews.content}
+              </p>
+            </div>
           </div>
-          <div className="flex-1 text-center md:text-left relative z-10">
-            <span className="text-[9px] font-bold uppercase tracking-widest bg-white/8 border border-white/10 px-3 py-1 rounded-full" style={{ color: 'var(--theme-color, #89cff0)' }}>Noutăți Oficiale Camena</span>
-            <h3 className="text-2xl font-anthropicSerif font-bold mt-3 mb-1.5 leading-snug text-white">{latestNews.title}</h3>
-            <p className="text-sm text-white/60 line-clamp-1 font-['Manrope']">{latestNews.content}</p>
+          <div className="text-xs sm:text-sm font-title font-bold uppercase tracking-wider text-blue-300 shrink-0 self-end md:self-center">
+            Citește Documentul &rarr;
           </div>
-          <div className="text-xs font-bold font-['Manrope'] shrink-0 hidden md:block" style={{ color: 'var(--theme-color, #89cff0)' }}>Citește Anunțul &rarr;</div>
         </div>
       )}
 
-      {/* 3. Main Bento Grid Section */}
+      {/* 3. Core Action Matrix (2-Column Architectural Layout) */}
       <div className="grid grid-cols-1 md:grid-cols-12 gap-5 items-stretch">
-
+        {/* Left Column: Live Poll or Active Projects */}
         {activePoll ? (
-          <Card className="md:col-span-7 lg:col-span-8 h-full flex flex-col justify-between">
+          <Card className="md:col-span-7 lg:col-span-8 flex flex-col justify-between">
             <div>
-              <div className="flex justify-between items-center mb-6">
-                <h3 className="font-anthropicSerif font-semibold text-lg flex items-center gap-2 text-slate-800">
-                  <Globe size={18} className={activePoll.closed ? 'text-amber-500' : 'text-brand-primary'} /> 
-                  {activePoll.closed ? 'Rezultate Sondaj' : 'Sondaj Activ'}
+              <div className="flex justify-between items-center pb-3 border-b border-slate-100 dark:border-slate-800 mb-4">
+                <h3 className="font-anthropicSerif font-bold text-lg sm:text-xl flex items-center gap-2 text-slate-900 dark:text-slate-100">
+                  <Globe size={20} className={activePoll.closed ? 'text-amber-600' : 'text-blue-600 dark:text-blue-400'} />
+                  {activePoll.closed ? 'Rezultate Finale Sondaj' : 'Sondaj în Desfășurare'}
                 </h3>
-                <span className="text-[10px] uppercase font-bold bg-white/40 px-2.5 py-1 rounded-lg border border-brand-muted/5">
-                  {activePoll.closed ? 'Închis' : 'Activ'} &bull; {totalVotes} {totalVotes === 1 ? 'vot' : 'voturi'}
+                <span className="text-xs font-title uppercase font-bold px-2.5 py-1 rounded-[2px] bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+                  {activePoll.closed ? 'Încheiat' : 'Activ'} • {totalVotes} {totalVotes === 1 ? 'vot' : 'voturi'}
                 </span>
               </div>
-              
+
               <div className="space-y-4">
-                <h4 className="text-lg font-anthropicSerif font-bold text-brand-accent leading-snug mb-2">{activePoll.question}</h4>
-                
-                <div className="space-y-3">
+                <h4 className="text-base sm:text-lg font-anthropicSerif font-bold text-slate-900 dark:text-slate-100 leading-snug">
+                  {activePoll.question}
+                </h4>
+
+                <div className="space-y-2.5">
                   {(activePoll.options || []).map((option, idx) => {
                     const optionVotes = Object.values(activePoll.votes || {}).filter(v => Array.isArray(v) ? v.includes(idx) : v === idx).length;
                     const percentage = totalVotes > 0 ? Math.round((optionVotes / totalVotes) * 100) : 0;
                     const isSelected = Array.isArray(userVote) ? userVote.includes(idx) : userVote === idx;
- 
+
                     if (activePoll.closed) {
                       return (
                         <div
                           key={idx}
-                          className={`w-full p-4 rounded-full border transition-all relative overflow-hidden flex items-center justify-between ${
-                            isSelected 
-                              ? 'border-amber-500 bg-amber-500/5' 
-                              : 'border-brand-muted/5 bg-white'
+                          className={`w-full p-3.5 sm:p-4 rounded-[2px] border transition-all relative overflow-hidden flex items-center justify-between ${
+                            isSelected
+                              ? 'border-amber-500/80 bg-amber-50/50 dark:bg-amber-950/20'
+                              : 'border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/30'
                           }`}
                         >
-                          <div 
-                            className="absolute left-0 top-0 bottom-0 bg-amber-500/10 transition-all duration-1000 ease-out z-0" 
+                          <div
+                            className="absolute left-0 top-0 bottom-0 bg-amber-500/10 transition-all duration-500 ease-out z-0"
                             style={{ width: `${percentage}%` }}
                           />
-                          
-                          <span className="text-sm font-semibold z-10 relative flex items-center gap-2">
+                          <span className="text-xs sm:text-sm font-semibold z-10 relative flex items-center gap-2 font-anthropic text-slate-900 dark:text-slate-100">
                             {isSelected && <span className="text-amber-600 font-bold">✓</span>}
                             {option}
                           </span>
-                          <span className="text-xs font-bold opacity-60 z-10 relative font-['Manrope']">{optionVotes} {optionVotes === 1 ? 'vot' : 'voturi'} ({percentage}%)</span>
+                          <span className="text-xs sm:text-sm font-bold font-data z-10 relative text-slate-600 dark:text-slate-400">
+                            {optionVotes} ({percentage}%)
+                          </span>
                         </div>
                       );
                     }
- 
+
                     return (
                       <button
                         key={idx}
                         onClick={() => handleVote(idx)}
-                        className={`w-full text-left p-4 rounded-full border transition-all relative overflow-hidden group flex items-center justify-between ${
-                          isSelected 
-                            ? 'border-brand-primary bg-brand-primary/5' 
-                            : 'border-brand-muted/5 hover:bg-black/5'
+                        className={`w-full text-left p-3.5 sm:p-4 rounded-[2px] border transition-all relative overflow-hidden flex items-center justify-between cursor-pointer focus-ring ${
+                          isSelected
+                            ? 'border-blue-600 bg-blue-50/50 dark:bg-blue-950/20'
+                            : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/30 hover:border-slate-300 dark:hover:border-slate-700'
                         }`}
                       >
-                        <div 
-                          className="absolute left-0 top-0 bottom-0 bg-brand-primary/10 transition-all duration-1000 ease-out z-0" 
+                        <div
+                          className="absolute left-0 top-0 bottom-0 bg-blue-600/10 transition-all duration-500 ease-out z-0"
                           style={{ width: `${percentage}%` }}
                         />
-                        
-                        <span className="text-sm font-semibold z-10 relative flex items-center gap-2">
-                          {isSelected && <span className="text-emerald-500 font-bold">✓</span>}
+                        <span className="text-xs sm:text-sm font-semibold z-10 relative flex items-center gap-2 font-anthropic text-slate-900 dark:text-slate-100">
+                          {isSelected && <span className="text-blue-600 dark:text-blue-400 font-bold">✓</span>}
                           {option}
                         </span>
-                        <span className="text-xs font-bold opacity-60 z-10 relative font-['Manrope']">{percentage}%</span>
+                        <span className="text-xs sm:text-sm font-bold font-data z-10 relative text-slate-600 dark:text-slate-400">
+                          {percentage}%
+                        </span>
                       </button>
                     );
                   })}
@@ -590,44 +699,56 @@ const ViewDashboard = ({ members, currentUserObj, isAdmin, onNavigateToSection, 
             </div>
 
             {isAdmin && (
-              <div className="mt-6 pt-4 border-t border-brand-muted/5 flex gap-4">
+              <div className="mt-5 pt-3 border-t border-slate-100 dark:border-slate-800 flex gap-3">
                 {activePoll.closed ? (
-                  <button 
+                  <button
                     onClick={handleArchivePoll}
-                    className="btn-stitch-primary py-2 px-6 rounded-full text-xs"
+                    className="btn-civic-secondary py-2 px-4 text-xs sm:text-sm font-title uppercase tracking-wider"
                   >
-                    Arhivează Sondaj
+                    Arhivează Rezultatele
                   </button>
                 ) : (
-                  <button 
+                  <button
                     onClick={handleClosePoll}
-                    className="btn-stitch-primary py-2 px-6 rounded-full text-xs"
+                    className="btn-civic-primary py-2 px-4 text-xs sm:text-sm font-title uppercase tracking-wider"
                   >
-                    Închide Sondaj
+                    Închide Votarea
                   </button>
                 )}
               </div>
             )}
           </Card>
         ) : (
-          <Card className="md:col-span-7 lg:col-span-8 h-full flex flex-col justify-between font-['Manrope']">
+          <Card className="md:col-span-7 lg:col-span-8 flex flex-col justify-between">
             <div>
-              <div className="flex justify-between items-center mb-6">
-                <h3 className="font-anthropicSerif font-semibold text-lg flex items-center gap-2 text-slate-800"><Lightbulb size={18} className="text-indigo-500" /> Proiecte în Desfășurare</h3>
-                <span className="text-[10px] uppercase font-bold bg-white/40 px-2.5 py-1 rounded-lg border border-brand-muted/5">Portofoliu</span>
+              <div className="flex justify-between items-center pb-3 border-b border-slate-100 dark:border-slate-800 mb-4">
+                <h3 className="font-anthropicSerif font-bold text-lg sm:text-xl flex items-center gap-2 text-slate-900 dark:text-slate-100">
+                  <Lightbulb size={20} className="text-blue-600 dark:text-blue-400" />
+                  Portofoliu Inițiative în Derulare
+                </h3>
+                <span className="text-xs font-title uppercase font-bold px-2.5 py-1 rounded-[2px] bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+                  Proiecte
+                </span>
               </div>
-              
+
               {events.filter(e => e.type === 'project' && !e.attendanceClosed).length > 0 ? (
-                <div className="space-y-4">
+                <div className="space-y-2.5">
                   {events.filter(e => e.type === 'project' && !e.attendanceClosed).slice(0, 3).map((proj) => (
-                    <div key={proj.id} className="p-4 bg-white/40 rounded-full border border-brand-muted/5 flex items-center justify-between hover:bg-indigo-50/10 transition-colors">
+                    <div
+                      key={proj.id}
+                      className="p-3.5 bg-slate-50/70 dark:bg-slate-900/40 rounded-[2px] border border-slate-200 dark:border-slate-800 flex items-center justify-between hover:border-slate-300 dark:hover:border-slate-700 transition-colors"
+                    >
                       <div>
-                        <h4 className="font-bold text-sm text-brand-accent">{proj.title}</h4>
-                        <p className="text-xs opacity-60 mt-1 flex items-center gap-1"><MapPin size={12} /> {proj.location || 'Locație nespecificată'}</p>
+                        <h4 className="font-bold text-xs sm:text-sm text-slate-900 dark:text-slate-100 font-anthropic">
+                          {proj.title}
+                        </h4>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 flex items-center gap-1">
+                          <MapPin size={13} /> {proj.location || 'Locație comunicată intern'}
+                        </p>
                       </div>
-                      <button 
+                      <button
                         onClick={() => onNavigateToSection('proiecte')}
-                        className="btn-stitch-secondary py-1 px-4 text-xs font-bold"
+                        className="btn-civic-secondary py-1.5 px-3 text-xs sm:text-sm font-title font-bold uppercase tracking-wider"
                       >
                         Detalii
                       </button>
@@ -635,16 +756,18 @@ const ViewDashboard = ({ members, currentUserObj, isAdmin, onNavigateToSection, 
                   ))}
                 </div>
               ) : (
-                <div className="py-8 text-center text-xs opacity-50 italic">Nu există proiecte în desfășurare în acest moment.</div>
+                <div className="py-8 text-center text-xs sm:text-sm text-slate-400 dark:text-slate-500 italic">
+                  Nu există acțiuni comunitare în derulare în acest moment.
+                </div>
               )}
             </div>
-            
+
             {!isAdmin && (
-              <div className="mt-6 border-t border-brand-muted/5 pt-4 flex justify-between items-center text-xs">
-                <span className="opacity-60">Vrei să propui o inițiativă nouă?</span>
+              <div className="mt-4 border-t border-slate-100 dark:border-slate-800 pt-3 flex justify-between items-center text-xs sm:text-sm">
+                <span className="text-slate-500 dark:text-slate-400">Vrei să propui o inițiativă comunitară nouă?</span>
                 <button
                   onClick={() => onNavigateToSection('proiecte')}
-                  className="text-indigo-600 font-bold hover:underline"
+                  className="text-blue-600 dark:text-blue-400 font-title font-bold hover:underline"
                 >
                   Propune un Proiect &rarr;
                 </button>
@@ -653,265 +776,292 @@ const ViewDashboard = ({ members, currentUserObj, isAdmin, onNavigateToSection, 
           </Card>
         )}
 
-        {/* Widget 2: Next Event Countdown & RSVP (Tilted visually for organic asymmetric look) */}
-        <Card className="md:col-span-5 lg:col-span-4 h-full flex flex-col justify-between font-['Manrope']">
+        {/* Right Column: Next Meeting Countdown & RSVP */}
+        <Card className="md:col-span-5 lg:col-span-4 flex flex-col justify-between">
           <div>
-            <div className="flex justify-between items-center mb-6">
-              <h3 className="font-anthropicSerif font-semibold text-lg flex items-center gap-2 text-slate-800"><Clock size={18} className="text-indigo-600" /> Următoarea Întâlnire</h3>
-              <span className="text-[10px] uppercase font-bold bg-[#0F172A]/10 text-[#0F172A] px-2.5 py-1 rounded-lg border border-[#0F172A]/5">Rsvp</span>
+            <div className="flex justify-between items-center pb-3 border-b border-slate-100 dark:border-slate-800 mb-4">
+              <h3 className="font-anthropicSerif font-bold text-lg sm:text-xl flex items-center gap-2 text-slate-900 dark:text-slate-100">
+                <Clock size={20} className="text-slate-700 dark:text-slate-300" />
+                Următoarea Întâlnire
+              </h3>
+              <span className="text-xs font-title uppercase font-bold px-2.5 py-1 rounded-[2px] bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+                Agenda
+              </span>
             </div>
 
             {nextEvent ? (
-               <div className="space-y-4">
-                 <div className="flex items-center gap-4">
-                   <div className="text-center bg-indigo-50 p-3 rounded-2xl border border-indigo-100/50 min-w-[70px]">
-                     <div className="text-3xl font-black leading-none text-indigo-700">{countdownDays}</div>
-                     <div className="text-[9px] font-bold uppercase opacity-60 mt-1 text-indigo-500">Zile</div>
-                   </div>
-                   <div>
-                     <h4 className="font-anthropicSerif font-semibold text-base truncate max-w-[170px] text-brand-accent" title={nextEvent.title}>{nextEvent.title}</h4>
-                     <p className="text-xs opacity-60 mt-1 flex items-center gap-1"><MapPin size={12} /> {nextEvent.location || 'Fără locație'}</p>
-                     <p className="text-xs opacity-60 mt-0.5">{new Date(nextEvent.date).toLocaleDateString('ro-RO', { weekday: 'short', day: 'numeric', month: 'short' })} la {nextEvent.time}</p>
-                   </div>
-                 </div>
+              <div className="space-y-4">
+                <div className="flex items-center gap-3.5">
+                  <div className="text-center bg-slate-100 dark:bg-slate-800 p-3 rounded-[2px] border border-slate-200 dark:border-slate-700 min-w-[70px] shrink-0">
+                    <div className="text-2xl sm:text-3xl font-bold font-data text-slate-900 dark:text-slate-100 leading-none">
+                      {countdownDays}
+                    </div>
+                    <div className="text-xs font-title font-bold uppercase text-slate-500 dark:text-slate-400 mt-1">
+                      Zile
+                    </div>
+                  </div>
+                  <div className="min-w-0">
+                    <h4 className="font-anthropicSerif font-bold text-sm sm:text-base text-slate-900 dark:text-slate-100 truncate" title={nextEvent.title}>
+                      {nextEvent.title}
+                    </h4>
+                    <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5 flex items-center gap-1">
+                      <MapPin size={13} /> {nextEvent.location || 'Sediu Interact'}
+                    </p>
+                    <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-data mt-0.5">
+                      {new Date(nextEvent.date).toLocaleDateString('ro-RO', { weekday: 'short', day: 'numeric', month: 'short' })} la {nextEvent.time}
+                    </p>
+                  </div>
+                </div>
 
-                 {nextEvent.type === 'project' ? (
-                   <div className="pt-4 border-t border-brand-muted/5 space-y-2">
-                     <div className="text-xs font-bold opacity-50 uppercase tracking-wider mb-1">Comitete de Lucru</div>
-                     {enrolledCommittees.length > 0 ? (
-                       <div className="p-3 bg-emerald-50 border border-emerald-100 rounded-xl text-emerald-800 text-xs font-semibold">
-                         Ești înscris în comitetul: <strong className="font-extrabold">{enrolledCommittees.join(', ')}</strong>
-                       </div>
-                     ) : (
-                       <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl text-brand-accent/60 text-xs font-semibold">
-                         Nu ești înscris în niciun comitet de lucru pentru acest proiect.
-                       </div>
-                     )}
-                   </div>
-                 ) : currentUserObj?.role === 'admin' ? (
-                    <div className="pt-4 border-t border-brand-muted/5">
-                      <div className="p-3 bg-amber-50 border border-amber-200/80 rounded-xl text-amber-900 text-xs font-semibold flex items-center justify-between">
-                        <span>Membru Board (Exonerat de RSVP)</span>
-                        <span className="text-[10px] font-bold bg-amber-200/60 text-amber-900 px-2 py-0.5 rounded-md uppercase">ADMIN</span>
-                      </div>
+                {nextEvent.type === 'project' ? (
+                  <div className="pt-3 border-t border-slate-100 dark:border-slate-800 space-y-2">
+                    <div className="text-xs font-title font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                      Comitet de Lucru
                     </div>
-                  ) : (
-                    <div className="pt-4 border-t border-brand-muted/5 space-y-2">
-                      <div className="text-xs font-bold opacity-50 uppercase tracking-wider mb-2">Te înscrii la activitate?</div>
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => handleRSVP('confirmed')}
-                          className={`flex-1 py-2.5 text-xs font-bold rounded-full transition-all border ${
-                            userRsvpStatus === 'confirmed'
-                              ? 'bg-emerald-500 border-emerald-500 text-white shadow-md shadow-emerald-500/10'
-                              : 'bg-white border-brand-muted/10 text-emerald-600 hover:bg-emerald-50'
-                          }`}
-                        >
-                          Particip
-                        </button>
-                        <button
-                          onClick={() => onRedirectToExcuse(nextEvent.id)}
-                          className={`flex-1 py-2.5 text-xs font-bold rounded-full transition-all border ${
-                            userRsvpStatus === 'declined'
-                              ? 'bg-rose-500 border-rose-500 text-white shadow-md shadow-rose-500/10'
-                              : 'bg-white border-brand-muted/10 text-rose-600 hover:bg-rose-50'
-                          }`}
-                        >
-                          Absentez
-                        </button>
+                    {enrolledCommittees.length > 0 ? (
+                      <div className="p-3 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/60 rounded-[2px] text-emerald-800 dark:text-emerald-300 text-xs sm:text-sm font-medium">
+                        Ești înscris în: <strong className="font-bold">{enrolledCommittees.join(', ')}</strong>
                       </div>
+                    ) : (
+                      <div className="p-3 bg-slate-50 dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800 rounded-[2px] text-slate-500 dark:text-slate-400 text-xs sm:text-sm">
+                        Neînscris în comitete pentru această acțiune.
+                      </div>
+                    )}
+                  </div>
+                ) : currentUserObj?.role === 'admin' ? (
+                  <div className="pt-3 border-t border-slate-100 dark:border-slate-800">
+                    <div className="p-3 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-[2px] text-slate-700 dark:text-slate-300 text-xs sm:text-sm font-medium flex items-center justify-between">
+                      <span>Membru Consiliu Director</span>
+                      <span className="text-xs font-title font-bold uppercase px-2 py-0.5 rounded-[2px] bg-slate-200 dark:bg-slate-700">BOARD</span>
                     </div>
-                  )}
-               </div>
+                  </div>
+                ) : (
+                  <div className="pt-3 border-t border-slate-100 dark:border-slate-800 space-y-2">
+                    <div className="text-xs font-title font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                      Confirmare Prezență (RSVP)
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => handleRSVP('confirmed')}
+                        className={`flex-1 py-2.5 text-xs sm:text-sm font-title font-bold uppercase tracking-wider rounded-[2px] transition-colors border ${
+                          userRsvpStatus === 'confirmed'
+                            ? 'bg-emerald-700 border-emerald-700 text-white'
+                            : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/20'
+                        }`}
+                      >
+                        Particip
+                      </button>
+                      <button
+                        onClick={() => onRedirectToExcuse(nextEvent.id)}
+                        className={`flex-1 py-2.5 text-xs sm:text-sm font-title font-bold uppercase tracking-wider rounded-[2px] transition-colors border ${
+                          userRsvpStatus === 'declined'
+                            ? 'bg-rose-700 border-rose-700 text-white'
+                            : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-rose-700 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/20'
+                        }`}
+                      >
+                        Învoire
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
             ) : (
-              <div className="py-8 text-center text-xs opacity-50 italic">Nu sunt întâlniri planificate în viitor.</div>
+              <div className="py-8 text-center text-xs sm:text-sm text-slate-400 dark:text-slate-500 italic">
+                Nu sunt întâlniri programate în agendă.
+              </div>
             )}
           </div>
         </Card>
 
-        {/* Widget 3: Circular compliance or personal ledger (Asymmetric col layout) */}
+        {/* Financial Governance Card */}
         {isAdmin ? (
-          <Card className="md:col-span-5 lg:col-span-5 h-full flex flex-col justify-between font-['Manrope']">
+          <Card className="md:col-span-5 lg:col-span-5 flex flex-col justify-between">
             <div>
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="font-anthropicSerif font-semibold text-lg flex items-center gap-2 text-slate-800"><CreditCard size={18} className="text-emerald-500" /> Monitorizare Cotizații</h3>
-                <span className="text-[10px] uppercase font-bold bg-white/40 px-2.5 py-1 rounded-lg border border-brand-muted/5">Financiar</span>
+              <div className="flex justify-between items-center pb-3 border-b border-slate-100 dark:border-slate-800 mb-4">
+                <h3 className="font-anthropicSerif font-bold text-lg sm:text-xl flex items-center gap-2 text-slate-900 dark:text-slate-100">
+                  <CreditCard size={20} className="text-emerald-700 dark:text-emerald-400" />
+                  Monitorizare Cotizații Club
+                </h3>
+                <span className="text-xs font-title uppercase font-bold px-2.5 py-1 rounded-[2px] bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+                  Trezorerie
+                </span>
               </div>
 
-              <div className="space-y-4">
-                <div className="flex items-center gap-4">
-                  <div className="relative w-16 h-16 rounded-full border-[6px] border-emerald-500/20 flex items-center justify-center shrink-0">
-                    <div className="absolute inset-0 rounded-full border-[6px] border-emerald-500" style={{ clipPath: `polygon(50% 50%, -50% -50%, ${complianceRate >= 50 ? '150%' : '50%'} -50%, ${complianceRate >= 50 ? '150%' : '50%'} 150%, 50% 150%)` }}></div>
-                    <span className="text-xs font-black font-['Manrope']">{complianceRate}%</span>
-                  </div>
+              <div className="space-y-3.5">
+                <div className="flex items-center justify-between p-3.5 bg-slate-50 dark:bg-slate-900/40 rounded-[2px] border border-slate-200 dark:border-slate-800">
                   <div>
-                    <h4 className="font-bold text-sm text-brand-accent">Rată Conformitate</h4>
-                    <p className="text-xs opacity-60 leading-tight mt-1">Sume achitate de membri raportat la obligația totală de cotizare.</p>
+                    <div className="text-xs font-title uppercase font-bold text-slate-500 dark:text-slate-400">
+                      Rată Conformitate
+                    </div>
+                    <div className="text-2xl sm:text-3xl lg:text-4xl font-bold font-data text-slate-900 dark:text-slate-100">
+                      {complianceRate}%
+                    </div>
+                  </div>
+                  <div className="text-right text-xs sm:text-sm font-data">
+                    <div className="text-emerald-700 dark:text-emerald-400 font-bold">{totalCollected} Lei încasat</div>
+                    <div className="text-rose-700 dark:text-rose-400 font-bold">{totalGlobalDebt} Lei restant</div>
                   </div>
                 </div>
-
-                <div className="pt-2 border-t border-brand-muted/5 space-y-1 text-xs">
-                  <div className="flex justify-between">
-                    <span className="opacity-60">Total Încasări:</span>
-                    <span className="font-bold text-emerald-600">{totalCollected} Lei</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="opacity-60">Datorii Restante:</span>
-                    <span className="font-bold text-rose-600">{totalGlobalDebt} Lei</span>
-                  </div>
-                </div>
+                <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 leading-relaxed font-anthropic">
+                  Calculat automat raportat la obligația de 15 Lei/lună pentru toți membrii activi.
+                </p>
               </div>
             </div>
+            <button
+              onClick={() => onNavigateToSection('istoric')}
+              className="w-full mt-4 py-2.5 btn-civic-secondary text-xs sm:text-sm font-title uppercase tracking-wider"
+            >
+              Deschide Registrul Trezoreriei &rarr;
+            </button>
           </Card>
         ) : (
-          <Card className="md:col-span-5 lg:col-span-5 h-full flex flex-col justify-between font-['Manrope']">
+          <Card className="md:col-span-5 lg:col-span-5 flex flex-col justify-between">
             <div>
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="font-anthropicSerif font-semibold text-lg flex items-center gap-2 text-slate-800"><CreditCard size={18} className="text-emerald-500" /> Situație Financiara Personala</h3>
-                <span className="text-[10px] uppercase font-bold bg-white px-2.5 py-1 rounded-lg border border-emerald-500/10">Ledger</span>
+              <div className="flex justify-between items-center pb-3 border-b border-slate-100 dark:border-slate-800 mb-4">
+                <h3 className="font-anthropicSerif font-bold text-lg sm:text-xl flex items-center gap-2 text-slate-900 dark:text-slate-100">
+                  <CreditCard size={20} className="text-emerald-700 dark:text-emerald-400" />
+                  Situație Financiară Personală
+                </h3>
+                <span className="text-xs font-title uppercase font-bold px-2.5 py-1 rounded-[2px] bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+                  Cotizație
+                </span>
               </div>
-              <div className="space-y-4">
-                <div className="p-4 rounded-2xl bg-white border border-emerald-500/10">
-                  <span className="text-[10px] font-bold uppercase tracking-wider opacity-50 block">Total Cotizație Plătită de tine:</span>
-                  <span className="text-2xl font-black text-emerald-600 block mt-1">{currentUserObj?.totalPaid || 0} Lei</span>
+
+              <div className="space-y-3">
+                <div className="p-3.5 bg-slate-50 dark:bg-slate-900/40 rounded-[2px] border border-slate-200 dark:border-slate-800">
+                  <span className="text-xs font-title font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 block">
+                    Total Cotizație Achitată:
+                  </span>
+                  <span className="text-2xl sm:text-3xl font-bold text-emerald-700 dark:text-emerald-400 font-data block mt-1">
+                    {currentUserObj?.totalPaid || 0} Lei
+                  </span>
                 </div>
-                <div className="text-xs space-y-1 font-['Manrope'] opacity-80 pl-1">
-                  <p>• Valoarea cotizației este <strong>15 Lei/lună</strong>.</p>
-                  <p>• Datoriile se calculează dinamic de la data aderării.</p>
+                <div className="text-xs sm:text-sm space-y-1 text-slate-500 dark:text-slate-400 font-anthropic">
+                  <p>• Cotizația regulamentară este de <strong>15 Lei/lună</strong>.</p>
+                  <p>• Datoriile se calculează de la data aderării în club.</p>
                 </div>
               </div>
             </div>
-            <button 
+            <button
               onClick={() => onNavigateToSection('profil')}
-              className="w-full mt-4 py-2 btn-stitch-secondary text-xs font-bold"
+              className="w-full mt-4 py-2.5 btn-civic-secondary text-xs sm:text-sm font-title uppercase tracking-wider"
             >
-              Vezi Fișa de Plată Completă
+              Vezi Fișa de Plată &rarr;
             </button>
           </Card>
         )}
 
-        {/* Widget 4: Member proposes a project, admin reviews what came in */}
-        {isAdmin ? (
-          <Card className="md:col-span-7 lg:col-span-7 h-full flex flex-col justify-between font-['Manrope']">
-            <div className="space-y-4">
-              <div className="flex justify-between items-center">
-                <h3 className="font-anthropicSerif font-semibold text-lg flex items-center gap-2 text-slate-800"><FileText size={18} className="text-brand-primary" /> Propuneri de Proiecte</h3>
-                <span className="text-[10px] uppercase font-bold text-slate-400">Analiză</span>
-              </div>
-              <p className="text-xs text-slate-500 leading-relaxed">
-                Membrii pot trimite propuneri de proiecte anonim sau semnate. Analizează-le și acordă puncte bonus
-                celor semnate care merită implementate.
-              </p>
-              <button
-                type="button"
-                onClick={() => onNavigateToSection('proiecte')}
-                className="w-full py-2.5 btn-stitch-primary text-xs uppercase tracking-wider flex items-center justify-center gap-2"
-              >
-                Vezi Propunerile
-                <FileText size={12} />
-              </button>
+        {/* Project Proposals Action Card */}
+        <Card className="md:col-span-7 lg:col-span-7 flex flex-col justify-between">
+          <div className="space-y-3">
+            <div className="flex justify-between items-center pb-3 border-b border-slate-100 dark:border-slate-800">
+              <h3 className="font-anthropicSerif font-bold text-lg sm:text-xl flex items-center gap-2 text-slate-900 dark:text-slate-100">
+                <FileText size={20} className="text-blue-600 dark:text-blue-400" />
+                {isAdmin ? 'Propuneri de Proiecte Comunitare' : 'Ai o Inițiativă pentru Comunitate?'}
+              </h3>
+              <span className="text-xs font-title uppercase font-bold px-2.5 py-1 rounded-[2px] bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+                {isAdmin ? 'Evaluare' : 'Inițiative'}
+              </span>
             </div>
-          </Card>
-        ) : (
-          <Card className="md:col-span-7 lg:col-span-7 h-full flex flex-col justify-between font-['Manrope']">
-            <div className="space-y-4">
-              <div className="flex justify-between items-center">
-                <h3 className="font-anthropicSerif font-semibold text-lg flex items-center gap-2 text-slate-800"><Lightbulb size={18} className="text-brand-primary" /> Ai o Idee de Proiect?</h3>
-                <span className="text-[10px] uppercase font-bold text-slate-400">Propuneri</span>
-              </div>
-              <p className="text-xs text-slate-500 leading-relaxed">
-                Trimite propunerea ta completă (titlu, descriere, buget) în secțiunea Proiecte — anonim sau cu numele tău.
-                Propunerile semnate pot primi <strong>puncte bonus</strong>.
-              </p>
-              <button
-                type="button"
-                onClick={() => onNavigateToSection('proiecte')}
-                className="w-full py-2.5 btn-stitch-primary text-xs uppercase tracking-wider flex items-center justify-center gap-2"
-              >
-                Propune un Proiect
-                <Send size={12} />
-              </button>
-            </div>
-          </Card>
-        )}
+            <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed font-anthropic">
+              {isAdmin
+                ? 'Membrii pot trimite fișe de proiect complete. Evaluează propunerile și alocă puncte bonus celor aprobate pentru implementare.'
+                : 'Trimite fișa de proiect (titlu, obiective, estimare buget) direct în registrul de proiecte. Inițiativele aprobate primesc punctaj bonus.'}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => onNavigateToSection('proiecte')}
+            className="w-full mt-4 py-3 btn-civic-primary text-xs sm:text-sm font-title uppercase tracking-wider flex items-center justify-center gap-2"
+          >
+            {isAdmin ? 'Deschide Registrul de Propuneri' : 'Trimite o Propunere Nouă'}
+            <Send size={15} />
+          </button>
+        </Card>
 
-        {/* Widget 5: Club-wide contribution total — admin-only monitoring metric, not a member's personal concern */}
-        {isAdmin && (
-          <Card className="md:col-span-12 lg:col-span-6 h-full flex flex-col font-['Manrope']">
-            <div className="relative z-10 flex flex-col justify-between h-full space-y-6">
-              <div className="flex justify-between items-center">
-                <h3 className="font-anthropicSerif font-semibold text-lg flex items-center gap-2 text-slate-800"><Trophy size={18} className="text-amber-500 animate-bounce" /> Obiectiv Comun Club</h3>
-                <span className="text-[10px] font-bold uppercase tracking-wider bg-slate-100 text-slate-500 px-2.5 py-1 rounded-lg border border-brand-muted/5">Activitate Totală</span>
+        {/* Club Activity Metric (Admin) or Volunteer Leaders (Member) */}
+        {isAdmin ? (
+          <Card className="md:col-span-12 lg:col-span-6 flex flex-col justify-between">
+            <div>
+              <div className="flex justify-between items-center pb-3 border-b border-slate-100 dark:border-slate-800 mb-4">
+                <h3 className="font-anthropicSerif font-bold text-lg sm:text-xl flex items-center gap-2 text-slate-900 dark:text-slate-100">
+                  <Trophy size={20} className="text-amber-600" />
+                  Obiectiv Anual Voluntariat
+                </h3>
+                <span className="text-xs font-title uppercase font-bold px-2.5 py-1 rounded-[2px] bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+                  Club Aggregate
+                </span>
               </div>
 
               <div className="space-y-4">
                 <div>
-                  <div className="flex justify-between text-xs font-bold mb-1.5 font-['Manrope'] text-slate-700">
-                    <span>Țintă ore activitate: {targetMonthlyHours}h</span>
-                    <span className="text-emerald-600">{totalCombinedHours}h realizate ({targetPercentage}%)</span>
+                  <div className="flex justify-between text-xs sm:text-sm font-semibold mb-1.5 font-anthropic text-slate-700 dark:text-slate-300">
+                    <span>Țintă lunară: {targetMonthlyHours}h</span>
+                    <span className="text-emerald-700 dark:text-emerald-400 font-data font-bold">{totalCombinedHours}h realizate ({targetPercentage}%)</span>
                   </div>
-                  <div className="w-full h-3.5 bg-slate-100 rounded-full overflow-hidden border border-brand-muted/10 shadow-inner">
-                    <div className="h-full bg-gradient-to-r from-amber-500 to-emerald-500 rounded-full transition-all duration-1000" style={{ width: `${targetPercentage}%` }}></div>
+                  <div className="w-full h-2.5 bg-slate-100 dark:bg-slate-800 rounded-[2px] overflow-hidden border border-slate-200 dark:border-slate-700">
+                    <div className="h-full bg-slate-900 dark:bg-slate-100 rounded-[2px] transition-all duration-500" style={{ width: `${targetPercentage}%` }}></div>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4 text-center">
-                  <div className="p-4 bg-slate-50 border border-slate-100 rounded-2xl">
-                    <div className="text-2xl font-black text-slate-800 dark:text-white font-['Manrope']">{totalCombinedHours}</div>
-                    <div className="text-[9px] font-bold uppercase opacity-85 mt-1 text-slate-500">Ore totale club</div>
+                <div className="grid grid-cols-2 gap-3 text-center">
+                  <div className="p-3.5 bg-slate-50 dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800 rounded-[2px]">
+                    <div className="text-2xl sm:text-3xl font-bold font-data text-slate-900 dark:text-slate-100">{totalCombinedHours}</div>
+                    <div className="text-xs font-title font-bold uppercase text-slate-500 dark:text-slate-400 mt-1">Ore totale club</div>
                   </div>
-                  <div className="p-4 bg-slate-50 border border-slate-100 rounded-2xl">
-                    <div className="text-2xl font-black text-slate-800 dark:text-white font-['Manrope']">{totalCombinedProjects}</div>
-                    <div className="text-[9px] font-bold uppercase opacity-85 mt-1 text-slate-500">Acțiuni comunitare</div>
+                  <div className="p-3.5 bg-slate-50 dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800 rounded-[2px]">
+                    <div className="text-2xl sm:text-3xl font-bold font-data text-slate-900 dark:text-slate-100">{totalCombinedProjects}</div>
+                    <div className="text-xs font-title font-bold uppercase text-slate-500 dark:text-slate-400 mt-1">Acțiuni comunitare</div>
                   </div>
                 </div>
               </div>
             </div>
           </Card>
-        )}
+        ) : null}
 
-        {/* Widget 6: Volunteers Leaderboard snapshot — full width for members since "Obiectiv Comun Club" is admin-only */}
-        <Card className={`md:col-span-12 ${isAdmin ? 'lg:col-span-6' : 'lg:col-span-12'} h-full flex flex-col justify-between font-['Manrope']`}>
+        {/* Leaders Snapshot */}
+        <Card className={`md:col-span-12 ${isAdmin ? 'lg:col-span-6' : 'lg:col-span-12'} flex flex-col justify-between`}>
           <div>
-            <div className="flex justify-between items-center mb-6">
-              <h3 className="font-anthropicSerif font-semibold text-lg flex items-center gap-2 text-slate-800"><Star size={18} className="text-brand-primary" /> Lideri de Activitate</h3>
-              <button 
-                onClick={() => onNavigateToSection('clasament')} 
-                className="text-xs font-bold text-brand-primary hover:underline"
+            <div className="flex justify-between items-center pb-3 border-b border-slate-100 dark:border-slate-800 mb-4">
+              <h3 className="font-anthropicSerif font-bold text-lg sm:text-xl flex items-center gap-2 text-slate-900 dark:text-slate-100">
+                <Star size={20} className="text-amber-600" />
+                Lideri de Activitate
+              </h3>
+              <button
+                onClick={() => onNavigateToSection('clasament')}
+                className="text-xs sm:text-sm font-title font-bold text-blue-600 dark:text-blue-400 hover:underline"
               >
-                Detalii
+                Clasament Complet &rarr;
               </button>
             </div>
 
-            <div className="space-y-3">
+            <div className="space-y-2.5">
               {topVolunteers.map((m, index) => (
-                <div 
-                  key={m.id} 
-                  className={`p-3 rounded-2xl border border-brand-muted/5 flex items-center gap-3 transition-all hover:bg-brand-accent/5 ${
-                    index === 0 ? 'bg-amber-500/5 border-amber-500/10' : ''
-                  }`}
+                <div
+                  key={m.id}
+                  className="p-3 rounded-[2px] border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/30 flex items-center gap-3.5 hover:border-slate-300 dark:hover:border-slate-700 transition-colors"
                 >
-                  <div className={`w-6 h-6 rounded-full flex items-center justify-center font-bold text-xs ${
-                    index === 0 ? 'bg-amber-500 text-white' : 'bg-brand-accent/5 text-brand-accent/60'
+                  <div className={`w-6 h-6 rounded-[1px] flex items-center justify-center font-bold text-xs sm:text-sm font-data ${
+                    index === 0 ? 'bg-amber-500 text-slate-950 font-black' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300'
                   }`}>
                     {index + 1}
                   </div>
-                  
-                  <img 
-                    src={m.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(m.name)}`} 
-                    alt={m.name} 
-                    className="w-8 h-8 rounded-xl object-cover border border-brand-muted/5 shadow-sm"
+
+                  <img
+                    src={m.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(m.name)}`}
+                    alt={m.name}
+                    className="w-8 h-8 rounded-[2px] object-cover border border-slate-200 dark:border-slate-700"
                   />
-                  
+
                   <div className="flex-1 min-w-0">
-                    <div className="font-bold text-xs truncate flex items-center gap-1.5">
+                    <div className="font-bold text-xs sm:text-sm text-slate-900 dark:text-slate-100 truncate font-anthropic">
                       {m.name}
                     </div>
-                    <div className="text-[10px] opacity-50 font-['Manrope'] truncate">{m.role || 'Voluntar'}</div>
+                    <div className="text-xs text-slate-500 dark:text-slate-400 font-anthropic truncate">{m.role || 'Voluntar'}</div>
                   </div>
 
                   <div className="text-right shrink-0">
-                    <span className="font-bold text-xs text-brand-accent font-['Manrope']">{m.stats?.hours || 0}h</span>
+                    <span className="font-bold text-xs sm:text-sm font-data text-slate-900 dark:text-slate-100">{m.stats?.hours || 0}h</span>
                   </div>
                 </div>
               ))}
@@ -919,56 +1069,59 @@ const ViewDashboard = ({ members, currentUserObj, isAdmin, onNavigateToSection, 
           </div>
         </Card>
 
-        {/* Widget 7: Member-exclusive Qualification status or Admin insights (occupies col-span-2) */}
-        {!isAdmin ? (
-          <Card className="md:col-span-12 lg:col-span-12 flex flex-col justify-between font-['Manrope'] relative overflow-hidden">
+        {/* Member-exclusive Qualification status & Attendance Rate Card */}
+        {!isAdmin && (
+          <Card className="md:col-span-12 flex flex-col justify-between">
             <div>
-              <div className="flex justify-between items-center mb-5">
-                <h3 className="font-anthropicSerif font-semibold text-lg flex items-center gap-2 text-slate-800"><CheckCircle size={18} className="text-emerald-500" /> Analiza Performanței Tale</h3>
-                <span className="text-[9px] font-bold uppercase tracking-wider bg-emerald-50 text-emerald-700 px-3 py-1 rounded-full border border-emerald-200">Indicator Status</span>
+              <div className="flex justify-between items-center pb-3 border-b border-slate-100 dark:border-slate-800 mb-4">
+                <h3 className="font-anthropicSerif font-bold text-lg sm:text-xl flex items-center gap-2 text-slate-900 dark:text-slate-100">
+                  <CheckCircle size={20} className="text-emerald-700 dark:text-emerald-400" />
+                  Calificativ & Disciplină Prezență
+                </h3>
+                <span className="text-xs font-title uppercase font-bold px-2.5 py-1 rounded-[2px] bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+                  Status Activitate
+                </span>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="p-4 bg-white rounded-2xl border border-brand-muted/5">
-                  <span className="text-[10px] font-bold uppercase tracking-wider opacity-50 block">Rata de prezență curentă:</span>
-                  <div className="flex items-baseline gap-2 mt-1">
-                    <span className="text-3xl font-black text-brand-accent font-['Manrope']">{personalQualObj.rate}</span>
-                    <span className="text-xs opacity-60">la activități</span>
+                <div className="p-4 bg-slate-50 dark:bg-slate-900/40 rounded-[2px] border border-slate-200 dark:border-slate-800">
+                  <span className="text-xs font-title uppercase font-bold text-slate-500 dark:text-slate-400 block">
+                    Rată de Prezență:
+                  </span>
+                  <div className="flex items-baseline gap-2 mt-1.5">
+                    <span className="text-2xl sm:text-3xl font-bold font-data text-slate-900 dark:text-slate-100">
+                      {personalQualObj.rate}
+                    </span>
+                    <span className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">la acțiuni obligatorii</span>
                   </div>
-                  <div className="w-full h-1.5 bg-brand-accent/5 rounded-full overflow-hidden mt-3">
-                    <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${personalQualObj.percentage}%` }} />
+                  <div className="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-[1px] overflow-hidden mt-3">
+                    <div className="h-full bg-emerald-600 rounded-[1px]" style={{ width: `${personalQualObj.percentage}%` }} />
                   </div>
                 </div>
 
-                <div className="p-4 bg-white rounded-2xl border border-brand-muted/5">
-                  <span className="text-[10px] font-bold uppercase tracking-wider opacity-50 block">Calificativul tău Camena:</span>
-                  <div className="mt-1 flex items-center gap-2">
-                    <span className="text-2xl font-black text-brand-accent">{personalQualObj.qualification}</span>
+                <div className="p-4 bg-slate-50 dark:bg-slate-900/40 rounded-[2px] border border-slate-200 dark:border-slate-800">
+                  <span className="text-xs font-title uppercase font-bold text-slate-500 dark:text-slate-400 block">
+                    Calificativ Oficial Camena:
+                  </span>
+                  <div className="mt-1.5 flex items-center gap-2">
+                    <span className="text-2xl sm:text-3xl font-bold font-data text-slate-900 dark:text-slate-100">
+                      {personalQualObj.qualification}
+                    </span>
                   </div>
-                  <p className="text-[10px] opacity-60 leading-tight mt-3">Calculat automat în raport cu rata de prezență și calitatea de voluntar activ.</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-2 font-anthropic">
+                    Calculat conform prezențelor și învoirilor înregistrate.
+                  </p>
                 </div>
               </div>
             </div>
-            <div className="text-[11px] opacity-55 font-medium font-['Manrope'] mt-4 border-t border-brand-muted/5 pt-3">
-              Pentru a-ți menține calificativul <strong>Foarte Bine</strong> sau <strong>Excelent</strong>, participă activ la întâlniri și asigură-te că transmiți cereri de învoire justificate în cazul absențelor programate.
+            <div className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+              <span>Pentru a-ți menține calificativul, transmite cereri de învoire din timp.</span>
+              <button
+                onClick={() => onNavigateToSection('prezenta')}
+                className="text-blue-600 dark:text-blue-400 font-title font-bold hover:underline"
+              >
+                Cereri Învoire &rarr;
+              </button>
             </div>
-          </Card>
-        ) : (
-          <Card className="md:col-span-12 lg:col-span-12 flex flex-col justify-between font-['Manrope'] relative overflow-hidden">
-            <div>
-              <div className="flex justify-between items-center mb-5">
-                <h3 className="font-anthropicSerif font-semibold text-lg flex items-center gap-2 text-slate-800"><Users size={18} className="text-brand-primary" /> Monitorizare Prezență Club</h3>
-                <span className="text-[9px] font-bold uppercase tracking-wider bg-sky-50 text-sky-700 px-3 py-1 rounded-full border border-sky-200">Panel Supervizor</span>
-              </div>
-              <p className="text-sm opacity-80 leading-relaxed font-['Manrope']">
-                Conform regulamentului, membrii activi cu un calificativ de prezență sub <strong>Bine</strong> primesc notificări automate în fisa de plată și pe e-mail. Ca administrator, poți superviza prezențele din tab-ul dedicat și poți aproba sau respinge cererile de învoire.
-              </p>
-            </div>
-            <button 
-              onClick={() => onNavigateToSection('prezenta')}
-              className="w-full mt-4 py-2.5 btn-stitch-primary text-xs font-bold"
-            >
-              Gestionează Prezențe & Cereri de Învoire
-            </button>
           </Card>
         )}
       </div>
@@ -1064,17 +1217,17 @@ const ViewPayments = ({ members, onUpdateMember, isAdmin }: { members: any[], on
 
   return (
     <>
-      <Card className="!p-8 rounded-[0px_3rem_3rem_3rem] border border-slate-200 bg-white shadow-xl font-anthropic">
+      <Card className="!p-6 md:!p-8 rounded-[2px] border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#161B22] shadow-xs font-anthropic">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
-          <h2 className="text-2xl md:text-3xl font-anthropicSerif font-semibold text-slate-800">Istoric General Încasări</h2>
+          <h2 className="text-2xl md:text-3xl font-anthropicSerif font-bold text-slate-900 dark:text-slate-100">Istoric General Încasări</h2>
           <div className="relative group w-full md:w-80">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-brand-accent/40 group-focus-within:text-brand-primary transition-colors" size={18} />
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-600 transition-colors" size={18} />
             <input 
               type="text" 
               placeholder="Caută după membru..." 
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
-              className="w-full pl-11 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-base focus:outline-none focus:border-brand-primary/40 focus:ring-2 focus:ring-brand-primary/15 focus:bg-white transition-all font-['Manrope']"
+              className="w-full pl-11 pr-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-[2px] text-xs sm:text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:border-blue-600 transition-all font-anthropic font-semibold"
             />
           </div>
         </div>
@@ -1083,19 +1236,19 @@ const ViewPayments = ({ members, onUpdateMember, isAdmin }: { members: any[], on
           <Table className="min-w-[840px]">
             <TableHeader>
               <TableRow>
-                <TableHead className="text-sm md:text-base py-4 px-4 font-bold">Membru</TableHead>
-                <TableHead className="text-sm md:text-base py-4 px-4 font-bold">Suma</TableHead>
-                <TableHead className="text-sm md:text-base py-4 px-4 font-bold">Lună Acoperită</TableHead>
-                <TableHead className="text-sm md:text-base py-4 px-4 font-bold">Data/Ora</TableHead>
-                <TableHead className="text-center text-sm md:text-base py-4 px-4 font-bold">Semn. Membru</TableHead>
-                <TableHead className="text-center text-sm md:text-base py-4 px-4 font-bold">Semn. Trezorier</TableHead>
-                <TableHead className="text-right text-sm md:text-base py-4 px-4 font-bold">Acțiuni</TableHead>
+                <TableHead className="text-xs sm:text-sm py-3.5 px-4 font-bold font-title uppercase tracking-wider">Membru</TableHead>
+                <TableHead className="text-xs sm:text-sm py-3.5 px-4 font-bold font-title uppercase tracking-wider">Suma</TableHead>
+                <TableHead className="text-xs sm:text-sm py-3.5 px-4 font-bold font-title uppercase tracking-wider">Lună Acoperită</TableHead>
+                <TableHead className="text-xs sm:text-sm py-3.5 px-4 font-bold font-title uppercase tracking-wider">Data/Ora</TableHead>
+                <TableHead className="text-center text-xs sm:text-sm py-3.5 px-4 font-bold font-title uppercase tracking-wider">Semn. Membru</TableHead>
+                <TableHead className="text-center text-xs sm:text-sm py-3.5 px-4 font-bold font-title uppercase tracking-wider">Semn. Trezorier</TableHead>
+                <TableHead className="text-right text-xs sm:text-sm py-3.5 px-4 font-bold font-title uppercase tracking-wider">Acțiuni</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center p-10 text-slate-400 font-semibold h-36 text-base">
+                  <TableCell colSpan={7} className="text-center p-10 text-slate-400 font-semibold h-36 text-sm sm:text-base font-anthropic">
                     Se încarcă istoricul...
                   </TableCell>
                 </TableRow>
@@ -1106,50 +1259,50 @@ const ViewPayments = ({ members, onUpdateMember, isAdmin }: { members: any[], on
                   
                   return (
                     <TableRow key={receipt.id} className={`group ${isCancelled ? 'opacity-50' : ''}`}>
-                      <TableCell className="font-bold py-5 px-4">
-                        <div className={isCancelled ? 'line-through text-slate-500 text-base md:text-lg' : 'text-slate-800 dark:text-white text-base md:text-lg'}>{receipt.memberName}</div>
-                        <div className="text-xs opacity-50 font-['Manrope'] mt-0.5">{receipt.id}</div>
+                      <TableCell className="font-bold py-4 px-4">
+                        <div className={isCancelled ? 'line-through text-slate-500 text-sm sm:text-base font-anthropic' : 'text-slate-900 dark:text-white text-sm sm:text-base font-anthropic font-bold'}>{receipt.memberName}</div>
+                        <div className="text-xs text-slate-400 font-data mt-0.5">{receipt.id}</div>
                       </TableCell>
-                      <TableCell className={`font-black font-['Manrope'] py-5 px-4 text-base md:text-lg ${isCancelled ? 'text-slate-500 line-through' : 'text-emerald-600 dark:text-emerald-400'}`}>
+                      <TableCell className={`font-black font-data py-4 px-4 text-sm sm:text-base ${isCancelled ? 'text-slate-500 line-through' : 'text-emerald-700 dark:text-emerald-400'}`}>
                         {receipt.amount} Lei
                       </TableCell>
-                      <TableCell className={`py-5 px-4 text-sm md:text-base ${isCancelled ? 'line-through text-slate-500' : 'text-slate-700 dark:text-slate-300'}`}>
+                      <TableCell className={`py-4 px-4 text-xs sm:text-sm font-anthropic ${isCancelled ? 'line-through text-slate-500' : 'text-slate-700 dark:text-slate-300'}`}>
                         {receipt.month || (receipt.monthsCovered && receipt.monthsCovered.join(', '))}
                       </TableCell>
-                      <TableCell className="opacity-70 text-xs md:text-sm font-['Manrope'] py-5 px-4">
+                      <TableCell className="text-slate-500 dark:text-slate-400 text-xs sm:text-sm font-data py-4 px-4">
                         {receipt.dateFormatted || new Date(receipt.date).toLocaleDateString('ro-RO', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                       </TableCell>
-                      <TableCell className="text-center py-5 px-4">
+                      <TableCell className="text-center py-4 px-4">
                         {receipt.memberSignature ? (
-                          <img src={receipt.memberSignature} alt="Semnatura Membru" className="h-10 w-22 object-contain mx-auto mix-blend-multiply dark:invert dark:mix-blend-screen" />
-                        ) : <span className="text-xs md:text-sm opacity-50 block text-center">-</span>}
+                          <img src={receipt.memberSignature} alt="Semnatura Membru" className="h-9 w-20 object-contain mx-auto mix-blend-multiply dark:invert dark:mix-blend-screen" />
+                        ) : <span className="text-xs text-slate-400 block text-center font-data">-</span>}
                       </TableCell>
-                      <TableCell className="text-center py-5 px-4">
+                      <TableCell className="text-center py-4 px-4">
                         {receipt.treasurerSignature ? (
-                          <img src={receipt.treasurerSignature} alt="Semnatura Trezorier" className="h-10 w-22 object-contain mx-auto mix-blend-multiply dark:invert dark:mix-blend-screen" />
-                        ) : <span className="text-xs md:text-sm opacity-50 block text-center">-</span>}
+                          <img src={receipt.treasurerSignature} alt="Semnatura Trezorier" className="h-9 w-20 object-contain mx-auto mix-blend-multiply dark:invert dark:mix-blend-screen" />
+                        ) : <span className="text-xs text-slate-400 block text-center font-data">-</span>}
                       </TableCell>
-                      <TableCell className="text-right py-5 px-4">
+                      <TableCell className="text-right py-4 px-4">
                         {canRevert && (
                           <button
                             onClick={() => setReceiptToRevert(receipt)}
-                            className="p-2.5 text-slate-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/30 rounded-xl transition-all"
+                            className="p-2 text-slate-400 hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950/40 rounded-[2px] transition-all cursor-pointer"
                             title="Revert Payment (Permis doar pentru ultima plată)"
                           >
-                            <RotateCcw size={18} />
+                            <RotateCcw size={17} />
                           </button>
                         )}
                         {!canRevert && isAdmin && !isCancelled && (
                           <button
                             disabled
-                            className="p-2.5 text-slate-300 dark:text-slate-700 rounded-xl cursor-not-allowed"
+                            className="p-2 text-slate-300 dark:text-slate-700 rounded-[2px] cursor-not-allowed"
                             title="Doar ultima plată a unui utilizator poate fi anulată"
                           >
-                            <RotateCcw size={18} />
+                            <RotateCcw size={17} />
                           </button>
                         )}
                         {isCancelled && (
-                           <span className="px-3.5 py-1 rounded-full bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-800 text-xs font-bold uppercase tracking-wider">Anulat</span>
+                           <span className="px-2.5 py-1 rounded-[2px] bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-400 border border-rose-200 dark:border-rose-800 text-xs font-bold uppercase tracking-wider font-title">Anulat</span>
                         )}
                       </TableCell>
                     </TableRow>
@@ -1157,7 +1310,7 @@ const ViewPayments = ({ members, onUpdateMember, isAdmin }: { members: any[], on
                 })
               ) : (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center p-10 text-slate-400 font-semibold h-36 text-base">
+                  <TableCell colSpan={7} className="text-center p-10 text-slate-400 font-semibold h-36 text-sm sm:text-base font-anthropic">
                     Nicio tranzacție înregistrată.
                   </TableCell>
                 </TableRow>
@@ -1175,36 +1328,36 @@ const ViewPayments = ({ members, onUpdateMember, isAdmin }: { members: any[], on
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="absolute inset-0 bg-brand-accent/40 backdrop-blur-sm"
+              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
               onClick={() => setReceiptToRevert(null)}
             />
             <motion.div 
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="relative w-full max-w-md bg-white rounded-[2rem] p-8 overflow-hidden shadow-2xl"
+              className="relative w-full max-w-md bg-white dark:bg-[#161B22] rounded-[2px] p-6 sm:p-8 overflow-hidden shadow-2xl border border-slate-300 dark:border-slate-700 font-anthropic"
             >
-              <div className="absolute top-0 left-0 w-full h-2 bg-red-500"></div>
+              <div className="absolute top-0 left-0 w-full h-1.5 bg-rose-600"></div>
               
-              <div className="flex items-center gap-4 text-red-600 mb-6">
-                <AlertCircle size={28} />
-                <h3 className="text-lg font-bold">Anulare Plată (Revert)</h3>
+              <div className="flex items-center gap-3 text-rose-600 mb-4">
+                <AlertCircle size={24} />
+                <h3 className="text-base sm:text-lg font-bold font-title">Anulare Plată (Revert)</h3>
               </div>
               
-              <p className="text-sm text-brand-accent/80 leading-relaxed mb-6 font-['Manrope']">
-                Ești sigur că vrei să anulezi această plată? Anularea va readăuga automat suma <span className="font-bold">{receiptToRevert.amount} Lei</span> la datoria membrului <span className="font-bold">{receiptToRevert.memberName}</span>.
+              <p className="text-xs sm:text-sm text-slate-700 dark:text-slate-300 leading-relaxed mb-6 font-anthropic">
+                Ești sigur că vrei să anulezi această plată? Anularea va readăuga automat suma <span className="font-bold font-data text-rose-600">{receiptToRevert.amount} Lei</span> la datoria membrului <span className="font-bold">{receiptToRevert.memberName}</span>.
               </p>
 
-              <div className="flex gap-4">
+              <div className="flex gap-3">
                 <button 
                   onClick={() => setReceiptToRevert(null)}
-                  className="flex-1 py-2.5 btn-stitch-secondary text-xs font-bold"
+                  className="flex-1 py-2.5 btn-civic-secondary text-xs sm:text-sm font-title uppercase tracking-wider"
                 >
                   Nu, renunță
                 </button>
                 <button 
                   onClick={handleConfirmRevert}
-                  className="flex-1 py-2.5 btn-stitch-danger text-xs font-bold"
+                  className="flex-1 py-2.5 btn-civic-danger text-xs sm:text-sm font-title uppercase tracking-wider"
                 >
                   Da, anulează plata
                 </button>
@@ -1241,7 +1394,6 @@ const ViewReports = ({ members }: ViewReportsProps) => {
       const targetMonthNorm = selectedMonth.normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase();
       const targetYearStr = selectedYear;
       
-      // Calculăm dacă există membri care nu au plătit
       let missingCount = 0;
       allCotizanti.forEach(m => {
         const memIdNorm = m.id ? String(m.id).toLowerCase() : '';
@@ -1262,7 +1414,6 @@ const ViewReports = ({ members }: ViewReportsProps) => {
         }
       });
       
-      // VALIDAREA PRE-EXPORT
       if (missingCount > 0) {
         setShowWarning(true);
         setIsExporting(false);
@@ -1272,35 +1423,38 @@ const ViewReports = ({ members }: ViewReportsProps) => {
       await proceedExport();
     } catch (err) {
       console.error(err);
+      toast.error("Eroare la verificarea plăților.");
       setIsExporting(false);
     }
   };
 
   const proceedExport = async () => {
-    setIsExporting(true);
     setShowWarning(false);
+    setIsExporting(true);
     try {
       const { generateTreasuryPDF } = await import('../../utils/pdfGenerator');
-      await generateTreasuryPDF({ 
-        month: selectedMonth, 
-        year: parseInt(selectedYear), 
-        members 
+      await generateTreasuryPDF({
+        members,
+        month: selectedMonth,
+        year: selectedYear
       });
-      toast.success('Documentul PDF a fost generat și descărcat cu succes!');
-    } catch (error) {
-      console.error(error);
-      toast.error('Eroare la generarea PDF-ului.');
+      toast.success("Raportul a fost descărcat cu succes!");
+    } catch (err) {
+      console.error("Export error:", err);
+      toast.error("Eroare la generarea raportului.");
     } finally {
       setIsExporting(false);
     }
   };
 
   return (
-    <Card>
-      <div className="flex justify-between items-start mb-6">
+    <Card className="!p-6 md:!p-8 rounded-[2px] border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#161B22] shadow-xs font-anthropic">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
         <div>
-          <h2 className="text-xl font-bold">Generare Rapoarte</h2>
-          <p className="opacity-70 mt-2 max-w-xl text-sm leading-relaxed">
+          <h2 className="text-2xl md:text-3xl font-anthropicSerif font-bold text-slate-900 dark:text-slate-100">
+            Rapoarte & Exporturi Oficiale
+          </h2>
+          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1 font-anthropic">
             Modul pentru exportarea datelor oficiale. Generează balanțe analitice, rapoarte de cheltuieli și fișe de prezență direct din sistem în format PDF.
           </p>
         </div>
@@ -1312,33 +1466,33 @@ const ViewReports = ({ members }: ViewReportsProps) => {
           <div className="fixed inset-0 z-[120] flex items-center justify-center p-4">
             <motion.div 
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              className="absolute inset-0 bg-brand-accent/60 backdrop-blur-md"
+              className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
               onClick={() => setShowWarning(false)}
             />
             
             <motion.div 
               initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="relative w-full max-w-md bg-white rounded-[2rem] shadow-[0_40px_100px_rgba(0,0,0,0.3)] p-8 z-[121] border border-brand-muted/10"
+              className="relative w-full max-w-md bg-white dark:bg-[#161B22] rounded-[2px] shadow-2xl p-6 sm:p-8 z-[121] border border-slate-300 dark:border-slate-700 font-anthropic"
             >
-              <div className="flex items-center gap-3 text-orange-600 mb-4">
-                <AlertCircle size={28} />
-                <h3 className="text-lg font-bold">Atenție Restanțieri!</h3>
+              <div className="flex items-center gap-3 text-amber-600 mb-4">
+                <AlertCircle size={24} />
+                <h3 className="text-base sm:text-lg font-bold font-title">Atenție Restanțieri</h3>
               </div>
               
-              <p className="text-sm text-brand-accent/80 leading-relaxed mb-6 font-['Manrope']">
+              <p className="text-xs sm:text-sm text-slate-700 dark:text-slate-300 leading-relaxed mb-6 font-anthropic">
                 Atenție! Nu toți membrii activi au achitat cotizația pentru luna selectată (<span className="font-bold">{selectedMonth} {selectedYear}</span>). În PDF vor apărea spații goale la semnături pentru restanțieri. Doriți să continuați generarea raportului fiscal?
               </p>
 
-              <div className="flex gap-4">
+              <div className="flex gap-3">
                 <button 
                   onClick={() => setShowWarning(false)}
-                  className="flex-1 py-2.5 btn-stitch-secondary text-xs font-bold"
+                  className="flex-1 py-2.5 btn-civic-secondary text-xs sm:text-sm font-title uppercase tracking-wider"
                 >
                   Anulează
                 </button>
                 <button 
                   onClick={proceedExport}
-                  className="flex-1 py-2.5 btn-stitch-primary text-xs font-bold"
+                  className="flex-1 py-2.5 btn-civic-primary text-xs sm:text-sm font-title uppercase tracking-wider"
                 >
                   Continuă Exportul
                 </button>
@@ -1348,28 +1502,28 @@ const ViewReports = ({ members }: ViewReportsProps) => {
         )}
       </AnimatePresence>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
         {/* Card: Balanță Analitică */}
-        <div className="p-5 border border-emerald-500/20 bg-emerald-50/10 rounded-2xl flex flex-col items-start gap-4 hover:border-emerald-500/40 transition-colors">
-          <div className="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center">
-            <CreditCard size={18} />
+        <div className="p-5 sm:p-6 border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/40 rounded-[2px] flex flex-col items-start gap-4 hover:border-slate-300 dark:hover:border-slate-700 transition-colors">
+          <div className="w-10 h-10 rounded-[2px] bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 flex items-center justify-center">
+            <CreditCard size={19} />
           </div>
           <div className="w-full">
-            <h4 className="font-bold text-base mb-1">Balanță Cotizații</h4>
-            <p className="text-sm opacity-70 mb-4">Sinteza plăților lunare și semnăturile electronice sub formă de tabel PDF.</p>
+            <h4 className="font-bold text-base sm:text-lg mb-1 font-anthropicSerif text-slate-900 dark:text-slate-100">Balanță Cotizații</h4>
+            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mb-4 font-anthropic">Sinteza plăților lunare și semnăturile electronice sub formă de tabel PDF.</p>
             
             <div className="flex gap-2 mb-4 w-full">
               <select 
                 value={selectedMonth} 
                 onChange={(e) => setSelectedMonth(e.target.value)}
-                className="flex-1 p-2.5 border border-brand-muted/10 rounded-xl text-sm font-semibold focus:outline-none focus:border-brand-primary bg-white cursor-pointer"
+                className="flex-1 p-2.5 border border-slate-200 dark:border-slate-700 rounded-[2px] text-xs sm:text-sm font-bold focus:outline-none focus:border-blue-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 cursor-pointer"
               >
                 {LUNI_DISPONIBILE.map(l => <option key={l} value={l}>{l}</option>)}
               </select>
               <select 
                 value={selectedYear} 
                 onChange={(e) => setSelectedYear(e.target.value)}
-                className="p-2.5 border border-brand-muted/10 rounded-xl text-sm font-semibold focus:outline-none focus:border-brand-primary bg-white cursor-pointer"
+                className="p-2.5 border border-slate-200 dark:border-slate-700 rounded-[2px] text-xs sm:text-sm font-bold focus:outline-none focus:border-blue-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 cursor-pointer"
               >
                 <option value="2026">2026</option>
                 <option value="2027">2027</option>
@@ -1380,20 +1534,18 @@ const ViewReports = ({ members }: ViewReportsProps) => {
           <button 
             onClick={handleExportClick}
             disabled={isExporting}
-            className={`mt-auto w-full flex justify-center items-center gap-2 py-2.5 rounded-full text-sm font-bold transition-colors btn-stitch-primary ${
-              isExporting 
-                ? 'opacity-50 cursor-wait' 
-                : ''
+            className={`mt-auto w-full py-3 btn-civic-primary text-xs sm:text-sm font-title uppercase tracking-wider flex items-center justify-center gap-2 ${
+              isExporting ? 'opacity-50 cursor-wait' : ''
             }`}
           >
             {isExporting ? (
               <>
-                <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                <div className="w-3.5 h-3.5 border-2 border-current border-t-transparent rounded-[1px] animate-spin" />
                 Se procesează datele...
               </>
             ) : (
               <>
-                <Download size={14} /> Generează PDF
+                <Download size={15} /> Generează PDF
               </>
             )}
           </button>
@@ -1404,13 +1556,13 @@ const ViewReports = ({ members }: ViewReportsProps) => {
           { title: 'Raport Prezență', desc: 'Tabel centralizator cu toate calificativele lunare. (În curând)' },
           { title: 'Fișă Activitate Proiecte', desc: 'Statusul tuturor proiectelor interne. (În curând)' }
         ].map(r => (
-          <div key={r.title} className="p-5 border border-brand-muted/10 rounded-2xl flex flex-col items-start gap-4 opacity-50 cursor-not-allowed">
-            <div className="w-10 h-10 rounded-xl bg-neutral-100 text-neutral-500 flex items-center justify-center"><FileText size={18} /></div>
+          <div key={r.title} className="p-5 sm:p-6 border border-slate-200 dark:border-slate-800 rounded-[2px] flex flex-col items-start gap-4 opacity-50 cursor-not-allowed bg-slate-50 dark:bg-slate-900/20">
+            <div className="w-10 h-10 rounded-[2px] bg-slate-100 dark:bg-slate-800 text-slate-500 flex items-center justify-center"><FileText size={19} /></div>
             <div>
-              <h4 className="font-bold text-sm mb-1">{r.title}</h4>
-              <p className="text-xs opacity-60">{r.desc}</p>
+              <h4 className="font-bold text-base mb-1 font-anthropicSerif text-slate-900 dark:text-slate-100">{r.title}</h4>
+              <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-anthropic">{r.desc}</p>
             </div>
-            <button disabled className="mt-auto flex items-center gap-2 text-xs font-semibold text-neutral-400">
+            <button disabled className="mt-auto flex items-center gap-2 text-xs sm:text-sm font-title font-bold text-slate-400">
               <Download size={14} /> Indisponibil
             </button>
           </div>
@@ -1609,14 +1761,16 @@ const ViewProfile = ({ currentUserObj, onUpdateMember, members }: ViewProfilePro
     try {
       const allowedPasswordChange = canEditMemberPassword(currentUserObj || effectiveUser, effectiveUser.role);
 
-      // Dacă s-a introdus o parolă nouă, o actualizăm prin Supabase Auth
+      // Dacă s-a introdus o parolă nouă, o actualizăm prin funcția securizată RPC
       if (allowedPasswordChange && password && password.trim().length > 0) {
-        const { error: authPassErr } = await supabase.auth.updateUser({
-          password: password.trim()
+        const { data: passRes, error: passErr } = await supabase.rpc('admin_set_member_password', {
+          p_admin_member_id: currentUserObj?.id || effectiveUser.id,
+          p_target_member_id: effectiveUser.id,
+          p_new_password: password.trim()
         });
-        if (authPassErr) {
-          console.warn("Eroare la actualizarea parolei în Auth:", authPassErr.message);
-          toast.error(`Eroare parolă: ${authPassErr.message}`);
+
+        if (passErr || (passRes && !passRes.success)) {
+          toast.error(passRes?.error || passErr?.message || "Eroare la actualizarea parolei.");
         } else {
           toast.success("Parola a fost actualizată cu succes!");
         }
@@ -1647,13 +1801,13 @@ const ViewProfile = ({ currentUserObj, onUpdateMember, members }: ViewProfilePro
         {/* Left Column: Edit Settings */}
         <div className="lg:col-span-5 space-y-6">
           <Card className="h-full">
-            <h3 className="text-lg font-bold mb-6 flex items-center gap-2 border-b border-brand-muted/5 pb-3">
-              <User size={18} className="text-brand-primary" /> Editare Profil
+            <h3 className="text-base sm:text-lg font-bold mb-6 flex items-center gap-2 border-b border-slate-100 dark:border-slate-800 pb-3 font-title text-slate-900 dark:text-slate-100">
+              <User size={20} className="text-blue-600 dark:text-blue-400" /> Editare Profil
             </h3>
             
             <div className="space-y-6">
               {/* Profile Photo Upload */}
-              <div className="flex flex-col items-center gap-4 p-5 bg-[#FAF9F5] rounded-2xl border border-brand-muted/10">
+              <div className="flex flex-col items-center gap-4 p-5 bg-slate-50 dark:bg-slate-800/60 rounded-[2px] border border-slate-200 dark:border-slate-700">
                 <div 
                   className="relative group cursor-pointer" 
                   onClick={() => document.getElementById('avatar-file-input')?.click()}
@@ -1663,18 +1817,18 @@ const ViewProfile = ({ currentUserObj, onUpdateMember, members }: ViewProfilePro
                     <img 
                       src={avatar} 
                       alt="Avatar" 
-                      className="w-24 h-24 rounded-3xl object-cover border-2 border-brand-primary/30 shadow-md transition-transform group-hover:scale-105"
+                      className="w-24 h-24 rounded-[2px] object-cover border-2 border-slate-300 dark:border-slate-600 shadow-xs transition-transform group-hover:scale-105"
                     />
                   ) : (
-                    <div className="w-24 h-24 rounded-3xl bg-brand-accent text-white flex items-center justify-center font-bold text-4xl shadow-md uppercase transition-transform group-hover:scale-105">
-                      {currentUserObj.name.charAt(0)}
+                    <div className="w-24 h-24 rounded-[2px] bg-slate-900 dark:bg-sky-500 text-white dark:text-slate-950 flex items-center justify-center font-bold text-4xl shadow-xs uppercase transition-transform group-hover:scale-105 font-title">
+                      {currentUserObj?.name ? currentUserObj.name.charAt(0) : 'U'}
                     </div>
                   )}
                   <div 
-                    className="absolute inset-0 flex flex-col items-center justify-center bg-black/45 text-white opacity-0 group-hover:opacity-100 rounded-3xl transition-opacity"
+                    className="absolute inset-0 flex flex-col items-center justify-center bg-black/50 text-white opacity-0 group-hover:opacity-100 rounded-[2px] transition-opacity"
                   >
                     <Upload size={22} className="mb-1" />
-                    <span className="text-[10px] font-bold">Schimbă</span>
+                    <span className="text-xs font-bold font-title uppercase tracking-wider">Schimbă</span>
                   </div>
                   <input 
                     id="avatar-file-input"
@@ -1693,7 +1847,7 @@ const ViewProfile = ({ currentUserObj, onUpdateMember, members }: ViewProfilePro
                   <button
                     type="button"
                     onClick={() => document.getElementById('avatar-file-input')?.click()}
-                    className="px-3.5 py-1.5 rounded-xl bg-brand-accent/10 hover:bg-brand-accent/20 text-brand-accent font-bold text-xs flex items-center gap-1.5 transition-colors cursor-pointer"
+                    className="px-4 py-2 rounded-[2px] bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-800 dark:text-slate-200 font-bold text-xs sm:text-sm flex items-center gap-1.5 transition-colors cursor-pointer font-title uppercase tracking-wider"
                   >
                     <Upload size={14} /> Încarcă Poză
                   </button>
@@ -1701,15 +1855,15 @@ const ViewProfile = ({ currentUserObj, onUpdateMember, members }: ViewProfilePro
                     <button
                       type="button"
                       onClick={() => setAvatar('')}
-                      className="px-3 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 font-bold text-xs transition-colors cursor-pointer"
+                      className="px-4 py-2 rounded-[2px] bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-100 dark:hover:bg-rose-900/50 text-rose-600 dark:text-rose-400 font-bold text-xs sm:text-sm transition-colors cursor-pointer font-title uppercase tracking-wider"
                     >
                       Șterge
                     </button>
                   )}
                 </div>
                 
-                <div className="w-full space-y-1">
-                  <label className="block text-[11px] font-semibold opacity-60 text-center">
+                <div className="w-full space-y-1.5">
+                  <label className="block text-xs font-bold text-slate-600 dark:text-slate-400 text-center font-title uppercase tracking-wider">
                     Sau introdu link direct către poză (URL):
                   </label>
                   <input 
@@ -1717,26 +1871,26 @@ const ViewProfile = ({ currentUserObj, onUpdateMember, members }: ViewProfilePro
                     value={avatar}
                     onChange={e => setAvatar(e.target.value)}
                     placeholder="https://exemplu.ro/poza.jpg" 
-                    className="w-full px-3 py-2 text-xs bg-white border border-brand-muted/10 rounded-xl focus:outline-none focus:border-brand-primary font-['Manrope']"
+                    className="w-full px-3.5 py-2.5 text-xs sm:text-sm bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-[2px] text-slate-900 dark:text-white focus:outline-none focus:border-sky-500 font-anthropic font-bold"
                   />
                 </div>
               </div>
 
               {/* Nickname / Poreclă */}
-              <div className="space-y-1">
-                <label className="text-xs font-semibold opacity-60 uppercase">Poreclă / Nickname</label>
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider font-title">Poreclă / Nickname</label>
                 <input 
                   type="text" 
                   value={nickname}
                   onChange={e => setNickname(e.target.value)}
                   placeholder="Ex: Poreclă" 
-                  className="w-full px-4 py-2.5 bg-[#FAF9F5] border border-brand-muted/10 rounded-xl focus:outline-none focus:border-brand-primary font-['Manrope']"
+                  className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-[2px] text-slate-900 dark:text-white text-sm font-bold focus:outline-none focus:border-sky-500 font-anthropic"
                 />
               </div>
 
               {/* Password Reset */}
-              <div className="space-y-1">
-                <label className="text-xs font-semibold opacity-60 uppercase">Parolă Nouă</label>
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider font-title">Parolă Nouă</label>
                 {canEditMemberPassword(currentUserObj || effectiveUser, effectiveUser.role) ? (
                   <div className="relative">
                     <input 
@@ -1744,25 +1898,25 @@ const ViewProfile = ({ currentUserObj, onUpdateMember, members }: ViewProfilePro
                       value={password}
                       onChange={e => setPassword(e.target.value)}
                       placeholder="••••••••" 
-                      className="w-full px-4 py-2.5 bg-[#FAF9F5] border border-brand-muted/10 rounded-xl focus:outline-none focus:border-brand-primary font-['Manrope'] pr-10"
+                      className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-[2px] text-slate-900 dark:text-white text-sm font-bold focus:outline-none focus:border-sky-500 font-anthropic pr-10"
                     />
                     <button 
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 opacity-50 hover:opacity-100 transition-opacity animate-fade-in"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 transition-colors cursor-pointer"
                     >
-                      {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                      {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                     </button>
                   </div>
                 ) : (
-                  <div className="space-y-1">
+                  <div className="space-y-1.5">
                     <input 
                       type="password"
                       value="••••••••"
                       disabled
                       readOnly
-                      className="w-full px-4 py-2.5 bg-slate-100 border border-slate-200 rounded-xl text-slate-500 cursor-not-allowed font-['Manrope']"
+                      className="w-full px-4 py-2.5 bg-slate-100 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700 rounded-[2px] text-slate-500 cursor-not-allowed font-anthropic text-sm"
                     />
-                    <p className="text-[11px] font-semibold text-amber-700">
+                    <p className="text-xs font-semibold text-amber-700 dark:text-amber-400">
                       🔒 Schimbarea parolelor pentru conturile de Board este făcută exclusiv de Stan Ștefan.
                     </p>
                   </div>
@@ -1770,13 +1924,13 @@ const ViewProfile = ({ currentUserObj, onUpdateMember, members }: ViewProfilePro
               </div>
 
               {/* Username Display */}
-              <div className="space-y-1">
-                <label className="text-xs font-semibold opacity-60 uppercase">Username</label>
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider font-title">Username</label>
                 <input
                   type="text"
                   value={effectiveUser.username}
                   readOnly
-                  className="w-full px-4 py-2.5 bg-[#FAF9F5] border border-brand-muted/10 rounded-xl font-['Manrope'] opacity-60 cursor-not-allowed"
+                  className="w-full px-4 py-2.5 bg-slate-100 dark:bg-slate-800/40 border border-slate-300 dark:border-slate-700 rounded-[2px] text-slate-900 dark:text-white text-sm font-bold font-anthropic opacity-75 cursor-not-allowed"
                 />
               </div>
 
@@ -1784,7 +1938,7 @@ const ViewProfile = ({ currentUserObj, onUpdateMember, members }: ViewProfilePro
               <button 
                 onClick={handleSave}
                 disabled={isSaving}
-                className="ios26-btn w-full py-3 font-semibold flex items-center justify-center gap-2"
+                className="w-full py-3 btn-civic-primary font-bold flex items-center justify-center gap-2 rounded-[2px] text-xs sm:text-sm font-title uppercase tracking-wider"
               >
                 {isSaving ? 'Se salvează...' : 'Salvează Modificările'}
               </button>
@@ -1796,34 +1950,34 @@ const ViewProfile = ({ currentUserObj, onUpdateMember, members }: ViewProfilePro
         <div className="lg:col-span-7 space-y-6">
           
           {/* Top Header Card */}
-          <Card>
+          <Card className="!rounded-[2px]">
             <div className="flex flex-col md:flex-row items-center gap-6">
               {(avatar || effectiveUser.photo_url || effectiveUser.photoUrl) ? (
                 <img 
                   src={avatar || effectiveUser.photo_url || effectiveUser.photoUrl} 
                   alt="Profile" 
-                  className="w-20 h-20 rounded-3xl object-cover border border-brand-muted/10 shadow-md"
+                  className="w-20 h-20 rounded-[2px] object-cover border border-slate-200 dark:border-slate-700 shadow-xs"
                 />
               ) : (
-                <div className="w-20 h-20 rounded-3xl bg-brand-accent text-white flex items-center justify-center font-bold text-3xl shadow-md uppercase">
+                <div className="w-20 h-20 rounded-[2px] bg-slate-900 text-white flex items-center justify-center font-bold text-3xl shadow-xs uppercase font-title">
                   {effectiveUser.name.charAt(0)}
                 </div>
               )}
               <div className="text-center md:text-left flex-1">
-                <h2 className="text-2xl font-black text-brand-accent mb-2">{effectiveUser.name}</h2>
+                <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-slate-100 mb-2 font-anthropicSerif">{effectiveUser.name}</h2>
                 <div className="flex flex-wrap justify-center md:justify-start gap-2">
-                  <span className="px-3 py-1 rounded-full bg-sky-50 text-sky-700 border border-sky-200 text-xs font-bold uppercase tracking-wider">
+                  <span className="px-3 py-1 rounded-[2px] bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 text-xs font-bold uppercase tracking-wider font-title">
                     {effectiveUser.role === 'admin' ? 'Board Member' : 'Voluntar'}
                   </span>
                   {effectiveUser.boardPosition && (
-                    <span className="px-3 py-1 rounded-full bg-purple-50 text-purple-700 border border-purple-200 text-xs font-black uppercase tracking-wider animate-pulse">
+                    <span className="px-3 py-1 rounded-[2px] bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800 text-xs font-bold uppercase tracking-wider font-title">
                       {effectiveUser.boardPosition}
                     </span>
                   )}
-                  <span className={`px-3 py-1 rounded-full text-xs font-black uppercase border tracking-wider ${
+                  <span className={`px-3 py-1 rounded-[2px] text-xs font-bold uppercase border tracking-wider font-title ${
                     effectiveUser.status === 'passive' 
-                      ? 'bg-amber-50 text-amber-700 border-amber-200' 
-                      : 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                      ? 'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800' 
+                      : 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800'
                   }`}>
                     {effectiveUser.status === 'passive' ? 'Pasiv' : 'Activ'}
                   </span>
@@ -1833,69 +1987,69 @@ const ViewProfile = ({ currentUserObj, onUpdateMember, members }: ViewProfilePro
           </Card>
 
           {/* Stats Bento Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             
             {/* Leaderboard Standing */}
-            <Card>
-              <h4 className="text-sm font-bold opacity-60 uppercase mb-4 flex items-center gap-2">
+            <Card className="!rounded-[2px]">
+              <h4 className="text-xs font-bold uppercase tracking-wider mb-4 flex items-center gap-2 font-title text-slate-600 dark:text-slate-400">
                 <Trophy size={16} className="text-amber-500" /> Clasament General
               </h4>
               <div className="flex items-baseline gap-2 mb-2">
-                <span className="text-4xl font-black text-brand-accent">#{rank}</span>
-                <span className="text-xs opacity-60">din {members.length} membri</span>
+                <span className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-slate-100 font-data">#{rank}</span>
+                <span className="text-xs sm:text-sm text-slate-500 font-anthropic">din {members.length} membri</span>
               </div>
-              <div className="text-sm font-semibold mb-4">Scor total: <span className="text-amber-600 font-bold">{effectiveUser.score || 0} puncte</span></div>
+              <div className="text-sm font-bold mb-4 font-anthropic">Scor total: <span className="text-amber-600 dark:text-amber-400 font-black font-data">{effectiveUser.score || 0} puncte</span></div>
               
               <div className="space-y-2 max-h-36 overflow-y-auto pr-1">
-                <div className="text-xs font-bold opacity-50 uppercase">Istoric Puncte</div>
+                <div className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 font-title">Istoric Puncte</div>
                 {effectiveUser.scoreAdjustments && effectiveUser.scoreAdjustments.length > 0 ? (
                   effectiveUser.scoreAdjustments.map((adj: any, i: number) => (
-                    <div key={i} className="flex justify-between items-center text-xs p-2 bg-[#FAF9F5] rounded-lg border border-brand-muted/5">
+                    <div key={i} className="flex justify-between items-center text-xs sm:text-sm p-2.5 bg-slate-50 dark:bg-slate-900 rounded-[2px] border border-slate-200 dark:border-slate-800 font-anthropic">
                       <div className="truncate pr-2">
-                        <div className="font-semibold truncate">{adj.reason}</div>
-                        <div className="opacity-50 text-[10px]">{adj.date} • {adj.adminName}</div>
+                        <div className="font-bold truncate text-slate-800 dark:text-slate-200">{adj.reason}</div>
+                        <div className="text-slate-400 text-xs font-data">{adj.date} • {adj.adminName}</div>
                       </div>
-                      <span className={`font-bold shrink-0 ${adj.points >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+                      <span className={`font-black shrink-0 font-data text-sm ${adj.points >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
                         {adj.points >= 0 ? `+${adj.points}` : adj.points}
                       </span>
                     </div>
                   ))
                 ) : (
-                  <div className="text-xs opacity-50 italic">Fără ajustări de scor înregistrate.</div>
+                  <div className="text-xs text-slate-400 italic">Fără ajustări de scor înregistrate.</div>
                 )}
               </div>
             </Card>
 
             {/* Attendance detailed */}
-            <Card>
-              <h4 className="text-sm font-bold opacity-60 uppercase mb-4 flex items-center gap-2">
+            <Card className="!rounded-[2px]">
+              <h4 className="text-xs font-bold uppercase tracking-wider mb-4 flex items-center gap-2 font-title text-slate-600 dark:text-slate-400">
                 <CheckCircle size={16} className="text-indigo-500" /> Detalii Prezență
               </h4>
               <div className="flex items-center gap-4 mb-3">
-                <div className="text-4xl font-black text-brand-accent">{rate}</div>
-                <div className={`px-2 py-0.5 rounded text-xs font-black uppercase ${colorClass}`}>
+                <div className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-slate-100 font-data">{rate}</div>
+                <div className={`px-2.5 py-1 rounded-[2px] text-xs font-black uppercase tracking-wider font-title ${colorClass}`}>
                   {qualification}
                 </div>
               </div>
               
               {effectiveUser.status !== 'passive' && (
-                <div className="w-full h-3 bg-brand-accent/5 rounded-full overflow-hidden shadow-inner mb-4">
+                <div className="w-full h-2.5 bg-slate-100 dark:bg-slate-800 rounded-[2px] overflow-hidden mb-4 border border-slate-200 dark:border-slate-700">
                   <div className={`h-full transition-all ${barColorClass}`} style={{ width: `${percentage}%` }} />
                 </div>
               )}
 
-              <div className="grid grid-cols-3 gap-2 text-center text-xs font-['Manrope']">
-                <div className="p-2 bg-emerald-50 rounded-xl border border-emerald-100">
-                  <div className="opacity-60 text-[10px] uppercase">Prezențe</div>
-                  <div className="font-bold text-emerald-700 text-sm mt-0.5">{presences}</div>
+              <div className="grid grid-cols-3 gap-2 text-center text-xs font-data">
+                <div className="p-2.5 bg-emerald-50 dark:bg-emerald-950/40 rounded-[2px] border border-emerald-200 dark:border-emerald-800">
+                  <div className="text-slate-500 dark:text-slate-400 text-xs font-bold uppercase font-title">Prezențe</div>
+                  <div className="font-bold text-emerald-700 dark:text-emerald-400 text-base mt-0.5">{presences}</div>
                 </div>
-                <div className="p-2 bg-indigo-50 rounded-xl border border-indigo-100">
-                  <div className="opacity-60 text-[10px] uppercase">Motivate</div>
-                  <div className="font-bold text-indigo-700 text-sm mt-0.5">{excused}</div>
+                <div className="p-2.5 bg-indigo-50 dark:bg-indigo-950/40 rounded-[2px] border border-indigo-200 dark:border-indigo-800">
+                  <div className="text-slate-500 dark:text-slate-400 text-xs font-bold uppercase font-title">Motivate</div>
+                  <div className="font-bold text-indigo-700 dark:text-indigo-400 text-base mt-0.5">{excused}</div>
                 </div>
-                <div className="p-2 bg-rose-50 rounded-xl border border-rose-100">
-                  <div className="opacity-60 text-[10px] uppercase">Absențe</div>
-                  <div className="font-bold text-rose-700 text-sm mt-0.5">{unexcused}</div>
+                <div className="p-2.5 bg-rose-50 dark:bg-rose-950/40 rounded-[2px] border border-rose-200 dark:border-rose-800">
+                  <div className="text-slate-500 dark:text-slate-400 text-xs font-bold uppercase font-title">Absențe</div>
+                  <div className="font-bold text-rose-700 dark:text-rose-400 text-base mt-0.5">{unexcused}</div>
                 </div>
               </div>
             </Card>
@@ -1903,29 +2057,29 @@ const ViewProfile = ({ currentUserObj, onUpdateMember, members }: ViewProfilePro
           </div>
 
           {/* Financial Ledger & Cotizații */}
-          <Card>
-            <h4 className="text-sm font-bold opacity-60 uppercase mb-4 flex items-center gap-2">
-              <CreditCard size={16} className="text-brand-primary" /> Registru Financiar (Cotizații)
+          <Card className="!rounded-[2px]">
+            <h4 className="text-xs font-bold uppercase tracking-wider mb-4 flex items-center gap-2 font-title text-slate-600 dark:text-slate-400">
+              <CreditCard size={16} className="text-blue-600 dark:text-blue-400" /> Registru Financiar (Cotizații)
             </h4>
             
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-              <div className="p-3 bg-[#FAF9F5] rounded-xl border border-brand-muted/5">
-                <div className="text-[10px] opacity-60 uppercase">Total Plătit</div>
-                <div className="text-lg font-black text-emerald-600">{effectiveUser.totalPaid || 0} RON</div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-5">
+              <div className="p-3.5 bg-slate-50 dark:bg-slate-800/80 rounded-[2px] border border-slate-200 dark:border-slate-700">
+                <div className="text-xs font-black uppercase text-slate-500 dark:text-slate-400 font-title tracking-wider">Total Plătit</div>
+                <div className="text-lg font-black text-emerald-600 dark:text-emerald-400 font-data mt-0.5">{effectiveUser.totalPaid || 0} RON</div>
               </div>
-              <div className="p-3 bg-[#FAF9F5] rounded-xl border border-brand-muted/5">
-                <div className="text-[10px] opacity-60 uppercase">Datorie Curentă</div>
-                <div className={`text-lg font-black ${debt > 0 ? 'text-rose-600' : 'text-emerald-600'}`}>
+              <div className="p-3.5 bg-slate-50 dark:bg-slate-800/80 rounded-[2px] border border-slate-200 dark:border-slate-700">
+                <div className="text-xs font-black uppercase text-slate-500 dark:text-slate-400 font-title tracking-wider">Datorie Curentă</div>
+                <div className={`text-lg font-black font-data mt-0.5 ${debt > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-600 dark:text-emerald-400'}`}>
                   {debt} RON
                 </div>
               </div>
-              <div className="p-3 bg-[#FAF9F5] rounded-xl border border-brand-muted/5">
-                <div className="text-[10px] opacity-60 uppercase">Status Plăți</div>
-                <div className="text-lg font-black">
+              <div className="p-3.5 bg-slate-50 dark:bg-slate-800/80 rounded-[2px] border border-slate-200 dark:border-slate-700">
+                <div className="text-xs font-black uppercase text-slate-500 dark:text-slate-400 font-title tracking-wider">Status Plăți</div>
+                <div className="text-base font-black font-title mt-0.5">
                   {debt === 0 ? (
-                    <span className="text-emerald-600 flex items-center gap-1"><Star size={14} className="fill-emerald-400 text-emerald-400" /> La Zi</span>
+                    <span className="text-emerald-600 dark:text-emerald-400 flex items-center gap-1"><Star size={14} className="fill-emerald-400 text-emerald-400" /> La Zi</span>
                   ) : (
-                    <span className="text-rose-600">Restanțier</span>
+                    <span className="text-rose-600 dark:text-rose-400">Restanțier</span>
                   )}
                 </div>
               </div>
@@ -1933,19 +2087,19 @@ const ViewProfile = ({ currentUserObj, onUpdateMember, members }: ViewProfilePro
 
             {/* Ledger Months grid */}
             <div>
-              <div className="text-xs font-bold opacity-50 uppercase mb-3">Istoric Plăți pe Luni</div>
+              <div className="text-xs font-black uppercase text-slate-500 dark:text-slate-400 mb-2.5 font-title tracking-wider">Istoric Plăți pe Luni</div>
               <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2">
                 {ledger.map((m, idx) => (
                   <div 
                     key={idx} 
-                    className={`p-2.5 rounded-xl border text-center text-xs flex flex-col justify-between transition-all ${
+                    className={`p-2.5 rounded-[2px] border text-center text-xs flex flex-col justify-between transition-all ${
                       m.status === 'Achitat' 
-                        ? 'bg-emerald-50/50 border-emerald-200/50 text-emerald-700' 
-                        : 'bg-rose-50/50 border-rose-200/50 text-rose-700'
+                        ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300' 
+                        : 'bg-rose-50 dark:bg-rose-950/40 border-rose-200 dark:border-rose-800 text-rose-800 dark:text-rose-300'
                     }`}
                   >
-                    <span className="font-bold text-[10px] uppercase opacity-75">{m.shortName} {m.year}</span>
-                    <span className="font-black mt-1 text-[11px]">{m.status}</span>
+                    <span className="font-bold text-[10px] sm:text-xs uppercase opacity-85 font-title">{m.shortName} {m.year}</span>
+                    <span className="font-black mt-1 text-xs font-title">{m.status}</span>
                   </div>
                 ))}
               </div>
@@ -1958,13 +2112,13 @@ const ViewProfile = ({ currentUserObj, onUpdateMember, members }: ViewProfilePro
 
       {/* Cropper Modal */}
       {tempImageSrc && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[150] flex items-center justify-center p-4">
-          <div className="bg-[#FAF9F5] rounded-3xl p-6 max-w-md w-full border border-brand-muted/10 shadow-[0_24px_64px_rgba(0,31,38,0.16)] flex flex-col items-center">
-            <h3 className="text-lg font-bold text-brand-accent mb-4">Ajustare Poza de Profil</h3>
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[150] flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-slate-900 rounded-[2px] p-6 max-w-md w-full border border-slate-300 dark:border-slate-800 shadow-2xl flex flex-col items-center font-anthropic">
+            <h3 className="text-lg font-black text-slate-900 dark:text-white mb-4 font-title">Ajustare Poza de Profil</h3>
             
             {/* Viewport crop area */}
             <div 
-              className="w-[200px] h-[200px] overflow-hidden rounded-3xl relative bg-black border border-brand-muted/15 mb-6 shadow-inner cursor-move select-none touch-none"
+              className="w-[200px] h-[200px] overflow-hidden rounded-[2px] relative bg-black border border-slate-300 dark:border-slate-700 mb-6 shadow-inner cursor-move select-none touch-none"
               onMouseDown={handleMouseDown}
               onMouseMove={handleMouseMove}
               onMouseUp={handleMouseUpOrLeave}
@@ -1991,34 +2145,34 @@ const ViewProfile = ({ currentUserObj, onUpdateMember, members }: ViewProfilePro
             {/* Controls */}
             <div className="w-full space-y-4 mb-6">
               <div className="space-y-1">
-                <div className="flex justify-between text-xs font-bold text-brand-accent/60">
+                <div className="flex justify-between text-xs font-bold text-slate-600 dark:text-slate-400 font-title uppercase tracking-wider">
                   <span>ZOOM</span>
-                  <span>{Math.round(cropZoom * 100)}%</span>
+                  <span className="font-data">{Math.round(cropZoom * 100)}%</span>
                 </div>
                 <input 
                   type="range" 
                   min="1" 
                   max="3" 
-                  step="0.05"
-                  value={cropZoom}
+                  step="0.05" 
+                  value={cropZoom} 
                   onChange={e => setCropZoom(parseFloat(e.target.value))}
-                  className="w-full h-1 bg-brand-accent/10 rounded-lg appearance-none cursor-pointer accent-[#28FAFC]"
+                  className="w-full h-1.5 bg-slate-200 dark:bg-slate-700 rounded-[2px] appearance-none cursor-pointer accent-blue-600"
                 />
               </div>
-              <p className="text-[10px] text-center opacity-50 uppercase font-semibold">Trage imaginea cu cursorul sau tactil pentru a o centra</p>
+              <p className="text-xs text-center text-slate-400 uppercase font-semibold font-title">Trage imaginea cu cursorul sau tactil pentru a o centra</p>
             </div>
             
             {/* Buttons */}
-            <div className="flex gap-4 w-full">
+            <div className="flex gap-3 w-full">
               <button 
                 onClick={() => setTempImageSrc(null)}
-                className="flex-1 py-2.5 btn-stitch-secondary text-xs font-bold"
+                className="flex-1 py-2.5 btn-civic-secondary text-xs sm:text-sm font-title uppercase tracking-wider"
               >
                 Renunță
               </button>
               <button 
                 onClick={handleApplyCrop}
-                className="flex-1 ios26-btn py-2.5 text-xs font-bold uppercase tracking-wider"
+                className="flex-1 py-2.5 btn-civic-primary text-xs sm:text-sm font-title uppercase tracking-wider"
               >
                 Aplică
               </button>
@@ -2116,7 +2270,7 @@ export function Dashboard({ username, onLogout }: DashboardProps) {
   useEffect(() => {
     if (!members || members.length === 0) return;
     const currentMember = members.find(m => m.username?.toLowerCase() === username.toLowerCase());
-    const localKey = `tutorial_seen_v2_${username.toLowerCase()}`;
+    const localKey = `tutorial_seen_v3_${username.toLowerCase()}`;
     const alreadySeenLocally = localStorage.getItem(localKey);
 
     if (currentMember) {
@@ -2148,13 +2302,13 @@ export function Dashboard({ username, onLogout }: DashboardProps) {
 
   const handleCloseTutorial = async () => {
     setIsTutorialOpen(false);
-    const localKey = `tutorial_seen_v2_${username.toLowerCase()}`;
+    const localKey = `tutorial_seen_v3_${username.toLowerCase()}`;
     localStorage.setItem(localKey, 'true');
 
     // Update in Supabase so login count is saved and has_seen_tutorial is marked true
     try {
       const currentMember = members.find(m => m.username?.toLowerCase() === username.toLowerCase());
-      const nextCount = (currentMember?.login_count || 0) + 1;
+      const nextCount = Math.max(1, (currentMember?.login_count || 0) + 1);
       await supabase
         .from('members')
         .update({
@@ -2318,10 +2472,12 @@ export function Dashboard({ username, onLogout }: DashboardProps) {
 
   const isTrezorierMaster = Boolean(
     currentUserObj?.username?.toLowerCase() === 'stan.stefan' ||
+    username?.toLowerCase() === 'stan.stefan' ||
     currentUserObj?.name?.toLowerCase().includes('stefan stan') ||
     currentUserObj?.name?.toLowerCase().includes('stan stefan') ||
-    currentUserObj?.boardPosition?.toLowerCase().includes('trezorier') ||
-    currentUserObj?.username?.toLowerCase() === 'admin'
+    currentUserObj?.id === 'M053' ||
+    currentUserObj?.id === 'M061' ||
+    username?.toLowerCase() === 'admin'
   );
 
   const handleUpdateMember = (updatedMember: any) => {
@@ -2335,57 +2491,252 @@ export function Dashboard({ username, onLogout }: DashboardProps) {
     });
   };
 
-  const MENU_CATEGORIES: { title: string; items: { id: string; label: string; icon: any; count?: number }[] }[] = [
-    {
-      title: "General",
-      items: [
-        { id: 'dashboard', label: 'Panou Principal', icon: Home },
-        { id: 'repartizare', label: 'Repartizare', icon: Users2 },
-        { id: 'prezenta', label: 'Prezență', icon: CheckCircle },
-        { id: 'calendar', label: 'Calendar', icon: CalendarIcon },
-      ]
-    },
-    {
-      title: "Oameni & Social",
-      items: [
-        ...(isAdmin ? [{ id: 'membri', label: 'Membri', icon: Users }] : []),
-        { id: 'clasament', label: 'Clasament', icon: Trophy },
-        { id: 'kudos', label: 'Kudos & Aprecieri', icon: Heart },
-      ]
-    },
-    {
-      title: "Idei & Inițiative",
-      items: [
-        { id: 'idei', label: 'Sondaje', icon: PieChart },
-        { id: 'proiecte', label: 'Idei Proiecte', icon: FileText },
-        ...(isAdmin ? [{ id: 'comunitate', label: 'Idei Comunitate', icon: Globe }] : []),
-        { id: 'sugestii', label: 'Casetă Sugestii', icon: MessageSquarePlus },
-        { id: 'forum', label: 'Forum', icon: MessageSquare },
-        { id: 'stiri', label: 'Știri', icon: Megaphone },
-      ]
-    },
-    ...(isAdmin ? [{
-      title: "Trezorerie",
-      items: [
-        { id: 'buget', label: 'Buget', icon: PieChart },
-        { id: 'rapoarte', label: 'Rapoarte', icon: FileText }
-      ]
-    }] : []),
-    ...(isTrezorierMaster ? [{
-      title: "Securitate & Control",
-      items: [
-        { id: 'audit', label: '🛡️ Audit Master', icon: ShieldAlert }
-      ]
-    }] : []),
-    {
-      title: "Cont",
-      items: [
-        { id: 'profil', label: 'Profilul Meu', icon: User }
-      ]
+  const [experienceMode, setExperienceMode] = useState<'easy' | 'advanced'>(() => {
+    if (typeof window === 'undefined') return 'easy';
+    return (localStorage.getItem('ui_experience_mode') as 'easy' | 'advanced') || 'easy';
+  });
+
+  const MENU_CATEGORIES: { title: string; items: { id: string; label: string; icon: any; count?: number }[] }[] = useMemo(() => {
+    if (experienceMode === 'easy') {
+      if (isAdmin) {
+        return [
+          {
+            title: "General",
+            items: [
+              { id: 'dashboard', label: 'Panou Principal', icon: Home },
+            ]
+          },
+          {
+            title: "Hub-uri Administrative",
+            items: [
+              { id: 'hub_admin_echipa', label: 'Membri & Echipă', icon: Users },
+              { id: 'hub_admin_finante', label: 'Finanțe & Trezorerie', icon: PieChart },
+              { id: 'hub_admin_comunitate', label: 'Decizii & Comunitate', icon: Megaphone },
+              { id: 'clasament', label: 'Clasament & Scoruri', icon: Trophy },
+            ]
+          },
+          {
+            title: "Cont",
+            items: [
+              { id: 'profil', label: 'Profilul Meu', icon: User }
+            ]
+          }
+        ];
+      }
+
+      // Member in Easy Mode
+      return [
+        {
+          title: "General",
+          items: [
+            { id: 'dashboard', label: 'Acasă', icon: Home },
+          ]
+        },
+        {
+          title: "Activitate & Social",
+          items: [
+            { id: 'hub_activitate', label: 'Activitate & Prezență', icon: CheckCircle },
+            { id: 'hub_comunitate', label: 'Social & Comunitate', icon: MessageSquare },
+            { id: 'clasament', label: 'Clasament & Scor', icon: Trophy },
+          ]
+        },
+        {
+          title: "Cont",
+          items: [
+            { id: 'profil', label: 'Profilul Meu', icon: User }
+          ]
+        }
+      ];
     }
-  ];
+
+    // Advanced Mode: Full granular categories
+    return [
+      {
+        title: "General",
+        items: [
+          { id: 'dashboard', label: 'Panou Principal', icon: Home },
+          { id: 'repartizare', label: 'Repartizare', icon: Users2 },
+          { id: 'prezenta', label: 'Prezență', icon: CheckCircle },
+          { id: 'calendar', label: 'Calendar', icon: CalendarIcon },
+        ]
+      },
+      {
+        title: "Oameni & Social",
+        items: [
+          ...(isAdmin ? [{ id: 'membri', label: 'Membri', icon: Users }] : []),
+          { id: 'clasament', label: 'Clasament', icon: Trophy },
+          { id: 'kudos', label: 'Kudos & Aprecieri', icon: Heart },
+        ]
+      },
+      {
+        title: "Idei & Inițiative",
+        items: [
+          { id: 'idei', label: 'Sondaje', icon: PieChart },
+          { id: 'proiecte', label: 'Idei Proiecte', icon: FileText },
+          ...(isAdmin ? [{ id: 'comunitate', label: 'Idei Comunitate', icon: Globe }] : []),
+          { id: 'sugestii', label: 'Casetă Sugestii', icon: MessageSquarePlus },
+          { id: 'forum', label: 'Forum', icon: MessageSquare },
+          { id: 'stiri', label: 'Știri', icon: Megaphone },
+        ]
+      },
+      ...(isAdmin ? [{
+        title: "Trezorerie",
+        items: [
+          { id: 'buget', label: 'Buget', icon: PieChart },
+          { id: 'rapoarte', label: 'Rapoarte', icon: FileText }
+        ]
+      }] : []),
+      ...(isTrezorierMaster ? [{
+        title: "Securitate & Control",
+        items: [
+          { id: 'audit', label: '🛡️ Audit Master', icon: ShieldAlert }
+        ]
+      }] : []),
+      {
+        title: "Cont",
+        items: [
+          { id: 'profil', label: 'Profilul Meu', icon: User }
+        ]
+      }
+    ];
+  }, [experienceMode, isAdmin, isTrezorierMaster]);
 
   const renderActiveView = () => {
+    // 1. Direct Easy Mode Hub Routing
+    if (activeSection === 'hub_activitate') {
+      return (
+        <MemberActivityHub
+          members={members}
+          onUpdateMember={handleUpdateMember}
+          isAdmin={isAdmin}
+          currentUserId={currentUserObj?.id || ''}
+          preselectedEventId={preselectedEventIdForExcuse}
+        />
+      );
+    }
+    if (activeSection === 'hub_comunitate') {
+      return (
+        <MemberCommunityHub
+          isAdmin={isAdmin}
+          currentUserId={currentUserObj?.id || ''}
+          currentUsername={currentUserObj?.username || username || ''}
+          members={members}
+        />
+      );
+    }
+    if (activeSection === 'hub_admin_echipa') {
+      return (
+        <AdminTeamHub
+          members={members}
+          onUpdateMember={handleUpdateMember}
+          onAddMemberClick={() => setIsMemberModalOpen(true)}
+          isAdmin={isAdmin}
+          currentUserId={currentUserObj?.id || ''}
+          currentUserObj={currentUserObj}
+          preselectedEventId={preselectedEventIdForExcuse}
+          membersViewSeed={membersViewSeed}
+        />
+      );
+    }
+    if (activeSection === 'hub_admin_finante') {
+      return (
+        <AdminFinanceHub
+          isAdmin={isAdmin}
+          isTrezorierMaster={isTrezorierMaster}
+          currentUserObj={currentUserObj}
+          members={members}
+          onUpdateMember={handleUpdateMember}
+          ViewPaymentsComponent={ViewPayments}
+          ViewReportsComponent={ViewReports}
+        />
+      );
+    }
+    if (activeSection === 'hub_admin_comunitate') {
+      return (
+        <AdminCommunityHub
+          isAdmin={isAdmin}
+          currentUserId={currentUserObj?.id || ''}
+          currentUsername={currentUserObj?.username || username || ''}
+          members={members}
+        />
+      );
+    }
+
+    // 2. Fallback / Subtab Routing for Easy Mode (Deep Linking from Notifications & Palette)
+    if (experienceMode === 'easy') {
+      if (isAdmin) {
+        if (activeSection === 'membri' || activeSection === 'repartizare' || activeSection === 'prezenta') {
+          return (
+            <AdminTeamHub
+              initialSubtab={activeSection}
+              members={members}
+              onUpdateMember={handleUpdateMember}
+              onAddMemberClick={() => setIsMemberModalOpen(true)}
+              isAdmin={isAdmin}
+              currentUserId={currentUserObj?.id || ''}
+              currentUserObj={currentUserObj}
+              preselectedEventId={preselectedEventIdForExcuse}
+              membersViewSeed={membersViewSeed}
+            />
+          );
+        }
+        if (activeSection === 'buget' || activeSection === 'istoric' || activeSection === 'rapoarte' || activeSection === 'audit') {
+          return (
+            <AdminFinanceHub
+              initialSubtab={activeSection}
+              isAdmin={isAdmin}
+              isTrezorierMaster={isTrezorierMaster}
+              currentUserObj={currentUserObj}
+              members={members}
+              onUpdateMember={handleUpdateMember}
+              ViewPaymentsComponent={ViewPayments}
+              ViewReportsComponent={ViewReports}
+            />
+          );
+        }
+        if (activeSection === 'stiri' || activeSection === 'news' || activeSection === 'idei' || activeSection === 'forum' || activeSection === 'comunitate' || activeSection === 'kudos' || activeSection === 'sugestii' || activeSection === 'proiecte') {
+          const mapped = (activeSection === 'news' ? 'stiri' : activeSection === 'proiecte' ? 'forum' : activeSection);
+          return (
+            <AdminCommunityHub
+              initialSubtab={mapped}
+              isAdmin={isAdmin}
+              currentUserId={currentUserObj?.id || ''}
+              currentUsername={currentUserObj?.username || username || ''}
+              members={members}
+            />
+          );
+        }
+      } else {
+        // Member Easy Mode Sub-routing
+        if (activeSection === 'prezenta' || activeSection === 'calendar' || activeSection === 'evenimente' || activeSection === 'events') {
+          const mapped = activeSection === 'prezenta' ? 'prezenta' : 'calendar';
+          return (
+            <MemberActivityHub
+              initialSubtab={mapped}
+              members={members}
+              onUpdateMember={handleUpdateMember}
+              isAdmin={isAdmin}
+              currentUserId={currentUserObj?.id || ''}
+              preselectedEventId={preselectedEventIdForExcuse}
+            />
+          );
+        }
+        if (activeSection === 'stiri' || activeSection === 'news' || activeSection === 'idei' || activeSection === 'forum' || activeSection === 'kudos' || activeSection === 'sugestii' || activeSection === 'proiecte') {
+          const mapped = (activeSection === 'news' ? 'stiri' : activeSection === 'proiecte' ? 'sugestii' : activeSection);
+          return (
+            <MemberCommunityHub
+              initialSubtab={mapped}
+              isAdmin={isAdmin}
+              currentUserId={currentUserObj?.id || ''}
+              currentUsername={currentUserObj?.username || username || ''}
+              members={members}
+            />
+          );
+        }
+      }
+    }
+
+    // 3. Standard Routing (Advanced Mode or Dedicated Views)
     switch (activeSection) {
       case 'dashboard': return (
         <ViewDashboard 
@@ -2395,7 +2746,7 @@ export function Dashboard({ username, onLogout }: DashboardProps) {
           onNavigateToSection={setActiveSection} 
           onRedirectToExcuse={(eventId) => {
             setPreselectedEventIdForExcuse(eventId);
-            setActiveSection('prezenta');
+            setActiveSection(experienceMode === 'easy' ? (isAdmin ? 'hub_admin_echipa' : 'hub_activitate') : 'prezenta');
           }}
           events={events}
         />
@@ -2428,7 +2779,7 @@ export function Dashboard({ username, onLogout }: DashboardProps) {
         />
       );
       case 'clasament': return (
-        <LeaderboardView members={members} isAdmin={isAdmin} onUpdateMember={handleUpdateMember} currentUserObj={currentUserObj} />
+        <LeaderboardView members={members} events={events} isAdmin={isAdmin} onUpdateMember={handleUpdateMember} currentUserObj={currentUserObj} />
       );
       case 'kudos': return (
         <KudosView 
@@ -2495,7 +2846,7 @@ export function Dashboard({ username, onLogout }: DashboardProps) {
           onNavigateToSection={setActiveSection} 
           onRedirectToExcuse={(eventId) => {
             setPreselectedEventIdForExcuse(eventId);
-            setActiveSection('prezenta');
+            setActiveSection(experienceMode === 'easy' ? (isAdmin ? 'hub_admin_echipa' : 'hub_activitate') : 'prezenta');
           }}
           events={events}
         />
@@ -2537,6 +2888,11 @@ export function Dashboard({ username, onLogout }: DashboardProps) {
     rapoarte: { colors: ['#ffeacd', '#475569'] },
     audit: { colors: ['#0F172A', '#89cff0'] },
     profil: { colors: ['#475569', '#89cff0'] },
+    hub_activitate: { colors: ['#89cff0', '#ffeacd'] },
+    hub_comunitate: { colors: ['#475569', '#89cff0'] },
+    hub_admin_echipa: { colors: ['#89cff0', '#0F172A'] },
+    hub_admin_finante: { colors: ['#89cff0', '#ffeacd'] },
+    hub_admin_comunitate: { colors: ['#475569', '#ffeacd'] },
   };
 
   const currentTheme = SECTION_THEMES[activeSection] || SECTION_THEMES.dashboard;
@@ -2571,7 +2927,7 @@ export function Dashboard({ username, onLogout }: DashboardProps) {
 
   return (
     <div
-      className="dashboard-shell h-screen font-['Hanken_Grotesk'] flex relative overflow-hidden"
+      className="dashboard-shell h-screen font-anthropic flex relative overflow-hidden"
       style={{
         '--theme-color': themeColor,
         background: 'var(--adm-bg)',
@@ -2600,11 +2956,11 @@ export function Dashboard({ username, onLogout }: DashboardProps) {
           isMobileSidebarOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full lg:translate-x-0'
         }`}
       >
-        <div className="px-5 pt-6 pb-4 flex flex-col items-center relative border-b border-white/10 shrink-0">
+        <div className="px-5 pt-6 pb-4 flex flex-col items-center relative border-b border-slate-200 dark:border-slate-800 shrink-0">
           {/* Close button for mobile sidebar */}
           <button
             onClick={() => setIsMobileSidebarOpen(false)}
-            className="lg:hidden absolute top-4 right-4 p-2 text-white/40 hover:text-white/80 hover:bg-white/5 transition-colors"
+            className="lg:hidden absolute top-4 right-4 p-2 text-slate-500 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-white dark:hover:bg-slate-800 rounded-[2px] transition-colors"
             title="Închide"
           >
             <X size={18} />
@@ -2612,7 +2968,7 @@ export function Dashboard({ username, onLogout }: DashboardProps) {
           {/* Desktop collapse toggle */}
           <button
             onClick={() => setIsSidebarCollapsed(v => !v)}
-            className="hidden lg:flex absolute top-4 right-3 p-1.5 text-white/30 hover:text-white/70 hover:bg-white/5 transition-colors"
+            className="hidden lg:flex absolute top-4 right-3 p-1.5 text-slate-400 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-500 dark:hover:text-white dark:hover:bg-slate-800 rounded-[2px] transition-colors"
             title={isSidebarCollapsed ? 'Expandează' : 'Restrânge'}
           >
             {isSidebarCollapsed ? <ChevronsRight size={15} /> : <ChevronsLeft size={15} />}
@@ -2624,8 +2980,8 @@ export function Dashboard({ username, onLogout }: DashboardProps) {
             className={`w-auto object-contain mb-3 transition-all duration-300 ${isSidebarCollapsed ? 'h-9' : 'h-14'}`}
           />
           {!isSidebarCollapsed && (
-            <div className="adm-meta-label flex items-center gap-2 text-center">
-              <span className="w-1 h-1 shrink-0" style={{ backgroundColor: themeColor }} />
+            <div className="adm-meta-label flex items-center gap-2 text-center text-slate-500 dark:text-slate-400 font-bold font-title">
+              <span className="w-1.5 h-1.5 shrink-0 rounded-full" style={{ backgroundColor: themeColor }} />
               District 2241 · Piatra Neamț
             </div>
           )}
@@ -2635,12 +2991,12 @@ export function Dashboard({ username, onLogout }: DashboardProps) {
           {MENU_CATEGORIES.map((category, idx) => (
             <div key={idx}>
               {!isSidebarCollapsed && (
-                <h3 className="adm-meta-label flex items-center gap-2 px-3 mb-1.5">
-                  <span className="h-px w-3 bg-white/20" />
+                <h3 className="adm-meta-label flex items-center gap-2 px-3 mb-1.5 text-slate-600 dark:text-slate-400 font-black font-title">
+                  <span className="h-px w-3 bg-slate-300 dark:bg-slate-700" />
                   {category.title}
                 </h3>
               )}
-              <nav className="space-y-0.5">
+              <nav className="space-y-1">
                 {category.items.map(item => {
                   const isActive = activeSection === item.id;
                   const Icon = item.icon;
@@ -2652,18 +3008,21 @@ export function Dashboard({ username, onLogout }: DashboardProps) {
                         setIsMobileSidebarOpen(false);
                       }}
                       title={isSidebarCollapsed ? item.label : undefined}
-                      className={`adm-nav-item w-full flex items-center gap-3 py-2.5 font-medium transition-all ${
+                      className={`adm-nav-item w-full flex items-center gap-3 py-2.5 font-bold transition-all rounded-[2px] ${
                         isSidebarCollapsed ? 'justify-center px-0' : 'px-4'
-                      } ${isActive ? 'active text-white' : 'text-white/55 hover:text-white/90'}`}
+                      } ${isActive 
+                        ? 'active bg-slate-900 text-white dark:bg-slate-800 dark:text-sky-300 shadow-xs' 
+                        : 'text-slate-700 hover:text-slate-950 hover:bg-slate-100 dark:text-slate-300 dark:hover:text-white dark:hover:bg-slate-800/60'
+                      }`}
                     >
                       <Icon
                         size={17}
                         className="shrink-0 transition-colors duration-300"
                         style={isActive ? { color: visibleThemeColor } : {}}
                       />
-                      {!isSidebarCollapsed && <span className="text-[13.5px] font-medium flex-1 text-left">{item.label}</span>}
+                      {!isSidebarCollapsed && <span className="text-[13.5px] font-bold flex-1 text-left font-anthropic">{item.label}</span>}
                       {!isSidebarCollapsed && item.id === 'comunitate' && unreadPitchesCount > 0 && (
-                        <span className="adm-meta-label !text-[9px] px-1.5 py-0.5 border border-white/20 text-white/70">
+                        <span className="text-[9px] font-black px-2 py-0.5 rounded-[2px] border border-slate-300 dark:border-slate-600 bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 font-data">
                           +{unreadPitchesCount}
                         </span>
                       )}
@@ -2675,26 +3034,26 @@ export function Dashboard({ username, onLogout }: DashboardProps) {
           ))}
         </div>
 
-        <div className="p-3 border-t border-white/10 shrink-0">
+        <div className="p-3 border-t border-slate-200 dark:border-slate-800 shrink-0">
            {!isSidebarCollapsed && (
-             <div className="flex items-center justify-between px-3 py-2 mb-2 border border-emerald-500/20 bg-emerald-500/5">
+             <div className="flex items-center justify-between px-3 py-2 mb-2 border border-emerald-300 dark:border-emerald-500/30 bg-emerald-50 dark:bg-emerald-950/40 rounded-[2px]">
                <div className="flex items-center gap-2">
                  <span className="relative flex h-1.5 w-1.5">
                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-60" />
                    <span className="relative inline-flex h-1.5 w-1.5 bg-emerald-400" />
                  </span>
-                 <span className="adm-meta-label !text-emerald-300/80">Sistem Operațional</span>
+                 <span className="adm-meta-label !text-emerald-800 dark:!text-emerald-300 font-bold font-title">Sistem Operațional</span>
                </div>
-               <span className="adm-meta-label !text-emerald-400/50">v{__APP_VERSION__}</span>
+               <span className="adm-meta-label !text-emerald-700 dark:!text-emerald-400 font-bold font-data">v{__APP_VERSION__}</span>
              </div>
            )}
            <button
             onClick={onLogout}
             title={isSidebarCollapsed ? 'Deconectare' : undefined}
-            className={`w-full flex items-center gap-3 py-2.5 text-red-400/80 hover:text-red-300 hover:bg-red-500/8 font-medium transition-all group ${isSidebarCollapsed ? 'justify-center px-0' : 'px-4'}`}
+            className={`w-full flex items-center gap-3 py-2.5 rounded-[2px] text-rose-600 hover:text-rose-700 hover:bg-rose-50 dark:text-rose-400 dark:hover:text-rose-300 dark:hover:bg-rose-950/40 font-bold transition-all group ${isSidebarCollapsed ? 'justify-center px-0' : 'px-4'}`}
           >
             <LogOut size={17} className="shrink-0" />
-            {!isSidebarCollapsed && <span className="text-[13.5px]">Deconectare</span>}
+            {!isSidebarCollapsed && <span className="text-[13.5px] font-title">Deconectare</span>}
           </button>
         </div>
       </aside>
@@ -2704,12 +3063,12 @@ export function Dashboard({ username, onLogout }: DashboardProps) {
       >
 
         {/* Header */}
-        <header className="adm-header sticky top-0 z-30 px-3.5 sm:px-6 py-3 sm:py-4 flex items-center justify-between">
+        <header className="adm-header sticky top-0 z-30 px-3.5 sm:px-6 py-3 sm:py-4 flex items-center justify-between backdrop-blur-md bg-white/90 dark:bg-[#0D111A]/90 border-b border-slate-200 dark:border-slate-800 shadow-xs">
           <div className="flex-1 flex items-center gap-2.5 sm:gap-3 min-w-0">
             {/* Mobile Sidebar Hamburger Toggle */}
             <button
               onClick={() => setIsMobileSidebarOpen(true)}
-              className="lg:hidden p-2 -ml-1 text-white/80 hover:text-white hover:bg-white/10 active:bg-white/20 rounded-lg transition-colors shrink-0 touch-manipulation"
+              className="lg:hidden p-2 -ml-1 text-slate-700 hover:text-slate-950 hover:bg-slate-100 dark:text-slate-300 dark:hover:text-white dark:hover:bg-slate-800 rounded-[2px] transition-colors shrink-0 touch-manipulation border border-slate-200 dark:border-slate-700"
               title="Meniu"
               aria-label="Deschide meniul"
             >
@@ -2717,16 +3076,52 @@ export function Dashboard({ username, onLogout }: DashboardProps) {
             </button>
 
             <div
-              className="w-2 h-2 shrink-0"
+              className="w-2.5 h-2.5 rounded-full shrink-0"
               style={{ backgroundColor: visibleThemeColor, transition: 'background-color 0.8s ease' }}
             />
-            <h1 className="text-xl md:text-2xl font-anthropicSerif italic font-medium text-white truncate">
+            <h1 className="text-xl md:text-2xl font-anthropicSerif italic font-bold text-slate-900 dark:text-white truncate">
               {activeTitle}
             </h1>
           </div>
 
-          <div className="flex items-center gap-3 md:gap-4 shrink-0">
+          <div className="flex items-center gap-2 sm:gap-3 md:gap-4 shrink-0">
             <ClockWidget events={events} />
+
+            {/* Easy / Advanced Mode Toggle Switch */}
+            <div className="hidden sm:flex items-center p-0.5 rounded-[2px] border border-slate-200 dark:border-slate-700 bg-slate-100/90 dark:bg-slate-800/60 font-title shadow-xs">
+              <button
+                onClick={() => {
+                  setExperienceMode('easy');
+                  localStorage.setItem('ui_experience_mode', 'easy');
+                  toast.success('🌱 Modul Simplificat activat');
+                }}
+                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-[2px] text-xs font-bold uppercase tracking-wider transition-all cursor-pointer ${
+                  experienceMode === 'easy'
+                    ? 'bg-white dark:bg-slate-900 text-emerald-700 dark:text-emerald-300 shadow-xs border border-slate-200 dark:border-slate-700'
+                    : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+                }`}
+                title="Mod Simplificat: Navigație compactă în hub-uri intuitive"
+              >
+                <Sparkles size={13} className={experienceMode === 'easy' ? 'text-emerald-500' : 'text-slate-400'} />
+                <span>Simplu</span>
+              </button>
+              <button
+                onClick={() => {
+                  setExperienceMode('advanced');
+                  localStorage.setItem('ui_experience_mode', 'advanced');
+                  toast.success('⚡ Modul Avansat activat');
+                }}
+                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-[2px] text-xs font-bold uppercase tracking-wider transition-all cursor-pointer ${
+                  experienceMode === 'advanced'
+                    ? 'bg-white dark:bg-slate-900 text-blue-700 dark:text-blue-300 shadow-xs border border-slate-200 dark:border-slate-700'
+                    : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+                }`}
+                title="Mod Avansat: Toate modulele și paginile separate"
+              >
+                <Zap size={13} className={experienceMode === 'advanced' ? 'text-blue-500' : 'text-slate-400'} />
+                <span>Avansat</span>
+              </button>
+            </div>
 
             {/* Smart Notifications Bell Dropdown */}
             <NotificationsDropdown
@@ -2738,7 +3133,7 @@ export function Dashboard({ username, onLogout }: DashboardProps) {
             {/* Light / Dark toggle */}
             <button
               onClick={() => setThemeMode(m => m === 'dark' ? 'light' : 'dark')}
-              className="p-2 border border-white/10 text-white/50 hover:text-white hover:bg-white/5 transition-all shrink-0"
+              className="p-2.5 rounded-[2px] border border-slate-200 dark:border-slate-700 bg-slate-50 hover:bg-slate-100 dark:bg-slate-800/60 dark:hover:bg-slate-800 text-slate-700 hover:text-slate-950 dark:text-slate-300 dark:hover:text-white transition-all shrink-0 cursor-pointer shadow-xs"
               title={themeMode === 'dark' ? 'Comută la mod luminos' : 'Comută la mod întunecat'}
             >
               {themeMode === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
@@ -2747,75 +3142,121 @@ export function Dashboard({ username, onLogout }: DashboardProps) {
             {/* Search / command palette trigger */}
             <button
               onClick={() => setIsCommandPaletteOpen(true)}
-              className="hidden md:flex items-center gap-2 pl-3.5 pr-2.5 py-2 bg-white/[0.02] hover:bg-white/5 border border-white/10 text-sm text-white/40 hover:text-white/70 transition-all w-48"
+              className="hidden md:flex items-center gap-2 pl-3.5 pr-2.5 py-2 bg-slate-50 hover:bg-slate-100 dark:bg-slate-800/60 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-[2px] text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 transition-all w-48 shadow-xs cursor-pointer"
             >
               <Search size={15} className="shrink-0" />
-              <span className="flex-1 text-left truncate">Căutare...</span>
-              <kbd className="text-[9px] font-bold px-1.5 py-0.5 border border-white/10 text-white/40">⌘K</kbd>
+              <span className="flex-1 text-left truncate font-medium font-anthropic">Căutare...</span>
+              <kbd className="text-[9px] font-bold px-1.5 py-0.5 rounded-[2px] border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 font-data">⌘K</kbd>
             </button>
 
             {/* User menu */}
             <div className="relative">
-              <button
-                onClick={() => setIsUserMenuOpen(v => !v)}
-                className="flex items-center gap-2.5 bg-white/[0.02] pl-2.5 pr-3 py-1.5 border border-white/10 hover:bg-white/5 transition-all"
-              >
-                 {(currentUserObj?.avatar || currentUserObj?.photo_url || currentUserObj?.photoUrl) ? (
-                   <img
-                     src={currentUserObj.avatar || currentUserObj.photo_url || currentUserObj.photoUrl}
-                     alt=""
-                     className="w-7 h-7 rounded-sm object-cover border border-white/10 shrink-0"
-                   />
-                 ) : (
-                   <div
-                    className="w-7 h-7 flex items-center justify-center font-bold text-sm shrink-0"
-                    style={{ background: themeColor, color: themeTextColor }}
-                   >
-                     {username.charAt(0).toUpperCase()}
-                   </div>
-                 )}
-                 <div className="hidden sm:flex flex-col leading-tight text-left">
-                   <span className="text-[10px] text-white/35 font-medium -mb-0.5">
-                     {(() => { const h = new Date().getHours(); return h < 12 ? 'Bună dimineața' : h < 18 ? 'Bună ziua' : 'Bună seara'; })()}
-                   </span>
-                   <span className="text-sm font-bold text-white capitalize">{username}</span>
-                 </div>
-                 <ChevronDown size={14} className={`text-white/30 transition-transform ${isUserMenuOpen ? 'rotate-180' : ''}`} />
-              </button>
+              {(() => {
+                const hour = new Date().getHours();
+                const greeting = (hour >= 5 && hour < 12) 
+                  ? 'Bună dimineața' 
+                  : (hour >= 12 && hour < 18) 
+                    ? 'Bună ziua' 
+                    : 'Bună seara';
+                const userNickname = currentUserObj?.nickname?.trim() || currentUserObj?.name?.trim().split(' ')[0] || username;
+                const avatarInitial = (userNickname || 'U').charAt(0).toUpperCase();
 
-              <AnimatePresence>
-                {isUserMenuOpen && (
+                return (
                   <>
-                    <div className="fixed inset-0 z-40" onClick={() => setIsUserMenuOpen(false)} />
-                    <motion.div
-                      initial={{ opacity: 0, y: -8, scale: 0.97 }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
-                      exit={{ opacity: 0, y: -8, scale: 0.97 }}
-                      transition={{ duration: 0.15 }}
-                      className="adm-glass-static absolute right-0 top-[calc(100%+0.5rem)] w-48 z-50 p-1.5"
+                    <button
+                      onClick={() => setIsUserMenuOpen(v => !v)}
+                      className="flex items-center gap-2.5 bg-slate-50 hover:bg-slate-100 dark:bg-slate-800/60 dark:hover:bg-slate-800 pl-2.5 pr-3 py-1.5 rounded-[2px] border border-slate-200 dark:border-slate-700 transition-all cursor-pointer shadow-xs text-slate-900 dark:text-white"
                     >
-                      <button
-                        onClick={() => { setActiveSection('profil'); setIsUserMenuOpen(false); }}
-                        className="adm-command-item w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-white/80 text-left"
-                      >
-                        <Settings size={15} className="text-white/50" /> Profilul Meu
-                      </button>
-                      <button
-                        onClick={() => { setIsTutorialOpen(true); setIsUserMenuOpen(false); }}
-                        className="adm-command-item w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-white/80 text-left"
-                      >
-                        <Compass size={15} className="text-white/50" /> Redeschide Turul
-                      </button>
-                      <button
-                        onClick={onLogout}
-                        className="adm-command-item w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-red-400 text-left"
-                      >
-                        <LogOut size={15} /> Deconectare
-                      </button>
-                    </motion.div>
+                      {(currentUserObj?.avatar || currentUserObj?.photo_url || currentUserObj?.photoUrl) ? (
+                        <img
+                          src={currentUserObj.avatar || currentUserObj.photo_url || currentUserObj.photoUrl}
+                          alt=""
+                          className="w-7 h-7 rounded-[2px] object-cover border border-slate-200 dark:border-slate-700 shrink-0"
+                        />
+                      ) : (
+                        <div
+                          className="w-7 h-7 rounded-[2px] flex items-center justify-center font-bold text-sm shrink-0 font-title"
+                          style={{ background: themeColor, color: themeTextColor }}
+                        >
+                          {avatarInitial}
+                        </div>
+                      )}
+                      <div className="hidden sm:flex flex-col leading-tight text-left">
+                        <span className="text-[10px] text-slate-500 dark:text-slate-400 font-bold -mb-0.5 font-title">
+                          {greeting}
+                        </span>
+                        <span className="text-sm font-black text-slate-900 dark:text-white font-anthropic">
+                          {userNickname}
+                        </span>
+                      </div>
+                      <ChevronDown size={14} className={`text-slate-400 dark:text-slate-500 transition-transform ${isUserMenuOpen ? 'rotate-180' : ''}`} />
+                    </button>
+
+                    <AnimatePresence>
+                      {isUserMenuOpen && (
+                        <>
+                          <div className="fixed inset-0 z-40" onClick={() => setIsUserMenuOpen(false)} />
+                          <motion.div
+                            initial={{ opacity: 0, y: -8, scale: 0.97 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            exit={{ opacity: 0, y: -8, scale: 0.97 }}
+                            transition={{ duration: 0.15 }}
+                            className="absolute right-0 top-[calc(100%+0.5rem)] w-60 z-50 p-1.5 rounded-[2px] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 shadow-xl font-anthropic"
+                          >
+                            <div className="px-3.5 py-2.5 border-b border-slate-100 dark:border-slate-800 mb-1">
+                              <div className="text-xs font-bold text-slate-900 dark:text-white font-anthropic truncate">
+                                {currentUserObj?.name || userNickname}
+                              </div>
+                              <div className="text-[10px] text-slate-500 dark:text-slate-400 font-title font-bold uppercase tracking-wider mt-0.5">
+                                {currentUserObj?.role === 'admin' ? (currentUserObj.boardPosition || 'Board Member') : 'Voluntar'}
+                              </div>
+                            </div>
+                            
+                            {/* Easy / Advanced Mode Toggle in Dropdown */}
+                            <button
+                              onClick={() => {
+                                const next = experienceMode === 'easy' ? 'advanced' : 'easy';
+                                setExperienceMode(next);
+                                localStorage.setItem('ui_experience_mode', next);
+                                setIsUserMenuOpen(false);
+                                toast.success(next === 'easy' ? '🌱 Modul Simplificat activat' : '⚡ Modul Avansat activat');
+                              }}
+                              className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-[2px] text-xs font-bold text-slate-700 hover:text-slate-950 hover:bg-slate-100 dark:text-slate-300 dark:hover:text-white dark:hover:bg-slate-800 text-left transition-colors cursor-pointer font-anthropic"
+                            >
+                              <div className="flex items-center gap-2">
+                                {experienceMode === 'easy' ? <Sparkles size={14} className="text-emerald-500" /> : <Zap size={14} className="text-blue-500" />}
+                                <span>{experienceMode === 'easy' ? 'Treci la Mod Avansat' : 'Treci la Mod Simplu'}</span>
+                              </div>
+                              <span className="text-[10px] uppercase font-data font-black px-1.5 py-0.5 rounded-[2px] bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-300 dark:border-slate-700">
+                                {experienceMode === 'easy' ? 'Easy' : 'Pro'}
+                              </span>
+                            </button>
+
+                            <button
+                              onClick={() => { setActiveSection('profil'); setIsUserMenuOpen(false); }}
+                              className="w-full flex items-center gap-2.5 px-3.5 py-2.5 rounded-[2px] text-sm font-bold text-slate-700 hover:text-slate-950 hover:bg-slate-100 dark:text-slate-300 dark:hover:text-white dark:hover:bg-slate-800 text-left transition-colors cursor-pointer font-anthropic"
+                            >
+                              <Settings size={15} className="text-slate-500 dark:text-slate-400" /> Profilul Meu
+                            </button>
+                            <button
+                              onClick={() => { setIsTutorialOpen(true); setIsUserMenuOpen(false); }}
+                              className="w-full flex items-center gap-2.5 px-3.5 py-2.5 rounded-[2px] text-sm font-bold text-slate-700 hover:text-slate-950 hover:bg-slate-100 dark:text-slate-300 dark:hover:text-white dark:hover:bg-slate-800 text-left transition-colors cursor-pointer font-anthropic"
+                            >
+                              <Compass size={15} className="text-slate-500 dark:text-slate-400" /> Redeschide Turul
+                            </button>
+                            <button
+                              onClick={onLogout}
+                              className="w-full flex items-center gap-2.5 px-3.5 py-2.5 rounded-[2px] text-sm font-bold text-rose-600 hover:text-rose-700 hover:bg-rose-50 dark:text-rose-400 dark:hover:text-rose-300 dark:hover:bg-rose-950/40 text-left transition-colors cursor-pointer font-anthropic"
+                            >
+                              <LogOut size={15} /> Deconectare
+                            </button>
+                          </motion.div>
+                        </>
+                      )}
+                    </AnimatePresence>
                   </>
-                )}
-              </AnimatePresence>
+                );
+              })()}
             </div>
           </div>
         </header>
@@ -2863,6 +3304,8 @@ export function Dashboard({ username, onLogout }: DashboardProps) {
       <PlatformTutorialModal
         isOpen={isTutorialOpen}
         onClose={handleCloseTutorial}
+        isMandatoryFirstTime={Boolean(currentUserObj && (currentUserObj.login_count === 0 || !currentUserObj.has_seen_tutorial))}
+        currentUser={currentUserObj}
       />
     </div>
   );

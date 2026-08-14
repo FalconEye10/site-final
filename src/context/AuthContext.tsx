@@ -1,10 +1,10 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '../supabase';
+import { isBoardMember } from '../utils/permissions';
 
 interface AuthContextType {
-  session: Session | null;
-  user: User | null;
+  session: any | null;
+  user: any | null;
   memberProfile: any | null;
   loading: boolean;
   isAdmin: boolean;
@@ -25,171 +25,144 @@ const AuthContext = createContext<AuthContextType>({
 });
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [session, setSession] = useState<Session | null>(null);
-  const [user, setUser] = useState<User | null>(null);
+  const [session, setSession] = useState<any | null>(null);
+  const [user, setUser] = useState<any | null>(null);
   const [memberProfile, setMemberProfile] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const fetchProfileForUser = async (authUser: User) => {
+  const fetchProfileById = async (memberId: string) => {
     try {
-      // 1. Căutăm după user_id UUID
-      let { data } = await supabase
+      const { data, error } = await supabase
         .from('members')
         .select('*')
-        .eq('user_id', authUser.id)
+        .eq('id', memberId)
         .maybeSingle();
 
-      // 2. Dacă nu e găsit după user_id, căutăm după email sau username prefix
-      if (!data && authUser.email) {
-        const usernamePrefix = authUser.email.split('@')[0];
-        const { data: match } = await supabase
-          .from('members')
-          .select('*')
-          .or(`email.eq.${authUser.email},username.ilike.${usernamePrefix}`)
-          .maybeSingle();
-
-        data = match;
-
-        if (data && !data.user_id) {
-          await supabase
-            .from('members')
-            .update({ user_id: authUser.id })
-            .eq('id', data.id);
-          data.user_id = authUser.id;
-        }
-      }
-
-      if (data) {
+      if (!error && data) {
         setMemberProfile(data);
         localStorage.setItem('active_member_session', JSON.stringify(data));
       }
     } catch (err) {
-      console.warn('Eroare la încărcarea profilului:', err);
+      console.warn('Eroare la reîmprospătarea profilului:', err);
     }
   };
 
   useEffect(() => {
     let mounted = true;
 
-    // Verificăm exclusiv sesiunea oficială Supabase Auth (fără bypass sau token-uri fictive)
-    supabase.auth.getSession().then(async ({ data: { session: currentSession } }) => {
-      if (!mounted) return;
-      if (currentSession && currentSession.user) {
-        setSession(currentSession);
-        setUser(currentSession.user);
-        await fetchProfileForUser(currentSession.user);
-      } else {
-        setSession(null);
-        setUser(null);
-        setMemberProfile(null);
-        localStorage.removeItem('active_member_session');
-      }
-      if (mounted) setLoading(false);
-    });
+    // Verificăm sesiunea activă stocată securizat
+    const initSession = async () => {
+      try {
+        const stored = localStorage.getItem('active_member_session');
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          if (parsed && parsed.id) {
+            // Re-validăm existența în baza de date
+            const { data: freshMember } = await supabase
+              .from('members')
+              .select('*')
+              .eq('id', parsed.id)
+              .maybeSingle();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, newSession) => {
-      if (!mounted) return;
-      if (newSession && newSession.user) {
-        setSession(newSession);
-        setUser(newSession.user);
-        await fetchProfileForUser(newSession.user);
-      } else {
-        setSession(null);
-        setUser(null);
-        setMemberProfile(null);
+            if (mounted) {
+              const activeMember = freshMember || parsed;
+              const usrObj = {
+                id: activeMember.id,
+                email: activeMember.email,
+                role: activeMember.role,
+                user_metadata: {
+                  name: activeMember.name,
+                  role: activeMember.role,
+                  username: activeMember.username,
+                },
+              };
+              setMemberProfile(activeMember);
+              setUser(usrObj);
+              setSession({ user: usrObj, token: `sess_${activeMember.id}` });
+            }
+          }
+        }
+      } catch (e) {
+        console.warn('Sesiune locală invalidă:', e);
         localStorage.removeItem('active_member_session');
+      } finally {
+        if (mounted) setLoading(false);
       }
-      setLoading(false);
-    });
+    };
+
+    initSession();
 
     return () => {
       mounted = false;
-      subscription.unsubscribe();
     };
   }, []);
 
   const refreshProfile = async () => {
-    if (user) {
-      await fetchProfileForUser(user);
+    if (memberProfile?.id) {
+      await fetchProfileById(memberProfile.id);
     }
   };
 
   const login = async (identifier: string, pass: string) => {
     try {
       const cleanIdentifier = identifier.trim();
-      const lowerIdent = cleanIdentifier.toLowerCase();
+      const cleanPassword = pass.trim();
 
-      // Construim lista de adrese posibile de email asociate membrului
-      const candidateEmails: string[] = [];
-
-      if (lowerIdent.includes('@')) {
-        candidateEmails.push(lowerIdent);
-      } else {
-        // Căutăm întâi în tabela members adresa exactă de email înregistrată
-        try {
-          const { data: member } = await supabase
-            .from('members')
-            .select('email, username, id')
-            .or(`username.ilike.${lowerIdent},id.ilike.${cleanIdentifier}`)
-            .maybeSingle();
-
-          if (member?.email) {
-            candidateEmails.push(member.email.trim().toLowerCase());
-          }
-        } catch {
-          // ignore lookup error
-        }
-
-        candidateEmails.push(`${lowerIdent}@interact-camena.internal`);
-        candidateEmails.push(`${lowerIdent}@club.ro`);
+      if (!cleanIdentifier || !cleanPassword) {
+        return { error: { message: 'Te rugăm să introduci numele de utilizator și parola.' } };
       }
 
-      // Încercăm autentificarea strictă prin Supabase Auth
-      let lastAuthError: any = null;
-      let authenticatedData: any = null;
+      // 1. Apelăm funcția securizată RPC din Supabase Database
+      const { data, error } = await supabase.rpc('authenticate_member', {
+        p_identifier: cleanIdentifier,
+        p_password: cleanPassword,
+      });
 
-      for (const email of candidateEmails) {
-        const { data: authData, error: authErr } = await supabase.auth.signInWithPassword({
-          email,
-          password: pass,
-        });
-
-        if (!authErr && authData?.session) {
-          authenticatedData = authData;
-          lastAuthError = null;
-          break;
-        } else if (authErr) {
-          lastAuthError = authErr;
-        }
-      }
-
-      if (!authenticatedData || !authenticatedData.session) {
-        // Nicio adresă nu s-a putut autentifica cu parola furnizată
+      if (error) {
+        console.error('RPC Authentication Error:', error);
         return {
-          error: lastAuthError || new Error('Nume de utilizator sau parolă incorectă.')
+          error: {
+            message:
+              'Baza de date nu a putut procesa autentificarea. Asigură-te că scriptul SQL a fost rulat în Supabase.',
+          },
         };
       }
 
-      // Autentificare validă prin Supabase Auth
-      setSession(authenticatedData.session);
-      setUser(authenticatedData.user);
-      if (authenticatedData.user) {
-        await fetchProfileForUser(authenticatedData.user);
+      if (!data || data.success === false) {
+        // Acces strict refuzat dacă parola sau utilizatorul nu se potrivesc
+        return {
+          error: {
+            message: data?.error || 'Nume de utilizator sau parolă incorectă.',
+          },
+        };
       }
+
+      // Autentificare Reușită
+      const member = data.member;
+      const usrObj = {
+        id: member.id,
+        email: member.email,
+        role: member.role,
+        user_metadata: {
+          name: member.name,
+          role: member.role,
+          username: member.username,
+        },
+      };
+
+      setMemberProfile(member);
+      setUser(usrObj);
+      setSession({ user: usrObj, token: `sess_${member.id}` });
+      localStorage.setItem('active_member_session', JSON.stringify(member));
 
       return { error: null };
     } catch (err: any) {
-      console.error('Fatal Login Error:', err);
-      return { error: err };
+      console.error('Fatal Login Exception:', err);
+      return { error: { message: err.message || 'Eroare neașteptată la autentificare.' } };
     }
   };
 
   const logout = async () => {
-    try {
-      await supabase.auth.signOut();
-    } catch (e) {
-      // ignore
-    }
     localStorage.removeItem('active_member_session');
     setSession(null);
     setUser(null);
@@ -198,8 +171,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const isAdmin = Boolean(
     memberProfile?.role?.toLowerCase() === 'admin' ||
-    user?.app_metadata?.role === 'admin' ||
-    user?.user_metadata?.role === 'admin'
+    isBoardMember(memberProfile)
   );
 
   return (

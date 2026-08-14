@@ -321,13 +321,13 @@ export const NotificationsDropdown: React.FC<NotificationsDropdownProps> = ({
       {/* Bell Button */}
       <button
         onClick={() => setIsOpen(v => !v)}
-        className="relative p-2 border border-white/10 text-white/60 hover:text-white hover:bg-white/5 transition-all shrink-0"
+        className="relative p-2.5 rounded-[2px] border border-slate-200 dark:border-slate-700 bg-slate-50 hover:bg-slate-100 dark:bg-slate-800/60 dark:hover:bg-slate-800 text-slate-700 hover:text-slate-950 dark:text-slate-300 dark:hover:text-white transition-all shrink-0 cursor-pointer shadow-xs"
         title="Notificări"
         aria-label="Deschide panoul de notificări"
       >
-        <Bell size={17} />
+        <Bell size={16} />
         {unreadCount > 0 && (
-          <span className="absolute -top-1 -right-1 min-w-[17px] h-[17px] px-1 rounded-full bg-rose-500 text-white text-[9px] font-black flex items-center justify-center animate-bounce shadow-md">
+          <span className="absolute -top-1 -right-1 min-w-[16px] h-[16px] px-1 rounded-[2px] bg-rose-500 text-white text-[9px] font-black flex items-center justify-center font-data shadow-xs">
             {unreadCount > 9 ? '9+' : unreadCount}
           </span>
         )}
@@ -341,15 +341,15 @@ export const NotificationsDropdown: React.FC<NotificationsDropdownProps> = ({
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -8, scale: 0.97 }}
             transition={{ duration: 0.15 }}
-            className="fixed sm:absolute inset-x-3 sm:inset-x-auto sm:right-0 top-16 sm:top-[calc(100%+0.5rem)] max-w-sm sm:w-96 rounded-2xl sm:rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden z-50 flex flex-col font-['Hanken_Grotesk'] text-slate-800 dark:text-white"
+            className="fixed sm:absolute inset-x-3 sm:inset-x-auto sm:right-0 top-16 sm:top-[calc(100%+0.5rem)] max-w-sm sm:w-96 rounded-[2px] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden z-50 flex flex-col font-anthropic text-slate-800 dark:text-white"
           >
             {/* Header */}
-            <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-100/90 dark:bg-slate-900">
+            <div className="p-3.5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-100/90 dark:bg-slate-900">
               <div className="flex items-center gap-2">
-                <div className="w-2.5 h-2.5 rounded-full bg-blue-500 shadow-sm" />
-                <h3 className="text-sm font-extrabold tracking-tight text-slate-900 dark:text-white">Centru Notificări</h3>
+                <div className="w-2 h-2 rounded-[2px] bg-blue-500 shadow-xs" />
+                <h3 className="text-xs sm:text-sm font-black tracking-tight text-slate-900 dark:text-white font-title">Centru Notificări</h3>
                 {unreadCount > 0 && (
-                  <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-blue-600 text-white shadow-sm">
+                  <span className="text-[10px] sm:text-xs font-black px-2 py-0.5 rounded-[2px] bg-blue-600 text-white shadow-xs font-data">
                     {unreadCount} noi
                   </span>
                 )}
@@ -358,23 +358,23 @@ export const NotificationsDropdown: React.FC<NotificationsDropdownProps> = ({
               {unreadCount > 0 && (
                 <button
                   onClick={markAllAsRead}
-                  className="text-[11px] font-semibold text-slate-400 hover:text-slate-700 dark:hover:text-white flex items-center gap-1 transition-colors"
+                  className="text-xs font-bold text-slate-500 hover:text-slate-900 dark:hover:text-white flex items-center gap-1 transition-colors font-title cursor-pointer uppercase tracking-wider"
                 >
-                  <CheckCheck size={13} />
+                  <CheckCheck size={14} />
                   Marchează citite
                 </button>
               )}
             </div>
 
             {/* Push Notifications Opt-in Toggle Banner */}
-            <div className="p-3 bg-slate-100/70 dark:bg-slate-950/40 border-b border-slate-200 dark:border-slate-800">
+            <div className="p-2.5 bg-slate-100/70 dark:bg-slate-950/40 border-b border-slate-200 dark:border-slate-800">
               <PushNotificationToggle memberId={currentUserId || currentUsername || 'member'} />
             </div>
 
             {/* Notification Items List */}
-            <div className="max-h-80 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800/60">
+            <div className="max-h-80 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800/60 font-anthropic">
               {notifications.length === 0 ? (
-                <div className="p-8 text-center text-slate-400 text-xs font-semibold">
+                <div className="p-8 text-center text-slate-400 text-xs sm:text-sm font-semibold">
                   Nu ai notificări noi momentan.
                 </div>
               ) : (
@@ -384,34 +384,34 @@ export const NotificationsDropdown: React.FC<NotificationsDropdownProps> = ({
                     <div
                       key={item.id}
                       onClick={() => handleNotificationClick(item)}
-                      className={`p-4 transition-colors cursor-pointer flex items-start gap-3 hover:bg-slate-50 dark:hover:bg-white/5 ${
+                      className={`p-3.5 transition-colors cursor-pointer flex items-start gap-3 hover:bg-slate-50 dark:hover:bg-white/5 ${
                         isUnread ? 'bg-blue-50/40 dark:bg-blue-950/20' : ''
                       }`}
                     >
-                      <div className="w-8 h-8 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center shrink-0 mt-0.5">
+                      <div className="w-8 h-8 rounded-[2px] bg-slate-100 dark:bg-slate-800 flex items-center justify-center shrink-0 mt-0.5">
                         {getIcon(item.type)}
                       </div>
 
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between gap-1">
-                          <h4 className={`text-xs font-bold truncate ${isUnread ? 'text-blue-900 dark:text-blue-200' : 'text-slate-900 dark:text-white'}`}>
+                          <h4 className={`text-xs sm:text-sm font-bold truncate font-title ${isUnread ? 'text-blue-900 dark:text-blue-200' : 'text-slate-900 dark:text-white'}`}>
                             {item.title}
                           </h4>
                           {isUnread && (
-                            <span className="w-2 h-2 rounded-full bg-blue-600 shrink-0" />
+                            <span className="w-2 h-2 rounded-[2px] bg-blue-600 shrink-0" />
                           )}
                         </div>
 
-                        <p className="text-[11px] text-slate-500 dark:text-slate-400 font-['Manrope'] line-clamp-2 mt-0.5">
+                        <p className="text-xs text-slate-600 dark:text-slate-400 font-anthropic line-clamp-2 mt-0.5">
                           {item.description}
                         </p>
 
-                        <div className="flex items-center justify-between mt-2 pt-1 text-[10px] text-slate-400">
-                          <span>
+                        <div className="flex items-center justify-between mt-1.5 pt-1 text-xs text-slate-400">
+                          <span className="font-data">
                             {item.timestamp ? new Date(item.timestamp).toLocaleDateString('ro-RO', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : 'Recent'}
                           </span>
-                          <span className="font-bold text-blue-600 dark:text-blue-400 flex items-center gap-0.5">
-                            Vezi <ChevronRight size={10} />
+                          <span className="font-bold text-blue-600 dark:text-blue-400 flex items-center gap-0.5 font-title">
+                            Vezi <ChevronRight size={12} />
                           </span>
                         </div>
                       </div>

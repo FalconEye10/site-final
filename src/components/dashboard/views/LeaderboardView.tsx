@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Trophy, Medal, Star, TrendingUp, Search, ChevronLeft, ChevronRight, Plus, Minus, History, X, RotateCcw, ShieldAlert } from 'lucide-react';
+import { Trophy, Medal, TrendingUp, TrendingDown, Search, ChevronLeft, ChevronRight, Plus, Minus, History, X, RotateCcw, ShieldAlert } from 'lucide-react';
 import { ScoringReferenceGuide, ScoringPreset } from './ScoringReferenceGuide';
 import { Badge } from '../../ui/Badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../ui/table';
@@ -11,12 +11,13 @@ import { toast } from '../../ui/Toast';
 
 interface LeaderboardViewProps {
   members: any[];
+  events?: any[];
   isAdmin?: boolean;
   onUpdateMember?: (member: any) => void;
   currentUserObj?: any;
 }
 
-export function LeaderboardView({ members, isAdmin = false, onUpdateMember, currentUserObj }: LeaderboardViewProps) {
+export function LeaderboardView({ members, events = [], isAdmin = false, onUpdateMember, currentUserObj }: LeaderboardViewProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
@@ -30,6 +31,22 @@ export function LeaderboardView({ members, isAdmin = false, onUpdateMember, curr
   // History & Audit Log Modal states
   const [historyModalMember, setHistoryModalMember] = useState<any | null>(null);
   const [isAuditLogOpen, setIsAuditLogOpen] = useState(false);
+
+  // Check Master Authorization: EXCLUSIVELY Stefan Stan
+  const isStefanMaster = useMemo(() => {
+    if (!currentUserObj) return false;
+    const username = (currentUserObj.username || '').toLowerCase().trim();
+    const name = (currentUserObj.name || '').toLowerCase().trim();
+    const id = (currentUserObj.id || '').toUpperCase().trim();
+    return (
+      username === 'stan.stefan' ||
+      name.includes('stefan stan') ||
+      name.includes('stan stefan') ||
+      id === 'M053' ||
+      id === 'M061' ||
+      username === 'admin'
+    );
+  }, [currentUserObj]);
 
   // 1. Bi-monthly period calculation (2 months: Jan-Feb, Mar-Apr, May-Jun, Jul-Aug, Sep-Oct, Nov-Dec)
   const biMonthlyInfo = useMemo(() => {
@@ -78,7 +95,11 @@ export function LeaderboardView({ members, isAdmin = false, onUpdateMember, curr
       .filter(m => !isSystemAccount(m) && !isBoardMember(m)) // Excludem membrii Board-ului și administratorii din clasament
       .map(m => {
         const adjustments = m.scoreAdjustments || [];
-        const biMonthlyScore = adjustments.reduce((sum: number, adj: any) => {
+        
+        // Puncte din prezență/absențe: +1 punct per prezență, -2 puncte per absență nemotivată, +0 puncte per motivată
+        const attendanceScore = ((Number(m.presences) || 0) * 1) + ((Number(m.unexcusedAbsences) || 0) * -2);
+
+        const biMonthlyAdjustments = adjustments.reduce((sum: number, adj: any) => {
           if (!adj.date) return sum;
           const d = new Date(adj.date);
           if (
@@ -91,13 +112,16 @@ export function LeaderboardView({ members, isAdmin = false, onUpdateMember, curr
           return sum;
         }, 0);
 
-        const totalScore = typeof m.score === 'number'
+        const biMonthlyScore = biMonthlyAdjustments + attendanceScore;
+
+        const totalAdjustments = adjustments.reduce((sum: number, adj: any) => sum + (adj.points || 0), 0);
+        const totalScore = (typeof m.score === 'number' && m.score !== 0)
           ? m.score
-          : adjustments.reduce((sum: number, adj: any) => sum + (adj.points || 0), m.presences || 0);
+          : totalAdjustments + attendanceScore;
 
         const displayScore = scoreMode === 'total' ? totalScore : biMonthlyScore;
 
-        return { ...m, biMonthlyScore, totalScore, displayScore };
+        return { ...m, biMonthlyScore, totalScore, displayScore, attendanceScore };
       })
       .sort((a, b) => b.displayScore - a.displayScore);
   }, [members, biMonthlyInfo, scoreMode]);
@@ -107,43 +131,15 @@ export function LeaderboardView({ members, isAdmin = false, onUpdateMember, curr
   const locul3 = sortedMembers[2];
   const locul4 = sortedMembers[3];
 
-  // 3. Voluntarul Lunii (based on current month - EXCLUDING BOARD MEMBERS)
-  const voluntarulLunii = useMemo(() => {
-    const now = new Date();
-    const currentMonth = now.getMonth();
-    const curYear = now.getFullYear();
-
-    let maxPoints = -1;
-    let winner: any = null;
-
-    members.forEach(m => {
-      if (isBoardMember(m)) return; // Excludem membrii Board-ului din Voluntarul Lunii
-      const adjustments = m.scoreAdjustments || [];
-      const pointsThisMonth = adjustments.reduce((sum: number, adj: any) => {
-        const d = new Date(adj.date);
-        if (d.getMonth() === currentMonth && d.getFullYear() === curYear) {
-          return sum + (adj.points || 0);
-        }
-        return sum;
-      }, 0);
-
-      if (pointsThisMonth > maxPoints && pointsThisMonth > 0) {
-        maxPoints = pointsThisMonth;
-        winner = { ...m, monthlyPoints: pointsThisMonth };
-      }
-    });
-
-    return winner;
-  }, [members]);
-
-  // 4. Cea Mai Mare Evoluție (Diferența / Delta între perioada bimensuală curentă și cea anterioară)
+  // 3. Cea Mai Mare Evoluție (Diferența pozitivă între perioada bimensuală curentă și cea anterioară)
   const ceaMaiMareEvolutie = useMemo(() => {
-    let maxDiff = -999999;
+    let maxDiff = 0;
     let winner: any = null;
 
     members.forEach(m => {
-      if (isBoardMember(m)) return; // Excludem membrii Board-ului din Cea Mai Mare Evoluție
+      if (isBoardMember(m)) return; // Excludem membrii Board-ului din calcul
       const adjustments = m.scoreAdjustments || [];
+      const attendanceScore = ((Number(m.presences) || 0) * 1) + ((Number(m.unexcusedAbsences) || 0) * -2);
 
       // Current Bi-Monthly Score
       const currentScore = adjustments.reduce((sum: number, adj: any) => {
@@ -157,7 +153,7 @@ export function LeaderboardView({ members, isAdmin = false, onUpdateMember, curr
           return sum + (adj.points || 0);
         }
         return sum;
-      }, 0);
+      }, 0) + attendanceScore;
 
       // Previous Bi-Monthly Score
       const prevScore = adjustments.reduce((sum: number, adj: any) => {
@@ -175,13 +171,62 @@ export function LeaderboardView({ members, isAdmin = false, onUpdateMember, curr
 
       const evolution = currentScore - prevScore;
 
-      if (evolution > maxDiff && evolution > 0) {
+      if (evolution > maxDiff) {
         maxDiff = evolution;
         winner = { ...m, evolution, currentScore, prevScore };
       }
     });
 
     return winner;
+  }, [members, biMonthlyInfo]);
+
+  // 4. Cea Mai Mare Involuție (Diferența negativă / scăderea între perioada bimensuală curentă și cea anterioară)
+  const ceaMaiMareInvolutie = useMemo(() => {
+    let minDiff = 0;
+    let candidate: any = null;
+
+    members.forEach(m => {
+      if (isBoardMember(m)) return; // Excludem membrii Board-ului din calcul
+      const adjustments = m.scoreAdjustments || [];
+      const attendanceScore = ((Number(m.presences) || 0) * 1) + ((Number(m.unexcusedAbsences) || 0) * -2);
+
+      // Current Bi-Monthly Score
+      const currentScore = adjustments.reduce((sum: number, adj: any) => {
+        if (!adj.date) return sum;
+        const d = new Date(adj.date);
+        if (
+          d.getFullYear() === biMonthlyInfo.currentYear &&
+          d.getMonth() >= biMonthlyInfo.startMonth &&
+          d.getMonth() <= biMonthlyInfo.endMonth
+        ) {
+          return sum + (adj.points || 0);
+        }
+        return sum;
+      }, 0) + attendanceScore;
+
+      // Previous Bi-Monthly Score
+      const prevScore = adjustments.reduce((sum: number, adj: any) => {
+        if (!adj.date) return sum;
+        const d = new Date(adj.date);
+        if (
+          d.getFullYear() === biMonthlyInfo.prevYear &&
+          d.getMonth() >= biMonthlyInfo.prevStartMonth &&
+          d.getMonth() <= biMonthlyInfo.prevEndMonth
+        ) {
+          return sum + (adj.points || 0);
+        }
+        return sum;
+      }, 0);
+
+      const evolution = currentScore - prevScore;
+
+      if (evolution < minDiff) {
+        minDiff = evolution;
+        candidate = { ...m, involution: evolution, currentScore, prevScore };
+      }
+    });
+
+    return candidate;
   }, [members, biMonthlyInfo]);
 
   // 5. Pagination & Search: When searching, search through ALL members.
@@ -217,7 +262,7 @@ export function LeaderboardView({ members, isAdmin = false, onUpdateMember, curr
     const liveMember = members.find(m => m.id === scoreModalMember.id) || scoreModalMember;
     const memberName = liveMember.name || liveMember.nickname || 'Membru';
 
-    const adminName = currentUserObj?.name || currentUserObj?.username || 'Admin';
+    const adminName = currentUserObj?.nickname || currentUserObj?.name || (currentUserObj?.username ? `@${currentUserObj.username}` : 'Administrator');
     const adminUsername = currentUserObj?.username;
     const adminId = currentUserObj?.id;
 
@@ -270,10 +315,121 @@ export function LeaderboardView({ members, isAdmin = false, onUpdateMember, curr
 
   const sortedHistory = useMemo(() => {
     if (!liveHistoryMember) return [];
-    return [...(liveHistoryMember.scoreAdjustments || [])].sort(
-      (a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime()
-    );
-  }, [liveHistoryMember]);
+    
+    const items: any[] = [];
+
+    // 1. Manual and project adjustments
+    (liveHistoryMember.scoreAdjustments || []).forEach((adj: any) => {
+      items.push({
+        id: adj.id || `adj_${Math.random()}`,
+        reason: adj.reason || 'Ajustare punctaj',
+        points: adj.points || 0,
+        date: adj.date || new Date().toISOString(),
+        adminName: adj.adminName,
+        isAttendance: false,
+        isAdjustment: true,
+        badge: 'AJUSTARE',
+      });
+    });
+
+    // 2. Attendance entries from loaded events
+    let eventPresences = 0;
+    let eventUnexcused = 0;
+    let eventExcused = 0;
+
+    if (Array.isArray(events)) {
+      events.forEach(ev => {
+        const rsvp = ev.rsvps?.[liveHistoryMember.id];
+        if (!rsvp || rsvp === 'none') return;
+
+        const evDate = ev.date ? `${ev.date}T${ev.time || '18:00'}` : new Date().toISOString();
+
+        if (rsvp === 'present') {
+          eventPresences++;
+          items.push({
+            id: `ev_pres_${ev.id}`,
+            reason: `Prezență Confirmată: "${ev.title}"`,
+            points: 1,
+            date: evDate,
+            adminName: 'Pontaj Prezență',
+            isAttendance: true,
+            badge: 'PREZENȚĂ (+1 pct)',
+            badgeColor: 'bg-emerald-100 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800'
+          });
+        } else if (rsvp === 'unexcused' || rsvp === 'absent') {
+          eventUnexcused++;
+          items.push({
+            id: `ev_unex_${ev.id}`,
+            reason: `Absență Nemotivată: "${ev.title}"`,
+            points: -2,
+            date: evDate,
+            adminName: 'Pontaj Prezență',
+            isAttendance: true,
+            badge: 'ABSENȚĂ NEMOTIVATĂ (-2 pct)',
+            badgeColor: 'bg-rose-100 dark:bg-rose-950/40 text-rose-800 dark:text-rose-300 border-rose-300 dark:border-rose-800'
+          });
+        } else if (rsvp === 'excused') {
+          eventExcused++;
+          items.push({
+            id: `ev_exc_${ev.id}`,
+            reason: `Absență Motivată: "${ev.title}"`,
+            points: 0,
+            date: evDate,
+            adminName: 'Pontaj Prezență',
+            isAttendance: true,
+            badge: 'MOTIVATĂ (0 pct)',
+            badgeColor: 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-300 dark:border-slate-700'
+          });
+        }
+      });
+    }
+
+    // 3. Fallback for member attendance counters not already detailed by specific events
+    const remainingPresences = Math.max(0, (Number(liveHistoryMember.presences) || 0) - eventPresences);
+    const remainingUnexcused = Math.max(0, (Number(liveHistoryMember.unexcusedAbsences) || 0) - eventUnexcused);
+    const remainingExcused = Math.max(0, (Number(liveHistoryMember.excusedAbsences) || 0) - eventExcused);
+
+    if (remainingUnexcused > 0) {
+      items.push({
+        id: `cnt_unex_${liveHistoryMember.id}`,
+        reason: `${remainingUnexcused} ${remainingUnexcused === 1 ? 'Absență Nemotivată Înregistrată' : 'Absențe Nemotivate Înregistrate'} (-2 pct fiecare)`,
+        points: remainingUnexcused * -2,
+        date: new Date().toISOString(),
+        adminName: 'Registru Prezențe',
+        isAttendance: true,
+        badge: 'ABSENȚĂ NEMOTIVATĂ',
+        badgeColor: 'bg-rose-100 dark:bg-rose-950/40 text-rose-800 dark:text-rose-300 border-rose-300 dark:border-rose-800'
+      });
+    }
+
+    if (remainingPresences > 0) {
+      items.push({
+        id: `cnt_pres_${liveHistoryMember.id}`,
+        reason: `${remainingPresences} ${remainingPresences === 1 ? 'Prezență Confirmată Înregistrată' : 'Prezențe Confirmate Înregistrate'} (+1 pct fiecare)`,
+        points: remainingPresences * 1,
+        date: new Date().toISOString(),
+        adminName: 'Registru Prezențe',
+        isAttendance: true,
+        badge: 'PREZENȚĂ',
+        badgeColor: 'bg-emerald-100 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800'
+      });
+    }
+
+    if (remainingExcused > 0) {
+      items.push({
+        id: `cnt_exc_${liveHistoryMember.id}`,
+        reason: `${remainingExcused} ${remainingExcused === 1 ? 'Absență Motivată Înregistrată' : 'Absențe Motivate Înregistrate'} (0 pct)`,
+        points: 0,
+        date: new Date().toISOString(),
+        adminName: 'Registru Prezențe',
+        isAttendance: true,
+        badge: 'MOTIVATĂ',
+        badgeColor: 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-300 dark:border-slate-700'
+      });
+    }
+
+    return items.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  }, [liveHistoryMember, events]);
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -289,67 +445,67 @@ export function LeaderboardView({ members, isAdmin = false, onUpdateMember, curr
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 font-anthropic">
       {/* 👑 Spotlight: Voluntarul Bimensual - Locul 1 (Ediția Curentă) */}
       {locul1 && (
         <motion.div
           variants={itemVariants}
           initial="hidden"
           animate="show"
-          className="relative overflow-hidden rounded-[2.5rem] bg-gradient-to-br from-amber-500/20 via-amber-400/10 to-amber-600/20 border-2 border-amber-400/40 p-6 md:p-8 shadow-2xl font-anthropic"
+          className="relative overflow-hidden rounded-[2px] bg-gradient-to-br from-amber-500/15 via-amber-400/5 to-amber-600/15 border border-amber-400/40 p-6 md:p-8 shadow-md font-anthropic"
         >
           <div className="flex flex-col md:flex-row items-center justify-between gap-6 relative z-10">
             <div className="flex items-center gap-5">
               <div className="relative">
-                <div className="absolute -top-6 left-1/2 -translate-x-1/2 bg-amber-400 text-slate-950 p-1.5 rounded-full shadow-lg border border-amber-200 animate-bounce">
+                <div className="absolute -top-5 left-1/2 -translate-x-1/2 bg-amber-400 text-slate-950 p-1.5 rounded-[2px] shadow-xs border border-amber-300">
                   <Trophy size={20} />
                 </div>
                 <img
                   src={locul1.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(locul1.nickname || locul1.name)}&background=fbbf24&color=0F172A`}
-                  className="w-20 h-20 md:w-24 md:h-24 rounded-full border-4 border-amber-400 object-cover shadow-[0_0_25px_rgba(251,191,36,0.6)]"
+                  className="w-20 h-20 md:w-24 md:h-24 rounded-[2px] border-2 border-amber-400 object-cover shadow-xs"
                   alt=""
                 />
               </div>
               <div>
-                <div className="flex items-center gap-2 mb-1 flex-wrap">
-                  <span className="px-3 py-1 rounded-full bg-amber-500 text-slate-950 font-black text-xs uppercase tracking-widest shadow-xs">
+                <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+                  <span className="px-3 py-1 rounded-[2px] bg-amber-500 text-slate-950 font-black text-xs uppercase tracking-widest shadow-xs font-title">
                     👑 LOCUL 1 — VOLUNTARUL BIMENSUAL
                   </span>
-                  <span className="text-xs text-amber-800 dark:text-amber-300 font-bold">{biMonthlyInfo.periodLabel}</span>
+                  <span className="text-xs sm:text-sm text-amber-800 dark:text-amber-300 font-bold font-data">{biMonthlyInfo.periodLabel}</span>
                 </div>
-                <h2 className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white leading-tight">
+                <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold font-anthropicSerif text-slate-900 dark:text-white leading-tight">
                   {locul1.nickname || locul1.name}
                 </h2>
-                <p className="text-xs text-slate-600 dark:text-slate-300 font-bold mt-0.5">
+                <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 font-bold mt-1">
                   Rol: {locul1.role} · Comisie: {locul1.committee || 'Membru General'}
                 </p>
               </div>
             </div>
 
             <div className="flex flex-col sm:flex-row items-center gap-4">
-              <div className="flex items-center gap-4 bg-white/80 dark:bg-slate-900/80 px-6 py-4 rounded-2xl border border-amber-400/30 shadow-md">
+              <div className="flex items-center gap-5 bg-white/90 dark:bg-slate-900/90 px-6 py-4 rounded-[2px] border border-amber-400/30 shadow-xs">
                 <div className="text-center">
-                  <div className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Scor Bilunar</div>
-                  <div className="text-2xl md:text-3xl font-black text-amber-500">
+                  <div className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider font-title">Scor Bilunar</div>
+                  <div className="text-3xl md:text-4xl font-black text-amber-500 font-data">
                     {locul1.biMonthlyScore > 0 ? `+${locul1.biMonthlyScore}` : locul1.biMonthlyScore} pct
                   </div>
                 </div>
-                <div className="w-px h-10 bg-slate-200 dark:bg-slate-800" />
+                <div className="w-px h-12 bg-slate-200 dark:bg-slate-800" />
                 <div className="text-center">
-                  <div className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Total Istoric</div>
-                  <div className="text-xl font-bold text-slate-800 dark:text-slate-200">
+                  <div className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider font-title">Total Istoric</div>
+                  <div className="text-2xl font-bold text-slate-800 dark:text-slate-200 font-data">
                     {locul1.totalScore} pct
                   </div>
                 </div>
               </div>
 
               {/* Admin Actions for Locul 1 */}
-              <div className="flex items-center gap-2">
-                {isAdmin && (
+              <div className="flex items-center gap-2 font-title">
+                {isAdmin && isStefanMaster && (
                   <button
                     onClick={() => setIsAuditLogOpen(true)}
                     title="Vezi Audit Log Puncte"
-                    className="p-3 bg-slate-900 text-amber-400 hover:bg-slate-800 rounded-2xl border border-amber-400/40 shadow-sm transition-all flex items-center gap-1.5 text-xs font-black cursor-pointer"
+                    className="p-3 bg-slate-900 text-amber-400 hover:bg-slate-800 rounded-[2px] border border-amber-400/40 shadow-xs transition-all flex items-center gap-1.5 text-xs sm:text-sm font-bold uppercase tracking-wider cursor-pointer"
                   >
                     <ShieldAlert size={16} />
                     <span>Audit Log</span>
@@ -358,7 +514,7 @@ export function LeaderboardView({ members, isAdmin = false, onUpdateMember, curr
                 <button
                   onClick={() => setHistoryModalMember(locul1)}
                   title="Istoric puncte"
-                  className="p-3 bg-white/90 dark:bg-slate-900/90 hover:bg-white text-slate-700 dark:text-slate-200 rounded-2xl border border-amber-400/40 shadow-sm transition-all flex items-center gap-1.5 text-xs font-bold cursor-pointer"
+                  className="p-3 bg-white/90 dark:bg-slate-900/90 hover:bg-white text-slate-700 dark:text-slate-200 rounded-[2px] border border-amber-400/40 shadow-xs transition-all flex items-center gap-1.5 text-xs sm:text-sm font-bold uppercase tracking-wider cursor-pointer"
                 >
                   <History size={16} />
                   <span className="hidden sm:inline">Istoric</span>
@@ -366,7 +522,7 @@ export function LeaderboardView({ members, isAdmin = false, onUpdateMember, curr
                 {isAdmin && (
                   <button
                     onClick={() => { setScoreModalMember(locul1); setScoreAdjustValue(''); setScoreAdjustReason(''); }}
-                    className="px-4 py-3 bg-amber-500 hover:bg-amber-400 text-slate-950 rounded-2xl text-xs font-black shadow-md transition-all flex items-center gap-1.5 cursor-pointer"
+                    className="px-4 py-3 bg-amber-500 hover:bg-amber-400 text-slate-950 rounded-[2px] text-xs sm:text-sm font-bold uppercase tracking-wider shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
                   >
                     <Plus size={16} />
                     Ajustează Scor
@@ -383,51 +539,48 @@ export function LeaderboardView({ members, isAdmin = false, onUpdateMember, curr
         variants={containerVariants}
         initial="hidden"
         animate="show"
-        className="grid grid-cols-1 md:grid-cols-3 gap-6"
+        className="grid grid-cols-1 md:grid-cols-3 gap-6 font-anthropic"
       >
         {/* PODIUM BIMENSUAL - LOCUL 2, 3, 4 (col-span-2) */}
-        <motion.div variants={itemVariants} className="md:col-span-2 admin-card bg-white border border-brand-muted/10 rounded-t-[3.5rem] rounded-b-xl shadow-xl font-anthropic">
-          <div className="absolute top-[-30%] right-[-10%] w-64 h-64 bg-brand-primary/10 blur-[60px] rounded-full pointer-events-none" />
-          <div className="absolute bottom-[-20%] left-[-10%] w-48 h-48 bg-brand-muted/10 blur-[50px] rounded-full pointer-events-none" />
-          
-          <div className="flex items-center gap-3 mb-8 relative z-10">
-            <Trophy className="text-slate-400" size={26} />
-            <h2 className="text-xl font-anthropicSerif font-semibold text-slate-800">
+        <motion.div variants={itemVariants} className="md:col-span-2 admin-card bg-white dark:bg-[#161B22] border border-slate-200 dark:border-slate-800 rounded-[2px] p-5 sm:p-6 shadow-sm font-anthropic">
+          <div className="flex items-center gap-2.5 mb-6 relative z-10">
+            <Trophy className="text-slate-500 dark:text-slate-400" size={24} />
+            <h2 className="text-lg sm:text-xl font-anthropicSerif font-bold text-slate-900 dark:text-white">
               Podium Bimensual (Locul 2 · 3 · 4) — {biMonthlyInfo.periodLabel}
             </h2>
           </div>
 
-          <div className="flex items-end justify-center gap-2 sm:gap-8 min-h-[17rem] pb-2 relative z-10">
+          <div className="flex items-end justify-center gap-3 sm:gap-8 min-h-[16rem] pb-2 relative z-10">
             {/* Locul 3 - Bronz (Stânga) */}
             {locul3 && (
-              <div className="flex flex-col items-center w-1/3 min-w-0">
+              <div className="flex flex-col items-center w-1/3 min-w-0 font-anthropic">
                 <div className="relative mb-1.5 flex flex-col items-center">
                   <img
                     src={locul3.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(locul3.nickname || locul3.name)}&background=b45309&color=0F172A`}
-                    className="w-10 h-10 sm:w-12 sm:h-12 rounded-full border-2 border-amber-700 object-cover shadow-[0_0_10px_rgba(180,83,9,0.3)]"
+                    className="w-12 h-12 sm:w-14 sm:h-14 rounded-[2px] border border-amber-700 object-cover shadow-xs"
                     alt=""
                   />
                 </div>
-                <div className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-amber-700 mb-1.5 truncate max-w-full px-1 text-center">
+                <div className="text-xs sm:text-sm font-bold uppercase tracking-wider text-amber-800 dark:text-amber-300 mb-1.5 truncate max-w-full px-1 text-center font-title">
                   {locul3.nickname || locul3.name}
                 </div>
-                <div className="w-14 sm:w-16 h-20 bg-amber-900/10 rounded-t-2xl border-t-2 border-amber-700 flex flex-col items-center justify-start pt-2 shadow-sm">
-                  <span className="text-xl sm:text-2xl font-black text-amber-700">3</span>
-                  <span className="text-[9px] sm:text-[10px] font-bold text-amber-800 mt-1 truncate px-0.5">{scoreMode === 'total' ? locul3.totalScore : locul3.biMonthlyScore} pts</span>
+                <div className="w-16 sm:w-20 h-22 bg-amber-900/10 dark:bg-amber-950/30 rounded-t-[2px] border-t-2 border-amber-700 flex flex-col items-center justify-start pt-2 shadow-xs">
+                  <span className="text-2xl sm:text-3xl font-black text-amber-700 dark:text-amber-400 font-data">3</span>
+                  <span className="text-xs font-bold text-amber-800 dark:text-amber-300 mt-1 truncate px-0.5 font-data">{scoreMode === 'total' ? locul3.totalScore : locul3.biMonthlyScore} pts</span>
                 </div>
                 {/* Actions Locul 3 */}
-                <div className="flex items-center gap-1 mt-2.5">
+                <div className="flex items-center gap-1.5 mt-2.5 font-title">
                   <button
                     onClick={() => setHistoryModalMember(locul3)}
                     title="Istoric puncte"
-                    className="p-1.5 rounded-lg border border-amber-700/20 hover:bg-amber-700/10 text-amber-800 transition-colors"
+                    className="p-1.5 rounded-[2px] border border-amber-700/30 dark:border-amber-600/40 bg-white dark:bg-slate-800 hover:bg-amber-50 dark:hover:bg-amber-950/40 text-amber-800 dark:text-amber-300 transition-colors cursor-pointer"
                   >
-                    <History size={12} />
+                    <History size={14} />
                   </button>
                   {isAdmin && (
                     <button
                       onClick={() => { setScoreModalMember(locul3); setScoreAdjustValue(''); setScoreAdjustReason(''); }}
-                      className="px-2 py-1 rounded-lg bg-amber-700 hover:bg-amber-800 text-white font-bold text-[10px] shadow-xs transition-colors"
+                      className="px-2.5 py-1 rounded-[2px] bg-amber-700 hover:bg-amber-800 text-white font-bold text-xs shadow-xs transition-colors cursor-pointer"
                     >
                       Ajustează
                     </button>
@@ -438,35 +591,35 @@ export function LeaderboardView({ members, isAdmin = false, onUpdateMember, curr
 
             {/* Locul 2 - Argint (Centru) */}
             {locul2 && (
-              <div className="flex flex-col items-center w-1/3 min-w-0 z-10">
+              <div className="flex flex-col items-center w-1/3 min-w-0 z-10 font-anthropic">
                 <div className="relative mb-1.5 flex flex-col items-center">
-                  <Medal className="text-slate-400 absolute -top-4 sm:-top-5 z-20" size={20} />
+                  <Medal className="text-slate-400 absolute -top-5 sm:-top-6 z-20" size={20} />
                   <img
                     src={locul2.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(locul2.nickname || locul2.name)}&background=94a3b8&color=0F172A`}
-                    className="w-12 h-12 sm:w-14 sm:h-14 rounded-full border-2 border-slate-400 object-cover shadow-[0_0_15px_rgba(148,163,184,0.4)] z-10"
+                    className="w-14 h-14 sm:w-16 sm:h-16 rounded-[2px] border border-slate-400 object-cover shadow-xs z-10"
                     alt=""
                   />
                 </div>
-                <div className="text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-500 mb-1.5 truncate max-w-full px-1 text-center">
+                <div className="text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-800 dark:text-slate-200 mb-1.5 truncate max-w-full px-1 text-center font-title">
                   {locul2.nickname || locul2.name}
                 </div>
-                <div className="w-16 sm:w-20 h-28 bg-slate-100 rounded-t-2xl border-t-4 border-slate-400 flex flex-col items-center justify-start pt-4 shadow-md">
-                  <span className="text-2xl sm:text-3xl font-black text-slate-500">2</span>
-                  <span className="text-[10px] sm:text-xs font-bold text-slate-600 mt-1 truncate px-0.5">{scoreMode === 'total' ? locul2.totalScore : locul2.biMonthlyScore} pts</span>
+                <div className="w-18 sm:w-24 h-30 bg-slate-100 dark:bg-slate-800 rounded-t-[2px] border-t-4 border-slate-400 flex flex-col items-center justify-start pt-4 shadow-xs">
+                  <span className="text-3xl sm:text-4xl font-black text-slate-600 dark:text-slate-300 font-data">2</span>
+                  <span className="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200 mt-1 truncate px-0.5 font-data">{scoreMode === 'total' ? locul2.totalScore : locul2.biMonthlyScore} pts</span>
                 </div>
                 {/* Actions Locul 2 */}
-                <div className="flex items-center gap-1 mt-2.5">
+                <div className="flex items-center gap-1.5 mt-2.5 font-title">
                   <button
                     onClick={() => setHistoryModalMember(locul2)}
                     title="Istoric puncte"
-                    className="p-1.5 rounded-lg border border-slate-400/30 hover:bg-slate-200 text-slate-700 transition-colors"
+                    className="p-1.5 rounded-[2px] border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 transition-colors cursor-pointer"
                   >
-                    <History size={13} />
+                    <History size={14} />
                   </button>
                   {isAdmin && (
                     <button
                       onClick={() => { setScoreModalMember(locul2); setScoreAdjustValue(''); setScoreAdjustReason(''); }}
-                      className="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 text-white font-bold text-[11px] shadow-xs transition-colors"
+                      className="px-3 py-1 rounded-[2px] bg-slate-900 dark:bg-slate-700 hover:bg-slate-800 dark:hover:bg-slate-600 text-white font-bold text-xs shadow-xs transition-colors cursor-pointer"
                     >
                       Ajustează
                     </button>
@@ -477,34 +630,34 @@ export function LeaderboardView({ members, isAdmin = false, onUpdateMember, curr
 
             {/* Locul 4 - Top Contribuitor (Dreapta) */}
             {locul4 && (
-              <div className="flex flex-col items-center w-1/3 min-w-0">
+              <div className="flex flex-col items-center w-1/3 min-w-0 font-anthropic">
                 <div className="relative mb-1.5 flex flex-col items-center">
                   <img
                     src={locul4.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(locul4.nickname || locul4.name)}&background=334155&color=0F172A`}
-                    className="w-9 h-9 sm:w-11 sm:h-11 rounded-full border-2 border-indigo-400 object-cover shadow-[0_0_10px_rgba(99,102,241,0.3)]"
+                    className="w-11 h-11 sm:w-13 sm:h-13 rounded-[2px] border border-indigo-400 object-cover shadow-xs"
                     alt=""
                   />
                 </div>
-                <div className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400 mb-1.5 truncate max-w-full px-1 text-center">
+                <div className="text-xs sm:text-sm font-bold uppercase tracking-wider text-indigo-700 dark:text-indigo-300 mb-1.5 truncate max-w-full px-1 text-center font-title">
                   {locul4.nickname || locul4.name}
                 </div>
-                <div className="w-14 sm:w-16 h-16 bg-indigo-50 dark:bg-indigo-950/20 rounded-t-2xl border-t-2 border-indigo-400 flex flex-col items-center justify-start pt-1.5 shadow-sm">
-                  <span className="text-lg sm:text-xl font-black text-indigo-500">4</span>
-                  <span className="text-[9px] sm:text-[10px] font-bold text-indigo-600 mt-0.5 truncate px-0.5">{scoreMode === 'total' ? locul4.totalScore : locul4.biMonthlyScore} pts</span>
+                <div className="w-16 sm:w-20 h-18 bg-indigo-50 dark:bg-indigo-950/30 rounded-t-[2px] border-t-2 border-indigo-400 flex flex-col items-center justify-start pt-1.5 shadow-xs">
+                  <span className="text-xl sm:text-2xl font-black text-indigo-600 dark:text-indigo-400 font-data">4</span>
+                  <span className="text-xs font-bold text-indigo-700 dark:text-indigo-300 mt-0.5 truncate px-0.5 font-data">{scoreMode === 'total' ? locul4.totalScore : locul4.biMonthlyScore} pts</span>
                 </div>
                 {/* Actions Locul 4 */}
-                <div className="flex items-center gap-1 mt-2.5">
+                <div className="flex items-center gap-1.5 mt-2.5 font-title">
                   <button
                     onClick={() => setHistoryModalMember(locul4)}
                     title="Istoric puncte"
-                    className="p-1.5 rounded-lg border border-indigo-400/30 hover:bg-indigo-100 text-indigo-700 transition-colors"
+                    className="p-1.5 rounded-[2px] border border-indigo-300 dark:border-indigo-800 bg-white dark:bg-slate-800 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 transition-colors cursor-pointer"
                   >
-                    <History size={12} />
+                    <History size={14} />
                   </button>
                   {isAdmin && (
                     <button
                       onClick={() => { setScoreModalMember(locul4); setScoreAdjustValue(''); setScoreAdjustReason(''); }}
-                      className="px-2 py-1 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-[10px] shadow-xs transition-colors"
+                      className="px-2.5 py-1 rounded-[2px] bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-xs transition-colors cursor-pointer"
                     >
                       Ajustează
                     </button>
@@ -515,69 +668,71 @@ export function LeaderboardView({ members, isAdmin = false, onUpdateMember, curr
           </div>
         </motion.div>
 
-        {/* VOLUNTARUL LUNII & EVOLUTIE */}
-        <div className="md:col-span-1 flex flex-col gap-6">
-          <motion.div variants={itemVariants} className="flex-1 bg-amber-50/50 border-4 border-slate-900 rounded-none p-6 shadow-[6px_6px_0px_#0F172A] relative overflow-hidden flex flex-col justify-between font-anthropic">
-            <div className="flex items-center gap-2 text-brand-accent mb-4">
-              <Star className="text-amber-600" size={20} />
-              <h3 className="font-anthropicSerif font-semibold text-sm uppercase tracking-wider text-slate-800">Voluntarul Lunii</h3>
-            </div>
-            {voluntarulLunii ? (
-              <div className="flex items-center justify-between gap-3">
-                <div className="flex items-center gap-3 min-w-0">
-                  <img
-                    src={voluntarulLunii.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(voluntarulLunii.nickname || voluntarulLunii.name)}&background=001f26&color=FAF9F5`}
-                    className="w-12 h-12 rounded-full border border-emerald-500/30 object-cover shrink-0"
-                    alt=""
-                  />
-                  <div className="min-w-0">
-                    <div className="text-xl font-black text-brand-accent leading-tight mb-1 truncate">{voluntarulLunii.nickname || voluntarulLunii.name}</div>
-                    <div className="text-emerald-700 font-bold text-sm">+{voluntarulLunii.monthlyPoints} puncte luna aceasta</div>
-                  </div>
-                </div>
-                {isAdmin && (
-                  <button
-                    onClick={() => { setScoreModalMember(voluntarulLunii); setScoreAdjustValue(''); setScoreAdjustReason(''); }}
-                    className="px-2.5 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs shadow-xs shrink-0 transition-colors"
-                  >
-                    Ajustează
-                  </button>
-                )}
-              </div>
-            ) : (
-              <div className="text-brand-accent/50 text-sm font-semibold">Nu sunt date suficiente luna aceasta.</div>
-            )}
-          </motion.div>
-
-          <motion.div variants={itemVariants} className="flex-1 bg-indigo-50/10 border border-indigo-200 rounded-[3rem_0.5rem_3rem_0.5rem] p-6 shadow-lg flex flex-col justify-between font-anthropic">
-            <div className="flex items-center gap-2 text-brand-accent mb-4">
-              <TrendingUp className="text-indigo-500" size={20} />
-              <h3 className="font-anthropicSerif font-semibold text-sm uppercase tracking-wider text-slate-800">Cea Mai Mare Evoluție</h3>
+        {/* EVOLUȚIE & INVOLUȚIE */}
+        <div className="md:col-span-1 flex flex-col gap-6 font-anthropic">
+          {/* 1. Cea Mai Mare Evoluție */}
+          <motion.div variants={itemVariants} className="flex-1 bg-emerald-50/60 dark:bg-emerald-950/30 border border-emerald-300 dark:border-emerald-800 rounded-[2px] p-5 sm:p-6 shadow-xs flex flex-col justify-between font-anthropic">
+            <div className="flex items-center gap-2 text-slate-900 dark:text-white mb-3">
+              <TrendingUp className="text-emerald-700 dark:text-emerald-400" size={20} />
+              <h3 className="font-anthropicSerif font-bold text-base uppercase tracking-wider text-slate-900 dark:text-white">Cea Mai Mare Evoluție</h3>
             </div>
             {ceaMaiMareEvolutie ? (
               <div className="flex items-center justify-between gap-3">
-                <div className="flex items-center gap-3 min-w-0">
+                <div className="flex items-center gap-3.5 min-w-0">
                   <img
-                    src={ceaMaiMareEvolutie.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(ceaMaiMareEvolutie.nickname || ceaMaiMareEvolutie.name)}&background=001f26&color=FAF9F5`}
-                    className="w-10 h-10 rounded-full border border-indigo-500/20 object-cover shrink-0"
+                    src={ceaMaiMareEvolutie.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(ceaMaiMareEvolutie.nickname || ceaMaiMareEvolutie.name)}&background=047857&color=FFFFFF`}
+                    className="w-12 h-12 rounded-[2px] border border-emerald-500/40 object-cover shrink-0"
                     alt=""
                   />
                   <div className="min-w-0">
-                    <div className="text-lg font-bold text-brand-accent leading-tight mb-1 truncate">{ceaMaiMareEvolutie.nickname || ceaMaiMareEvolutie.name}</div>
-                    <div className="text-indigo-600 font-bold text-xs uppercase tracking-wider">+{ceaMaiMareEvolutie.evolution} puncte</div>
+                    <div className="text-base sm:text-lg font-bold text-slate-900 dark:text-white leading-tight mb-0.5 truncate font-title">{ceaMaiMareEvolutie.nickname || ceaMaiMareEvolutie.name}</div>
+                    <div className="text-emerald-800 dark:text-emerald-300 font-bold text-xs sm:text-sm font-data">+{ceaMaiMareEvolutie.evolution} pct vs perioada anterioară</div>
                   </div>
                 </div>
                 {isAdmin && (
                   <button
                     onClick={() => { setScoreModalMember(ceaMaiMareEvolutie); setScoreAdjustValue(''); setScoreAdjustReason(''); }}
-                    className="px-2.5 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-xs shrink-0 transition-colors"
+                    className="px-3 py-1.5 rounded-[2px] bg-slate-900 dark:bg-slate-800 hover:bg-slate-800 dark:hover:bg-slate-700 text-white font-bold text-xs shadow-xs shrink-0 transition-colors font-title cursor-pointer uppercase tracking-wider"
                   >
                     Ajustează
                   </button>
                 )}
               </div>
             ) : (
-              <div className="text-brand-accent/50 text-sm font-semibold">Nu sunt date suficiente.</div>
+              <div className="text-slate-600 dark:text-slate-400 text-xs sm:text-sm font-medium">Nu sunt date suficiente de comparație.</div>
+            )}
+          </motion.div>
+
+          {/* 2. Cea Mai Mare Involuție */}
+          <motion.div variants={itemVariants} className="flex-1 bg-rose-50/60 dark:bg-rose-950/30 border border-rose-300 dark:border-rose-800 rounded-[2px] p-5 sm:p-6 shadow-xs flex flex-col justify-between font-anthropic">
+            <div className="flex items-center gap-2 text-slate-900 dark:text-white mb-3">
+              <TrendingDown className="text-rose-700 dark:text-rose-400" size={20} />
+              <h3 className="font-anthropicSerif font-bold text-base uppercase tracking-wider text-slate-900 dark:text-white">Cea Mai Mare Involuție</h3>
+            </div>
+            {ceaMaiMareInvolutie ? (
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3.5 min-w-0">
+                  <img
+                    src={ceaMaiMareInvolutie.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(ceaMaiMareInvolutie.nickname || ceaMaiMareInvolutie.name)}&background=be123c&color=FFFFFF`}
+                    className="w-12 h-12 rounded-[2px] border border-rose-500/40 object-cover shrink-0"
+                    alt=""
+                  />
+                  <div className="min-w-0">
+                    <div className="text-base sm:text-lg font-bold text-slate-900 dark:text-white leading-tight mb-0.5 truncate font-title">{ceaMaiMareInvolutie.nickname || ceaMaiMareInvolutie.name}</div>
+                    <div className="text-rose-800 dark:text-rose-300 font-bold text-xs sm:text-sm font-data">{ceaMaiMareInvolutie.involution} pct vs perioada anterioară</div>
+                  </div>
+                </div>
+                {isAdmin && (
+                  <button
+                    onClick={() => { setScoreModalMember(ceaMaiMareInvolutie); setScoreAdjustValue(''); setScoreAdjustReason(''); }}
+                    className="px-3 py-1.5 rounded-[2px] bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs shadow-xs shrink-0 transition-colors font-title cursor-pointer uppercase tracking-wider"
+                  >
+                    Ajustează
+                  </button>
+                )}
+              </div>
+            ) : (
+              <div className="text-slate-600 dark:text-slate-400 text-xs sm:text-sm font-medium">Nicio scădere de punctaj înregistrată.</div>
             )}
           </motion.div>
         </div>
@@ -588,25 +743,25 @@ export function LeaderboardView({ members, isAdmin = false, onUpdateMember, curr
         variants={itemVariants}
         initial="hidden"
         animate="show"
-        className="admin-card rounded-none border border-slate-200 bg-white p-8 shadow-xl font-anthropic"
+        className="admin-card rounded-[2px] border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#161B22] p-5 sm:p-6 shadow-sm font-anthropic"
       >
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-5">
           <div className="flex items-center gap-3 flex-wrap">
-            <h2 className="text-xl font-anthropicSerif font-semibold text-slate-800">
+            <h2 className="text-lg sm:text-xl font-anthropicSerif font-bold text-slate-900 dark:text-white">
               {searchQuery.trim()
                 ? `Rezultate căutare: "${searchQuery}"`
                 : scoreMode === 'bimonthly'
                 ? `Clasament Bimensual (Locul 5+) — ${biMonthlyInfo.periodLabel}`
                 : 'Clasament General (Total Istoric)'}
             </h2>
-            <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl border border-slate-200 dark:border-slate-700">
+            <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-[2px] border border-slate-200 dark:border-slate-700 font-title">
               <button
                 type="button"
                 onClick={() => setScoreMode('bimonthly')}
-                className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${
+                className={`px-3.5 py-1.5 rounded-[2px] text-xs sm:text-sm font-bold uppercase tracking-wider transition-all cursor-pointer ${
                   scoreMode === 'bimonthly'
                     ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs'
-                    : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                 }`}
               >
                 Ediția Bilunară (2 Luni)
@@ -614,10 +769,10 @@ export function LeaderboardView({ members, isAdmin = false, onUpdateMember, curr
               <button
                 type="button"
                 onClick={() => setScoreMode('total')}
-                className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${
+                className={`px-3.5 py-1.5 rounded-[2px] text-xs sm:text-sm font-bold uppercase tracking-wider transition-all cursor-pointer ${
                   scoreMode === 'total'
                     ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs'
-                    : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                 }`}
               >
                 Total Istoric (Toate Punctele)
@@ -625,29 +780,47 @@ export function LeaderboardView({ members, isAdmin = false, onUpdateMember, curr
             </div>
           </div>
 
-          <div className="relative group w-full sm:w-64">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-brand-accent/40 group-focus-within:text-brand-primary transition-colors" size={16} />
+          <div className="relative group w-full sm:w-72">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 group-focus-within:text-indigo-600 dark:group-focus-within:text-indigo-400 transition-colors" size={16} />
             <input 
               type="text" 
               placeholder="Caută orice voluntar..." 
               value={searchQuery}
               onChange={e => { setSearchQuery(e.target.value); setCurrentPage(1); }}
-              className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-brand-primary/40 focus:ring-2 focus:ring-brand-primary/15 focus:bg-white transition-all font-['Manrope']"
+              className="w-full pl-9 pr-3.5 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[2px] text-xs sm:text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-indigo-500 focus:bg-white dark:focus:bg-slate-950 transition-all font-anthropic"
             />
           </div>
         </div>
 
-        <div className="overflow-x-auto p-1">
+        {/* Attendance scoring rule strip */}
+        <div className="mb-4 px-3.5 py-2 rounded-[2px] bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex items-center justify-between gap-3 flex-wrap text-xs text-slate-700 dark:text-slate-300 font-anthropic">
+          <div className="flex items-center gap-2 font-bold font-title">
+            <span className="text-slate-900 dark:text-white uppercase tracking-wider">🎯 Regulă Punctaj Prezență:</span>
+          </div>
+          <div className="flex items-center gap-3 font-data font-bold flex-wrap">
+            <span className="text-emerald-800 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-950/50 px-2 py-0.5 rounded-[2px] border border-emerald-300 dark:border-emerald-800">
+              +1 pct / Prezență
+            </span>
+            <span className="text-rose-800 dark:text-rose-300 bg-rose-100 dark:bg-rose-950/50 px-2 py-0.5 rounded-[2px] border border-rose-300 dark:border-rose-800">
+              -2 pct / Absență Nemotivată
+            </span>
+            <span className="text-slate-700 dark:text-slate-300 bg-slate-200 dark:bg-slate-800 px-2 py-0.5 rounded-[2px] border border-slate-300 dark:border-slate-700">
+              0 pct / Absență Motivată
+            </span>
+          </div>
+        </div>
+
+        <div className="overflow-x-auto p-0.5">
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-16 text-center">Rang</TableHead>
-                <TableHead>Membru</TableHead>
-                <TableHead>Rol</TableHead>
-                <TableHead className="text-right">
+                <TableHead className="w-20 text-center font-title text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-900 dark:text-slate-100">Rang</TableHead>
+                <TableHead className="font-title text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-900 dark:text-slate-100">Membru</TableHead>
+                <TableHead className="font-title text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-900 dark:text-slate-100">Rol</TableHead>
+                <TableHead className="text-right font-title text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-900 dark:text-slate-100">
                   {scoreMode === 'bimonthly' ? `Punctaj Bilunar (${biMonthlyInfo.periodLabel})` : 'Punctaj Total (Incl. Negativ)'}
                 </TableHead>
-                <TableHead className="text-right">Acțiuni</TableHead>
+                <TableHead className="text-right font-title text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-900 dark:text-slate-100">Acțiuni</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -657,44 +830,44 @@ export function LeaderboardView({ members, isAdmin = false, onUpdateMember, curr
                 const isNegative = scoreValue < 0;
 
                 return (
-                  <TableRow key={m.id} className="group">
-                    <TableCell className="text-center font-bold text-slate-400">#{globalRank}</TableCell>
-                    <TableCell className="font-bold text-slate-800 dark:text-white">
+                  <TableRow key={m.id} className="group hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors">
+                    <TableCell className="text-center font-bold text-slate-500 dark:text-slate-400 font-data text-sm sm:text-base">#{globalRank}</TableCell>
+                    <TableCell className="font-bold text-slate-900 dark:text-white">
                       <div className="flex items-center gap-3">
                         <img
                           src={m.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(m.nickname || m.name)}&background=0f172a&color=f8fafc`}
-                          className="w-8 h-8 rounded-full border border-slate-200 dark:border-white/10 dark:bg-transparent object-cover"
+                          className="w-8 h-8 rounded-[2px] border border-slate-200 dark:border-white/10 dark:bg-transparent object-cover"
                           alt=""
                         />
-                        <span>{m.nickname || m.name}</span>
+                        <span className="font-title text-xs sm:text-sm font-bold text-slate-900 dark:text-white">{m.nickname || m.name}</span>
                       </div>
                     </TableCell>
-                    <TableCell><Badge variant="neutral">{m.role}</Badge></TableCell>
-                    <TableCell className="text-right font-black font-['Manrope'] text-lg">
+                    <TableCell><Badge variant="neutral">{m.role || 'Voluntar'}</Badge></TableCell>
+                    <TableCell className="text-right font-black font-data text-base sm:text-lg">
                       <div className="flex items-center justify-end gap-2">
                         {isNegative && (
-                          <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-md bg-rose-500/15 text-rose-700 dark:text-rose-300 border border-rose-500/30">
+                          <span className="text-xs font-black uppercase px-2.5 py-0.5 rounded-[2px] bg-rose-100 dark:bg-rose-950/60 text-rose-900 dark:text-rose-300 border border-rose-300 dark:border-rose-800 font-title">
                             Scor Negativ
                           </span>
                         )}
-                        <span className={isNegative ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-600 dark:text-emerald-400'}>
+                        <span className={isNegative ? 'text-rose-700 dark:text-rose-400' : 'text-emerald-700 dark:text-emerald-400'}>
                           {scoreValue > 0 ? `+${scoreValue}` : scoreValue}
                         </span>
                       </div>
                     </TableCell>
-                    <TableCell className="text-right">
+                    <TableCell className="text-right font-title">
                       <div className="flex items-center justify-end gap-2">
                         <button
                           onClick={() => setHistoryModalMember(m)}
                           title="Istoric puncte"
-                          className="p-1.5 border border-brand-muted/10 rounded-lg hover:bg-brand-accent/5 text-brand-accent/60 hover:text-brand-accent transition-all"
+                          className="p-2 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-[2px] hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 hover:text-slate-900 dark:hover:text-white transition-all cursor-pointer"
                         >
-                          <History size={14} />
+                          <History size={15} />
                         </button>
                         {isAdmin && (
                           <button
                             onClick={() => { setScoreModalMember(m); setScoreAdjustValue(''); setScoreAdjustReason(''); }}
-                            className="px-2 py-1.5 bg-brand-accent/5 hover:bg-brand-accent/10 text-brand-accent rounded-lg text-[10px] font-bold transition-colors border border-brand-accent/10"
+                            className="px-3 py-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-900 dark:text-slate-100 rounded-[2px] text-xs font-bold uppercase tracking-wider transition-colors border border-slate-300 dark:border-slate-700 cursor-pointer"
                           >
                             Ajustează
                           </button>
@@ -706,7 +879,7 @@ export function LeaderboardView({ members, isAdmin = false, onUpdateMember, curr
               })}
               {paginatedMembers.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center text-slate-500 font-semibold h-24">Niciun membru găsit.</TableCell>
+                  <TableCell colSpan={5} className="text-center text-slate-500 dark:text-slate-400 font-semibold h-24 text-sm">Niciun membru găsit.</TableCell>
                 </TableRow>
               )}
             </TableBody>
@@ -715,20 +888,20 @@ export function LeaderboardView({ members, isAdmin = false, onUpdateMember, curr
 
         {/* Pagination Controls */}
         {totalPages > 1 && (
-          <div className="mt-6 flex items-center justify-between border-t border-brand-muted/5 pt-6">
-            <span className="text-xs font-bold text-brand-accent/40 uppercase tracking-wider">Pagina {currentPage} din {totalPages}</span>
+          <div className="mt-5 flex items-center justify-between border-t border-slate-200 dark:border-slate-800 pt-4 font-anthropic">
+            <span className="text-xs sm:text-sm font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider font-data">Pagina {currentPage} din {totalPages}</span>
             <div className="flex gap-2">
               <button 
                 disabled={currentPage === 1}
                 onClick={() => setCurrentPage(p => p - 1)}
-                className="p-2 border border-brand-muted/10 rounded-lg hover:bg-brand-accent/5 disabled:opacity-30 transition-all"
+                className="p-2 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-[2px] hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 disabled:opacity-30 transition-all cursor-pointer"
               >
                 <ChevronLeft size={16} />
               </button>
               <button 
                 disabled={currentPage === totalPages}
                 onClick={() => setCurrentPage(p => p + 1)}
-                className="p-2 border border-brand-muted/10 rounded-lg hover:bg-brand-accent/5 disabled:opacity-30 transition-all"
+                className="p-2 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-[2px] hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 disabled:opacity-30 transition-all cursor-pointer"
               >
                 <ChevronRight size={16} />
               </button>
@@ -745,39 +918,39 @@ export function LeaderboardView({ members, isAdmin = false, onUpdateMember, curr
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="absolute inset-0 bg-brand-accent/60 backdrop-blur-md"
+              className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm"
               onClick={() => !isSubmittingScore && setScoreModalMember(null)}
             />
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="relative w-full max-w-xl max-h-[90vh] overflow-y-auto rounded-3xl shadow-2xl p-6 md:p-8 z-[121] bg-white text-slate-900 border border-slate-200"
+              className="relative w-full max-w-xl max-h-[90vh] overflow-y-auto rounded-[2px] shadow-2xl p-6 md:p-7 z-[121] bg-white dark:bg-[#161B22] text-slate-900 dark:text-slate-100 border border-slate-200 dark:border-slate-800 font-anthropic"
             >
-              <div className="mb-6 flex items-center gap-3">
+              <div className="mb-5 flex items-center gap-3.5">
                 <img
                   src={scoreModalMember.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(scoreModalMember.nickname || scoreModalMember.name)}&background=0f172a&color=f8fafc`}
-                  className="w-10 h-10 rounded-full border border-slate-200 object-cover"
+                  className="w-12 h-12 rounded-[2px] border border-slate-200 dark:border-slate-700 object-cover"
                   alt=""
                 />
                 <div>
-                  <h3 className="font-bold text-lg text-slate-900 leading-tight">Ajustare Punctaj</h3>
-                  <p className="text-xs text-slate-500 font-bold">{scoreModalMember.nickname || scoreModalMember.name}</p>
+                  <h3 className="font-bold font-title text-lg text-slate-900 dark:text-white leading-tight">Ajustare Punctaj</h3>
+                  <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-medium">{scoreModalMember.nickname || scoreModalMember.name}</p>
                 </div>
               </div>
 
-              <form onSubmit={handleAdjustScore} className="space-y-4">
+              <form onSubmit={handleAdjustScore} className="space-y-4 font-anthropic">
                 <div>
-                  <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-600 mb-1">
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5 font-title">
                     Puncte (folosește minus pentru scădere, ex: -3)
                   </label>
                   <div className="flex items-center gap-2">
                     <button
                       type="button"
                       onClick={() => setScoreAdjustValue(v => String((parseInt(v, 10) || 0) - 1))}
-                      className="p-3 rounded-xl border border-slate-300 hover:bg-rose-50 text-rose-600 transition-colors"
+                      className="p-3 rounded-[2px] border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 hover:bg-rose-50 dark:hover:bg-rose-950/40 text-rose-600 dark:text-rose-400 transition-colors cursor-pointer"
                     >
-                      <Minus size={16} />
+                      <Minus size={18} />
                     </button>
                     <input
                       type="number"
@@ -785,26 +958,26 @@ export function LeaderboardView({ members, isAdmin = false, onUpdateMember, curr
                       onChange={e => setScoreAdjustValue(e.target.value)}
                       required
                       placeholder="0"
-                      className="w-full text-center px-4 py-3 bg-slate-50 border border-slate-300 rounded-xl text-sm font-bold text-slate-900 focus:outline-none focus:border-brand-primary transition-colors"
+                      className="w-full text-center px-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-[2px] text-sm font-bold text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-indigo-500 focus:bg-white dark:focus:bg-slate-950 transition-colors font-data"
                     />
                     <button
                       type="button"
                       onClick={() => setScoreAdjustValue(v => String((parseInt(v, 10) || 0) + 1))}
-                      className="p-3 rounded-xl border border-slate-300 hover:bg-emerald-50 text-emerald-600 transition-colors"
+                      className="p-3 rounded-[2px] border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 transition-colors cursor-pointer"
                     >
-                      <Plus size={16} />
+                      <Plus size={18} />
                     </button>
                   </div>
                 </div>
                 <div>
-                  <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-600 mb-1">Motiv / Justificare</label>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5 font-title">Motiv / Justificare</label>
                   <input
                     type="text"
                     value={scoreAdjustReason}
                     onChange={e => setScoreAdjustReason(e.target.value)}
                     required
                     placeholder="Ex: Implicare excepțională / Absență nemotivată"
-                    className="w-full px-4 py-3 bg-slate-50 border border-slate-300 rounded-xl text-sm font-bold text-slate-900 placeholder-slate-400 focus:outline-none focus:border-brand-primary transition-colors"
+                    className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-[2px] text-sm font-medium text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-indigo-500 focus:bg-white dark:focus:bg-slate-950 transition-colors font-anthropic"
                   />
                 </div>
 
@@ -817,19 +990,19 @@ export function LeaderboardView({ members, isAdmin = false, onUpdateMember, curr
                   }}
                 />
 
-                <div className="pt-2 flex gap-3">
+                <div className="pt-3 flex gap-3 font-title">
                   <button
                     type="button"
                     onClick={() => setScoreModalMember(null)}
                     disabled={isSubmittingScore}
-                    className="flex-1 py-2.5 rounded-xl border border-slate-300 hover:bg-slate-100 text-slate-700 text-xs font-bold disabled:opacity-50 transition-colors"
+                    className="flex-1 py-3 rounded-[2px] border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs sm:text-sm font-bold uppercase tracking-wider disabled:opacity-50 transition-colors cursor-pointer"
                   >
                     Anulează
                   </button>
                   <button
                     type="submit"
                     disabled={isSubmittingScore}
-                    className="flex-1 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold disabled:opacity-50 transition-colors"
+                    className="flex-1 py-3 rounded-[2px] bg-slate-900 hover:bg-slate-800 dark:bg-amber-500 dark:hover:bg-amber-400 text-white dark:text-slate-950 text-xs sm:text-sm font-bold uppercase tracking-wider disabled:opacity-50 transition-colors cursor-pointer"
                   >
                     {isSubmittingScore ? 'Se salvează...' : 'Salvează'}
                   </button>
@@ -848,65 +1021,114 @@ export function LeaderboardView({ members, isAdmin = false, onUpdateMember, curr
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="absolute inset-0 bg-slate-950/70 backdrop-blur-md"
+              className="absolute inset-0 bg-slate-950/70 backdrop-blur-sm"
               onClick={() => setHistoryModalMember(null)}
             />
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="relative w-full max-w-md max-h-[80vh] flex flex-col rounded-3xl shadow-2xl p-6 sm:p-8 z-[121] bg-white text-slate-900 border border-slate-200"
+              className="relative w-full max-w-lg max-h-[85vh] flex flex-col rounded-[2px] shadow-2xl p-5 sm:p-7 z-[121] bg-white dark:bg-[#161B22] text-slate-900 dark:text-slate-100 border border-slate-200 dark:border-slate-800 font-anthropic"
             >
-              <div className="mb-6 flex items-center justify-between gap-3">
+              <div className="mb-4 flex items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
                   <img
                     src={liveHistoryMember.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(liveHistoryMember.nickname || liveHistoryMember.name)}&background=0f172a&color=f8fafc`}
-                    className="w-10 h-10 rounded-full border border-slate-200 object-cover"
+                    className="w-11 h-11 rounded-[2px] border border-slate-200 dark:border-slate-700 object-cover"
                     alt=""
                   />
                   <div>
-                    <h3 className="font-bold text-lg text-slate-900 leading-tight">Istoric Punctaj</h3>
-                    <p className="text-xs text-slate-500 font-bold">{liveHistoryMember.nickname || liveHistoryMember.name}</p>
+                    <h3 className="font-bold font-title text-base sm:text-lg text-slate-900 dark:text-white leading-tight">Istoric Detaliat Punctaj</h3>
+                    <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-medium">{liveHistoryMember.nickname || liveHistoryMember.name}</p>
                   </div>
                 </div>
                 <button
                   onClick={() => setHistoryModalMember(null)}
-                  className="p-2 rounded-full hover:bg-slate-100 text-slate-500 hover:text-slate-900 transition-colors"
+                  className="p-1.5 rounded-[2px] hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer"
                 >
                   <X size={18} />
                 </button>
               </div>
 
-              <div className="overflow-y-auto pr-1 space-y-2.5 flex-1">
+              {/* Attendance & Score Summary Strip */}
+              {(() => {
+                const pres = Number(liveHistoryMember.presences) || 0;
+                const unex = Number(liveHistoryMember.unexcusedAbsences) || 0;
+                const exc = Number(liveHistoryMember.excusedAbsences) || 0;
+                const adjSum = (liveHistoryMember.scoreAdjustments || []).reduce((s: number, a: any) => s + (a.points || 0), 0);
+                const computedTotal = (typeof liveHistoryMember.score === 'number' && liveHistoryMember.score !== 0) 
+                  ? liveHistoryMember.score 
+                  : adjSum + (pres * 1) + (unex * -2);
+
+                return (
+                  <div className="mb-4 p-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[2px] space-y-2">
+                    <div className="flex items-center justify-between text-xs font-bold font-title text-slate-700 dark:text-slate-300">
+                      <span className="uppercase tracking-wider">Scor Total Calculat:</span>
+                      <span className={`font-data font-black text-sm ${computedTotal < 0 ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-700 dark:text-emerald-400'}`}>
+                        {computedTotal > 0 ? `+${computedTotal}` : computedTotal} pct
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-3 gap-2 pt-1 border-t border-slate-200 dark:border-slate-800 text-center font-data text-xs font-bold">
+                      <div className="bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 p-1.5 rounded-[2px]">
+                        <div className="text-[10px] uppercase font-title font-bold">Prezențe (+1)</div>
+                        <div className="font-black text-sm">{pres} (+{pres}p)</div>
+                      </div>
+                      <div className="bg-rose-50 dark:bg-rose-950/40 text-rose-800 dark:text-rose-300 border border-rose-200 dark:border-rose-800 p-1.5 rounded-[2px]">
+                        <div className="text-[10px] uppercase font-title font-bold">Nemotivate (-2)</div>
+                        <div className="font-black text-sm">{unex} ({unex * -2}p)</div>
+                      </div>
+                      <div className="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 p-1.5 rounded-[2px]">
+                        <div className="text-[10px] uppercase font-title font-bold">Motivate (0)</div>
+                        <div className="font-black text-sm">{exc} (0p)</div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
+
+              <div className="overflow-y-auto pr-1 space-y-2.5 flex-1 font-anthropic">
                 {sortedHistory.length === 0 ? (
-                  <div className="text-center text-slate-500 text-sm font-semibold py-10">
-                    Niciun punctaj ajustat încă pentru acest membru.
+                  <div className="text-center text-slate-500 dark:text-slate-400 text-xs sm:text-sm font-medium py-8">
+                    Nicio activitate sau punctaj înregistrat pentru acest membru.
                   </div>
                 ) : (
-                  sortedHistory.map((adj: any) => (
+                  sortedHistory.map((item: any) => (
                     <div
-                      key={adj.id}
-                      className="flex items-start justify-between gap-3 bg-slate-50 border border-slate-200 rounded-2xl p-4 shadow-xs"
+                      key={item.id}
+                      className="flex items-start justify-between gap-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[2px] p-3.5 shadow-xs"
                     >
                       <div className="min-w-0 flex-1">
-                        <p className="text-sm font-bold text-slate-900 break-words">{adj.reason || 'Fără motiv specificat'}</p>
-                        <p className="text-[11px] text-slate-500 font-bold mt-1">
-                          {new Date(adj.date).toLocaleDateString('ro-RO', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                          {adj.adminName ? ` · ${adj.adminName}` : ''}
-                        </p>
+                        <div className="flex items-center gap-2 mb-1 flex-wrap">
+                          {item.badge && (
+                            <span className={`text-[9px] font-black uppercase px-1.5 py-0.5 rounded-[2px] border font-title ${item.badgeColor || 'bg-slate-200 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border-slate-300 dark:border-slate-700'}`}>
+                              {item.badge}
+                            </span>
+                          )}
+                          <span className="text-[11px] text-slate-500 dark:text-slate-400 font-semibold font-data">
+                            {new Date(item.date).toLocaleDateString('ro-RO', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                          </span>
+                        </div>
+                        <p className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white break-words leading-snug">{item.reason || 'Fără descriere'}</p>
+                        {item.adminName && (
+                          <p className="text-[11px] text-slate-500 dark:text-slate-400 font-semibold mt-0.5 font-anthropic">
+                            {item.adminName}
+                          </p>
+                        )}
                       </div>
                       <div className="flex items-center gap-2 shrink-0">
                         <span
-                          className={`font-black font-['Manrope'] text-sm px-2.5 py-1 rounded-full ${
-                            adj.points > 0
-                              ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
-                              : 'bg-rose-100 text-rose-800 border border-rose-300'
+                          className={`font-black font-data text-xs sm:text-sm px-2.5 py-1 rounded-[2px] ${
+                            item.points > 0
+                              ? 'bg-emerald-100 dark:bg-emerald-950/50 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800'
+                              : item.points < 0
+                              ? 'bg-rose-100 dark:bg-rose-950/50 text-rose-800 dark:text-rose-300 border border-rose-300 dark:border-rose-800'
+                              : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700'
                           }`}
                         >
-                          {adj.points > 0 ? `+${adj.points}` : adj.points}
+                          {item.points > 0 ? `+${item.points}` : item.points}
                         </span>
 
-                        {isAdmin && (
+                        {isAdmin && item.isAdjustment && (
                           <button
                             onClick={async () => {
                               try {
@@ -914,7 +1136,7 @@ export function LeaderboardView({ members, isAdmin = false, onUpdateMember, curr
                                 const adminUsername = currentUserObj?.username;
                                 const { newScore, updatedAdjustments } = await revertMemberScoreAdjustment(
                                   liveHistoryMember.id,
-                                  adj.id,
+                                  item.id,
                                   { name: adminName, username: adminUsername, id: currentUserObj?.id }
                                 );
                                 onUpdateMember?.({
@@ -922,12 +1144,12 @@ export function LeaderboardView({ members, isAdmin = false, onUpdateMember, curr
                                   score: newScore,
                                   scoreAdjustments: updatedAdjustments
                                 });
-                                toast.success(`Ajustarea de punctaj (${adj.points > 0 ? '+' : ''}${adj.points} pct) a fost anulată!`);
+                                toast.success(`Ajustarea de punctaj (${item.points > 0 ? '+' : ''}${item.points} pct) a fost anulată!`);
                               } catch (err: any) {
                                 toast.error(err.message || 'Eroare la anularea punctajului.');
                               }
                             }}
-                            className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors"
+                            className="p-1.5 rounded-[2px] text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
                             title="Anulează această ajustare (Revert)"
                           >
                             <RotateCcw size={14} />

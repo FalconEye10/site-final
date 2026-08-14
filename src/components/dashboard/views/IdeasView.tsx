@@ -213,27 +213,27 @@ export const IdeasView: React.FC<IdeasViewProps> = ({ isAdmin, currentUserId }) 
     <div className="p-6 space-y-8 max-w-7xl mx-auto">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-800">Sondaje</h1>
-          <p className="text-slate-500">Decizii la nivelul clubului, votate de membri</p>
+          <h1 className="text-2xl md:text-3xl font-bold font-anthropicSerif text-slate-900 dark:text-slate-100">Sondaje & Consultări</h1>
+          <p className="text-xs md:text-sm text-slate-500 dark:text-slate-400 mt-1 font-anthropic">Decizii la nivelul clubului, supuse votului democratic al membrilor</p>
         </div>
         {isAdmin && (
-          <div className="flex bg-slate-100 p-1 rounded-full border border-black/5">
+          <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-[2px] border border-slate-200 dark:border-slate-700 font-title">
             <button
               onClick={() => setActiveActivityModule('sondaje')}
-              className={`px-5 py-2 rounded-full text-sm font-bold transition-all ${
+              className={`px-4 py-2 rounded-[2px] text-xs sm:text-sm font-bold uppercase tracking-wider transition-all cursor-pointer ${
                 activeActivityModule === 'sondaje'
-                  ? 'bg-white text-indigo-700 shadow-sm'
-                  : 'text-slate-600 hover:text-slate-800'
+                  ? 'bg-slate-900 text-white dark:bg-sky-500 dark:text-slate-950 shadow-xs'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100'
               }`}
             >
               Sondaje Active
             </button>
             <button
               onClick={() => setActiveActivityModule('istoric')}
-              className={`px-5 py-2 rounded-full text-sm font-bold transition-all ${
+              className={`px-4 py-2 rounded-[2px] text-xs sm:text-sm font-bold uppercase tracking-wider transition-all cursor-pointer ${
                 activeActivityModule === 'istoric'
-                  ? 'bg-white text-indigo-700 shadow-sm'
-                  : 'text-slate-600 hover:text-slate-800'
+                  ? 'bg-slate-900 text-white dark:bg-sky-500 dark:text-slate-950 shadow-xs'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100'
               }`}
             >
               Istoric Sondaje
@@ -242,21 +242,23 @@ export const IdeasView: React.FC<IdeasViewProps> = ({ isAdmin, currentUserId }) 
         )}
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-        <div className="p-6 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-sky-100 text-sky-600 rounded-lg">
+      <div className="bg-white dark:bg-[#161B22] rounded-[2px] shadow-xs border border-slate-200 dark:border-slate-800 overflow-hidden font-anthropic">
+        <div className="p-5 sm:p-6 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 flex justify-between items-center">
+          <div className="flex items-center gap-3.5">
+            <div className="p-2.5 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-[2px] border border-slate-200 dark:border-slate-700">
               <BarChart3 className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-lg font-semibold text-slate-800">Sondaje Active</h2>
-              <p className="text-sm text-slate-500">Decizii și sondaje importante</p>
+              <h2 className="text-lg sm:text-xl font-bold font-anthropicSerif text-slate-900 dark:text-slate-100">
+                {activeActivityModule === 'sondaje' ? 'Sondaje Active' : 'Arhivă Sondaje Finalizate'}
+              </h2>
+              <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-anthropic">Consultări oficiale înregistrate</p>
             </div>
           </div>
           {isAdmin && (
             <button
               onClick={() => setShowNewPoll(!showNewPoll)}
-              className="flex items-center gap-2 px-4 py-1.5 btn-stitch-secondary text-xs font-bold"
+              className="flex items-center gap-2 px-4 py-2 btn-civic-primary text-xs sm:text-sm font-title uppercase tracking-wider cursor-pointer"
             >
               {showNewPoll ? 'Anulează' : 'Sondaj Nou'}
               {!showNewPoll && <Plus className="w-4 h-4" />}
@@ -264,49 +266,49 @@ export const IdeasView: React.FC<IdeasViewProps> = ({ isAdmin, currentUserId }) 
           )}
         </div>
 
-        <div className="p-6 space-y-6">
+        <div className="p-5 sm:p-6 space-y-6">
           {isAdmin && showNewPoll && (
-            <form onSubmit={handleCreatePoll} className="space-y-4 p-4 bg-sky-50 rounded-xl border border-sky-100 mb-6">
+            <form onSubmit={handleCreatePoll} className="space-y-4 p-5 sm:p-6 bg-slate-50 dark:bg-slate-900 rounded-[2px] border border-slate-200 dark:border-slate-800 mb-6 font-anthropic">
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Întrebarea sondajului</label>
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5 font-title">Întrebarea sondajului</label>
                 <input
                   type="text"
                   value={newPollQuestion}
                   onChange={(e) => setNewPollQuestion(e.target.value)}
-                  placeholder="Ex: Ce tematică să alegem pentru..."
-                  className="w-full rounded-lg border-slate-200 shadow-sm focus:border-sky-500 focus:ring-sky-500"
+                  placeholder="Ex: Ce tematică să alegem pentru gala de Crăciun?"
+                  className="w-full px-4 py-2.5 rounded-[2px] border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-sm font-semibold text-slate-900 dark:text-slate-100 focus:outline-none focus:border-blue-600"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Opțiuni (separate prin virgulă)</label>
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5 font-title">Opțiuni (separate prin virgulă)</label>
                 <textarea
                   value={newPollOptionsStr}
                   onChange={(e) => setNewPollOptionsStr(e.target.value)}
                   placeholder="Ex: Opțiunea A, Opțiunea B, Opțiunea C"
-                  className="w-full rounded-lg border-slate-200 shadow-sm focus:border-sky-500 focus:ring-sky-500 h-24 resize-none"
+                  className="w-full px-4 py-2.5 rounded-[2px] border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-sm font-semibold text-slate-900 dark:text-slate-100 focus:outline-none focus:border-blue-600 h-24 resize-none font-anthropic"
                 />
               </div>
-              <div className="flex items-center gap-2 mt-2">
+              <div className="flex items-center gap-2.5 mt-2">
                 <input
                   type="checkbox"
                   id="multipleChoice"
                   checked={newPollIsMultipleChoice}
                   onChange={(e) => setNewPollIsMultipleChoice(e.target.checked)}
-                  className="rounded border-slate-300 text-sky-600 focus:ring-sky-500"
+                  className="rounded-[1px] border-slate-300 dark:border-slate-700 text-blue-600 focus:ring-0 cursor-pointer"
                 />
-                <label htmlFor="multipleChoice" className="text-sm text-slate-700">Permite selecție multiplă</label>
+                <label htmlFor="multipleChoice" className="text-xs sm:text-sm font-medium text-slate-700 dark:text-slate-300 cursor-pointer">Permite selecție multiplă</label>
               </div>
               <button
                 type="submit"
-                className="w-full py-2.5 btn-stitch-primary text-xs font-bold"
+                className="w-full py-3 btn-civic-primary text-xs sm:text-sm font-title uppercase tracking-wider cursor-pointer"
               >
-                Lansează Sondajul
+                Lansează Sondajul Oficial
               </button>
             </form>
           )}
 
           {displayedPolls.length === 0 ? (
-            <p className="text-center text-slate-500 py-4">Nu există sondaje active.</p>
+            <p className="text-center text-slate-500 dark:text-slate-400 py-8 text-sm font-anthropic">Nu există sondaje active în această secțiune.</p>
           ) : (
             <div className="space-y-6 max-h-[600px] overflow-y-auto pr-2">
               {displayedPolls.map(poll => {
@@ -317,34 +319,38 @@ export const IdeasView: React.FC<IdeasViewProps> = ({ isAdmin, currentUserId }) 
                 const showResults = isAdmin || hasVoted;
 
                 return (
-                  <div key={poll.id} className="p-5 bg-white border border-slate-200 rounded-xl shadow-sm relative group">
+                  <div key={poll.id} className="p-5 sm:p-6 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[2px] shadow-xs relative group font-anthropic">
                     {isAdmin && (
-                      <div className="absolute top-4 right-4 flex gap-2">
+                      <div className="absolute top-4 right-4 flex gap-2 font-title">
                         <button
                           onClick={() => handleTogglePollStatus(poll.id, poll.isActive !== false)}
-                          className={`px-3 py-1 text-[10px] font-bold uppercase tracking-wider rounded-full border transition-all opacity-100 md:opacity-0 md:group-hover:opacity-100 ${
+                          className={`px-3 py-1 text-xs font-bold uppercase tracking-wider rounded-[2px] border transition-all cursor-pointer ${
                             poll.isActive !== false
-                              ? 'border-orange-200 text-orange-600 hover:bg-orange-50'
-                              : 'border-emerald-200 text-emerald-700 hover:bg-emerald-50'
+                              ? 'border-amber-300 bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300'
+                              : 'border-emerald-300 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300'
                           }`}
                         >
                           {poll.isActive !== false ? 'Închide' : 'Deschide'}
                         </button>
                         <button
                           onClick={() => handleDeletePoll(poll.id)}
-                          className="text-slate-400 hover:text-red-600 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity p-1"
+                          className="text-slate-400 hover:text-rose-600 transition-colors p-1.5 cursor-pointer"
                           title="Șterge sondaj"
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
                       </div>
                     )}
-                    <h3 className="text-lg font-medium text-slate-800 mb-2 pr-32">
+                    <h3 className="text-lg sm:text-xl font-bold font-anthropicSerif text-slate-900 dark:text-slate-100 mb-2 pr-32 leading-snug">
                       {poll.question}
-                      {poll.isMultipleChoice && <span className="ml-2 text-xs font-semibold px-2 py-1 bg-slate-100 text-slate-600 rounded-full">Alegere Multiplă</span>}
+                      {poll.isMultipleChoice && (
+                        <span className="ml-2 text-xs font-bold font-title uppercase px-2.5 py-0.5 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-[2px] border border-slate-200 dark:border-slate-700">
+                          Alegere Multiplă
+                        </span>
+                      )}
                     </h3>
 
-                    <div className="space-y-3 mt-4">
+                    <div className="space-y-2.5 mt-4">
                       {(poll.options || []).map((option, idx) => {
                         const result = results[idx];
                         let isSelected = false;
@@ -359,28 +365,28 @@ export const IdeasView: React.FC<IdeasViewProps> = ({ isAdmin, currentUserId }) 
                             {!showResults ? (
                               <button
                                 onClick={() => handleVotePoll(poll.id, idx)}
-                                className="w-full text-left p-4 rounded-2xl border border-slate-200 hover:border-brand-primary/55 hover:bg-brand-primary/5 transition-all flex justify-between items-center group/btn active:scale-[0.99]"
+                                className="w-full text-left p-4 rounded-[2px] border border-slate-200 dark:border-slate-700 hover:border-slate-400 dark:hover:border-slate-500 bg-slate-50 dark:bg-slate-800/60 transition-all flex justify-between items-center group/btn cursor-pointer font-anthropic"
                               >
-                                <span className="text-sm font-medium text-slate-700">{option}</span>
-                                <div className="w-4 h-4 rounded-full border border-slate-300 group-hover/btn:border-sky-400"></div>
+                                <span className="text-sm font-semibold text-slate-800 dark:text-slate-200">{option}</span>
+                                <div className="w-4 h-4 rounded-[1px] border border-slate-300 dark:border-slate-600 group-hover/btn:border-slate-900 dark:group-hover/btn:border-slate-100"></div>
                               </button>
                             ) : (
                               <button
                                 onClick={() => handleVotePoll(poll.id, idx)}
-                                className="w-full text-left p-4 rounded-2xl border border-slate-100 hover:border-brand-primary/55 bg-slate-50 hover:bg-brand-primary/5 transition-all relative overflow-hidden group/btn block active:scale-[0.99]"
+                                className="w-full text-left p-4 rounded-[2px] border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-900/60 transition-all relative overflow-hidden group/btn block cursor-pointer font-anthropic"
                               >
                                 <div
-                                  className={`absolute inset-0 opacity-10 transition-all ${isSelected ? 'bg-sky-500' : 'bg-slate-300 group-hover/btn:bg-sky-200'}`}
+                                  className={`absolute inset-0 opacity-15 transition-all ${isSelected ? 'bg-blue-600' : 'bg-slate-300 dark:bg-slate-700'}`}
                                   style={{ width: `${result.percentage}%` }}
                                 />
                                 <div className="relative flex justify-between items-center z-10">
-                                  <div className="flex items-center gap-2">
-                                    {isSelected && <CheckCircle2 className="w-4 h-4 text-sky-600" />}
-                                    <span className={`text-sm ${isSelected ? 'font-semibold text-sky-900' : 'font-medium text-slate-700 group-hover/btn:text-sky-800'}`}>
-                                      {option} {isSelected && <span className="text-xs text-sky-600 ml-1">(Votul tău)</span>}
+                                  <div className="flex items-center gap-2.5">
+                                    {isSelected && <CheckCircle2 className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0" />}
+                                    <span className={`text-sm ${isSelected ? 'font-bold text-slate-900 dark:text-slate-100' : 'font-medium text-slate-700 dark:text-slate-300'}`}>
+                                      {option} {isSelected && <span className="text-xs text-blue-600 dark:text-blue-400 font-title uppercase ml-1.5 font-bold">(Votul tău)</span>}
                                     </span>
                                   </div>
-                                  <span className="text-sm font-medium text-slate-600">
+                                  <span className="text-sm font-bold font-data text-slate-900 dark:text-slate-100">
                                     {result.percentage}% ({result.count})
                                   </span>
                                 </div>
@@ -390,8 +396,8 @@ export const IdeasView: React.FC<IdeasViewProps> = ({ isAdmin, currentUserId }) 
                         );
                       })}
                     </div>
-                    <div className="mt-4 flex items-center justify-between text-xs text-slate-500 border-t border-slate-100 pt-3">
-                      <div className="flex flex-col gap-1">
+                    <div className="mt-4 flex items-center justify-between text-xs sm:text-sm text-slate-500 dark:text-slate-400 border-t border-slate-100 dark:border-slate-800 pt-3">
+                      <div className="flex flex-col gap-0.5 font-data">
                         <span>Alegători unici: {totalVoters}</span>
                         {poll.isMultipleChoice && <span>Voturi totale exprimate: {totalVotesCast}</span>}
                       </div>
@@ -399,25 +405,25 @@ export const IdeasView: React.FC<IdeasViewProps> = ({ isAdmin, currentUserId }) 
                         {isAdmin && (
                           <button
                             onClick={() => setExpandedPolls(prev => ({ ...prev, [poll.id]: !prev[poll.id] }))}
-                            className="flex items-center gap-1 text-sky-600 hover:text-sky-700 font-medium"
+                            className="flex items-center gap-1 text-blue-600 dark:text-blue-400 font-title font-semibold hover:underline cursor-pointer"
                           >
                             {isExpanded ? 'Ascunde Detalii' : 'Vezi Detalii'}
-                            {isExpanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                            {isExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
                           </button>
                         )}
                         {poll.createdAt && (
-                          <span>{poll.createdAt.toDate().toLocaleDateString('ro-RO')}</span>
+                          <span className="font-data">{poll.createdAt.toDate ? poll.createdAt.toDate().toLocaleDateString('ro-RO') : new Date(poll.createdAt).toLocaleDateString('ro-RO')}</span>
                         )}
                       </div>
                     </div>
 
                     {isAdmin && isExpanded && (
-                      <div className="mt-4 bg-slate-50 p-4 rounded-lg border border-slate-100 text-sm">
-                        <h4 className="font-semibold text-slate-700 mb-2">Detalii Voturi</h4>
+                      <div className="mt-4 bg-slate-50 dark:bg-slate-800/60 p-4 rounded-[2px] border border-slate-200 dark:border-slate-700 text-xs sm:text-sm font-anthropic">
+                        <h4 className="font-bold text-slate-900 dark:text-slate-100 mb-2 font-title uppercase">Detalii Voturi Exprimate</h4>
                         {Object.entries(poll.votes || {}).length === 0 ? (
                           <p className="text-slate-500 italic">Nu există voturi exprimate.</p>
                         ) : (
-                          <ul className="space-y-1">
+                          <ul className="space-y-1.5">
                             {Object.entries(poll.votes || {}).map(([voterId, voteVal]) => {
                               let selectedStr = '';
                               if (Array.isArray(voteVal)) {
@@ -426,9 +432,9 @@ export const IdeasView: React.FC<IdeasViewProps> = ({ isAdmin, currentUserId }) 
                                 selectedStr = (poll.options || [])[voteVal];
                               }
                               return (
-                                <li key={voterId} className="flex justify-between border-b border-slate-200/50 pb-1 last:border-0">
-                                  <span className="text-slate-600 truncate max-w-[50%]" title={voterId}>{voterId}</span>
-                                  <span className="font-medium text-slate-800 text-right">{selectedStr}</span>
+                                <li key={voterId} className="flex justify-between border-b border-slate-200 dark:border-slate-700/60 pb-1.5 last:border-0 font-data">
+                                  <span className="text-slate-600 dark:text-slate-400 truncate max-w-[50%]" title={voterId}>{voterId}</span>
+                                  <span className="font-medium text-slate-900 dark:text-slate-100 text-right">{selectedStr}</span>
                                 </li>
                               );
                             })}

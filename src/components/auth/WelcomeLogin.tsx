@@ -100,7 +100,7 @@ export function WelcomeLogin({ onLoginSuccess }: WelcomeLoginProps) {
  
       {/* Floating 3D Geometric Shape 2: Isometric Glass Cube (Bottom Right) */}
       <motion.div
-        className="absolute bottom-[15%] right-[12%] w-32 h-32 rounded-3xl border border-white/20 bg-white/5 backdrop-blur-md shadow-[0_8px_32px_rgba(255,234,205,0.15)] flex items-center justify-center pointer-events-none hidden md:flex z-10"
+        className="absolute bottom-[15%] right-[12%] w-28 h-28 rounded-[2px] border border-slate-200 bg-white/40 backdrop-blur-md shadow-sm flex items-center justify-center pointer-events-none hidden md:flex z-10"
         animate={{
           y: [0, 18, 0],
           rotateX: [0, 360],
@@ -112,7 +112,7 @@ export function WelcomeLogin({ onLoginSuccess }: WelcomeLoginProps) {
           ease: "easeInOut"
         }}
       >
-        <svg width="80" height="80" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg" className="opacity-80">
+        <svg width="60" height="60" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg" className="opacity-80">
           <path d="M40 15L65 28L40 41L15 28L40 15Z" fill="url(#cube_top)" stroke="#ffeacd" strokeWidth="1"/>
           <path d="M15 28V58L40 71V41L15 28Z" fill="url(#cube_left)" stroke="#89cff0" strokeWidth="1"/>
           <path d="M40 41V71L65 58V28L40 41Z" fill="url(#cube_right)" stroke="#475569" strokeWidth="1"/>
@@ -133,13 +133,13 @@ export function WelcomeLogin({ onLoginSuccess }: WelcomeLoginProps) {
         </svg>
       </motion.div>
  
-      {/* Floating 3D Geometric Shape 3: Glossy Glass Bubble (Middle Right) */}
+      {/* Floating 3D Geometric Shape 3: Glossy Glass Frame (Middle Right) */}
       <motion.div
-        className="absolute top-[40%] right-[20%] w-20 h-20 rounded-full bg-gradient-to-br from-white/30 via-white/5 to-transparent border border-white/30 backdrop-blur-sm shadow-[inset_-3px_-3px_9px_rgba(255,255,255,0.3),3px_3px_9px_rgba(137,207,240,0.2)] pointer-events-none hidden lg:block z-0"
+        className="absolute top-[40%] right-[20%] w-16 h-16 rounded-[2px] bg-slate-100/40 border border-slate-200 backdrop-blur-sm pointer-events-none hidden lg:block z-0"
         animate={{
           y: [0, -25, 0],
           x: [0, 15, 0],
-          scale: [1, 1.15, 1]
+          scale: [1, 1.1, 1]
         }}
         transition={{
           duration: 16,
@@ -178,7 +178,7 @@ export function WelcomeLogin({ onLoginSuccess }: WelcomeLoginProps) {
       <AnimatePresence>
         {showIntro && (
           <motion.div 
-            className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-[#FAF9F5]"
+            className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-[#FAF9F5] font-anthropic"
             initial={{ opacity: 1 }}
             exit={{ opacity: 0, filter: 'blur(10px)', scale: 1.05 }}
             transition={{ duration: 1.4, ease: easeInOut }}
@@ -189,8 +189,8 @@ export function WelcomeLogin({ onLoginSuccess }: WelcomeLoginProps) {
               transition={{ duration: 1.8, ease: easeOut, delay: 0.2 }}
               className="flex items-center justify-center mb-6"
             >
-              <div className="w-16 h-16 rounded-2xl bg-brand-primary/20 flex items-center justify-center border border-brand-primary/40 shadow-[0_0_40px_rgba(40,250,252,0.3)]">
-                <span className="font-['Great_Vibes'] text-4xl text-brand-primary">IC</span>
+              <div className="w-14 h-14 rounded-[2px] bg-slate-900 text-white flex items-center justify-center border border-slate-800 shadow-xs">
+                <span className="font-anthropicSerif text-2xl font-bold">IC</span>
               </div>
             </motion.div>
             
@@ -198,7 +198,7 @@ export function WelcomeLogin({ onLoginSuccess }: WelcomeLoginProps) {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 1.8, ease: easeOut, delay: 0.5 }}
-              className="font-['Great_Vibes'] text-6xl text-brand-accent"
+              className="font-anthropicSerif text-4xl sm:text-5xl font-bold text-slate-900"
             >
               Interact Camena
             </motion.h1>
@@ -207,7 +207,7 @@ export function WelcomeLogin({ onLoginSuccess }: WelcomeLoginProps) {
               initial={{ opacity: 0 }}
               animate={{ opacity: 0.6 }}
               transition={{ duration: 1.8, ease: easeOut, delay: 1.0 }}
-              className="mt-4 font-anthropic text-sm tracking-[0.2em] uppercase"
+              className="mt-3 font-title text-xs tracking-[0.2em] uppercase text-slate-600 font-bold"
             >
               Service Above Self
             </motion.p>
@@ -215,51 +215,35 @@ export function WelcomeLogin({ onLoginSuccess }: WelcomeLoginProps) {
         )}
       </AnimatePresence>
 
-      {/* Main Login Card (Expanded & Beautified) */}
+      {/* Main Login Card */}
       <motion.div 
         initial={{ opacity: 0, scale: 0.95 }}
         animate={!showIntro ? { opacity: 1, scale: 1 } : {}}
-        transition={{ duration: 1.4, ease: easeOut, delay: showIntro ? 0 : 0.3 }}
-        className="w-full max-w-[540px] bg-white/85 backdrop-blur-xl rounded-[2.5rem] p-10 md:p-12 shadow-[0_16px_50px_rgba(0,31,38,0.08)] border border-brand-muted/10 relative z-10 flex flex-col items-center animate-in fade-in duration-1000"
+        transition={{ duration: 1.2, ease: easeOut, delay: showIntro ? 0 : 0.3 }}
+        className="w-full max-w-[480px] bg-white/95 backdrop-blur-md rounded-[2px] p-8 md:p-10 shadow-xl border border-slate-200 relative z-10 flex flex-col items-center animate-in fade-in duration-700 font-anthropic"
       >
-        {/* 3D Rotating Logo Container */}
-        <div className="relative group perspective-[1000px] z-20 pointer-events-none mt-2 mb-4">
-          <motion.div 
-            animate={{ 
-              rotateY: [0, 8, -8, 0],
-              rotateX: [0, -6, 6, 0]
-            }}
-            transition={{ duration: 15, repeat: Infinity, ease: "easeInOut" }}
-            className="relative"
-          >
-            <motion.div 
-              initial={{ rotate: -15, scale: 0.8, y: 20 }}
-              animate={{ rotate: 0, scale: 1, y: 0 }}
-              transition={{ type: 'spring', damping: 24, stiffness: 45 }}
-              className="relative w-full max-w-[320px] h-auto max-h-[110px] py-2 flex items-center justify-center mx-auto"
-            >
-              <img 
-                src="/logo.png" 
-                alt="Interact Logo" 
-                className="w-full h-auto max-h-[110px] object-contain mix-blend-multiply" 
-                referrerPolicy="no-referrer" 
-              />
-            </motion.div>
-          </motion.div>
+        {/* Logo */}
+        <div className="relative z-20 pointer-events-none mt-1 mb-3">
+          <img 
+            src="/logo.png" 
+            alt="Interact Logo" 
+            className="w-full h-auto max-h-[85px] object-contain mix-blend-multiply" 
+            referrerPolicy="no-referrer" 
+          />
         </div>
 
-        <h2 className="text-5xl md:text-6xl font-['Great_Vibes'] text-brand-accent text-center mb-1 drop-shadow-xs">Interact Camena</h2>
-        <p className="text-sm font-anthropicSerif italic font-semibold text-slate-500 text-center mb-4">Portal Administrație</p>
+        <h2 className="text-2xl md:text-3xl font-bold font-anthropicSerif text-slate-900 text-center mb-0.5">Interact Camena</h2>
+        <p className="text-xs font-title uppercase tracking-wider font-bold text-slate-500 text-center mb-3">Portal Administrație</p>
 
-        {/* Copywriting specific to the brand */}
-        <p className="text-lg text-slate-600 font-anthropicSerif italic text-center leading-relaxed max-w-[440px] mb-8 px-4">
-          Arhitectura schimbării locale începe prin organizare. Unificăm membrii, inițiativele și resursele comunității sub deviza <span className="font-semibold text-brand-accent font-anthropic">Service Above Self</span> pentru a construi un impact de durată.
+        {/* Copywriting */}
+        <p className="text-xs text-slate-600 font-anthropic text-center leading-relaxed max-w-[380px] mb-6 px-2">
+          Arhitectura schimbării locale începe prin organizare. Unificăm membrii, inițiativele și resursele comunității sub deviza <span className="font-bold text-slate-900">Service Above Self</span>.
         </p>
 
-        <form onSubmit={handleLogin} className="w-full space-y-6">
+        <form onSubmit={handleLogin} className="w-full space-y-4 font-anthropic">
           {/* Username Input */}
           <div>
-            <label className="block text-sm font-semibold font-anthropicSerif italic text-slate-800 tracking-wider mb-2 ml-1">Utilizator</label>
+            <label className="block text-[10px] font-bold font-title uppercase tracking-wider text-slate-700 mb-1">Utilizator</label>
             <input
               type="text"
               placeholder="Ex: ITC"
@@ -268,14 +252,14 @@ export function WelcomeLogin({ onLoginSuccess }: WelcomeLoginProps) {
                 setUsername(e.target.value);
                 setError('');
               }}
-              className="w-full px-5 py-4 bg-[#FAF9F5] border border-brand-muted/15 rounded-2xl focus:outline-none focus:border-brand-primary focus:ring-4 focus:ring-brand-primary/20 transition-all font-anthropic text-base"
+              className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-[2px] focus:outline-none focus:border-slate-800 transition-all font-anthropic text-xs text-slate-900 font-medium"
               required
             />
           </div>
 
           {/* Password Input */}
           <div>
-            <label className="block text-sm font-semibold font-anthropicSerif italic text-slate-800 tracking-wider mb-2 ml-1">Parolă</label>
+            <label className="block text-[10px] font-bold font-title uppercase tracking-wider text-slate-700 mb-1">Parolă</label>
             <input
               type="password"
               placeholder="••••••••"
@@ -284,7 +268,7 @@ export function WelcomeLogin({ onLoginSuccess }: WelcomeLoginProps) {
                 setPassword(e.target.value);
                 setError('');
               }}
-              className="w-full px-5 py-4 bg-[#FAF9F5] border border-brand-muted/15 rounded-2xl focus:outline-none focus:border-brand-primary focus:ring-4 focus:ring-brand-primary/20 transition-all font-anthropic text-base"
+              className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-[2px] focus:outline-none focus:border-slate-800 transition-all font-anthropic text-xs text-slate-900 font-medium"
               required
             />
           </div>
@@ -296,9 +280,9 @@ export function WelcomeLogin({ onLoginSuccess }: WelcomeLoginProps) {
                 initial={{ opacity: 0, y: -5, height: 0 }} 
                 animate={{ opacity: 1, y: 0, height: 'auto' }}
                 exit={{ opacity: 0, y: -5, height: 0 }}
-                className="text-red-500 text-sm font-anthropic overflow-hidden text-center"
+                className="text-rose-600 text-xs font-medium font-anthropic overflow-hidden text-center"
               >
-                <div className="pt-2">{error}</div>
+                <div className="pt-1">{error}</div>
               </motion.div>
             )}
           </AnimatePresence>
@@ -307,7 +291,7 @@ export function WelcomeLogin({ onLoginSuccess }: WelcomeLoginProps) {
           <button
             type="submit"
             disabled={isLoading}
-            className={`ios26-btn w-full mt-6 py-4 rounded-2xl font-anthropic font-bold text-sm transition-all active:scale-[0.98] ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+            className={`w-full mt-4 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-[2px] font-title font-bold text-xs uppercase tracking-wider shadow-xs transition-all cursor-pointer ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
           >
             {isLoading ? 'Se conectează...' : 'Autentificare'}
           </button>
@@ -318,11 +302,11 @@ export function WelcomeLogin({ onLoginSuccess }: WelcomeLoginProps) {
             onClick={() => {
               window.location.hash = '';
             }}
-            className="w-full py-3.5 border border-brand-muted/25 hover:border-brand-muted/50 text-brand-muted hover:text-brand-accent rounded-2xl text-xs font-bold transition-all active:scale-[0.98] flex items-center justify-center gap-2 uppercase tracking-widest font-anthropic group"
+            className="w-full py-2 border border-slate-300 hover:border-slate-400 text-slate-600 hover:text-slate-900 rounded-[2px] text-xs font-bold font-title transition-all flex items-center justify-center gap-1.5 uppercase tracking-wider cursor-pointer group"
           >
             <svg 
-              width="14" 
-              height="14" 
+              width="13" 
+              height="13" 
               viewBox="0 0 24 24" 
               fill="none" 
               stroke="currentColor" 
@@ -338,7 +322,7 @@ export function WelcomeLogin({ onLoginSuccess }: WelcomeLoginProps) {
           </button>
         </form>
 
-        <p className="text-[11px] text-slate-400 text-center mt-8 font-anthropicSerif italic leading-relaxed">
+        <p className="text-[10px] text-slate-400 text-center mt-6 font-anthropic leading-relaxed">
           © {new Date().getFullYear()} Interact Camena Piatra Neamț.<br />
           Serviciu Digital Securizat.
         </p>

@@ -79,15 +79,15 @@ export const PushNotificationToggle: React.FC<PushNotificationToggleProps> = ({
   }
 
   return (
-    <div className="flex flex-col gap-2.5 p-3 rounded-2xl bg-slate-100/90 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700">
-      <div className="flex flex-wrap items-center gap-2">
+    <div className="flex flex-col gap-2.5 p-3.5 rounded-[2px] bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 font-anthropic">
+      <div className="flex flex-wrap items-center gap-2 font-title">
         <button
           onClick={handleToggle}
           disabled={loading}
-          className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-xl font-extrabold text-xs tracking-wide transition-all duration-300 shadow-sm ${
+          className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-[2px] font-bold text-xs uppercase tracking-wider transition-all duration-200 cursor-pointer ${
             subscribed
-              ? 'bg-emerald-600 text-white border border-emerald-500 hover:bg-emerald-700'
-              : 'bg-amber-500 hover:bg-amber-600 text-slate-950 font-black'
+              ? 'bg-emerald-600 text-white hover:bg-emerald-700'
+              : 'btn-civic-primary'
           }`}
         >
           {loading ? (
@@ -99,32 +99,32 @@ export const PushNotificationToggle: React.FC<PushNotificationToggleProps> = ({
             </>
           ) : (
             <>
-              <Bell className="w-3.5 h-3.5 text-slate-950" />
-              Activează Notificări Push
+              <Bell className="w-3.5 h-3.5" />
+              Activează Notificări
             </>
           )}
         </button>
 
-        {showTestButton && (
+        {showTestButton && subscribed && (
           <button
             onClick={handleTestNotification}
             disabled={testLoading}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white border border-blue-500 transition-all shadow-sm active:scale-95 shrink-0"
+            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-[2px] btn-civic-secondary text-xs uppercase tracking-wider font-bold transition-all cursor-pointer"
           >
             {testLoading ? (
-              <Loader2 className="w-3.5 h-3.5 animate-spin text-white" />
+              <Loader2 className="w-3 h-3 animate-spin" />
             ) : (
-              <Send className="w-3.5 h-3.5 text-white" />
+              <Send className="w-3 h-3 text-slate-500 dark:text-slate-400" />
             )}
-            <span className="text-white font-bold text-xs">Testează pe Dispozitiv</span>
+            Test Push
           </button>
         )}
       </div>
 
       {statusMessage && (
-        <p className="text-xs font-bold text-slate-900 dark:text-slate-100 animate-in fade-in duration-300 px-1">
+        <div className="text-[11px] font-medium text-slate-600 dark:text-slate-300 font-data">
           {statusMessage}
-        </p>
+        </div>
       )}
     </div>
   );

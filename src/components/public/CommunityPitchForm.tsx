@@ -102,12 +102,12 @@ export const CommunityPitchForm: React.FC = () => {
 
   if (submitted) {
     return (
-      <div className="pitch-form-container w-full max-w-3xl mx-auto liquid-glass rounded-3xl p-8 lg:p-12 text-center border border-brand_signature-baby_blue/30 shadow-[0_20px_50px_rgba(40,250,252,0.1)]">
-        <div className="w-20 h-20 bg-brand_signature-baby_blue/20 text-brand_signature-baby_blue rounded-full flex items-center justify-center mx-auto mb-6 border border-brand_signature-baby_blue/30">
-          <CheckCircle2 className="w-10 h-10" />
+      <div className="pitch-form-container w-full max-w-3xl mx-auto bg-white border border-slate-200 rounded-[2px] p-6 sm:p-10 text-center shadow-sm font-anthropic">
+        <div className="w-16 h-16 bg-emerald-50 text-emerald-600 rounded-[2px] flex items-center justify-center mx-auto mb-4 border border-emerald-200">
+          <CheckCircle2 className="w-8 h-8" />
         </div>
-        <h2 className="font-headings text-2xl lg:text-3xl font-black text-text-executive_dark mb-4">Propunere Trimisă cu Succes!</h2>
-        <p className="font-headings text-lg text-text-executive_dark/70 max-w-xl mx-auto mb-8">
+        <h2 className="font-anthropicSerif text-2xl font-bold text-slate-900 mb-2">Propunere Trimisă cu Succes!</h2>
+        <p className="font-anthropic text-sm text-slate-600 max-w-xl mx-auto mb-6">
           Îți mulțumim pentru inițiativă! Echipa de administrare Interact Camena va analiza propunerea ta de proiect și te va contacta în cel mai scurt timp posibil.
         </p>
         <button
@@ -119,115 +119,112 @@ export const CommunityPitchForm: React.FC = () => {
             setContact('');
             setPdfFile(null);
           }}
-          className="emil-btn bg-text-executive_dark text-surface-background px-8 py-4 rounded-xl shadow-[0_4px_20px_rgba(40,250,252,0.15)] group inline-flex items-center justify-center"
+          className="bg-slate-900 hover:bg-slate-800 text-white px-6 py-3 rounded-[2px] shadow-xs inline-flex items-center justify-center font-title text-xs font-bold tracking-wider uppercase cursor-pointer"
         >
-          <div className="emil-btn-overlay"></div>
-          <span className="emil-btn-content font-headings text-sm font-bold tracking-widest uppercase">
-            Trimite altă idee
-          </span>
+          Trimite altă idee
         </button>
       </div>
     );
   }
 
   return (
-    <div className="pitch-form-container w-full max-w-3xl mx-auto liquid-glass rounded-3xl overflow-hidden border border-text-executive_dark/10 shadow-[0_15px_35px_rgba(0,31,38,0.02)] hover:border-brand_signature-baby_blue/20 transition-all duration-300">
-      <div className="p-8 lg:p-12 border-b border-text-executive_dark/5 bg-gradient-to-r from-brand_signature-baby_blue/5 to-transparent">
-        <div className="flex items-center gap-4">
-          <div className="w-12 h-12 bg-brand_signature-baby_blue/20 text-text-executive_dark rounded-2xl flex items-center justify-center border border-brand_signature-baby_blue/30">
-            <FileText className="w-6 h-6" />
+    <div className="pitch-form-container w-full max-w-3xl mx-auto bg-white rounded-[2px] overflow-hidden border border-slate-200 shadow-sm transition-all font-anthropic">
+      <div className="p-6 sm:p-8 border-b border-slate-100 bg-slate-50/50 font-anthropic">
+        <div className="flex items-center gap-3.5">
+          <div className="w-10 h-10 bg-indigo-50 text-indigo-900 rounded-[2px] flex items-center justify-center border border-indigo-200 shadow-xs">
+            <FileText className="w-5 h-5" />
           </div>
           <div>
-            <h2 className="font-headings text-xl lg:text-2xl font-black text-text-executive_dark">Propune o Idee Comunității</h2>
-            <p className="font-headings text-sm text-text-executive_dark/60 mt-1">Suntem deschiși la parteneriate și proiecte noi care pot ajuta orașul nostru.</p>
+            <h2 className="font-anthropicSerif text-xl font-bold text-slate-900">Propune o Idee Comunității</h2>
+            <p className="font-anthropic text-xs text-slate-500 mt-0.5">Suntem deschiși la parteneriate și proiecte noi care pot ajuta orașul nostru.</p>
           </div>
         </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="p-8 lg:p-12 space-y-6">
+      <form onSubmit={handleSubmit} className="p-6 sm:p-8 space-y-4 font-anthropic">
         {error && (
-          <div className="flex items-center gap-3 p-4 bg-rose-500/10 border border-rose-500/20 rounded-xl text-sm text-rose-700 dark:text-rose-400">
-            <AlertCircle className="w-5 h-5 shrink-0" />
-            <span className="font-headings font-semibold">{error}</span>
+          <div className="flex items-center gap-2 p-3 bg-rose-50 border border-rose-200 rounded-[2px] text-xs text-rose-700">
+            <AlertCircle className="w-4 h-4 shrink-0" />
+            <span className="font-anthropic font-medium">{error}</span>
           </div>
         )}
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Nume / Organizatie */}
-          <div className="space-y-2">
-            <label className="block font-headings text-sm font-bold text-text-executive_dark/75 tracking-wider uppercase">Nume Complet / Organizație *</label>
+          <div className="space-y-1">
+            <label className="block font-title text-[10px] font-bold text-slate-700 tracking-wider uppercase">Nume Complet / Organizație *</label>
             <div className="relative group">
-              <User className="absolute left-4 top-1/2 -translate-y-1/2 text-text-executive_dark/40 group-focus-within:text-brand_signature-baby_blue transition-colors w-4 h-4" />
+              <User className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-3.5 h-3.5" />
               <input
                 type="text"
                 required
                 value={name}
                 onChange={e => setName(e.target.value)}
                 placeholder="Ex: Popescu Ionel sau Colegiul Național..."
-                className="w-full pl-11 pr-4 py-3.5 bg-surface-background border border-text-executive_dark/10 rounded-xl text-sm font-headings outline-none focus:border-brand_signature-baby_blue focus:ring-2 focus:ring-brand_signature-baby_blue/20 transition-all text-text-executive_dark"
+                className="w-full pl-8 pr-3 py-2 bg-slate-50 border border-slate-300 rounded-[2px] text-xs font-anthropic outline-none focus:border-slate-800 transition-all text-slate-900"
               />
             </div>
           </div>
 
           {/* Contact (Email/Tel) */}
-          <div className="space-y-2">
-            <label className="block font-headings text-sm font-bold text-text-executive_dark/75 tracking-wider uppercase">Informații Contact (Email / Tel) *</label>
+          <div className="space-y-1">
+            <label className="block font-title text-[10px] font-bold text-slate-700 tracking-wider uppercase">Informații Contact (Email / Tel) *</label>
             <div className="relative group">
-              <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-text-executive_dark/40 group-focus-within:text-brand_signature-baby_blue transition-colors w-4 h-4" />
+              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-3.5 h-3.5" />
               <input
                 type="text"
                 required
                 value={contact}
                 onChange={e => setContact(e.target.value)}
                 placeholder="Ex: contact@email.com / 07xx..."
-                className="w-full pl-11 pr-4 py-3.5 bg-surface-background border border-text-executive_dark/10 rounded-xl text-sm font-headings outline-none focus:border-brand_signature-baby_blue focus:ring-2 focus:ring-brand_signature-baby_blue/20 transition-all text-text-executive_dark"
+                className="w-full pl-8 pr-3 py-2 bg-slate-50 border border-slate-300 rounded-[2px] text-xs font-anthropic outline-none focus:border-slate-800 transition-all text-slate-900"
               />
             </div>
           </div>
         </div>
 
         {/* Titlu idee */}
-        <div className="space-y-2">
-          <label className="block font-headings text-sm font-bold text-text-executive_dark/75 tracking-wider uppercase">Titlul Ideii / Proiectului *</label>
+        <div className="space-y-1">
+          <label className="block font-title text-[10px] font-bold text-slate-700 tracking-wider uppercase">Titlul Ideii / Proiectului *</label>
           <div className="relative group">
-            <Tag className="absolute left-4 top-1/2 -translate-y-1/2 text-text-executive_dark/40 group-focus-within:text-brand_signature-baby_blue transition-colors w-4 h-4" />
+            <Tag className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-3.5 h-3.5" />
             <input
               type="text"
               required
               value={title}
               onChange={e => setTitle(e.target.value)}
               placeholder="Ex: Campania de împădurire ecologică"
-              className="w-full pl-11 pr-4 py-3.5 bg-surface-background border border-text-executive_dark/10 rounded-xl text-sm font-headings outline-none focus:border-brand_signature-baby_blue focus:ring-2 focus:ring-brand_signature-baby_blue/20 transition-all text-text-executive_dark"
+              className="w-full pl-8 pr-3 py-2 bg-slate-50 border border-slate-300 rounded-[2px] text-xs font-anthropic outline-none focus:border-slate-800 transition-all text-slate-900"
             />
           </div>
         </div>
 
         {/* Descriere */}
-        <div className="space-y-2">
-          <label className="block font-headings text-sm font-bold text-text-executive_dark/75 tracking-wider uppercase">Descrierea Ideii *</label>
+        <div className="space-y-1">
+          <label className="block font-title text-[10px] font-bold text-slate-700 tracking-wider uppercase">Descrierea Ideii *</label>
           <div className="relative group">
-            <AlignLeft className="absolute left-4 top-4 text-text-executive_dark/40 group-focus-within:text-brand_signature-baby_blue transition-colors w-4 h-4" />
+            <AlignLeft className="absolute left-3 top-2.5 text-slate-400 w-3.5 h-3.5" />
             <textarea
               required
               value={description}
               onChange={e => setDescription(e.target.value)}
               placeholder="Descrie pe scurt ideea, scopul propus și modul în care Interact Camena poate sprijini inițiativa..."
               rows={4}
-              className="w-full pl-11 pr-4 py-3.5 bg-surface-background border border-text-executive_dark/10 rounded-xl text-sm font-headings outline-none focus:border-brand_signature-baby_blue focus:ring-2 focus:ring-brand_signature-baby_blue/20 transition-all resize-none text-text-executive_dark"
+              className="w-full pl-8 pr-3 py-2 bg-slate-50 border border-slate-300 rounded-[2px] text-xs font-anthropic outline-none focus:border-slate-800 transition-all resize-none text-slate-900"
             />
           </div>
         </div>
 
         {/* PDF Upload */}
-        <div className="space-y-2">
-          <label className="block font-headings text-sm font-bold text-text-executive_dark/75 tracking-wider uppercase">Atașament Propunere PDF * (Max 5MB)</label>
+        <div className="space-y-1">
+          <label className="block font-title text-[10px] font-bold text-slate-700 tracking-wider uppercase">Atașament Propunere PDF * (Max 5MB)</label>
           <div className="relative">
-            <label className="flex flex-col items-center justify-center gap-3 cursor-pointer w-full p-8 border-2 border-dashed border-text-executive_dark/10 hover:border-brand_signature-baby_blue rounded-xl transition-all bg-surface-background hover:bg-brand_signature-baby_blue/5 group">
-              <Upload className="w-8 h-8 text-text-executive_dark/40 group-hover:text-brand_signature-baby_blue transition-colors" />
-              <span className="text-sm font-headings text-text-executive_dark/60 group-hover:text-text-executive_dark font-medium transition-colors">
+            <label className="flex flex-col items-center justify-center gap-2 cursor-pointer w-full p-5 border-2 border-dashed border-slate-300 hover:border-slate-400 rounded-[2px] transition-all bg-slate-50 hover:bg-slate-100/50 group">
+              <Upload className="w-6 h-6 text-slate-400 group-hover:text-slate-600 transition-colors" />
+              <span className="text-xs font-anthropic text-slate-600 group-hover:text-slate-900 font-medium transition-colors">
                 {pdfFile ? pdfFile.name : 'Apasă pentru a încărca fișierul propunerii (PDF)'}
               </span>
-              <span className="text-xs text-text-executive_dark/40">Sunt acceptate doar fișiere .pdf</span>
+              <span className="text-[10px] text-slate-400">Sunt acceptate doar fișiere .pdf</span>
               <input
                 ref={fileInputRef}
                 type="file"
@@ -244,12 +241,12 @@ export const CommunityPitchForm: React.FC = () => {
                   setPdfFile(null);
                   if (fileInputRef.current) fileInputRef.current.value = '';
                 }}
-                className="absolute top-3 right-3 text-xs bg-rose-500/10 hover:bg-rose-500 text-rose-600 hover:text-white px-2 py-1 rounded transition-colors"
+                className="absolute top-2.5 right-2.5 text-[10px] font-title font-bold bg-rose-50 hover:bg-rose-500 text-rose-600 hover:text-white px-2 py-0.5 rounded-[2px] transition-colors cursor-pointer"
               >
-                Sterge
+                Șterge
               </button>
             )}
-            <p className="text-xs text-text-executive_dark/50 mt-2">Dimensiune maximă: 5MB. PDFs cu poze sau imagini mari pot depăși limita.</p>
+            <p className="text-[10px] text-slate-400 mt-1">Dimensiune maximă: 5MB.</p>
           </div>
         </div>
 
@@ -257,22 +254,19 @@ export const CommunityPitchForm: React.FC = () => {
         <button
           type="submit"
           disabled={isSubmitting || !title.trim() || !name.trim() || !description.trim() || !contact.trim() || !pdfFile}
-          className="emil-btn bg-text-executive_dark text-surface-background w-full py-4 rounded-xl shadow-[0_4px_20px_rgba(40,250,252,0.15)] group flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+          className="bg-slate-900 hover:bg-slate-800 text-white w-full py-3 rounded-[2px] shadow-xs font-title text-xs font-bold tracking-wider uppercase flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
         >
-          <div className="emil-btn-overlay"></div>
-          <span className="emil-btn-content font-headings text-sm font-bold tracking-widest uppercase flex items-center gap-2">
-            {isSubmitting ? (
-              <>
-                <div className="w-4 h-4 border-2 border-surface-background/30 border-t-surface-background rounded-full animate-spin" />
-                Se trimite...
-              </>
-            ) : (
-              <>
-                <Send className="w-4 h-4" />
-                Trimite Propunerea
-              </>
-            )}
-          </span>
+          {isSubmitting ? (
+            <>
+              <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-[2px] animate-spin" />
+              Se trimite...
+            </>
+          ) : (
+            <>
+              <Send className="w-3.5 h-3.5" />
+              Trimite Propunerea
+            </>
+          )}
         </button>
       </form>
     </div>
