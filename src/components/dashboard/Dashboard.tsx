@@ -2968,19 +2968,20 @@ export function Dashboard({ username, onLogout }: DashboardProps) {
           isMobileSidebarOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full lg:translate-x-0'
         }`}
       >
-        <div className="px-5 pt-6 pb-4 flex flex-col items-center relative border-b border-slate-200 dark:border-slate-800 shrink-0">
+        <div className="px-5 pt-[max(1.5rem,env(safe-area-inset-top,1.5rem))] pb-4 flex flex-col items-center relative border-b border-slate-200 dark:border-slate-800 shrink-0">
           {/* Close button for mobile sidebar */}
           <button
             onClick={() => setIsMobileSidebarOpen(false)}
-            className="lg:hidden absolute top-4 right-4 p-2 text-slate-500 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-white dark:hover:bg-slate-800 rounded-[2px] transition-colors"
+            className="lg:hidden absolute top-[max(1rem,env(safe-area-inset-top,1rem))] right-4 p-2.5 text-slate-500 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-white dark:hover:bg-slate-800 rounded-[2px] transition-colors cursor-pointer"
             title="Închide"
+            aria-label="Închide meniul"
           >
             <X size={18} />
           </button>
           {/* Desktop collapse toggle */}
           <button
             onClick={() => setIsSidebarCollapsed(v => !v)}
-            className="hidden lg:flex absolute top-4 right-3 p-1.5 text-slate-400 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-500 dark:hover:text-white dark:hover:bg-slate-800 rounded-[2px] transition-colors"
+            className="hidden lg:flex absolute top-4 right-3 p-1.5 text-slate-400 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-500 dark:hover:text-white dark:hover:bg-slate-800 rounded-[2px] transition-colors cursor-pointer"
             title={isSidebarCollapsed ? 'Expandează' : 'Restrânge'}
           >
             {isSidebarCollapsed ? <ChevronsRight size={15} /> : <ChevronsLeft size={15} />}
@@ -3046,7 +3047,7 @@ export function Dashboard({ username, onLogout }: DashboardProps) {
           ))}
         </div>
 
-        <div className="p-3 border-t border-slate-200 dark:border-slate-800 shrink-0">
+        <div className="p-3 pb-[max(0.75rem,env(safe-area-inset-bottom,0.75rem))] border-t border-slate-200 dark:border-slate-800 shrink-0">
            {!isSidebarCollapsed && (
              <div className="flex items-center justify-between px-3 py-2 mb-2 border border-emerald-300 dark:border-emerald-500/30 bg-emerald-50 dark:bg-emerald-950/40 rounded-[2px]">
                <div className="flex items-center gap-2">
@@ -3062,7 +3063,7 @@ export function Dashboard({ username, onLogout }: DashboardProps) {
            <button
             onClick={onLogout}
             title={isSidebarCollapsed ? 'Deconectare' : undefined}
-            className={`w-full flex items-center gap-3 py-2.5 rounded-[2px] text-rose-600 hover:text-rose-700 hover:bg-rose-50 dark:text-rose-400 dark:hover:text-rose-300 dark:hover:bg-rose-950/40 font-bold transition-all group ${isSidebarCollapsed ? 'justify-center px-0' : 'px-4'}`}
+            className={`w-full flex items-center gap-3 py-2.5 rounded-[2px] text-rose-600 hover:text-rose-700 hover:bg-rose-50 dark:text-rose-400 dark:hover:text-rose-300 dark:hover:bg-rose-950/40 font-bold transition-all group cursor-pointer ${isSidebarCollapsed ? 'justify-center px-0' : 'px-4'}`}
           >
             <LogOut size={17} className="shrink-0" />
             {!isSidebarCollapsed && <span className="text-[13.5px] font-title">Deconectare</span>}
@@ -3075,12 +3076,12 @@ export function Dashboard({ username, onLogout }: DashboardProps) {
       >
 
         {/* Header */}
-        <header className="adm-header sticky top-0 z-30 px-3.5 sm:px-6 py-3 sm:py-4 flex items-center justify-between backdrop-blur-md bg-white/90 dark:bg-[#0D111A]/90 border-b border-slate-200 dark:border-slate-800 shadow-xs">
-          <div className="flex-1 flex items-center gap-2.5 sm:gap-3 min-w-0">
+        <header className="adm-header sticky top-0 z-30 px-3 sm:px-6 pb-3 pt-[max(0.875rem,env(safe-area-inset-top,0.875rem))] sm:py-4 flex items-center justify-between backdrop-blur-md bg-white/90 dark:bg-[#0D111A]/90 border-b border-slate-200 dark:border-slate-800 shadow-xs">
+          <div className="flex-1 flex items-center gap-2 sm:gap-3 min-w-0">
             {/* Mobile Sidebar Hamburger Toggle */}
             <button
               onClick={() => setIsMobileSidebarOpen(true)}
-              className="lg:hidden p-2 -ml-1 text-slate-700 hover:text-slate-950 hover:bg-slate-100 dark:text-slate-300 dark:hover:text-white dark:hover:bg-slate-800 rounded-[2px] transition-colors shrink-0 touch-manipulation border border-slate-200 dark:border-slate-700"
+              className="lg:hidden min-h-[42px] min-w-[42px] p-2 -ml-1 text-slate-700 hover:text-slate-950 hover:bg-slate-100 dark:text-slate-300 dark:hover:text-white dark:hover:bg-slate-800 rounded-[2px] transition-colors shrink-0 touch-manipulation border border-slate-200 dark:border-slate-700 flex items-center justify-center cursor-pointer"
               title="Meniu"
               aria-label="Deschide meniul"
             >
@@ -3091,12 +3092,12 @@ export function Dashboard({ username, onLogout }: DashboardProps) {
               className="w-2.5 h-2.5 rounded-full shrink-0"
               style={{ backgroundColor: visibleThemeColor, transition: 'background-color 0.8s ease' }}
             />
-            <h1 className="text-xl md:text-2xl font-anthropicSerif italic font-bold text-slate-900 dark:text-white truncate">
+            <h1 className="text-lg sm:text-xl md:text-2xl font-anthropicSerif italic font-bold text-slate-900 dark:text-white truncate">
               {activeTitle}
             </h1>
           </div>
 
-          <div className="flex items-center gap-2 sm:gap-3 md:gap-4 shrink-0">
+          <div className="flex items-center gap-1.5 sm:gap-3 md:gap-4 shrink-0">
             <ClockWidget events={events} />
 
             {/* Easy / Advanced Mode Toggle Switch */}
@@ -3145,7 +3146,7 @@ export function Dashboard({ username, onLogout }: DashboardProps) {
             {/* Light / Dark toggle */}
             <button
               onClick={() => setThemeMode(m => m === 'dark' ? 'light' : 'dark')}
-              className="p-2.5 rounded-[2px] border border-slate-200 dark:border-slate-700 bg-slate-50 hover:bg-slate-100 dark:bg-slate-800/60 dark:hover:bg-slate-800 text-slate-700 hover:text-slate-950 dark:text-slate-300 dark:hover:text-white transition-all shrink-0 cursor-pointer shadow-xs"
+              className="p-2 sm:p-2.5 rounded-[2px] border border-slate-200 dark:border-slate-700 bg-slate-50 hover:bg-slate-100 dark:bg-slate-800/60 dark:hover:bg-slate-800 text-slate-700 hover:text-slate-950 dark:text-slate-300 dark:hover:text-white transition-all shrink-0 cursor-pointer shadow-xs min-h-[38px] min-w-[38px] flex items-center justify-center"
               title={themeMode === 'dark' ? 'Comută la mod luminos' : 'Comută la mod întunecat'}
             >
               {themeMode === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
@@ -3177,7 +3178,7 @@ export function Dashboard({ username, onLogout }: DashboardProps) {
                   <>
                     <button
                       onClick={() => setIsUserMenuOpen(v => !v)}
-                      className="flex items-center gap-2.5 bg-slate-50 hover:bg-slate-100 dark:bg-slate-800/60 dark:hover:bg-slate-800 pl-2.5 pr-3 py-1.5 rounded-[2px] border border-slate-200 dark:border-slate-700 transition-all cursor-pointer shadow-xs text-slate-900 dark:text-white"
+                      className="flex items-center gap-1.5 sm:gap-2.5 bg-slate-50 hover:bg-slate-100 dark:bg-slate-800/60 dark:hover:bg-slate-800 pl-1.5 sm:pl-2.5 pr-2 sm:pr-3 py-1.5 rounded-[2px] border border-slate-200 dark:border-slate-700 transition-all cursor-pointer shadow-xs text-slate-900 dark:text-white min-h-[38px]"
                     >
                       {(currentUserObj?.avatar || currentUserObj?.photo_url || currentUserObj?.photoUrl) ? (
                         <img
