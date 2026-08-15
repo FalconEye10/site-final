@@ -29,7 +29,6 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,900;1,400;1,600&display=swap" rel="stylesheet">
     
-    <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lenis@1.1.2/dist/lenis.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
@@ -37,28 +36,6 @@
     <script type="module" src="https://unpkg.com/@splinetool/viewer@1.3.3/build/spline-viewer.js"></script>
     
     <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    colors: {
-                        brand_signature: { 
-                            baby_blue: '#A0D8EF',
-                            taupe: '#475569',
-                            brown: '#101D34',
-                            cream: '#F9EBD1'
-                        },
-                        surface: { background: '#FFFFFF' },
-                        text: { executive_dark: '#101D34' }
-                    },
-                    fontFamily: {
-                        display: ['"Playfair Display"', 'serif'],
-                        headings: ['"Inter"', 'sans-serif'],
-                        data: ['"Inter"', 'monospace'],
-                    }
-                }
-            }
-        }
         // Enable pre-animation hidden states (prevents flash before GSAP runs)
         if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
             document.documentElement.classList.add('gsap-anim');
@@ -103,17 +80,9 @@
         <div class="flex items-center gap-2.5 sm:gap-3 md:gap-4 min-w-0">
             <!-- Interact Logo (Prominent) -->
             <img 
-                src="/images/interact-logo.png" 
+                src="/logo.png" 
                 alt="Interact Camena" 
                 class="h-8 sm:h-9 md:h-12 w-auto object-contain shrink-0" 
-                onerror="if(!this.dataset.tried){this.dataset.tried='true';this.src='/logo.png';}"
-            />
-            <!-- Rotary International Logo (Discrete & Secondary) -->
-            <img 
-                src="/images/rotary-logo.png" 
-                alt="Rotary International" 
-                class="h-6 sm:h-7 md:h-9 w-auto object-contain opacity-75 hover:opacity-100 transition-opacity border-l border-text-executive_dark/15 pl-2.5 sm:pl-3 md:pl-4 shrink-0 hidden xs:block" 
-                onerror="this.style.display='none'"
             />
             <div class="hidden sm:flex flex-col border-l border-text-executive_dark/15 pl-3 md:pl-4 min-w-0">
                 <div class="flex items-center gap-2">

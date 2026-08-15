@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { CheckCircle, Calendar as CalendarIcon, Sparkles } from 'lucide-react';
-import { AttendanceView } from '../views/AttendanceView';
-import { EventsView } from '../views/EventsView';
+
+const AttendanceView = lazy(() => import('../views/AttendanceView').then(m => ({ default: m.AttendanceView })));
+const EventsView = lazy(() => import('../views/EventsView').then(m => ({ default: m.EventsView })));
 
 interface MemberActivityHubProps {
   initialSubtab?: 'prezenta' | 'calendar';
@@ -65,7 +66,7 @@ export const MemberActivityHub: React.FC<MemberActivityHubProps> = ({
       </div>
 
       {/* Sub-view Content */}
-      <div>
+      <Suspense fallback={<div className="h-48 rounded-[2px] bg-slate-100 dark:bg-slate-900 animate-pulse" />}>
         {subtab === 'prezenta' && (
           <AttendanceView
             members={members}
@@ -83,7 +84,7 @@ export const MemberActivityHub: React.FC<MemberActivityHubProps> = ({
             onUpdateMember={onUpdateMember}
           />
         )}
-      </div>
+      </Suspense>
     </div>
   );
 };

@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { PieChart, CreditCard, FileText, ShieldAlert, Sparkles } from 'lucide-react';
-import { BudgetView } from '../views/BudgetView';
-import { MasterAuditView } from '../views/MasterAuditView';
+
+const BudgetView = lazy(() => import('../views/BudgetView').then(m => ({ default: m.BudgetView })));
+const MasterAuditView = lazy(() => import('../views/MasterAuditView').then(m => ({ default: m.MasterAuditView })));
 
 interface AdminFinanceHubProps {
   initialSubtab?: string;
@@ -71,7 +72,7 @@ export const AdminFinanceHub: React.FC<AdminFinanceHubProps> = ({
       </div>
 
       {/* Sub-view Content */}
-      <div>
+      <Suspense fallback={<div className="h-48 rounded-[2px] bg-slate-100 dark:bg-slate-900 animate-pulse" />}>
         {subtab === 'buget' && (
           <BudgetView
             isAdmin={isAdmin}
@@ -98,7 +99,7 @@ export const AdminFinanceHub: React.FC<AdminFinanceHubProps> = ({
             members={members}
           />
         )}
-      </div>
+      </Suspense>
     </div>
   );
 };

@@ -2,13 +2,82 @@
 // Service Worker pentru Notificări Push (Interact Camena Piatra Neamț)
 // ==============================================================================
 
-// Activare imediată la instalare fără a aștepta închiderea altor tab-uri
+// Versioned cache for offline resilience and fast asset loading
+const CACHE_NAME = 'interact-camena-v8-2-3';
+const PRECACHE_ASSETS = [
+  '/',
+  '/index.html',
+  '/logo.png',
+  '/manifest.json',
+  '/termeni-si-conditii.html',
+  '/politica-de-confidentialitate.html'
+];
+
+// Activare imediată la instalare și precache asset-uri cheie
 self.addEventListener('install', (event) => {
+  event.waitUntil(
+    caches.open(CACHE_NAME).then((cache) => {
+      return cache.addAll(PRECACHE_ASSETS).catch((err) => {
+        console.warn('Pre-cache warning:', err);
+      });
+    })
+  );
   self.skipWaiting();
 });
 
 self.addEventListener('activate', (event) => {
-  event.waitUntil(self.clients.claim());
+  event.waitUntil(
+    caches.keys().then((cacheNames) => {
+      return Promise.all(
+        cacheNames
+          .filter((name) => name.startsWith('interact-camena-') && name !== CACHE_NAME)
+          .map((name) => caches.delete(name))
+      );
+    }).then(() => self.clients.claim())
+  );
+});
+
+// Interceptare cereri de imagini și stiluri pentru cache rapid (Stale-While-Revalidate)
+self.addEventListener('fetch', (event) => {
+  const url = new URL(event.request.url);
+
+  // Ignorăm apelurile non-GET sau către API-ul Supabase / auth / realtime
+  if (
+    event.request.method !== 'GET' ||
+    url.hostname.includes('supabase.co') ||
+    url.pathname.startsWith('/rest/') ||
+    url.pathname.startsWith('/auth/') ||
+    url.pathname.startsWith('/storage/')
+  ) {
+    return;
+  }
+
+  // Pentru imagini și asset-uri statice locale, aplicăm Stale-While-Revalidate
+  if (
+    url.pathname.startsWith('/images/') ||
+    url.pathname.startsWith('/assets/') ||
+    url.pathname === '/logo.png' ||
+    url.pathname === '/img.jpeg' ||
+    url.pathname.endsWith('.css') ||
+    url.pathname.endsWith('.js')
+  ) {
+    event.respondWith(
+      caches.open(CACHE_NAME).then((cache) => {
+        return cache.match(event.request).then((cachedResponse) => {
+          const fetchPromise = fetch(event.request)
+            .then((networkResponse) => {
+              if (networkResponse && networkResponse.status === 200) {
+                cache.put(event.request, networkResponse.clone());
+              }
+              return networkResponse;
+            })
+            .catch(() => cachedResponse);
+
+          return cachedResponse || fetchPromise;
+        });
+      })
+    );
+  }
 });
 
 // Listener pentru evenimentul 'push' - recepționează mesajul de la serverul Push (Google FCM/Mozilla/Apple)

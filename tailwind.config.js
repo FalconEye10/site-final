@@ -2,13 +2,15 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   darkMode: 'class',
-  content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}", "./**/*.{html,js}"],
+  content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
   theme: {
     extend: {
       colors: {
         brand_signature: {
           baby_blue: '#A0D8EF',
           cream: '#F9EBD1',
+          taupe: '#475569',
+          brown: '#101D34',
         },
         'brand-primary': '#89cff0',
         'brand-accent': '#0F172A',

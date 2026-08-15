@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { Users, Users2, CheckCircle, ShieldCheck } from 'lucide-react';
-import { MembersView } from '../views/MembersView';
-import { RepartizareView } from '../views/RepartizareView';
-import { AttendanceView } from '../views/AttendanceView';
+
+const MembersView = lazy(() => import('../views/MembersView').then(m => ({ default: m.MembersView })));
+const RepartizareView = lazy(() => import('../views/RepartizareView').then(m => ({ default: m.RepartizareView })));
+const AttendanceView = lazy(() => import('../views/AttendanceView').then(m => ({ default: m.AttendanceView })));
 
 interface AdminTeamHubProps {
   initialSubtab?: string;
@@ -73,7 +74,7 @@ export const AdminTeamHub: React.FC<AdminTeamHubProps> = ({
       </div>
 
       {/* Sub-view Content */}
-      <div>
+      <Suspense fallback={<div className="h-48 rounded-[2px] bg-slate-100 dark:bg-slate-900 animate-pulse" />}>
         {subtab === 'membri' && (
           <MembersView
             members={members}
@@ -101,7 +102,7 @@ export const AdminTeamHub: React.FC<AdminTeamHubProps> = ({
             preselectedEventId={preselectedEventId}
           />
         )}
-      </div>
+      </Suspense>
     </div>
   );
 };

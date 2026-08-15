@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, lazy, Suspense } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Home, Users, Users2, CheckCircle, Calendar as CalendarIcon,
@@ -11,8 +11,6 @@ import {
   Heart, MessageSquarePlus, Compass
 } from 'lucide-react';
 
-
-import { MembersView } from './views/MembersView';
 import { AuroraBackground } from '../ui/AuroraBackground';
 import { CommandPalette, type CommandNavItem } from './CommandPalette';
 import { calculateDebt, calculateQualification, generateMemberLedger } from '../../utils/finance';
@@ -20,22 +18,6 @@ import { fetchMembers, updateMemberFields, revertLatestTreasuryPayment, fetchAll
 import { canEditMemberPassword, isBoardMember } from '../../utils/permissions';
 import { supabase } from '../../supabase';
 import { toast } from '../ui/Toast';
-import { AddMemberModal } from '../members/AddMemberModal';
-import { AttendanceView } from './views/AttendanceView';
-import { EventsView } from './views/EventsView';
-import { IdeasView } from './views/IdeasView';
-import { CommunityIdeasView } from './views/CommunityIdeasView';
-import { RepartizareView } from './views/RepartizareView';
-
-import { ProjectProposalsView } from './views/ProjectProposalsView';
-import { ForumView } from './views/ForumView';
-import { NewsView } from './views/NewsView';
-import { LeaderboardView } from './views/LeaderboardView';
-import { BudgetView } from './views/BudgetView';
-import { KudosView } from './views/KudosView';
-import { SuggestionsView } from './views/SuggestionsView';
-import { MasterAuditView } from './views/MasterAuditView';
-import { PlatformTutorialModal } from './PlatformTutorialModal';
 import { NotificationsDropdown } from './NotificationsDropdown';
 import { MemberActivityHub } from './hubs/MemberActivityHub';
 import { MemberCommunityHub } from './hubs/MemberCommunityHub';
@@ -45,6 +27,39 @@ import { AdminCommunityHub } from './hubs/AdminCommunityHub';
 import { VolunteerSpotlightCard } from './VolunteerSpotlightCard';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
 import { ShieldAlert, Zap, Sparkles } from 'lucide-react';
+
+// Lazy-loaded Views & Modals for optimum performance and minimal bundle footprint
+const MembersView = lazy(() => import('./views/MembersView').then(m => ({ default: m.MembersView })));
+const AttendanceView = lazy(() => import('./views/AttendanceView').then(m => ({ default: m.AttendanceView })));
+const EventsView = lazy(() => import('./views/EventsView').then(m => ({ default: m.EventsView })));
+const IdeasView = lazy(() => import('./views/IdeasView').then(m => ({ default: m.IdeasView })));
+const CommunityIdeasView = lazy(() => import('./views/CommunityIdeasView').then(m => ({ default: m.CommunityIdeasView })));
+const RepartizareView = lazy(() => import('./views/RepartizareView').then(m => ({ default: m.RepartizareView })));
+const ProjectProposalsView = lazy(() => import('./views/ProjectProposalsView').then(m => ({ default: m.ProjectProposalsView })));
+const ForumView = lazy(() => import('./views/ForumView').then(m => ({ default: m.ForumView })));
+const NewsView = lazy(() => import('./views/NewsView').then(m => ({ default: m.NewsView })));
+const LeaderboardView = lazy(() => import('./views/LeaderboardView').then(m => ({ default: m.LeaderboardView })));
+const BudgetView = lazy(() => import('./views/BudgetView').then(m => ({ default: m.BudgetView })));
+const KudosView = lazy(() => import('./views/KudosView').then(m => ({ default: m.KudosView })));
+const SuggestionsView = lazy(() => import('./views/SuggestionsView').then(m => ({ default: m.SuggestionsView })));
+const MasterAuditView = lazy(() => import('./views/MasterAuditView').then(m => ({ default: m.MasterAuditView })));
+const AddMemberModal = lazy(() => import('../members/AddMemberModal').then(m => ({ default: m.AddMemberModal })));
+const PlatformTutorialModal = lazy(() => import('./PlatformTutorialModal').then(m => ({ default: m.PlatformTutorialModal })));
+
+function ViewLoadingSkeleton() {
+  return (
+    <div className="space-y-4 animate-pulse p-2 sm:p-4">
+      <div className="h-9 bg-slate-200/70 dark:bg-slate-800/70 rounded-[2px] w-48 mb-6" />
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <div className="h-24 bg-slate-200/60 dark:bg-slate-800/60 rounded-[2px]" />
+        <div className="h-24 bg-slate-200/60 dark:bg-slate-800/60 rounded-[2px]" />
+        <div className="h-24 bg-slate-200/60 dark:bg-slate-800/60 rounded-[2px]" />
+        <div className="h-24 bg-slate-200/60 dark:bg-slate-800/60 rounded-[2px]" />
+      </div>
+      <div className="h-64 bg-slate-200/50 dark:bg-slate-800/50 rounded-[2px]" />
+    </div>
+  );
+}
 
 interface DashboardProps {
   username: string;
@@ -3286,7 +3301,9 @@ export function Dashboard({ username, onLogout }: DashboardProps) {
               exit={{ opacity: 0, y: -10 }}
               transition={{ duration: 0.3, ease: easeOut }}
             >
-              {renderActiveView()}
+              <Suspense fallback={<ViewLoadingSkeleton />}>
+                {renderActiveView()}
+              </Suspense>
             </motion.div>
           </AnimatePresence>
         </div>
@@ -3302,24 +3319,32 @@ export function Dashboard({ username, onLogout }: DashboardProps) {
         onSelectMember={(member) => { setMembersViewSeed({ memberId: member.id, search: member.name }); setActiveSection('membri'); }}
       />
 
-      {/* Add Member Modal - Renders directly in Dashboard to overlay everything */}
-      <AddMemberModal
-        isOpen={isMemberModalOpen}
-        onClose={() => setIsMemberModalOpen(false)}
-        members={members}
-        currentUserObj={currentUserObj}
-        onAddMember={(newMember) => {
-          setMembers(prev => [...prev, newMember]);
-        }}
-      />
+      {/* Add Member Modal - Conditional on-demand load */}
+      {isMemberModalOpen && (
+        <Suspense fallback={null}>
+          <AddMemberModal
+            isOpen={isMemberModalOpen}
+            onClose={() => setIsMemberModalOpen(false)}
+            members={members}
+            currentUserObj={currentUserObj}
+            onAddMember={(newMember) => {
+              setMembers(prev => [...prev, newMember]);
+            }}
+          />
+        </Suspense>
+      )}
 
-      {/* Platform Tutorial Modal */}
-      <PlatformTutorialModal
-        isOpen={isTutorialOpen}
-        onClose={handleCloseTutorial}
-        isMandatoryFirstTime={Boolean(currentUserObj && (currentUserObj.login_count === 0 || !currentUserObj.has_seen_tutorial))}
-        currentUser={currentUserObj}
-      />
+      {/* Platform Tutorial Modal - Conditional on-demand load */}
+      {isTutorialOpen && (
+        <Suspense fallback={null}>
+          <PlatformTutorialModal
+            isOpen={isTutorialOpen}
+            onClose={handleCloseTutorial}
+            isMandatoryFirstTime={Boolean(currentUserObj && (currentUserObj.login_count === 0 || !currentUserObj.has_seen_tutorial))}
+            currentUser={currentUserObj}
+          />
+        </Suspense>
+      )}
     </div>
   );
 }

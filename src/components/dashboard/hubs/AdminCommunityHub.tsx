@@ -1,12 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { Megaphone, PieChart, MessageSquare, Globe, Heart, Lightbulb, Sparkles } from 'lucide-react';
-import { NewsView } from '../views/NewsView';
-import { IdeasView } from '../views/IdeasView';
-import { ForumView } from '../views/ForumView';
-import { CommunityIdeasView } from '../views/CommunityIdeasView';
-import { KudosView } from '../views/KudosView';
-import { SuggestionsView } from '../views/SuggestionsView';
-import { ProjectProposalsView } from '../views/ProjectProposalsView';
+
+const NewsView = lazy(() => import('../views/NewsView').then(m => ({ default: m.NewsView })));
+const IdeasView = lazy(() => import('../views/IdeasView').then(m => ({ default: m.IdeasView })));
+const ForumView = lazy(() => import('../views/ForumView').then(m => ({ default: m.ForumView })));
+const CommunityIdeasView = lazy(() => import('../views/CommunityIdeasView').then(m => ({ default: m.CommunityIdeasView })));
+const KudosView = lazy(() => import('../views/KudosView').then(m => ({ default: m.KudosView })));
+const SuggestionsView = lazy(() => import('../views/SuggestionsView').then(m => ({ default: m.SuggestionsView })));
+const ProjectProposalsView = lazy(() => import('../views/ProjectProposalsView').then(m => ({ default: m.ProjectProposalsView })));
 
 interface AdminCommunityHubProps {
   initialSubtab?: string;
@@ -72,7 +73,7 @@ export const AdminCommunityHub: React.FC<AdminCommunityHubProps> = ({
       </div>
 
       {/* Sub-view Content */}
-      <div>
+      <Suspense fallback={<div className="h-48 rounded-[2px] bg-slate-100 dark:bg-slate-900 animate-pulse" />}>
         {subtab === 'stiri' && (
           <NewsView
             isAdmin={isAdmin}
@@ -122,7 +123,7 @@ export const AdminCommunityHub: React.FC<AdminCommunityHubProps> = ({
             members={members}
           />
         )}
-      </div>
+      </Suspense>
     </div>
   );
 };
