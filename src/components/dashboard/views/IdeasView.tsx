@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../../supabase';
 import { Trash2, CheckCircle2, BarChart3, Plus, ChevronDown, ChevronUp } from 'lucide-react';
+import { toast } from '../../ui/Toast';
 
 interface Poll {
   id: string;
@@ -105,9 +106,10 @@ export const IdeasView: React.FC<IdeasViewProps> = ({ isAdmin, currentUserId }) 
         .eq('id', pollId);
 
       if (error) throw error;
-    } catch (error) {
+      toast.success('Votul tău a fost înregistrat!');
+    } catch (error: any) {
       console.error("Error voting: ", error);
-      alert('A apărut o eroare la înregistrarea votului.');
+      toast.error('A apărut o eroare la înregistrarea votului.');
     }
   };
 
@@ -115,7 +117,7 @@ export const IdeasView: React.FC<IdeasViewProps> = ({ isAdmin, currentUserId }) 
     e.preventDefault();
     const validOptions = newPollOptionsStr.split(',').map(o => o.trim()).filter(o => o !== '');
     if (!newPollQuestion.trim() || validOptions.length < 2) {
-      alert('Te rog introdu o întrebare și cel puțin 2 opțiuni valide separate prin virgulă.');
+      toast.error('Te rog introdu o întrebare și cel puțin 2 opțiuni valide separate prin virgulă.');
       return;
     }
 
@@ -133,13 +135,14 @@ export const IdeasView: React.FC<IdeasViewProps> = ({ isAdmin, currentUserId }) 
 
       if (error) throw error;
 
+      toast.success('Sondajul a fost creat cu succes!');
       setNewPollQuestion('');
       setNewPollOptionsStr('');
       setNewPollIsMultipleChoice(false);
       setShowNewPoll(false);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error creating poll: ", error);
-      alert('Eroare la crearea sondajului.');
+      toast.error('Eroare la crearea sondajului.');
     }
   };
 
@@ -150,18 +153,21 @@ export const IdeasView: React.FC<IdeasViewProps> = ({ isAdmin, currentUserId }) 
         .update({ isActive: !currentStatus })
         .eq('id', pollId);
       if (error) throw error;
-    } catch (error) {
+      toast.success(currentStatus ? 'Sondajul a fost închis.' : 'Sondajul a fost reactivat.');
+    } catch (error: any) {
       console.error("Error toggling poll status: ", error);
+      toast.error('Eroare la modificarea statusului sondajului.');
     }
   };
 
   const handleDeletePoll = async (pollId: string) => {
-    if (!window.confirm('Sigur dorești să ștergi acest sondaj?')) return;
     try {
       const { error } = await supabase.from('polls').delete().eq('id', pollId);
       if (error) throw error;
-    } catch (error) {
+      toast.success('Sondajul a fost șters.');
+    } catch (error: any) {
       console.error("Error deleting poll: ", error);
+      toast.error('Eroare la ștergerea sondajului.');
     }
   };
 

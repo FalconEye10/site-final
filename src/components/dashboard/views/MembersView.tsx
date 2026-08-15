@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 
 import { MemberDrawer } from '../../members/MemberDrawer';
+import { AnimatedCounter } from '../../ui/AnimatedCounter';
 import { calculateDebt, calculateQualification } from '../../../utils/finance';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../ui/table';
 import { downloadXlsx } from '../../../utils/xlsx';
@@ -136,15 +137,18 @@ export function MembersView({
 
       const matchesRole = selectedRole === 'Toți' || mRole === selectedRole;
       
+      // Status Activitate: 'ACTIV' = toți voluntarii activi (inclusiv restanțieri), 'PASIV' = doar cei pasivi
+      const isPassive = rawStatus === 'passive' || rawStatus === 'pasiv';
+      const isActive = !isPassive;
+
       let matchesStatus = true;
-      if (selectedStatus !== 'Toți') {
-        if (selectedStatus === 'ACTIV') {
-          matchesStatus = rawStatus === 'active' || rawStatus === 'activ' || !m.status;
-        } else if (selectedStatus === 'PASIV') {
-          matchesStatus = rawStatus === 'passive' || rawStatus === 'pasiv';
-        }
+      if (selectedStatus === 'ACTIV') {
+        matchesStatus = isActive;
+      } else if (selectedStatus === 'PASIV') {
+        matchesStatus = isPassive;
       }
       
+      // Balanță Cotizații: 'Restanțieri' = datorie > 0, 'La Zi' = datorie === 0
       let matchesDebt = true;
       const debt = calculateDebt(m.joinDate, m.totalPaid || 0);
       if (selectedDebtFilter === 'Restanțieri') matchesDebt = debt > 0;
@@ -165,7 +169,10 @@ export function MembersView({
   const { totalMembri, membriActivi, membriNoi, rataRetentie } = useMemo(() => {
     const validMembers = members.filter(m => !isSystemAccount(m));
     const total = validMembers.length;
-    const active = total;
+    const active = validMembers.filter(m => {
+      const s = (m.status || '').toLowerCase();
+      return s !== 'passive' && s !== 'pasiv';
+    }).length;
     
     const now = new Date();
     const newMembers = validMembers.filter(m => {
@@ -174,11 +181,11 @@ export function MembersView({
       return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
     }).length;
 
-    const inactiveOrSuspended = validMembers.filter(m => {
+    const passiveCount = validMembers.filter(m => {
       const s = (m.status || '').toLowerCase();
-      return s === 'inactive' || s === 'inactiv' || s === 'suspended' || s === 'suspendat';
+      return s === 'passive' || s === 'pasiv';
     }).length;
-    const retention = total > 0 ? Math.round(((total - inactiveOrSuspended) / total) * 100) : 100;
+    const retention = total > 0 ? Math.round(((total - passiveCount) / total) * 100) : 100;
 
     return { totalMembri: total, membriActivi: active, membriNoi: newMembers, rataRetentie: retention };
   }, [members]);
@@ -252,10 +259,10 @@ export function MembersView({
       {/* 1. Header & Statistici (Compact 2x2 on mobile, 4 columns on lg) */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4 font-anthropic">
         {[
-          { label: 'Total Membri', value: totalMembri.toString(), change: 'Înregistrați în total', icon: Users, color: 'text-blue-700 dark:text-blue-400', bg: 'bg-blue-100 dark:bg-blue-950/50', border: 'border-t-blue-600' },
-          { label: 'Membri Activi', value: membriActivi.toString(), change: 'Total membri activi', icon: Activity, color: 'text-emerald-700 dark:text-emerald-400', bg: 'bg-emerald-100 dark:bg-emerald-950/50', border: 'border-t-emerald-600' },
-          { label: 'Membri Noi', value: membriNoi.toString(), change: 'Înscriși luna aceasta', icon: UserPlus, color: 'text-purple-700 dark:text-purple-400', bg: 'bg-purple-100 dark:bg-purple-950/50', border: 'border-t-purple-600' },
-          { label: 'Rată Retenție', value: `${rataRetentie}%`, change: 'Raport conturi active', icon: Clock, color: 'text-amber-700 dark:text-amber-400', bg: 'bg-amber-100 dark:bg-amber-950/50', border: 'border-t-amber-500' }
+          { label: 'Total Membri', numValue: totalMembri, suffix: '', change: 'Înregistrați în total', icon: Users, color: 'text-blue-700 dark:text-blue-400', bg: 'bg-blue-100 dark:bg-blue-950/50', border: 'border-t-blue-600' },
+          { label: 'Membri Activi', numValue: membriActivi, suffix: '', change: 'Total membri activi', icon: Activity, color: 'text-emerald-700 dark:text-emerald-400', bg: 'bg-emerald-100 dark:bg-emerald-950/50', border: 'border-t-emerald-600' },
+          { label: 'Membri Noi', numValue: membriNoi, suffix: '', change: 'Înscriși luna aceasta', icon: UserPlus, color: 'text-purple-700 dark:text-purple-400', bg: 'bg-purple-100 dark:bg-purple-950/50', border: 'border-t-purple-600' },
+          { label: 'Rată Retenție', numValue: rataRetentie, suffix: '%', change: 'Raport conturi active', icon: Clock, color: 'text-amber-700 dark:text-amber-400', bg: 'bg-amber-100 dark:bg-amber-950/50', border: 'border-t-amber-500' }
         ].map((stat, i) => {
           const cardStyle = [
             "rounded-[2px] border-2 border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs border-t-4 border-t-blue-600",
@@ -272,7 +279,9 @@ export function MembersView({
                 </div>
                 <span className="text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 truncate ml-1 text-right font-title">{stat.label}</span>
               </div>
-              <div className="text-3xl sm:text-4xl md:text-5xl font-extrabold mb-1 text-slate-900 dark:text-white tracking-tight font-data">{stat.value}</div>
+              <div className="text-3xl sm:text-4xl md:text-5xl font-extrabold mb-1 text-slate-900 dark:text-white tracking-tight font-data">
+                <AnimatedCounter value={stat.numValue} suffix={stat.suffix} />
+              </div>
               <div className="text-xs sm:text-sm font-medium text-slate-500 dark:text-slate-400 font-anthropic truncate">{stat.change}</div>
             </div>
           );
@@ -802,24 +811,24 @@ export function MembersView({
               initial={{ opacity: 0, scale: 0.97 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.97 }}
-              className="relative w-full max-w-sm bg-white border border-slate-300 rounded-[2px] shadow-2xl p-5 z-[201] text-slate-900 space-y-3.5 font-anthropic"
+              className="relative w-full max-w-sm bg-white dark:bg-[#161B22] border border-slate-300 dark:border-slate-800 rounded-[2px] shadow-2xl p-5 z-[201] text-slate-900 dark:text-slate-100 space-y-3.5 font-anthropic"
             >
-              <div className="flex items-center gap-2 text-rose-700">
+              <div className="flex items-center gap-2 text-rose-700 dark:text-rose-400">
                 <AlertCircle size={20} />
-                <h3 className="font-bold text-sm text-slate-900 font-title">Confirmare Ștergere Membru</h3>
+                <h3 className="font-bold text-sm text-slate-900 dark:text-white font-title">Confirmare Ștergere Membru</h3>
               </div>
 
-              <p className="text-xs text-slate-600 leading-relaxed font-anthropic">
-                Ești sigur că dorești să ștergi definitiv membrul <strong className="text-slate-900 font-bold">{memberToDelete.name}</strong>
-                {memberToDelete.email && <> (<span className="text-slate-500 font-data">{memberToDelete.email}</span>)</>}
-                {memberToDelete.role === 'admin' && <span className="ml-1 text-indigo-600 font-bold font-title">[BOARD]</span>}
+              <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed font-anthropic">
+                Ești sigur că dorești să ștergi definitiv membrul <strong className="text-slate-900 dark:text-white font-bold">{memberToDelete.name}</strong>
+                {memberToDelete.email && <> (<span className="text-slate-500 dark:text-slate-400 font-data">{memberToDelete.email}</span>)</>}
+                {memberToDelete.role === 'admin' && <span className="ml-1 text-indigo-600 dark:text-indigo-400 font-bold font-title">[BOARD]</span>}
                 ? Această acțiune va elimina contul din sistem și este ireversibilă.
               </p>
 
               <div className="flex gap-2.5 pt-1.5 font-title">
                 <button
                   onClick={() => setMemberToDelete(null)}
-                  className="flex-1 py-2 rounded-[2px] bg-slate-100 hover:bg-slate-200 border border-slate-300 text-xs font-semibold text-slate-700 cursor-pointer"
+                  className="flex-1 py-2 rounded-[2px] bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-300 dark:border-slate-700 text-xs font-semibold text-slate-700 dark:text-slate-200 cursor-pointer"
                 >
                   Anulează
                 </button>

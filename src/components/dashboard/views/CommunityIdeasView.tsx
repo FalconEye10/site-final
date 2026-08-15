@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../../supabase';
 import { FileText, Trash2, Globe } from 'lucide-react';
+import { EmptyState } from '../../ui/EmptyState';
+import { toast } from '../../ui/Toast';
+import { SkeletonCard, Skeleton } from '../../ui/Skeleton';
 
 interface ProjectPitch {
   id: string;
@@ -67,19 +70,27 @@ export const CommunityIdeasView: React.FC<CommunityIdeasViewProps> = ({ isAdmin 
 
   const handleDeletePitch = async (pitch: ProjectPitch) => {
     if (!isAdmin) return;
-    if (!window.confirm('Ești sigur că vrei să ștergi definitiv acest pitch? Această acțiune este ireversibilă.')) return;
 
     try {
       const { error } = await supabase.from('project_pitches').delete().eq('id', pitch.id);
       if (error) throw error;
-    } catch (error) {
+      toast.success('Pitch-ul a fost șters.');
+    } catch (error: any) {
       console.error("Error deleting pitch: ", error);
-      alert('A apărut o eroare la ștergerea pitch-ului.');
+      toast.error('A apărut o eroare la ștergerea pitch-ului.');
     }
   };
 
   if (loading) {
-    return <div className="p-8 text-center text-slate-500">Se încarcă datele...</div>;
+    return (
+      <div className="p-6 space-y-8 max-w-7xl mx-auto">
+        <div className="space-y-2">
+          <Skeleton className="h-8 w-64" />
+          <Skeleton className="h-4 w-96" />
+        </div>
+        <SkeletonCard count={3} />
+      </div>
+    );
   }
 
   return (
@@ -93,9 +104,12 @@ export const CommunityIdeasView: React.FC<CommunityIdeasViewProps> = ({ isAdmin 
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 font-anthropic">
         {pitches.length === 0 ? (
-          <div className="col-span-full bg-white dark:bg-[#161B22] rounded-[2px] border border-slate-200 dark:border-slate-800 text-center py-16 text-slate-500 dark:text-slate-400">
-            <Globe className="w-12 h-12 mx-auto text-slate-300 dark:text-slate-600 mb-3" />
-            <p className="text-xs sm:text-sm font-anthropic">Nu există pitch-uri în comunitate momentan.</p>
+          <div className="col-span-full">
+            <EmptyState
+              icon={Globe}
+              title="Nu există pitch-uri din comunitate"
+              description="Aici vor apărea propunerile de proiecte și fișierele PDF trimise de parteneri și comunitatea externă."
+            />
           </div>
         ) : (
           pitches.map(pitch => (

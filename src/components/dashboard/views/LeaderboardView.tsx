@@ -452,19 +452,19 @@ export function LeaderboardView({ members, events = [], isAdmin = false, onUpdat
           variants={itemVariants}
           initial="hidden"
           animate="show"
-          className="relative overflow-hidden rounded-[2px] bg-gradient-to-br from-amber-500/15 via-amber-400/5 to-amber-600/15 border border-amber-400/40 p-6 md:p-8 shadow-md font-anthropic"
+          className="relative rounded-[2px] bg-gradient-to-br from-amber-500/15 via-amber-400/5 to-amber-600/15 border border-amber-400/40 p-6 md:p-8 shadow-md font-anthropic"
         >
           <div className="flex flex-col md:flex-row items-center justify-between gap-6 relative z-10">
             <div className="flex items-center gap-5">
-              <div className="relative">
-                <div className="absolute -top-5 left-1/2 -translate-x-1/2 bg-amber-400 text-slate-950 p-1.5 rounded-[2px] shadow-xs border border-amber-300">
-                  <Trophy size={20} />
-                </div>
+              <div className="relative shrink-0">
                 <img
                   src={locul1.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(locul1.nickname || locul1.name)}&background=fbbf24&color=0F172A`}
-                  className="w-20 h-20 md:w-24 md:h-24 rounded-[2px] border-2 border-amber-400 object-cover shadow-xs"
-                  alt=""
+                  className="w-20 h-20 md:w-24 md:h-24 rounded-full border-4 border-amber-400 object-cover shadow-[0_0_20px_rgba(251,191,36,0.35)]"
+                  alt={locul1.name}
                 />
+                <div className="absolute -bottom-1 -right-1 bg-amber-400 text-slate-950 p-1.5 rounded-full shadow-md border-2 border-white dark:border-slate-900">
+                  <Trophy size={16} />
+                </div>
               </div>
               <div>
                 <div className="flex items-center gap-2 mb-1.5 flex-wrap">
@@ -482,30 +482,30 @@ export function LeaderboardView({ members, events = [], isAdmin = false, onUpdat
               </div>
             </div>
 
-            <div className="flex flex-col sm:flex-row items-center gap-4">
-              <div className="flex items-center gap-5 bg-white/90 dark:bg-slate-900/90 px-6 py-4 rounded-[2px] border border-amber-400/30 shadow-xs">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
+              <div className="flex items-center justify-around sm:justify-center gap-5 sm:gap-6 bg-white/95 dark:bg-slate-900/95 px-5 py-3 rounded-[2px] border border-amber-400/30 shadow-xs">
                 <div className="text-center">
-                  <div className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider font-title">Scor Bilunar</div>
-                  <div className="text-3xl md:text-4xl font-black text-amber-500 font-data">
+                  <div className="text-[10px] sm:text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider font-title">Scor Bilunar</div>
+                  <div className="text-2xl sm:text-3xl font-black text-amber-500 font-data leading-none mt-1">
                     {locul1.biMonthlyScore > 0 ? `+${locul1.biMonthlyScore}` : locul1.biMonthlyScore} pct
                   </div>
                 </div>
-                <div className="w-px h-12 bg-slate-200 dark:bg-slate-800" />
+                <div className="w-px h-10 bg-slate-200 dark:bg-slate-800" />
                 <div className="text-center">
-                  <div className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider font-title">Total Istoric</div>
-                  <div className="text-2xl font-bold text-slate-800 dark:text-slate-200 font-data">
+                  <div className="text-[10px] sm:text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider font-title">Total Istoric</div>
+                  <div className="text-xl sm:text-2xl font-bold text-slate-800 dark:text-slate-200 font-data leading-none mt-1">
                     {locul1.totalScore} pct
                   </div>
                 </div>
               </div>
 
               {/* Admin Actions for Locul 1 */}
-              <div className="flex items-center gap-2 font-title">
+              <div className="flex flex-wrap sm:flex-nowrap items-center justify-center gap-2.5 font-title">
                 {isAdmin && isStefanMaster && (
                   <button
                     onClick={() => setIsAuditLogOpen(true)}
                     title="Vezi Audit Log Puncte"
-                    className="p-3 bg-slate-900 text-amber-400 hover:bg-slate-800 rounded-[2px] border border-amber-400/40 shadow-xs transition-all flex items-center gap-1.5 text-xs sm:text-sm font-bold uppercase tracking-wider cursor-pointer"
+                    className="inline-flex items-center justify-center gap-2 h-11 px-4 bg-slate-900 dark:bg-slate-800 text-amber-400 hover:bg-slate-800 dark:hover:bg-slate-700 rounded-[2px] border border-amber-400/40 shadow-xs transition-all text-xs font-bold uppercase tracking-wider cursor-pointer"
                   >
                     <ShieldAlert size={16} />
                     <span>Audit Log</span>
@@ -513,19 +513,19 @@ export function LeaderboardView({ members, events = [], isAdmin = false, onUpdat
                 )}
                 <button
                   onClick={() => setHistoryModalMember(locul1)}
-                  title="Istoric puncte"
-                  className="p-3 bg-white/90 dark:bg-slate-900/90 hover:bg-white text-slate-700 dark:text-slate-200 rounded-[2px] border border-amber-400/40 shadow-xs transition-all flex items-center gap-1.5 text-xs sm:text-sm font-bold uppercase tracking-wider cursor-pointer"
+                  title="Istoric detaliat puncte"
+                  className="inline-flex items-center justify-center gap-2 h-11 px-4 bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-800 dark:text-slate-200 rounded-[2px] border border-slate-300 dark:border-slate-700 shadow-xs transition-all text-xs font-bold uppercase tracking-wider cursor-pointer"
                 >
                   <History size={16} />
-                  <span className="hidden sm:inline">Istoric</span>
+                  <span>Istoric</span>
                 </button>
                 {isAdmin && (
                   <button
                     onClick={() => { setScoreModalMember(locul1); setScoreAdjustValue(''); setScoreAdjustReason(''); }}
-                    className="px-4 py-3 bg-amber-500 hover:bg-amber-400 text-slate-950 rounded-[2px] text-xs sm:text-sm font-bold uppercase tracking-wider shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
+                    className="inline-flex items-center justify-center gap-2 h-11 px-4 bg-amber-500 hover:bg-amber-400 text-slate-950 rounded-[2px] text-xs font-bold uppercase tracking-wider shadow-xs transition-all cursor-pointer"
                   >
                     <Plus size={16} />
-                    Ajustează Scor
+                    <span>Ajustează Scor</span>
                   </button>
                 )}
               </div>
@@ -557,7 +557,7 @@ export function LeaderboardView({ members, events = [], isAdmin = false, onUpdat
                 <div className="relative mb-1.5 flex flex-col items-center">
                   <img
                     src={locul3.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(locul3.nickname || locul3.name)}&background=b45309&color=0F172A`}
-                    className="w-12 h-12 sm:w-14 sm:h-14 rounded-[2px] border border-amber-700 object-cover shadow-xs"
+                    className="w-12 h-12 sm:w-14 sm:h-14 rounded-full border-2 border-amber-700 object-cover shadow-xs"
                     alt=""
                   />
                 </div>
@@ -596,7 +596,7 @@ export function LeaderboardView({ members, events = [], isAdmin = false, onUpdat
                   <Medal className="text-slate-400 absolute -top-5 sm:-top-6 z-20" size={20} />
                   <img
                     src={locul2.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(locul2.nickname || locul2.name)}&background=94a3b8&color=0F172A`}
-                    className="w-14 h-14 sm:w-16 sm:h-16 rounded-[2px] border border-slate-400 object-cover shadow-xs z-10"
+                    className="w-14 h-14 sm:w-16 sm:h-16 rounded-full border-2 border-slate-400 object-cover shadow-xs z-10"
                     alt=""
                   />
                 </div>
@@ -634,7 +634,7 @@ export function LeaderboardView({ members, events = [], isAdmin = false, onUpdat
                 <div className="relative mb-1.5 flex flex-col items-center">
                   <img
                     src={locul4.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(locul4.nickname || locul4.name)}&background=334155&color=0F172A`}
-                    className="w-11 h-11 sm:w-13 sm:h-13 rounded-[2px] border border-indigo-400 object-cover shadow-xs"
+                    className="w-11 h-11 sm:w-13 sm:h-13 rounded-full border-2 border-indigo-400 object-cover shadow-xs"
                     alt=""
                   />
                 </div>

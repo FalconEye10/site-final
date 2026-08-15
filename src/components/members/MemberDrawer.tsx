@@ -56,12 +56,16 @@ export function MemberDrawer({ member, onClose, onUpdateMember, isAdmin, current
   useEffect(() => {
     async function loadKudos() {
       try {
-        const { data } = await supabase.from('kudos').select('id, toId, toName');
+        const { data } = await supabase.from('kudos').select('*');
         if (data) {
-          const count = data.filter((k: any) => 
-            (k.toId && String(k.toId) === String(member.id)) ||
-            (k.toName && member.name && k.toName.toLowerCase() === member.name.toLowerCase())
-          ).length;
+          const count = data.filter((k: any) => {
+            const targetId = k.toId || k.to_id || k.recipient_id;
+            const targetName = k.toName || k.to_name || k.recipient_name;
+            return (
+              (targetId && String(targetId).toLowerCase() === String(member.id).toLowerCase()) ||
+              (targetName && member.name && targetName.toLowerCase() === member.name.toLowerCase())
+            );
+          }).length;
           setMemberKudosCount(count);
         }
       } catch (err) {

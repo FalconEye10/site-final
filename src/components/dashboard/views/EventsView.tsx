@@ -1024,13 +1024,13 @@ export function EventsView({ isAdmin, members = [], currentUserId, onUpdateMembe
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
               transition={{ duration: 0.2, ease: easeOut }}
-              className="relative w-full max-w-lg bg-white rounded-[2px] shadow-2xl p-6 sm:p-7 overflow-y-auto overflow-x-hidden max-h-[92vh] scrollbar-thin font-anthropic"
+              className="relative w-full max-w-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[2px] shadow-2xl p-6 sm:p-7 overflow-y-auto overflow-x-hidden max-h-[92vh] scrollbar-thin font-anthropic"
             >
-              <div className="flex justify-between items-center mb-5 relative z-10 border-b border-slate-200 pb-3.5">
-                <h2 className="text-xl sm:text-2xl font-bold font-anthropicSerif text-slate-900">
+              <div className="flex justify-between items-center mb-5 relative z-10 border-b border-slate-200 dark:border-slate-800 pb-3.5">
+                <h2 className="text-xl sm:text-2xl font-bold font-anthropicSerif text-slate-900 dark:text-white">
                   {editingEvent ? 'Editează Eveniment' : 'Eveniment Nou'}
                 </h2>
-                <button onClick={() => setIsModalOpen(false)} className="p-1.5 hover:bg-slate-100 text-slate-400 hover:text-slate-700 rounded-[2px] transition-colors cursor-pointer">
+                <button onClick={() => setIsModalOpen(false)} className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 rounded-[2px] transition-colors cursor-pointer">
                   <X size={20} />
                 </button>
               </div>
@@ -1038,7 +1038,7 @@ export function EventsView({ isAdmin, members = [], currentUserId, onUpdateMembe
               <form className="space-y-4 relative z-10 font-anthropic" onSubmit={handleSubmit}>
                 {/* Title */}
                 <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5 font-title">
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5 font-title">
                     Titlu Eveniment (Obligatoriu)
                   </label>
                   <input 
@@ -1046,7 +1046,7 @@ export function EventsView({ isAdmin, members = [], currentUserId, onUpdateMembe
                     value={title}
                     onChange={e => setTitle(e.target.value)}
                     required
-                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-300 rounded-[2px] text-sm font-bold text-slate-900 focus:outline-none focus:border-indigo-500 transition-colors font-anthropic" 
+                    className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-[2px] text-sm font-bold text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:border-indigo-500 transition-colors font-anthropic" 
                     placeholder="Ex: Întâlnire Proiect Camena" 
                   />
                 </div>
@@ -1054,7 +1054,7 @@ export function EventsView({ isAdmin, members = [], currentUserId, onUpdateMembe
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {/* Date */}
                   <div>
-                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5 font-title">
+                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5 font-title">
                       Data (Obligatorie)
                     </label>
                     <input 
@@ -1062,33 +1062,33 @@ export function EventsView({ isAdmin, members = [], currentUserId, onUpdateMembe
                       value={date}
                       onChange={e => setDate(e.target.value)}
                       required
-                      className="w-full px-4 py-2.5 bg-slate-50 border border-slate-300 rounded-[2px] text-sm font-medium text-slate-900 focus:outline-none focus:border-indigo-500 transition-colors font-anthropic" 
+                      className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-[2px] text-sm font-medium text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 transition-colors font-anthropic" 
                     />
                   </div>
 
                   {/* Time */}
                   <div>
-                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5 font-title">
+                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5 font-title">
                       Ora (Format 24h)
                     </label>
                     <div className="flex gap-2 font-data">
                       <select 
                         value={hour}
                         onChange={e => setHour(e.target.value)}
-                        className="flex-1 px-3 py-2.5 bg-slate-50 border border-slate-300 rounded-[2px] text-sm font-bold text-slate-900 focus:outline-none focus:border-indigo-500 transition-colors cursor-pointer"
+                        className="flex-1 px-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-[2px] text-sm font-bold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 transition-colors cursor-pointer"
                       >
                         {Array.from({length: 24}, (_, i) => i.toString().padStart(2, '0')).map(h => (
-                          <option key={h} value={h}>{h}</option>
+                          <option key={h} value={h} className="bg-white dark:bg-slate-800 text-slate-900 dark:text-white">{h}</option>
                         ))}
                       </select>
                       <span className="flex items-center font-bold text-slate-400 text-base">:</span>
                       <select 
                         value={minute}
                         onChange={e => setMinute(e.target.value)}
-                        className="flex-1 px-3 py-2.5 bg-slate-50 border border-slate-300 rounded-[2px] text-sm font-bold text-slate-900 focus:outline-none focus:border-indigo-500 transition-colors cursor-pointer"
+                        className="flex-1 px-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-[2px] text-sm font-bold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 transition-colors cursor-pointer"
                       >
                         {['00', '05', '10', '15', '20', '25', '30', '35', '40', '45', '50', '55'].map(m => (
-                          <option key={m} value={m}>{m}</option>
+                          <option key={m} value={m} className="bg-white dark:bg-slate-800 text-slate-900 dark:text-white">{m}</option>
                         ))}
                       </select>
                     </div>
@@ -1097,47 +1097,47 @@ export function EventsView({ isAdmin, members = [], currentUserId, onUpdateMembe
 
                 {/* Project planned window (De la - Până la) */}
                 {type === 'project' && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 p-4 bg-sky-50/60 border border-sky-200 rounded-[2px]">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 p-4 bg-sky-50/60 dark:bg-sky-950/30 border border-sky-200 dark:border-sky-800 rounded-[2px]">
                     <div className="md:col-span-2">
-                      <span className="text-xs font-bold uppercase tracking-wider text-sky-900 font-title">
+                      <span className="text-xs font-bold uppercase tracking-wider text-sky-900 dark:text-sky-200 font-title">
                         Durata Proiectului · folosită pentru orele de voluntariat
                       </span>
                     </div>
                     <div>
-                      <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5 font-title">Până la data</label>
+                      <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5 font-title">Până la data</label>
                       <input
                         type="date"
                         value={endDate}
                         onChange={e => setEndDate(e.target.value)}
                         required={type === 'project'}
-                        className="w-full px-3.5 py-2 bg-white border border-slate-300 rounded-[2px] text-sm font-medium text-slate-900 focus:outline-none focus:border-indigo-500 font-anthropic"
+                        className="w-full px-3.5 py-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-[2px] text-sm font-medium text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 font-anthropic"
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5 font-title">Până la ora</label>
+                      <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5 font-title">Până la ora</label>
                       <div className="flex gap-2 font-data">
                         <select
                           value={endHour}
                           onChange={e => setEndHour(e.target.value)}
-                          className="flex-1 px-3 py-2 bg-white border border-slate-300 rounded-[2px] text-sm font-bold text-slate-900 focus:outline-none focus:border-indigo-500 cursor-pointer"
+                          className="flex-1 px-3 py-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-[2px] text-sm font-bold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 cursor-pointer"
                         >
                           {Array.from({length: 24}, (_, i) => i.toString().padStart(2, '0')).map(h => (
-                            <option key={h} value={h}>{h}</option>
+                            <option key={h} value={h} className="bg-white dark:bg-slate-800 text-slate-900 dark:text-white">{h}</option>
                           ))}
                         </select>
                         <span className="flex items-center font-bold text-slate-400 text-base">:</span>
                         <select
                           value={endMinute}
                           onChange={e => setEndMinute(e.target.value)}
-                          className="flex-1 px-3 py-2 bg-white border border-slate-300 rounded-[2px] text-sm font-bold text-slate-900 focus:outline-none focus:border-indigo-500 cursor-pointer"
+                          className="flex-1 px-3 py-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-[2px] text-sm font-bold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 cursor-pointer"
                         >
                           {['00', '05', '10', '15', '20', '25', '30', '35', '40', '45', '50', '55'].map(m => (
-                            <option key={m} value={m}>{m}</option>
+                            <option key={m} value={m} className="bg-white dark:bg-slate-800 text-slate-900 dark:text-white">{m}</option>
                           ))}
                         </select>
                       </div>
                     </div>
-                    <div className="md:col-span-2 text-xs font-bold text-sky-800 font-data">
+                    <div className="md:col-span-2 text-xs font-bold text-sky-800 dark:text-sky-300 font-data">
                       Durată totală planificată: {computePlannedDurationHours()} ore. Fiecare departament poate avea propriul număr de ore mai jos.
                     </div>
                   </div>
@@ -1145,70 +1145,70 @@ export function EventsView({ isAdmin, members = [], currentUserId, onUpdateMembe
 
                 {/* Location */}
                 <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5 font-title">
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5 font-title">
                     Locație (Opțională)
                   </label>
                   <input 
                     type="text" 
                     value={location}
                     onChange={e => setLocation(e.target.value)}
-                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-300 rounded-[2px] text-sm font-medium text-slate-900 focus:outline-none focus:border-indigo-500 transition-colors font-anthropic" 
+                    className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-[2px] text-sm font-medium text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:border-indigo-500 transition-colors font-anthropic" 
                     placeholder="Ex: Sediul Central sau Online - Zoom" 
                   />
                 </div>
 
                 {/* Type */}
                 <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5 font-title">
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5 font-title">
                     Tip Eveniment
                   </label>
                   <select 
                     value={type}
                     onChange={e => setType(e.target.value as any)}
-                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-300 rounded-[2px] text-sm font-bold text-slate-900 focus:outline-none focus:border-indigo-500 transition-colors font-anthropic cursor-pointer"
+                    className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-[2px] text-sm font-bold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 transition-colors font-anthropic cursor-pointer"
                   >
-                    <option value="meeting">Întâlnire</option>
-                    <option value="project">Proiect / Acțiune</option>
-                    <option value="social">Eveniment</option>
-                    <option value="other">Altele</option>
+                    <option value="meeting" className="bg-white dark:bg-slate-800 text-slate-900 dark:text-white">Întâlnire</option>
+                    <option value="project" className="bg-white dark:bg-slate-800 text-slate-900 dark:text-white">Proiect / Acțiune</option>
+                    <option value="social" className="bg-white dark:bg-slate-800 text-slate-900 dark:text-white">Eveniment</option>
+                    <option value="other" className="bg-white dark:bg-slate-800 text-slate-900 dark:text-white">Altele</option>
                   </select>
                 </div>
 
                 {/* Description */}
                 <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5 font-title">
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5 font-title">
                     Descriere (Opțională)
                   </label>
                   <textarea 
                     value={description}
                     onChange={e => setDescription(e.target.value)}
                     rows={3}
-                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-300 rounded-[2px] text-sm font-medium text-slate-900 focus:outline-none focus:border-indigo-500 transition-colors font-anthropic resize-none" 
+                    className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-[2px] text-sm font-medium text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:border-indigo-500 transition-colors font-anthropic resize-none" 
                     placeholder="Detalii suplimentare, agenda discuției..." 
                   />
                 </div>
 
                 {/* Shifts Organization Section */}
-                <div className="border-t border-slate-200 pt-4 space-y-3.5 font-anthropic">
+                <div className="border-t border-slate-200 dark:border-slate-800 pt-4 space-y-3.5 font-anthropic">
                   <div className={`p-4 rounded-[2px] border transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
                     isShiftBased
-                      ? 'bg-emerald-50/90 border-emerald-500 shadow-xs'
-                      : 'bg-slate-50 border-slate-300'
+                      ? 'bg-emerald-50/90 dark:bg-emerald-950/40 border-emerald-500 dark:border-emerald-700 shadow-xs'
+                      : 'bg-slate-50 dark:bg-slate-800/60 border-slate-300 dark:border-slate-700'
                   }`}>
                     <div className="pr-2 space-y-1">
                       <div className="flex items-center gap-2 font-title">
-                        <span className="font-bold text-xs sm:text-sm text-slate-900">
+                        <span className="font-bold text-xs sm:text-sm text-slate-900 dark:text-white">
                           Organizare pe Ture de Voluntariat (Shifts)
                         </span>
                         <span className={`px-2 py-0.5 rounded-[2px] text-[10px] font-black uppercase tracking-wider shadow-xs ${
                           isShiftBased
                             ? 'bg-emerald-600 text-white'
-                            : 'bg-slate-900 text-white'
+                            : 'bg-slate-900 dark:bg-slate-700 text-white'
                         }`}>
                           {isShiftBased ? '● ON / ACTIVAT' : '○ OFF / DEZACTIVAT'}
                         </span>
                       </div>
-                      <p className="text-xs text-slate-600">
+                      <p className="text-xs text-slate-600 dark:text-slate-400">
                         Activează pentru evenimente cu mai multe zile sau intervale orare diferite. Voluntarii aleg tura dorită, iar la prezențe vor fi evaluați doar cei repartizați.
                       </p>
                     </div>
@@ -1225,7 +1225,7 @@ export function EventsView({ isAdmin, members = [], currentUserId, onUpdateMembe
                       className={`relative inline-flex h-7 w-14 shrink-0 cursor-pointer rounded-[2px] border p-0.5 transition-colors duration-200 ease-in-out focus:outline-none shadow-xs ${
                         isShiftBased
                           ? 'bg-emerald-600 border-emerald-700'
-                          : 'bg-slate-900 border-black'
+                          : 'bg-slate-900 dark:bg-slate-700 border-slate-950 dark:border-slate-600'
                       }`}
                     >
                       <span
@@ -1239,7 +1239,7 @@ export function EventsView({ isAdmin, members = [], currentUserId, onUpdateMembe
                   {isShiftBased && (
                     <div className="space-y-3 pt-1.5 font-anthropic">
                       <div className="flex items-center justify-between font-title">
-                        <span className="text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-900 flex items-center gap-2">
+                        <span className="text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-900 dark:text-white flex items-center gap-2">
                           <span className="w-2.5 h-2.5 rounded-[2px] bg-emerald-500" />
                           Ture de Voluntariat Configurate ({formShifts.length})
                         </span>
@@ -1253,21 +1253,21 @@ export function EventsView({ isAdmin, members = [], currentUserId, onUpdateMembe
                       </div>
 
                       {formShifts.length === 0 ? (
-                        <p className="text-xs sm:text-sm text-emerald-800 italic py-3 text-center bg-emerald-50/50 rounded-[2px] border border-dashed border-emerald-300">
+                        <p className="text-xs sm:text-sm text-emerald-800 dark:text-emerald-300 italic py-3 text-center bg-emerald-50/50 dark:bg-emerald-950/30 rounded-[2px] border border-dashed border-emerald-300 dark:border-emerald-800">
                           Apasă butonul <strong>"+ Adaugă Tură"</strong> de mai sus pentru a configura prima tură.
                         </p>
                       ) : (
                         <div className="space-y-3.5">
                           {formShifts.map((shift, sIdx) => (
-                            <div key={shift.id} className="p-4 bg-white border border-slate-300 rounded-[2px] space-y-3.5 relative shadow-xs">
-                              <div className="flex items-center justify-between border-b border-slate-100 pb-2.5 font-title">
-                                <span className="text-xs font-bold uppercase tracking-wider text-slate-900 bg-slate-100 px-2.5 py-1 rounded-[2px]">
+                            <div key={shift.id} className="p-4 bg-white dark:bg-slate-800/90 border border-slate-300 dark:border-slate-700 rounded-[2px] space-y-3.5 relative shadow-xs">
+                              <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-700 pb-2.5 font-title">
+                                <span className="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-slate-100 bg-slate-100 dark:bg-slate-700 px-2.5 py-1 rounded-[2px]">
                                   Configurare Tură #{sIdx + 1}
                                 </span>
                                 <button
                                   type="button"
                                   onClick={() => handleRemoveShift(shift.id)}
-                                  className="text-red-500 hover:text-red-700 hover:bg-red-50 px-2.5 py-1 rounded-[2px] transition-colors cursor-pointer flex items-center gap-1 text-xs font-bold uppercase tracking-wider"
+                                  className="text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-950/40 px-2.5 py-1 rounded-[2px] transition-colors cursor-pointer flex items-center gap-1 text-xs font-bold uppercase tracking-wider"
                                   title="Elimină Tura"
                                 >
                                   <Trash2 size={14} /> Elimină
@@ -1275,7 +1275,7 @@ export function EventsView({ isAdmin, members = [], currentUserId, onUpdateMembe
                               </div>
 
                               <div>
-                                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5 font-title">
+                                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5 font-title">
                                   Nume Tură (Obligatoriu)
                                 </label>
                                 <input
@@ -1284,14 +1284,14 @@ export function EventsView({ isAdmin, members = [], currentUserId, onUpdateMembe
                                   onChange={e => handleUpdateShiftField(shift.id, 'name', e.target.value)}
                                   required={isShiftBased}
                                   placeholder="Ex: Tura 1 - Vineri După-amiază"
-                                  className="w-full px-3.5 py-2 bg-slate-50 border border-slate-300 rounded-[2px] text-sm font-bold text-slate-900 focus:outline-none focus:border-indigo-500 transition-colors font-anthropic"
+                                  className="w-full px-3.5 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-[2px] text-sm font-bold text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:border-indigo-500 transition-colors font-anthropic"
                                 />
                               </div>
 
                               {/* Row 1: Data & Capacitate Maxima */}
                               <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
                                 <div>
-                                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5 font-title">
+                                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5 font-title">
                                     Data Turei
                                   </label>
                                   <input
@@ -1299,11 +1299,11 @@ export function EventsView({ isAdmin, members = [], currentUserId, onUpdateMembe
                                     value={shift.date}
                                     onChange={e => handleUpdateShiftField(shift.id, 'date', e.target.value)}
                                     required={isShiftBased}
-                                    className="w-full px-3.5 py-2 bg-slate-50 border border-slate-300 rounded-[2px] text-sm font-medium text-slate-900 font-anthropic"
+                                    className="w-full px-3.5 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-[2px] text-sm font-medium text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 font-anthropic"
                                   />
                                 </div>
                                 <div>
-                                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5 font-title">
+                                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5 font-title">
                                     Capacitate Maximă (Voluntari)
                                   </label>
                                   <input
@@ -1312,7 +1312,7 @@ export function EventsView({ isAdmin, members = [], currentUserId, onUpdateMembe
                                     max="100"
                                     value={shift.maxVolunteers}
                                     onChange={e => handleUpdateShiftField(shift.id, 'maxVolunteers', parseInt(e.target.value, 10) || 1)}
-                                    className="w-full px-3.5 py-2 bg-slate-50 border border-slate-300 rounded-[2px] text-sm font-bold text-slate-900 font-data"
+                                    className="w-full px-3.5 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-[2px] text-sm font-bold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 font-data"
                                   />
                                 </div>
                               </div>
@@ -1320,53 +1320,53 @@ export function EventsView({ isAdmin, members = [], currentUserId, onUpdateMembe
                               {/* Row 2: Interval Orar (De la -> Pana la) */}
                               <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
                                 <div>
-                                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5 font-title">
+                                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5 font-title">
                                     De la Ora (Început Tură)
                                   </label>
                                   <input
                                     type="time"
                                     value={shift.startTime}
                                     onChange={e => handleUpdateShiftField(shift.id, 'startTime', e.target.value)}
-                                    className="w-full px-3.5 py-2 bg-slate-50 border border-slate-300 rounded-[2px] text-sm font-bold text-slate-900 font-data"
+                                    className="w-full px-3.5 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-[2px] text-sm font-bold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 font-data"
                                   />
                                 </div>
                                 <div>
-                                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5 font-title">
+                                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5 font-title">
                                     Până la Ora (Sfârșit Tură)
                                   </label>
                                   <input
                                     type="time"
                                     value={shift.endTime}
                                     onChange={e => handleUpdateShiftField(shift.id, 'endTime', e.target.value)}
-                                    className="w-full px-3.5 py-2 bg-slate-50 border border-slate-300 rounded-[2px] text-sm font-bold text-slate-900 font-data"
+                                    className="w-full px-3.5 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-[2px] text-sm font-bold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 font-data"
                                   />
                                 </div>
                               </div>
 
-                              <div className="text-xs sm:text-sm font-bold text-slate-900 bg-slate-50 p-3 rounded-[2px] border border-slate-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 font-anthropic">
-                                <span>Durată calculată: <strong className="text-emerald-600 font-data">{shift.hours} ore</strong> de voluntariat / membru</span>
-                                <span>Voluntari înscriși: <strong className="text-emerald-600 font-data">{shift.assignedMembers.length}</strong> / {shift.maxVolunteers}</span>
+                              <div className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white bg-slate-50 dark:bg-slate-900 p-3 rounded-[2px] border border-slate-200 dark:border-slate-700 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 font-anthropic">
+                                <span>Durată calculată: <strong className="text-emerald-600 dark:text-emerald-400 font-data">{shift.hours} ore</strong> de voluntariat / membru</span>
+                                <span>Voluntari înscriși: <strong className="text-emerald-600 dark:text-emerald-400 font-data">{shift.assignedMembers.length}</strong> / {shift.maxVolunteers}</span>
                               </div>
 
                               {/* Member Assignment checklist */}
                               <div className="space-y-1.5 font-anthropic">
-                                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 font-title">
+                                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 font-title">
                                   Repartizare Membri (Opțional - voluntarii se pot înscrie și direct din lista de evenimente)
                                 </label>
-                                <div className="border border-slate-200 rounded-[2px] p-3 bg-slate-50/50 space-y-2.5">
+                                <div className="border border-slate-200 dark:border-slate-700 rounded-[2px] p-3 bg-slate-50/50 dark:bg-slate-900/50 space-y-2.5">
                                   <div className="flex flex-wrap gap-1.5 font-title">
                                     {shift.assignedMembers.length === 0 ? (
-                                      <span className="text-xs text-slate-400 italic">Niciun voluntar selectat manual</span>
+                                      <span className="text-xs text-slate-400 dark:text-slate-500 italic">Niciun voluntar selectat manual</span>
                                     ) : (
                                       shift.assignedMembers.map(mId => {
                                         const mObj = members?.find(m => m.id === mId);
                                         return (
-                                          <span key={mId} className="inline-flex items-center gap-1.5 bg-purple-100 text-purple-950 text-xs font-bold px-2.5 py-1 rounded-[2px] border border-purple-200 shadow-xs">
+                                          <span key={mId} className="inline-flex items-center gap-1.5 bg-purple-100 dark:bg-purple-950/60 text-purple-950 dark:text-purple-200 text-xs font-bold px-2.5 py-1 rounded-[2px] border border-purple-200 dark:border-purple-800 shadow-xs">
                                             {mObj?.name || mId}
                                             <button
                                               type="button"
                                               onClick={() => handleToggleShiftMember(shift.id, mId)}
-                                              className="hover:text-red-600 font-bold ml-1 cursor-pointer text-sm"
+                                              className="hover:text-red-600 dark:hover:text-red-400 font-bold ml-1 cursor-pointer text-sm"
                                             >
                                               ×
                                             </button>
@@ -1381,10 +1381,10 @@ export function EventsView({ isAdmin, members = [], currentUserId, onUpdateMembe
                                     placeholder="Caută voluntar pentru această tură..."
                                     value={shiftSearchQueries[shift.id] || ''}
                                     onChange={e => setShiftSearchQueries(prev => ({ ...prev, [shift.id]: e.target.value }))}
-                                    className="w-full px-3 py-2 bg-white border border-slate-200 rounded-[2px] text-xs sm:text-sm font-medium text-slate-900 font-anthropic"
+                                    className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-[2px] text-xs sm:text-sm font-medium text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:border-indigo-500 font-anthropic"
                                   />
 
-                                  <div className="max-h-36 overflow-y-auto border-t border-slate-200 pt-2 space-y-1 scrollbar-thin">
+                                  <div className="max-h-36 overflow-y-auto border-t border-slate-200 dark:border-slate-700 pt-2 space-y-1 scrollbar-thin">
                                     {members
                                       ?.filter(m => m.role !== 'admin')
                                       .filter(m => {
@@ -1400,8 +1400,8 @@ export function EventsView({ isAdmin, members = [], currentUserId, onUpdateMembe
                                             onClick={() => handleToggleShiftMember(shift.id, m.id)}
                                             className={`w-full flex items-center justify-between p-2 rounded-[2px] text-xs sm:text-sm font-medium transition-colors cursor-pointer font-anthropic ${
                                               isSelected
-                                                ? 'bg-purple-100 text-purple-950 border border-purple-300'
-                                                : 'hover:bg-slate-100 text-slate-700'
+                                                ? 'bg-purple-100 dark:bg-purple-950/60 text-purple-950 dark:text-purple-200 border border-purple-300 dark:border-purple-800'
+                                                : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300'
                                             }`}
                                           >
                                             <span className="flex items-center gap-2">
@@ -1413,9 +1413,9 @@ export function EventsView({ isAdmin, members = [], currentUserId, onUpdateMembe
                                               {m.name}
                                             </span>
                                             {isSelected ? (
-                                              <span className="text-purple-700 font-bold font-title text-xs">✓ Înscris</span>
+                                              <span className="text-purple-700 dark:text-purple-300 font-bold font-title text-xs">✓ Înscris</span>
                                             ) : (
-                                              <span className="text-slate-400 font-medium font-title text-xs">+ Înscrie</span>
+                                              <span className="text-slate-400 dark:text-slate-500 font-medium font-title text-xs">+ Înscrie</span>
                                             )}
                                           </button>
                                         );
@@ -1433,9 +1433,9 @@ export function EventsView({ isAdmin, members = [], currentUserId, onUpdateMembe
 
                 {/* Working Committees Section */}
                 {type === 'project' && (
-                  <div className="border-t border-slate-200 pt-4 space-y-3.5 font-anthropic">
+                  <div className="border-t border-slate-200 dark:border-slate-800 pt-4 space-y-3.5 font-anthropic">
                     <div className="flex items-center justify-between font-title">
-                      <h3 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-900">Comitete de Lucru</h3>
+                      <h3 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-900 dark:text-white">Comitete de Lucru</h3>
                       <button
                         type="button"
                         onClick={handleAddCommittee}
@@ -1446,17 +1446,17 @@ export function EventsView({ isAdmin, members = [], currentUserId, onUpdateMembe
                     </div>
 
                     {formCommittees.length === 0 ? (
-                      <p className="text-xs sm:text-sm text-slate-500 italic py-3 text-center bg-slate-50 rounded-[2px] border border-dashed border-slate-300">
+                      <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 italic py-3 text-center bg-slate-50 dark:bg-slate-800/60 rounded-[2px] border border-dashed border-slate-300 dark:border-slate-700">
                         Nu a fost adăugat niciun comitet. Apasă butonul de mai sus pentru a crea unul.
                       </p>
                     ) : (
                       <div className="space-y-3.5 font-anthropic">
                         {formCommittees.map((c) => (
-                          <div key={c.id} className="relative p-4 bg-white border border-slate-300 rounded-[2px] space-y-3.5 shadow-xs">
+                          <div key={c.id} className="relative p-4 bg-white dark:bg-slate-800/90 border border-slate-300 dark:border-slate-700 rounded-[2px] space-y-3.5 shadow-xs">
                             <button
                               type="button"
                               onClick={() => handleRemoveCommittee(c.id)}
-                              className="absolute top-3.5 right-3.5 text-red-500 hover:text-red-700 hover:bg-red-50 p-1.5 rounded-[2px] transition-colors cursor-pointer"
+                              className="absolute top-3.5 right-3.5 text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-950/40 p-1.5 rounded-[2px] transition-colors cursor-pointer"
                               title="Elimină Comitet"
                             >
                               <Trash2 size={16} />
@@ -1465,32 +1465,32 @@ export function EventsView({ isAdmin, members = [], currentUserId, onUpdateMembe
                             <div className="pr-6 space-y-3.5">
                               {/* Committee Name */}
                               <div>
-                                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5 font-title">Nume Comitet (Obligatoriu)</label>
+                                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5 font-title">Nume Comitet (Obligatoriu)</label>
                                 <input
                                   type="text"
                                   value={c.name}
                                   onChange={e => handleUpdateCommitteeField(c.id, 'name', e.target.value)}
                                   required
                                   placeholder="Ex: Logistică, Decor, Sponsori..."
-                                  className="w-full px-3.5 py-2 bg-slate-50 border border-slate-300 rounded-[2px] text-sm font-bold text-slate-900 focus:outline-none focus:border-indigo-500 transition-colors font-anthropic"
+                                  className="w-full px-3.5 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-[2px] text-sm font-bold text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:border-indigo-500 transition-colors font-anthropic"
                                 />
                               </div>
 
                               {/* Committee Description */}
                               <div>
-                                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5 font-title">Descriere Comitet (Opțională)</label>
+                                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5 font-title">Descriere Comitet (Opțională)</label>
                                 <textarea
                                   value={c.description}
                                   onChange={e => handleUpdateCommitteeField(c.id, 'description', e.target.value)}
                                   rows={2}
                                   placeholder="Sarcini specifice, agenda..."
-                                  className="w-full px-3.5 py-2 bg-slate-50 border border-slate-300 rounded-[2px] text-sm font-medium text-slate-900 focus:outline-none focus:border-indigo-500 transition-colors resize-none font-anthropic"
+                                  className="w-full px-3.5 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-[2px] text-sm font-medium text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:border-indigo-500 transition-colors resize-none font-anthropic"
                                 />
                               </div>
 
                               {/* Committee Hours */}
                               <div>
-                                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5 font-title">
+                                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5 font-title">
                                   Ore Voluntariat (acest departament)
                                 </label>
                                 <input
@@ -1501,26 +1501,26 @@ export function EventsView({ isAdmin, members = [], currentUserId, onUpdateMembe
                                   onChange={e => handleUpdateCommitteeField(c.id, 'hours', parseFloat(e.target.value) || 0)}
                                   required
                                   placeholder="Ex: 4"
-                                  className="w-full px-3.5 py-2 bg-slate-50 border border-slate-300 rounded-[2px] text-sm font-bold text-slate-900 focus:outline-none focus:border-indigo-500 transition-colors font-data"
+                                  className="w-full px-3.5 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-[2px] text-sm font-bold text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:border-indigo-500 transition-colors font-data"
                                 />
-                                <p className="text-xs font-medium text-slate-500 mt-1">
+                                <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mt-1">
                                   Fiecare membru din acest comitet primește exact aceste ore la finalizare.
                                 </p>
                               </div>
 
                               {/* Committee Members Multi-Select Dropdown */}
                               <div>
-                                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5 font-title">Membri Comitet</label>
-                                <div className="border border-slate-200 rounded-[2px] p-3 bg-slate-50/50 space-y-2.5 font-anthropic">
+                                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5 font-title">Membri Comitet</label>
+                                <div className="border border-slate-200 dark:border-slate-700 rounded-[2px] p-3 bg-slate-50/50 dark:bg-slate-900/50 space-y-2.5 font-anthropic">
                                   {/* Selected members badges */}
                                   <div className="flex flex-wrap gap-1.5 font-title">
                                     {c.members.length === 0 ? (
-                                      <span className="text-xs text-slate-400 italic">Niciun membru selectat</span>
+                                      <span className="text-xs text-slate-400 dark:text-slate-500 italic">Niciun membru selectat</span>
                                     ) : (
                                       c.members.map(memberId => {
                                         const mObj = members?.find(m => m.id === memberId);
                                         return (
-                                          <span key={memberId} className="inline-flex items-center gap-1.5 bg-indigo-100 text-indigo-950 text-xs font-bold px-2.5 py-1 rounded-[2px] border border-indigo-200 shadow-xs">
+                                          <span key={memberId} className="inline-flex items-center gap-1.5 bg-indigo-100 dark:bg-indigo-950/60 text-indigo-950 dark:text-indigo-200 text-xs font-bold px-2.5 py-1 rounded-[2px] border border-indigo-200 dark:border-indigo-800 shadow-xs">
                                             {mObj?.name || memberId}
                                             <button
                                               type="button"
@@ -1528,7 +1528,7 @@ export function EventsView({ isAdmin, members = [], currentUserId, onUpdateMembe
                                                 const updatedMembers = c.members.filter(id => id !== memberId);
                                                 handleUpdateCommitteeField(c.id, 'members', updatedMembers);
                                               }}
-                                              className="hover:text-red-600 font-bold ml-1 text-sm cursor-pointer"
+                                              className="hover:text-red-600 dark:hover:text-red-400 font-bold ml-1 text-sm cursor-pointer"
                                             >
                                               ×
                                             </button>
@@ -1543,11 +1543,11 @@ export function EventsView({ isAdmin, members = [], currentUserId, onUpdateMembe
                                     placeholder="Caută membru..."
                                     value={memberSearchQueries[c.id] || ''}
                                     onChange={e => setMemberSearchQueries(prev => ({ ...prev, [c.id]: e.target.value }))}
-                                    className="w-full px-3 py-2 bg-white border border-slate-200 rounded-[2px] text-xs sm:text-sm font-medium text-slate-900 font-anthropic"
+                                    className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-[2px] text-xs sm:text-sm font-medium text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:border-indigo-500 font-anthropic"
                                   />
 
                                   {/* Scrollable checklist of members */}
-                                  <div className="max-h-36 overflow-y-auto border-t border-slate-200 pt-2 space-y-1 scrollbar-thin">
+                                  <div className="max-h-36 overflow-y-auto border-t border-slate-200 dark:border-slate-700 pt-2 space-y-1 scrollbar-thin">
                                     {members
                                       ?.filter(m => {
                                         const q = (memberSearchQueries[c.id] || '').toLowerCase();
@@ -1567,8 +1567,8 @@ export function EventsView({ isAdmin, members = [], currentUserId, onUpdateMembe
                                             }}
                                             className={`w-full flex items-center justify-between p-2 rounded-[2px] text-xs sm:text-sm font-medium transition-all cursor-pointer font-anthropic ${
                                               isSelected
-                                                ? 'bg-indigo-100 border border-indigo-300 text-indigo-950'
-                                                : 'hover:bg-slate-100 border border-transparent text-slate-700'
+                                                ? 'bg-indigo-100 dark:bg-indigo-950/60 border border-indigo-300 dark:border-indigo-800 text-indigo-950 dark:text-indigo-200'
+                                                : 'hover:bg-slate-100 dark:hover:bg-slate-800 border border-transparent text-slate-700 dark:text-slate-300'
                                             }`}
                                           >
                                             <div className="flex items-center gap-2">
@@ -1579,7 +1579,7 @@ export function EventsView({ isAdmin, members = [], currentUserId, onUpdateMembe
                                               />
                                               <span>{m.name}</span>
                                             </div>
-                                            {isSelected && <span className="text-indigo-600 font-bold font-title text-xs">✓</span>}
+                                            {isSelected && <span className="text-indigo-600 dark:text-indigo-400 font-bold font-title text-xs">✓</span>}
                                           </button>
                                         );
                                       })}
@@ -1589,20 +1589,20 @@ export function EventsView({ isAdmin, members = [], currentUserId, onUpdateMembe
 
                               {/* Coordinator Selector */}
                               <div>
-                                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5 font-title">
+                                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5 font-title">
                                   Coordonator (Șef Comitet) - Opțional
                                 </label>
                                 <div className="relative font-anthropic">
                                   <select
                                     value={c.coordinatorId || ''}
                                     onChange={e => handleUpdateCommitteeField(c.id, 'coordinatorId', e.target.value || null)}
-                                    className="w-full px-3.5 py-2 bg-white border border-slate-300 rounded-[2px] text-sm font-medium text-slate-900 focus:outline-none focus:border-indigo-500 transition-colors font-anthropic cursor-pointer"
+                                    className="w-full px-3.5 py-2 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-[2px] text-sm font-medium text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 transition-colors font-anthropic cursor-pointer"
                                   >
-                                    <option value="">Niciunul / Fără Coordonator</option>
+                                    <option value="" className="bg-white dark:bg-slate-800 text-slate-900 dark:text-white">Niciunul / Fără Coordonator</option>
                                     {c.members.map(memberId => {
                                       const mObj = members?.find(m => m.id === memberId);
                                       return (
-                                        <option key={memberId} value={memberId}>
+                                        <option key={memberId} value={memberId} className="bg-white dark:bg-slate-800 text-slate-900 dark:text-white">
                                           {mObj?.name || memberId}
                                         </option>
                                       );
@@ -1640,31 +1640,31 @@ export function EventsView({ isAdmin, members = [], currentUserId, onUpdateMembe
             />
             <motion.div 
               initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="relative w-full max-w-sm bg-white rounded-[2px] shadow-2xl p-5 sm:p-6 font-anthropic border border-slate-200"
+              className="relative w-full max-w-sm bg-white dark:bg-slate-900 rounded-[2px] shadow-2xl p-5 sm:p-6 font-anthropic border border-slate-200 dark:border-slate-800"
             >
               <div className="flex justify-between items-start mb-3.5 font-title">
-                <h3 className="text-base sm:text-lg font-bold text-slate-900">Cere Învoire</h3>
-                <button onClick={() => setRequestingAbsenceFor(null)} className="p-1.5 hover:bg-slate-100 text-slate-400 hover:text-slate-700 rounded-[2px] cursor-pointer">
+                <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">Cere Învoire</h3>
+                <button onClick={() => setRequestingAbsenceFor(null)} className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 rounded-[2px] cursor-pointer">
                   <X size={18} />
                 </button>
               </div>
-              <p className="text-xs sm:text-sm text-slate-600 font-medium mb-4 font-anthropic leading-relaxed">
-                Te rugăm să motivezi absența pentru <span className="font-bold text-slate-900">{requestingAbsenceFor.title}</span>. Cererea va fi analizată de administratori.
+              <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 font-medium mb-4 font-anthropic leading-relaxed">
+                Te rugăm să motivezi absența pentru <span className="font-bold text-slate-900 dark:text-white">{requestingAbsenceFor.title}</span>. Cererea va fi analizată de administratori.
               </p>
               
               <form onSubmit={handleAbsenceSubmit} className="space-y-3.5 font-anthropic">
                 <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5 font-title">Motiv Învoire</label>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5 font-title">Motiv Învoire</label>
                   <textarea 
                     required
                     rows={4}
                     value={absenceReason}
                     onChange={e => setAbsenceReason(e.target.value)}
-                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-[2px] text-sm focus:outline-none focus:border-indigo-500 resize-none text-slate-900 font-anthropic"
+                    className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-[2px] text-sm focus:outline-none focus:border-indigo-500 resize-none text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 font-anthropic"
                     placeholder="Scrie aici motivul absenței..."
                   />
                 </div>
-                <button type="submit" className="w-full py-3 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-[2px] text-xs sm:text-sm uppercase tracking-wider transition-all shadow-xs cursor-pointer font-title">
+                <button type="submit" className="w-full py-3 bg-slate-900 hover:bg-slate-800 dark:bg-slate-700 dark:hover:bg-slate-600 text-white font-bold rounded-[2px] text-xs sm:text-sm uppercase tracking-wider transition-all shadow-xs cursor-pointer font-title">
                   Trimite Cererea
                 </button>
               </form>

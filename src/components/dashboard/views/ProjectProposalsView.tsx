@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../../supabase';
-import { FileText, Clock, CheckCircle2, XCircle, ExternalLink, Users, HandMetal, Sparkles } from 'lucide-react';
+import { FileText, Clock, CheckCircle2, XCircle, ExternalLink, Users, HandMetal, Sparkles, Trash2, Check, X, Plus } from 'lucide-react';
 import { ProjectProposalForm } from './ProjectProposalForm';
 import { toast } from '../../ui/Toast';
+import { EmptyState } from '../../ui/EmptyState';
+import { SkeletonCard, Skeleton } from '../../ui/Skeleton';
 
 interface VolunteerInterest {
   id: string;
@@ -104,6 +106,38 @@ export const ProjectProposalsView: React.FC<ProjectProposalsViewProps> = ({ isAd
     }
   };
 
+  const handleUpdateStatus = async (proposalId: string, newStatus: 'pending' | 'approved' | 'rejected') => {
+    if (!isAdmin) return;
+    try {
+      const { error } = await supabase
+        .from('project_proposals')
+        .update({ status: newStatus })
+        .eq('id', proposalId);
+      if (error) throw error;
+      toast.success(`Statusul propunerii a fost actualizat: ${newStatus === 'approved' ? 'Aprobat' : newStatus === 'rejected' ? 'Respins' : 'În Analiză'}`);
+      setProposals(prev => prev.map(p => p.id === proposalId ? { ...p, status: newStatus } : p));
+    } catch (err: any) {
+      console.error('Error updating proposal status:', err);
+      toast.error('Eroare la actualizarea statusului propunerii.');
+    }
+  };
+
+  const handleDeleteProposal = async (proposalId: string) => {
+    if (!isAdmin) return;
+    try {
+      const { error } = await supabase
+        .from('project_proposals')
+        .delete()
+        .eq('id', proposalId);
+      if (error) throw error;
+      toast.success('Propunerea de proiect a fost ștearsă.');
+      setProposals(prev => prev.filter(p => p.id !== proposalId));
+    } catch (err: any) {
+      console.error('Error deleting proposal:', err);
+      toast.error('Eroare la ștergerea propunerii.');
+    }
+  };
+
   const signedProposals = proposals.filter(p => !p.isAnonymous);
   const anonymousProposals = proposals.filter(p => p.isAnonymous);
 
@@ -150,8 +184,12 @@ export const ProjectProposalsView: React.FC<ProjectProposalsViewProps> = ({ isAd
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="w-8 h-8 border-3 border-indigo-500 border-t-transparent rounded-[2px] animate-spin" />
+      <div className="p-3 md:p-6 space-y-6 max-w-7xl mx-auto font-anthropic">
+        <div className="space-y-2">
+          <Skeleton className="h-8 w-64" />
+          <Skeleton className="h-4 w-96" />
+        </div>
+        <SkeletonCard count={3} />
       </div>
     );
   }
@@ -244,12 +282,14 @@ export const ProjectProposalsView: React.FC<ProjectProposalsViewProps> = ({ isAd
       ) : (
         /* Proposals Grid */
         visibleProposals.length === 0 ? (
-          <div className="bg-white dark:bg-slate-900 rounded-[2px] shadow-xs border border-slate-200 dark:border-slate-800 p-12 text-center">
-            <FileText className="w-10 h-10 mx-auto text-slate-300 dark:text-slate-600 mb-3" />
-            <p className="text-sm text-slate-500 dark:text-slate-400 font-semibold font-anthropic">
-              Nu există propuneri în această categorie momentan.
-            </p>
-          </div>
+          <EmptyState
+            icon={FileText}
+            title="Nu există propuneri în această categorie"
+            description="Fii tu primul care propune o inițiativă nouă sau un proiect pentru comunitate!"
+            actionLabel={!isAdmin ? "Propune Proiect Nou" : undefined}
+            onAction={!isAdmin ? () => setMemberViewTab('formular') : undefined}
+            actionIcon={Plus}
+          />
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
             {visibleProposals.map(proposal => {
@@ -259,14 +299,25 @@ export const ProjectProposalsView: React.FC<ProjectProposalsViewProps> = ({ isAd
               return (
                 <div
                   key={proposal.id}
-                  className="bg-white dark:bg-slate-900 rounded-[2px] shadow-xs border border-slate-200 dark:border-slate-800 p-5 sm:p-6 flex flex-col hover:border-slate-300 transition-all relative overflow-hidden font-anthropic"
+                  className="bg-white dark:bg-slate-900 rounded-[2px] shadow-xs border border-slate-200 dark:border-slate-800 p-5 sm:p-6 flex flex-col hover:border-slate-300 dark:hover:border-slate-700 transition-all relative overflow-hidden font-anthropic group"
                 >
-                  {/* Top Bar: Icon + Status */}
+                  {/* Top Bar: Icon + Status + Admin Delete */}
                   <div className="flex items-start justify-between mb-3 gap-2">
                     <div className="w-9 h-9 bg-indigo-50 dark:bg-indigo-950/40 rounded-[2px] flex items-center justify-center text-indigo-600 dark:text-indigo-400 shrink-0">
                       <FileText className="w-5 h-5" />
                     </div>
-                    {getStatusBadge(proposal.status)}
+                    <div className="flex items-center gap-2">
+                      {getStatusBadge(proposal.status)}
+                      {isAdmin && (
+                        <button
+                          onClick={() => handleDeleteProposal(proposal.id)}
+                          className="p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-[2px] transition-colors cursor-pointer"
+                          title="Șterge propunerea"
+                        >
+                          <Trash2 size={15} />
+                        </button>
+                      )}
+                    </div>
                   </div>
 
                   {/* Committee Tag */}
@@ -315,6 +366,24 @@ export const ProjectProposalsView: React.FC<ProjectProposalsViewProps> = ({ isAd
                       <span>{isInterested ? 'Disponibil ✓' : 'Mă implic 🙋'}</span>
                     </button>
                   </div>
+
+                  {/* Admin Status Controls */}
+                  {isAdmin && proposal.status === 'pending' && (
+                    <div className="flex items-center gap-2 mb-3 pt-2 border-t border-slate-100 dark:border-slate-800 font-title">
+                      <button
+                        onClick={() => handleUpdateStatus(proposal.id, 'approved')}
+                        className="flex-1 py-1.5 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/40 dark:hover:bg-emerald-900/50 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 rounded-[2px] text-xs font-bold flex items-center justify-center gap-1 cursor-pointer transition-colors"
+                      >
+                        <Check size={14} /> Aprobă
+                      </button>
+                      <button
+                        onClick={() => handleUpdateStatus(proposal.id, 'rejected')}
+                        className="flex-1 py-1.5 bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/40 dark:hover:bg-rose-900/50 text-rose-700 dark:text-rose-400 border border-rose-200 dark:border-rose-800 rounded-[2px] text-xs font-bold flex items-center justify-center gap-1 cursor-pointer transition-colors"
+                      >
+                        <X size={14} /> Respinge
+                      </button>
+                    </div>
+                  )}
 
                   {/* Footer */}
                   <div className="mt-auto pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-anthropic">

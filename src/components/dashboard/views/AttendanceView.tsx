@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { CheckCircle2, XCircle, Clock, ChevronDown, Lock, Loader2, MessageSquare, Search, RotateCcw, Check, X } from 'lucide-react';
-import { EventData, AbsenceRequest, fetchAbsenceRequests, saveAbsenceRequest, deleteAbsenceRequest, recordAttendance, fetchEvents, saveEvent, applyMemberScoreAdjustment } from '../../../utils/supabaseService';
+import { EventData, AbsenceRequest, fetchAbsenceRequests, saveAbsenceRequest, deleteAbsenceRequest, recordAttendance, fetchEvents, saveEvent, applyMemberScoreAdjustment, isSystemAccount } from '../../../utils/supabaseService';
 import { toast } from '../../ui/Toast';
 import { Badge } from '../../ui/Badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../ui/table';
@@ -318,7 +318,7 @@ export function AttendanceView({ members, onUpdateMember, isAdmin, currentUserId
     if (!selectedEvent) return;
 
     if (!selectedEvent.attendanceClosed) {
-      const activeMembers = members.filter(m => m.role !== 'admin');
+      const activeMembers = members.filter(m => !isSystemAccount(m) && m.role !== 'admin');
       let targetMembers = activeMembers;
       if (selectedEvent.isShiftBased && selectedEvent.shifts?.length) {
         targetMembers = activeMembers.filter(m => selectedEvent.shifts!.some(s => s.assignedMembers.includes(m.id)));
@@ -366,7 +366,7 @@ export function AttendanceView({ members, onUpdateMember, isAdmin, currentUserId
 
     setIsFinalizing(true);
     try {
-      const activeMembers = members.filter(m => m.role !== 'admin');
+      const activeMembers = members.filter(m => !isSystemAccount(m) && m.role !== 'admin');
       let targetMembers = activeMembers;
       if (selectedEvent.isShiftBased && selectedEvent.shifts?.length) {
         targetMembers = activeMembers.filter(m => selectedEvent.shifts!.some(s => s.assignedMembers.includes(m.id)));
@@ -892,7 +892,7 @@ export function AttendanceView({ members, onUpdateMember, isAdmin, currentUserId
               <div className="overflow-y-auto scrollbar-thin p-4 sm:p-5 font-anthropic">
                 {selectedEvent.attendanceClosed ? (
                   (() => {
-                    const activeMembers = members.filter(m => m.role !== 'admin');
+                    const activeMembers = members.filter(m => !isSystemAccount(m) && m.role !== 'admin');
                     let targetMembers = activeMembers;
                     if (selectedEvent.isShiftBased && selectedEvent.shifts?.length) {
                       targetMembers = activeMembers.filter(m => selectedEvent.shifts!.some(s => s.assignedMembers.includes(m.id)));
@@ -995,7 +995,7 @@ export function AttendanceView({ members, onUpdateMember, isAdmin, currentUserId
                     </TableHeader>
                     <TableBody>
                       {members
-                        .filter(m => m.role !== 'admin')
+                        .filter(m => !isSystemAccount(m) && m.role !== 'admin')
                         .filter(m => {
                           if (selectedEvent.isShiftBased && selectedEvent.shifts?.length) {
                             if (selectedShiftId === 'all') {

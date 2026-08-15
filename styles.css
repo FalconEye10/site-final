@@ -1932,6 +1932,27 @@ html[data-theme="light"] .dashboard-shell {
   color-scheme: light;
 }
 
+/* Smooth Theme Transition across Dashboard */
+.dashboard-shell {
+  transition: background-color 200ms cubic-bezier(0.4, 0, 0.2, 1),
+              color 200ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.dashboard-shell .adm-glass,
+.dashboard-shell .admin-card,
+.dashboard-shell aside,
+.dashboard-shell header,
+.dashboard-shell nav {
+  transition: background-color 200ms cubic-bezier(0.4, 0, 0.2, 1),
+              border-color 200ms cubic-bezier(0.4, 0, 0.2, 1),
+              color 200ms cubic-bezier(0.4, 0, 0.2, 1),
+              box-shadow 200ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ============================================
+   SHIMMER & LUXURY RECOGNITION EFFECTS
+   ============================================ */
+
 /* --- Panels: flat ink rectangles with a hairline border, not glass --- */
 .adm-glass {
   position: relative;
@@ -2263,33 +2284,44 @@ html[data-theme="light"] .dashboard-shell {
   background-color: rgba(6, 9, 16, 0.7) !important;
 }
 /* Primary buttons */
-.dashboard-shell .adm-btn-primary { background: #0f172a !important; color: #ffffff !important; border: 1px solid rgba(255,255,255,0.15) !important; }
-.dark .dashboard-shell .adm-btn-primary,
-html[data-theme="dark"] .dashboard-shell .adm-btn-primary,
-.dashboard-shell.dark .adm-btn-primary { background: #38bdf8 !important; color: #020617 !important; }
-
-/* Legacy button family re-themed with high contrast and sharp editorial edges */
-.dashboard-shell .btn-stitch-primary {
-  background: #0f172a !important;
-  color: #ffffff !important;
-  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+.dashboard-shell .adm-btn-primary,
+.dashboard-shell .btn-civic-primary,
+.dashboard-shell .btn-stitch-primary { 
+  background: #0f172a !important; 
+  color: #ffffff !important; 
+  border: 1px solid rgba(255,255,255,0.15) !important; 
   border-radius: 2px !important;
 }
+.dark .dashboard-shell .adm-btn-primary,
+html[data-theme="dark"] .dashboard-shell .adm-btn-primary,
+.dashboard-shell.dark .adm-btn-primary,
+.dark .dashboard-shell .btn-civic-primary,
+html[data-theme="dark"] .dashboard-shell .btn-civic-primary,
+.dashboard-shell.dark .btn-civic-primary,
 .dark .dashboard-shell .btn-stitch-primary,
 html[data-theme="dark"] .dashboard-shell .btn-stitch-primary,
-.dashboard-shell.dark .btn-stitch-primary {
-  background: #38bdf8 !important;
-  color: #020617 !important;
+.dashboard-shell.dark .btn-stitch-primary { 
+  background: #38bdf8 !important; 
+  color: #020617 !important; 
 }
+.dashboard-shell .adm-btn-primary::before,
+.dashboard-shell .btn-civic-primary::before,
 .dashboard-shell .btn-stitch-primary::before { display: none !important; }
+.dashboard-shell .adm-btn-primary:hover,
+.dashboard-shell .btn-civic-primary:hover,
 .dashboard-shell .btn-stitch-primary:hover { filter: brightness(1.15); }
 
+/* Secondary buttons */
+.dashboard-shell .btn-civic-secondary,
 .dashboard-shell .btn-stitch-secondary {
   background: #ffffff !important;
   color: #0f172a !important;
   border: 1px solid #cbd5e1 !important;
   border-radius: 2px !important;
 }
+.dark .dashboard-shell .btn-civic-secondary,
+html[data-theme="dark"] .dashboard-shell .btn-civic-secondary,
+.dashboard-shell.dark .btn-civic-secondary,
 .dark .dashboard-shell .btn-stitch-secondary,
 html[data-theme="dark"] .dashboard-shell .btn-stitch-secondary,
 .dashboard-shell.dark .btn-stitch-secondary {
@@ -2297,7 +2329,11 @@ html[data-theme="dark"] .dashboard-shell .btn-stitch-secondary,
   color: #f8fafc !important;
   border: 1px solid #334155 !important;
 }
+.dashboard-shell .btn-civic-secondary:hover,
 .dashboard-shell .btn-stitch-secondary:hover { filter: brightness(0.95); }
+.dark .dashboard-shell .btn-civic-secondary:hover,
+html[data-theme="dark"] .dashboard-shell .btn-civic-secondary:hover,
+.dashboard-shell.dark .btn-civic-secondary:hover,
 .dark .dashboard-shell .btn-stitch-secondary:hover,
 html[data-theme="dark"] .dashboard-shell .btn-stitch-secondary:hover,
 .dashboard-shell.dark .btn-stitch-secondary:hover { filter: brightness(1.2); }
@@ -2315,12 +2351,17 @@ html[data-theme="dark"] .dashboard-shell .btn-stitch-theme,
   color: #020617 !important;
 }
 
+/* Danger buttons */
+.dashboard-shell .btn-civic-danger,
 .dashboard-shell .btn-stitch-danger {
   background: #fef2f2 !important;
   color: #dc2626 !important;
   border: 1px solid #fca5a5 !important;
   border-radius: 2px !important;
 }
+.dark .dashboard-shell .btn-civic-danger,
+html[data-theme="dark"] .dashboard-shell .btn-civic-danger,
+.dashboard-shell.dark .btn-civic-danger,
 .dark .dashboard-shell .btn-stitch-danger,
 html[data-theme="dark"] .dashboard-shell .btn-stitch-danger,
 .dashboard-shell.dark .btn-stitch-danger {
@@ -2328,6 +2369,7 @@ html[data-theme="dark"] .dashboard-shell .btn-stitch-danger,
   color: #f87171 !important;
   border: 1px solid rgba(220, 38, 38, 0.4) !important;
 }
+.dashboard-shell .btn-civic-danger:hover,
 .dashboard-shell .btn-stitch-danger:hover {
   background: #fee2e2 !important;
 }
@@ -2380,7 +2422,7 @@ html[data-theme="dark"] .dashboard-shell .ios26-btn,
   color: var(--adm-ink, #0f172a);
 }
 .dashboard-shell input::placeholder,
-.dashboard-shell textarea::placeholder { color: var(--adm-ink-faint, #94a3b8) !important; }
+.dashboard-shell textarea::placeholder { color: var(--adm-ink-faint, #64748b) !important; }
 .dashboard-shell input:focus,
 .dashboard-shell select:focus,
 .dashboard-shell textarea:focus {
@@ -2388,15 +2430,23 @@ html[data-theme="dark"] .dashboard-shell .ios26-btn,
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--theme-color, #89cff0) 15%, transparent) !important;
   outline: none;
 }
+
 select option { 
   background-color: #ffffff; 
   color: #0f172a; 
 }
 html.dark select option,
 .dark select option,
-.dashboard-shell option { 
+html[data-theme="dark"] .dashboard-shell option,
+.dark .dashboard-shell option { 
   background-color: #1e293b !important; 
   color: #f8fafc !important; 
+}
+html:not(.dark) select option,
+html[data-theme="light"] select option,
+html[data-theme="light"] .dashboard-shell option {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
 }
 
 /* Global Universal High-Contrast Guarantee for Inputs, Selects & Textareas */
@@ -2420,21 +2470,57 @@ html.dark textarea,
 
 html.dark input::placeholder,
 html.dark textarea::placeholder,
+[data-theme="dark"] input::placeholder,
+[data-theme="dark"] textarea::placeholder,
 .dark input::placeholder,
 .dark textarea::placeholder {
   color: #94a3b8 !important;
+}
+
+html:not(.dark) input::placeholder,
+html:not(.dark) textarea::placeholder,
+html[data-theme="light"] input::placeholder,
+html[data-theme="light"] textarea::placeholder {
+  color: #64748b !important;
+  opacity: 1 !important;
 }
 
 html.dark input[type="number"],
 html.dark input[type="text"],
 html.dark input[type="password"],
 html.dark input[type="email"],
+html.dark input[type="search"],
+html.dark input[type="date"],
+[data-theme="dark"] input[type="number"],
+[data-theme="dark"] input[type="text"],
+[data-theme="dark"] input[type="password"],
+[data-theme="dark"] input[type="email"],
+[data-theme="dark"] input[type="search"],
+[data-theme="dark"] input[type="date"],
 .dark input[type="number"],
 .dark input[type="text"],
 .dark input[type="password"],
-.dark input[type="email"] {
+.dark input[type="email"],
+.dark input[type="search"],
+.dark input[type="date"] {
   color: #ffffff !important;
   caret-color: #38bdf8 !important;
+}
+
+html:not(.dark) input[type="number"],
+html:not(.dark) input[type="text"],
+html:not(.dark) input[type="password"],
+html:not(.dark) input[type="email"],
+html:not(.dark) input[type="search"],
+html:not(.dark) input[type="date"],
+html[data-theme="light"] input[type="number"],
+html[data-theme="light"] input[type="text"],
+html[data-theme="light"] input[type="password"],
+html[data-theme="light"] input[type="email"],
+html[data-theme="light"] input[type="search"],
+html[data-theme="light"] input[type="date"] {
+  color: #0f172a !important;
+  caret-color: #0f172a !important;
 }
 
 /* Safety net: ensure proper background and text */

@@ -5,6 +5,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '../../../supabase';
 import { toast } from '../../ui/Toast';
+import { isSystemAccount } from '../../../utils/supabaseService';
 
 interface Committee {
   id: string;
@@ -107,26 +108,29 @@ export function RepartizareView({ isAdmin, members }: RepartizareViewProps) {
 
   // Filtered members list
   const filteredMembers = useMemo(() => {
-    return members.filter(m => {
-      const nameMatch = (m.name || '').toLowerCase().includes(memberSearchQuery.toLowerCase()) ||
-                        (m.nickname || '').toLowerCase().includes(memberSearchQuery.toLowerCase());
-      
-      const skillMatch = selectedSkillFilter === 'Toate' || 
-                         (Array.isArray(m.skills) && m.skills.includes(selectedSkillFilter));
-      
-      return nameMatch && skillMatch;
-    });
+    return members
+      .filter(m => !isSystemAccount(m))
+      .filter(m => {
+        const nameMatch = (m.name || '').toLowerCase().includes(memberSearchQuery.toLowerCase()) ||
+                          (m.nickname || '').toLowerCase().includes(memberSearchQuery.toLowerCase());
+        
+        const skillMatch = selectedSkillFilter === 'Toate' || 
+                           (Array.isArray(m.skills) && m.skills.includes(selectedSkillFilter));
+        
+        return nameMatch && skillMatch;
+      });
   }, [members, memberSearchQuery, selectedSkillFilter]);
 
   // Statistics for the selected project
   const projectStats = useMemo(() => {
+    const validMembers = members.filter(m => !isSystemAccount(m));
     const totalMembersAssignedSet = new Set<string>();
     committees.forEach(c => {
       c.members.forEach(mId => totalMembersAssignedSet.add(mId));
       if (c.coordinatorId) totalMembersAssignedSet.add(c.coordinatorId);
     });
 
-    const unassignedCount = Math.max(0, members.length - totalMembersAssignedSet.size);
+    const unassignedCount = Math.max(0, validMembers.length - totalMembersAssignedSet.size);
 
     return {
       assignedCount: totalMembersAssignedSet.size,

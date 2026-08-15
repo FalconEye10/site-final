@@ -46,13 +46,17 @@ export const NotificationsDropdown: React.FC<NotificationsDropdownProps> = ({
 
   // Close dropdown on click outside
   useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
+    const handleClickOutside = (e: MouseEvent | TouchEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
         setIsOpen(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener('touchstart', handleClickOutside, { passive: true });
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('touchstart', handleClickOutside);
+    };
   }, []);
 
   // Fetch real-time data sources
@@ -75,12 +79,26 @@ export const NotificationsDropdown: React.FC<NotificationsDropdownProps> = ({
         if (pitchRes.data) setRawPitches(pitchRes.data);
         if (eventRes.data) setRawEvents(eventRes.data);
 
-        if (currentUserId || currentUsername) {
+        if (currentUserId && currentUsername) {
           const { data: memberData } = await supabase
             .from('members')
             .select('*')
-            .or(`id.eq.${currentUserId || ''},username.eq.${currentUsername || ''}`)
-            .single();
+            .or(`id.eq.${currentUserId},username.eq.${currentUsername}`)
+            .maybeSingle();
+          if (memberData) setCurrentMemberData(memberData);
+        } else if (currentUserId) {
+          const { data: memberData } = await supabase
+            .from('members')
+            .select('*')
+            .eq('id', currentUserId)
+            .maybeSingle();
+          if (memberData) setCurrentMemberData(memberData);
+        } else if (currentUsername) {
+          const { data: memberData } = await supabase
+            .from('members')
+            .select('*')
+            .eq('username', currentUsername)
+            .maybeSingle();
           if (memberData) setCurrentMemberData(memberData);
         }
       } catch (err) {
@@ -333,16 +351,33 @@ export const NotificationsDropdown: React.FC<NotificationsDropdownProps> = ({
         )}
       </button>
 
-      {/* Notifications Dropdown Panel */}
+      {/* Notifications Dropdown Panel & Click-Outside Dismiss Backdrop */}
       <AnimatePresence>
         {isOpen && (
-          <motion.div
-            initial={{ opacity: 0, y: -8, scale: 0.97 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -8, scale: 0.97 }}
-            transition={{ duration: 0.15 }}
-            className="fixed sm:absolute inset-x-3 sm:inset-x-auto sm:right-0 top-16 sm:top-[calc(100%+0.5rem)] max-w-sm sm:w-96 rounded-[2px] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden z-50 flex flex-col font-anthropic text-slate-800 dark:text-white"
-          >
+          <>
+            {/* Backdrop that intercepts clicks/taps on mobile and desktop,
+                dismissing the dropdown FIRST without activating whatever was clicked underneath */}
+            <div
+              className="fixed inset-0 z-[140] bg-black/25 sm:bg-transparent"
+              onClick={(e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                setIsOpen(false);
+              }}
+              onTouchStart={(e) => {
+                e.stopPropagation();
+                setIsOpen(false);
+              }}
+              aria-hidden="true"
+            />
+
+            <motion.div
+              initial={{ opacity: 0, y: -8, scale: 0.97 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -8, scale: 0.97 }}
+              transition={{ duration: 0.15 }}
+              className="fixed sm:absolute inset-x-3 sm:inset-x-auto sm:right-0 top-16 sm:top-[calc(100%+0.5rem)] max-w-sm sm:w-96 rounded-[2px] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden z-[150] flex flex-col font-anthropic text-slate-800 dark:text-white"
+            >
             {/* Header */}
             <div className="p-3.5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-100/90 dark:bg-slate-900">
               <div className="flex items-center gap-2">
@@ -421,8 +456,9 @@ export const NotificationsDropdown: React.FC<NotificationsDropdownProps> = ({
               )}
             </div>
           </motion.div>
-        )}
-      </AnimatePresence>
+        </>
+      )}
+    </AnimatePresence>
     </div>
   );
 };

@@ -26,12 +26,14 @@ export const VolunteerSpotlightCard: React.FC<VolunteerSpotlightCardProps> = ({
   useEffect(() => {
     async function loadKudos() {
       try {
-        const { data, error } = await supabase.from('kudos').select('toId, toName');
+        const { data, error } = await supabase.from('kudos').select('*');
         if (!error && data) {
           const map: Record<string, number> = {};
           data.forEach((k: any) => {
-            if (k.toId) map[k.toId] = (map[k.toId] || 0) + 1;
-            if (k.toName) map[k.toName.toLowerCase()] = (map[k.toName.toLowerCase()] || 0) + 1;
+            const targetId = k.toId || k.to_id || k.recipient_id;
+            const targetName = k.toName || k.to_name || k.recipient_name;
+            if (targetId) map[targetId] = (map[targetId] || 0) + 1;
+            if (targetName) map[targetName.toLowerCase()] = (map[targetName.toLowerCase()] || 0) + 1;
           });
           setKudosCounts(map);
         }

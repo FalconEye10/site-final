@@ -1,5 +1,4 @@
 import { supabase } from '../supabase';
-import { calculateDebt } from './finance';
 
 /**
  * Verifică dacă un membru este un cont tehnic de sistem (admin tehnic sau registrul de audit)
@@ -666,7 +665,7 @@ export async function processTreasuryPayment(
   try {
     const { data: memberSnap, error: fetchErr } = await supabase
       .from('members')
-      .select('joinDate, totalPaid')
+      .select('joinDate, totalPaid, status')
       .eq('id', memberId.toString())
       .single();
 
@@ -674,8 +673,7 @@ export async function processTreasuryPayment(
 
     const currentTotalPaid = Number(memberSnap.totalPaid || 0);
     const newTotalPaid = currentTotalPaid + paymentDoc.amount;
-    const newDebt = calculateDebt(memberSnap.joinDate, newTotalPaid);
-    const newStatus = newDebt > 0 ? 'debtor' : 'active';
+    const currentStatus = memberSnap.status || 'active';
 
     const { error: paymentErr } = await supabase
       .from('payments')
@@ -689,12 +687,12 @@ export async function processTreasuryPayment(
 
     const { error: memberErr } = await supabase
       .from('members')
-      .update({ totalPaid: newTotalPaid, status: newStatus })
+      .update({ totalPaid: newTotalPaid })
       .eq('id', memberId.toString());
 
     if (memberErr) throw memberErr;
 
-    return { newTotalPaid, newStatus };
+    return { newTotalPaid, newStatus: currentStatus };
   } catch (error) {
     console.error("Error processing treasury payment:", error);
     throw error;
@@ -749,7 +747,7 @@ export async function revertLatestTreasuryPayment(
   try {
     const { data: memberSnap, error: fetchErr } = await supabase
       .from('members')
-      .select('joinDate, totalPaid')
+      .select('joinDate, totalPaid, status')
       .eq('id', memberId.toString())
       .single();
 
@@ -757,8 +755,7 @@ export async function revertLatestTreasuryPayment(
 
     const currentTotalPaid = Number(memberSnap.totalPaid || 0);
     const newTotalPaid = Math.max(0, currentTotalPaid - paymentAmount);
-    const newDebt = calculateDebt(memberSnap.joinDate, newTotalPaid);
-    const newStatus = newDebt > 0 ? 'debtor' : 'active';
+    const currentStatus = memberSnap.status || 'active';
 
     const { error: delErr } = await supabase
       .from('payments')
@@ -769,12 +766,12 @@ export async function revertLatestTreasuryPayment(
 
     const { error: memberErr } = await supabase
       .from('members')
-      .update({ totalPaid: newTotalPaid, status: newStatus })
+      .update({ totalPaid: newTotalPaid })
       .eq('id', memberId.toString());
 
     if (memberErr) throw memberErr;
 
-    return { newTotalPaid, newStatus };
+    return { newTotalPaid, newStatus: currentStatus };
   } catch (error) {
     console.error("Error reverting treasury payment:", error);
     throw error;

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Search, CornerDownLeft, ArrowUp, ArrowDown, User as UserIcon } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
+import { APP_VERSION } from '../../version';
 
 export interface CommandNavItem {
   id: string;
@@ -178,6 +179,7 @@ export function CommandPalette({ isOpen, onClose, navItems, members, onNavigate,
 
             <div className="hidden sm:flex items-center justify-between px-5 py-3 border-t border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-900 text-xs font-bold text-slate-500 dark:text-slate-400 font-title">
               <span className="flex items-center gap-1.5"><ArrowUp size={13} /><ArrowDown size={13} /> Navighează</span>
+              <span className="font-data text-[11px] text-slate-400 dark:text-slate-500">Interact Camena v{APP_VERSION}</span>
               <span className="flex items-center gap-1.5"><CornerDownLeft size={13} /> Deschide</span>
             </div>
           </motion.div>

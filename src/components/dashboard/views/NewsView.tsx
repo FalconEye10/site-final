@@ -2,6 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../../../supabase';
 import { Megaphone, Trash2, ExternalLink, Plus, Send } from 'lucide-react';
 import { NewsAdminForm } from './NewsAdminForm';
+import { EmptyState } from '../../ui/EmptyState';
+import { Skeleton, SkeletonCard } from '../../ui/Skeleton';
+import { toast } from '../../ui/Toast';
 
 interface NewsComment {
   id: string;
@@ -122,20 +125,23 @@ export const NewsView: React.FC<NewsViewProps> = ({ isAdmin, currentUserId, curr
         .eq('id', newsId);
 
       if (error) throw error;
+      toast.success('Comentariul a fost adăugat!');
       setCommentText(prev => ({ ...prev, [newsId]: '' }));
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error adding comment:', err);
+      toast.error('Eroare la adăugarea comentariului.');
     }
   };
 
   const handleDeleteNews = async (newsId: string) => {
     if (!isAdmin) return;
-    if (!window.confirm('Ești sigur că vrei să ștergi această știre?')) return;
     try {
       const { error } = await supabase.from('news').delete().eq('id', newsId);
       if (error) throw error;
-    } catch (err) {
+      toast.success('Știrea a fost ștearsă.');
+    } catch (err: any) {
       console.error('Error deleting news:', err);
+      toast.error('Eroare la ștergerea știrii.');
     }
   };
 
@@ -153,7 +159,15 @@ export const NewsView: React.FC<NewsViewProps> = ({ isAdmin, currentUserId, curr
   };
 
   if (loading) {
-    return <div className="p-8 text-center text-slate-500">Se încarcă știrile...</div>;
+    return (
+      <div className="p-4 sm:p-6 space-y-6 max-w-4xl mx-auto font-anthropic">
+        <div className="space-y-2">
+          <Skeleton className="h-8 w-48" />
+          <Skeleton className="h-4 w-72" />
+        </div>
+        <SkeletonCard count={2} />
+      </div>
+    );
   }
 
   if (showCreateForm && isAdmin) {
@@ -189,10 +203,14 @@ export const NewsView: React.FC<NewsViewProps> = ({ isAdmin, currentUserId, curr
       </div>
 
       {news.length === 0 ? (
-        <div className="bg-white dark:bg-[#161B22] rounded-[2px] shadow-xs border border-slate-200 dark:border-slate-800 p-12 text-center">
-          <Megaphone className="w-10 h-10 mx-auto text-slate-300 dark:text-slate-600 mb-3" />
-          <p className="text-sm text-slate-500 dark:text-slate-400 font-anthropic">Nu există știri publicate momentan.</p>
-        </div>
+        <EmptyState
+          icon={Megaphone}
+          title="Niciun anunț publicat momentan"
+          description="Aici vor fi publicate noutățile oficiale ale clubului, comunicatele consiliului și rezumatele proiectelor."
+          actionLabel={isAdmin ? "Adaugă Prima Știre" : undefined}
+          onAction={isAdmin ? () => setShowCreateForm(true) : undefined}
+          actionIcon={Plus}
+        />
       ) : (
         <div className="space-y-6">
           {news.map(item => {

@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../../supabase';
-import { MessageSquare, Send, Trash2, Edit3, Heart, ThumbsUp, ThumbsDown, X, Check } from 'lucide-react';
+import { MessageSquare, Send, Trash2, Edit3, Heart, ThumbsUp, ThumbsDown, X, Check, Plus } from 'lucide-react';
+import { toast } from '../../ui/Toast';
+import { EmptyState } from '../../ui/EmptyState';
+import { SkeletonCard, Skeleton } from '../../ui/Skeleton';
 
 interface ForumPost {
   id: string;
@@ -67,7 +70,10 @@ export const ForumView: React.FC<ForumViewProps> = ({ isAdmin, currentUserId, cu
 
   const handleCreatePost = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newPostTitle.trim() || !newPostContent.trim()) return;
+    if (!newPostTitle.trim() || !newPostContent.trim()) {
+      toast.error('Completează titlul și conținutul postării.');
+      return;
+    }
 
     setIsSubmitting(true);
     try {
@@ -84,12 +90,13 @@ export const ForumView: React.FC<ForumViewProps> = ({ isAdmin, currentUserId, cu
 
       if (error) throw error;
 
+      toast.success('Subiectul a fost publicat pe forum!');
       setNewPostTitle('');
       setNewPostContent('');
       setShowNewPost(false);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error creating forum post:', err);
-      alert('A apărut o eroare la publicarea postării.');
+      toast.error('Eroare la publicarea postării: ' + (err.message || 'Eroare necunoscută'));
     } finally {
       setIsSubmitting(false);
     }
@@ -124,12 +131,13 @@ export const ForumView: React.FC<ForumViewProps> = ({ isAdmin, currentUserId, cu
 
   const handleDeletePost = async (postId: string) => {
     if (!isAdmin) return;
-    if (!window.confirm('Ești sigur că vrei să ștergi această postare?')) return;
     try {
       const { error } = await supabase.from('forum_posts').delete().eq('id', postId);
       if (error) throw error;
-    } catch (err) {
+      toast.success('Postarea a fost ștearsă.');
+    } catch (err: any) {
       console.error('Error deleting post:', err);
+      toast.error('Eroare la ștergerea postării.');
     }
   };
 
@@ -150,14 +158,24 @@ export const ForumView: React.FC<ForumViewProps> = ({ isAdmin, currentUserId, cu
         })
         .eq('id', editingPostId);
       if (error) throw error;
+      toast.success('Postarea a fost actualizată!');
       setEditingPostId(null);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error updating post:', err);
+      toast.error('Eroare la salvarea modificărilor.');
     }
   };
 
   if (loading) {
-    return <div className="p-8 text-center text-slate-500">Se încarcă forumul...</div>;
+    return (
+      <div className="p-4 sm:p-6 space-y-6 max-w-4xl mx-auto font-anthropic">
+        <div className="space-y-2">
+          <Skeleton className="h-8 w-48" />
+          <Skeleton className="h-4 w-72" />
+        </div>
+        <SkeletonCard count={2} />
+      </div>
+    );
   }
 
   return (
@@ -171,6 +189,7 @@ export const ForumView: React.FC<ForumViewProps> = ({ isAdmin, currentUserId, cu
           onClick={() => setShowNewPost(!showNewPost)}
           className="flex items-center gap-2 px-4 py-2.5 btn-civic-primary text-xs sm:text-sm font-title uppercase tracking-wider cursor-pointer"
         >
+          {showNewPost ? <X size={15} /> : <Plus size={15} />}
           {showNewPost ? 'Anulează' : 'Postare Nouă'}
         </button>
       </div>
@@ -203,10 +222,14 @@ export const ForumView: React.FC<ForumViewProps> = ({ isAdmin, currentUserId, cu
       )}
 
       {posts.length === 0 ? (
-        <div className="bg-white dark:bg-[#161B22] rounded-[2px] shadow-xs border border-slate-200 dark:border-slate-800 p-12 text-center">
-          <MessageSquare className="w-10 h-10 mx-auto text-slate-300 dark:text-slate-600 mb-3" />
-          <p className="text-sm text-slate-500 dark:text-slate-400 font-anthropic">Nu există postări pe forum încă. Deschide tu prima temă de dezbatere!</p>
-        </div>
+        <EmptyState
+          icon={MessageSquare}
+          title="Nu există postări pe forum încă"
+          description="Fii primul care deschide o temă de discuție, o inițiativă nouă sau un subiect de dezbatere pentru colegi!"
+          actionLabel="Deschide Prima Discuție"
+          onAction={() => setShowNewPost(true)}
+          actionIcon={Plus}
+        />
       ) : (
         <div className="space-y-4">
           {posts.map(post => (

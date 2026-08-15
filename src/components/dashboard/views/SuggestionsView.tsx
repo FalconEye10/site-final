@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../../../supabase';
 import { MessageSquarePlus, ShieldCheck, Send, EyeOff, Sparkles, Filter } from 'lucide-react';
 import { toast } from '../../ui/Toast';
+import { EmptyState } from '../../ui/EmptyState';
+import { SkeletonList } from '../../ui/Skeleton';
 
 interface SuggestionItem {
   id: string;
@@ -264,13 +266,13 @@ export const SuggestionsView: React.FC<SuggestionsViewProps> = ({
           </div>
 
           {loading ? (
-            <div className="p-12 text-center text-slate-500 dark:text-slate-400 font-bold font-anthropic text-xs sm:text-sm">Se încarcă sugestiile...</div>
+            <SkeletonList count={3} />
           ) : filteredSuggestions.length === 0 ? (
-            <div className="rounded-[2px] border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-12 text-center shadow-xs">
-              <MessageSquarePlus className="w-10 h-10 mx-auto text-slate-300 dark:text-slate-700 mb-3" />
-              <h3 className="text-base sm:text-lg font-bold text-slate-800 dark:text-white font-title">Nicio sugestie în această categorie</h3>
-              <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1 font-anthropic">Ai o idee? Trimite-o folosind formularul din stânga!</p>
-            </div>
+            <EmptyState
+              icon={MessageSquarePlus}
+              title="Nicio sugestie în această categorie"
+              description="Ai o idee de îmbunătățire sau o opinie constructivă? Trimite-o anonim sau asumat din panoul alăturat!"
+            />
           ) : (
             <div className="space-y-3.5">
               {filteredSuggestions.map(item => {

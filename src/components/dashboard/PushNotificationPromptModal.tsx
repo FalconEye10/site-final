@@ -59,8 +59,14 @@ export const PushNotificationPromptModal: React.FC<PushNotificationPromptModalPr
   if (!isVisible) return null;
 
   return (
-    <div className="fixed inset-0 z-[99999] flex items-end sm:items-center justify-center p-4 sm:p-6 bg-slate-950/60 backdrop-blur-sm animate-in fade-in duration-300 font-anthropic">
-      <div className="relative w-full max-w-lg bg-slate-900 border border-slate-800 rounded-[2px] p-6 sm:p-7 shadow-2xl text-white overflow-hidden animate-in zoom-in-95 duration-300 font-anthropic">
+    <div 
+      className="fixed inset-0 z-[99999] flex items-end sm:items-center justify-center p-4 sm:p-6 bg-slate-950/60 backdrop-blur-sm animate-in fade-in duration-300 font-anthropic"
+      onClick={handleDismiss}
+    >
+      <div 
+        className="relative w-full max-w-lg bg-slate-900 border border-slate-800 rounded-[2px] p-6 sm:p-7 shadow-2xl text-white overflow-hidden animate-in zoom-in-95 duration-300 font-anthropic"
+        onClick={(e) => e.stopPropagation()}
+      >
         
         {/* Close button */}
         <button
