@@ -1,6 +1,7 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "interact-camena", // UPDATE THIS to match the exact name of your Cloudflare Worker/Project
+  "name": "interact-camena",
+  "main": "./src/worker.js",
   "compatibility_date": "2026-08-11",
   "observability": {
     "enabled": true

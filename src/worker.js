@@ -301,7 +301,7 @@ export default {
       }
     }
 
-    // Pass through to Cloudflare Static Assets
+    // Forward to Cloudflare Static Assets
     if (env && env.ASSETS && typeof env.ASSETS.fetch === 'function') {
       return env.ASSETS.fetch(request);
     }
