@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../../../supabase';
 import { Trash2, CheckCircle2, BarChart3, Plus, ChevronDown, ChevronUp } from 'lucide-react';
 import { toast } from '../../ui/Toast';
+import { formatRomaniaDate } from '../../../utils/romaniaTime';
 
 interface Poll {
   id: string;
@@ -418,7 +419,7 @@ export const IdeasView: React.FC<IdeasViewProps> = ({ isAdmin, currentUserId }) 
                           </button>
                         )}
                         {poll.createdAt && (
-                          <span className="font-data">{poll.createdAt.toDate ? poll.createdAt.toDate().toLocaleDateString('ro-RO') : new Date(poll.createdAt).toLocaleDateString('ro-RO')}</span>
+                          <span className="font-data">{formatRomaniaDate(poll.createdAt.toDate ? poll.createdAt.toDate() : poll.createdAt)}</span>
                         )}
                       </div>
                     </div>

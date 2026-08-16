@@ -5,6 +5,7 @@ import { ProjectProposalForm } from './ProjectProposalForm';
 import { toast } from '../../ui/Toast';
 import { EmptyState } from '../../ui/EmptyState';
 import { SkeletonCard, Skeleton } from '../../ui/Skeleton';
+import { formatRomaniaDate } from '../../../utils/romaniaTime';
 
 interface VolunteerInterest {
   id: string;
@@ -388,7 +389,7 @@ export const ProjectProposalsView: React.FC<ProjectProposalsViewProps> = ({ isAd
                   {/* Footer */}
                   <div className="mt-auto pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-anthropic">
                     <span className="font-data">
-                      {proposal.createdAt ? new Date(proposal.createdAt).toLocaleDateString('ro-RO', { day: '2-digit', month: 'short', year: 'numeric' }) : ''}
+                      {proposal.createdAt ? formatRomaniaDate(proposal.createdAt, { day: '2-digit', month: 'short', year: 'numeric' }) : ''}
                     </span>
                     {proposal.pdfUrl && (
                       <a

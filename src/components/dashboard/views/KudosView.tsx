@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { supabase } from '../../../supabase';
 import { Heart, Send, Sparkles, Search, Award } from 'lucide-react';
 import { toast } from '../../ui/Toast';
+import { formatRomaniaDate } from '../../../utils/romaniaTime';
 
 interface KudosItem {
   id: string;
@@ -245,7 +246,7 @@ export const KudosView: React.FC<KudosViewProps> = ({ currentUserId, currentUser
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {filteredKudos.map(item => {
             const cat = KUDOS_CATEGORIES.find(c => c.id === item.category) || KUDOS_CATEGORIES[0];
-            const dateStr = new Date(item.createdAt).toLocaleDateString('ro-RO', {
+            const dateStr = formatRomaniaDate(item.createdAt, {
               day: 'numeric',
               month: 'short',
               year: 'numeric'

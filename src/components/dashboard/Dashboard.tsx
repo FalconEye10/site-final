@@ -15,6 +15,7 @@ import { AuroraBackground } from '../ui/AuroraBackground';
 import { CommandPalette, type CommandNavItem } from './CommandPalette';
 import { calculateDebt, calculateQualification, generateMemberLedger } from '../../utils/finance';
 import { fetchMembers, updateMemberFields, revertLatestTreasuryPayment, fetchAllTreasuryPayments } from '../../utils/supabaseService';
+import { formatRomaniaDate, formatRomaniaDateTime, getRomaniaDateTimeMs, ROMANIA_TIMEZONE } from '../../utils/romaniaTime';
 import { canEditMemberPassword, isBoardMember } from '../../utils/permissions';
 import { supabase } from '../../supabase';
 import { toast } from '../ui/Toast';
@@ -97,22 +98,22 @@ function ClockWidget({ events }: { events: any[] }) {
   const ongoingEvent = events.find(event => {
     if (event.attendanceClosed) return false;
     if (!event.date || !event.time) return false;
-    const eventStart = new Date(`${event.date}T${event.time}`).getTime();
+    const eventStart = getRomaniaDateTimeMs(event.date, event.time);
     const eventEnd = eventStart + 2 * 60 * 60 * 1000; // default 2 hours duration
     const now = time.getTime();
     return now >= eventStart && now <= eventEnd;
   });
 
   const formatTime = (date: Date) => {
-    return date.toLocaleTimeString('ro-RO', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    return new Intl.DateTimeFormat('ro-RO', { timeZone: ROMANIA_TIMEZONE, hour: '2-digit', minute: '2-digit', second: '2-digit' }).format(date);
   };
 
   const formatDate = (date: Date) => {
-    return date.toLocaleDateString('ro-RO', { day: 'numeric', month: 'long', year: 'numeric' });
+    return formatRomaniaDate(date, { day: 'numeric', month: 'long', year: 'numeric' });
   };
 
   const formatDay = (date: Date) => {
-    const day = date.toLocaleDateString('ro-RO', { weekday: 'long' });
+    const day = formatRomaniaDate(date, { weekday: 'long' });
     return day.charAt(0).toUpperCase() + day.slice(1);
   };
 
@@ -417,7 +418,7 @@ const ViewDashboard = ({ members, currentUserObj, isAdmin, onNavigateToSection, 
         </div>
         <div className="flex items-center gap-2 text-xs font-title font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-3 py-1.5 rounded-[2px] border border-slate-200 dark:border-slate-700 shrink-0">
           <span className="w-2 h-2 rounded-[1px] bg-emerald-500" />
-          {new Date().toLocaleDateString('ro-RO', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+          {formatRomaniaDate(new Date(), { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
         </div>
       </div>
 
@@ -823,7 +824,7 @@ const ViewDashboard = ({ members, currentUserObj, isAdmin, onNavigateToSection, 
                       <MapPin size={13} /> {nextEvent.location || 'Sediu Interact'}
                     </p>
                     <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-data mt-0.5">
-                      {new Date(nextEvent.date).toLocaleDateString('ro-RO', { weekday: 'short', day: 'numeric', month: 'short' })} la {nextEvent.time}
+                      {formatRomaniaDate(nextEvent.date, { weekday: 'short', day: 'numeric', month: 'short' })} la {nextEvent.time}
                     </p>
                   </div>
                 </div>
@@ -1285,7 +1286,7 @@ const ViewPayments = ({ members, onUpdateMember, isAdmin }: { members: any[], on
                         {receipt.month || (receipt.monthsCovered && receipt.monthsCovered.join(', '))}
                       </TableCell>
                       <TableCell className="text-slate-500 dark:text-slate-400 text-xs sm:text-sm font-data py-4 px-4">
-                        {receipt.dateFormatted || new Date(receipt.date).toLocaleDateString('ro-RO', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                        {receipt.dateFormatted || formatRomaniaDateTime(receipt.date, { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                       </TableCell>
                       <TableCell className="text-center py-4 px-4">
                         {receipt.memberSignature ? (
@@ -2234,12 +2235,12 @@ function useMemberAlerts(currentUserObj: any, events: any[], isAdmin: boolean): 
     const sevenDaysFromNow = now + 7 * 24 * 60 * 60 * 1000;
     const nextEvent = (events || [])
       .filter((e: any) => e?.date && !e.attendanceClosed)
-      .map((e: any) => ({ ...e, ts: new Date(`${e.date}T${e.time || '00:00'}`).getTime() }))
+      .map((e: any) => ({ ...e, ts: getRomaniaDateTimeMs(e.date, e.time) }))
       .filter((e: any) => e.ts >= now && e.ts <= sevenDaysFromNow)
       .sort((a: any, b: any) => a.ts - b.ts)[0];
 
     if (nextEvent) {
-      const dateLabel = new Intl.DateTimeFormat('ro-RO', { weekday: 'long', day: 'numeric', month: 'long' }).format(new Date(nextEvent.ts));
+      const dateLabel = formatRomaniaDate(nextEvent.ts, { weekday: 'long', day: 'numeric', month: 'long' });
       alerts.push({
         id: `event-${nextEvent.id}`,
         kind: 'event',

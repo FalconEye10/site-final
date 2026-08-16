@@ -4,6 +4,7 @@ import { MessageSquarePlus, ShieldCheck, Send, EyeOff, Sparkles, Filter } from '
 import { toast } from '../../ui/Toast';
 import { EmptyState } from '../../ui/EmptyState';
 import { SkeletonList } from '../../ui/Skeleton';
+import { formatRomaniaDate } from '../../../utils/romaniaTime';
 
 interface SuggestionItem {
   id: string;
@@ -276,7 +277,7 @@ export const SuggestionsView: React.FC<SuggestionsViewProps> = ({
           ) : (
             <div className="space-y-3.5">
               {filteredSuggestions.map(item => {
-                const dateStr = new Date(item.createdAt).toLocaleDateString('ro-RO', {
+                const dateStr = formatRomaniaDate(item.createdAt, {
                   day: 'numeric',
                   month: 'short',
                   year: 'numeric'

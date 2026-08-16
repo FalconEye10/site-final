@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ShieldAlert, Search, RefreshCw, X, ArrowUpRight, ArrowDownRight, RotateCcw, Lock, UserX, UserPlus, Key } from 'lucide-react';
 import { fetchScoreAuditLogs, ScoreAuditLog } from '../../../utils/supabaseService';
+import { formatRomaniaDateTime } from '../../../utils/romaniaTime';
 
 interface ScoreAuditLogModalProps {
   isOpen: boolean;
@@ -173,7 +174,7 @@ export function ScoreAuditLogModal({ isOpen, onClose }: ScoreAuditLogModalProps)
                       return (
                         <tr key={log.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors">
                           <td className="py-3 px-3.5 font-data text-xs text-slate-600 dark:text-slate-400 font-semibold whitespace-nowrap">
-                            {new Date(log.createdAt).toLocaleDateString('ro-RO', {
+                            {formatRomaniaDateTime(log.createdAt, {
                               day: '2-digit',
                               month: 'short',
                               year: 'numeric',

@@ -4,6 +4,14 @@ import {
   Clock, MapPin, Plus, Edit2, Trash2, X, Lock
 } from 'lucide-react';
 import { EventData, fetchEvents, saveEvent, deleteEvent, saveAbsenceRequest, applyMemberScoreAdjustment } from '../../../utils/supabaseService';
+import { 
+  getRomaniaTodayString, 
+  getRomaniaTimeNow, 
+  formatRomaniaDate, 
+  formatRomaniaMonthYear, 
+  getRomaniaDateTimeMs, 
+  getRomaniaDateParts 
+} from '../../../utils/romaniaTime';
 import { toast } from '../../ui/Toast';
 
 const easeOut: [number, number, number, number] = [0.23, 1, 0.32, 1];
@@ -27,14 +35,15 @@ export function EventsView({ isAdmin, members = [], currentUserId, onUpdateMembe
   const [requestingAbsenceFor, setRequestingAbsenceFor] = useState<EventData | null>(null);
   const [absenceReason, setAbsenceReason] = useState('');
 
-  // Form states
+  // Form states with strict Romania Time defaults
+  const initialRomTime = getRomaniaTimeNow();
   const [title, setTitle] = useState('');
-  const [date, setDate] = useState(() => new Date().toISOString().split('T')[0]);
-  const [hour, setHour] = useState('18');
+  const [date, setDate] = useState(() => getRomaniaTodayString());
+  const [hour, setHour] = useState(() => initialRomTime.nextHour);
   const [minute, setMinute] = useState('00');
-  // Proiecte: fereastra de timp planificată (de la - până la), folosită ca durată implicită pe departament.
-  const [endDate, setEndDate] = useState(() => new Date().toISOString().split('T')[0]);
-  const [endHour, setEndHour] = useState('20');
+  // Proiecte: fereastra de timp planificată (de la - până la)
+  const [endDate, setEndDate] = useState(() => getRomaniaTodayString());
+  const [endHour, setEndHour] = useState(() => initialRomTime.nextEndHour);
   const [endMinute, setEndMinute] = useState('00');
   const [location, setLocation] = useState('');
   const [type, setType] = useState<'meeting' | 'project' | 'social' | 'other'>('meeting');
@@ -53,10 +62,10 @@ export function EventsView({ isAdmin, members = [], currentUserId, onUpdateMembe
   // State for member searching in each committee card
   const [memberSearchQueries, setMemberSearchQueries] = useState<Record<string, string>>({});
 
-  /** Durata planificată a proiectului (de la - până la), în ore. Servește ca punct de plecare pe departament. */
+  /** Durata planificată a proiectului (de la - până la), în ore. Respectă fusul orar al României. */
   const computePlannedDurationHours = () => {
-    const start = new Date(`${date}T${hour.padStart(2, '0')}:${minute.padStart(2, '0')}`).getTime();
-    const end = new Date(`${endDate}T${endHour.padStart(2, '0')}:${endMinute.padStart(2, '0')}`).getTime();
+    const start = getRomaniaDateTimeMs(date, `${hour}:${minute}`);
+    const end = getRomaniaDateTimeMs(endDate, `${endHour}:${endMinute}`);
     if (!Number.isFinite(start) || !Number.isFinite(end) || end <= start) return 1;
     return Math.round(((end - start) / (1000 * 60 * 60)) * 10) / 10;
   };
@@ -218,13 +227,20 @@ export function EventsView({ isAdmin, members = [], currentUserId, onUpdateMembe
   };
 
   const openAddModal = () => {
+    const today = new Date();
+    const localDateStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+    const nextHour = (today.getHours() + 1) % 24;
+    const nextEndHour = (nextHour + 2) % 24;
+    const defaultHourStr = String(nextHour).padStart(2, '0');
+    const defaultEndHourStr = String(nextEndHour).padStart(2, '0');
+
     setEditingEvent(null);
     setTitle('');
-    setDate(new Date().toISOString().split('T')[0]);
-    setHour('18');
+    setDate(localDateStr);
+    setHour(defaultHourStr);
     setMinute('00');
-    setEndDate(new Date().toISOString().split('T')[0]);
-    setEndHour('20');
+    setEndDate(localDateStr);
+    setEndHour(defaultEndHourStr);
     setEndMinute('00');
     setLocation('');
     setType('meeting');
@@ -241,11 +257,11 @@ export function EventsView({ isAdmin, members = [], currentUserId, onUpdateMembe
     setEditingEvent(e);
     setTitle(e.title);
     setDate(e.date);
-    const [h, m] = e.time.split(':');
+    const [h, m] = (e.time || '18:00').split(':');
     setHour(h || '18');
     setMinute(m || '00');
     setEndDate(e.endDate || e.date);
-    const [eh, em] = (e.endTime || e.time).split(':');
+    const [eh, em] = (e.endTime || e.time || '20:00').split(':');
     setEndHour(eh || '20');
     setEndMinute(em || '00');
     setLocation(e.location || '');
@@ -254,14 +270,16 @@ export function EventsView({ isAdmin, members = [], currentUserId, onUpdateMembe
     setIsShiftBased(e.isShiftBased || false);
     setFormShifts(e.shifts || []);
     if (e.committees) {
-      const list = Object.entries(e.committees).map(([id, data]) => ({
-        id,
-        name: data.name,
-        description: data.description,
-        coordinatorId: data.coordinatorId || null,
-        members: data.members || [],
-        hours: data.hours ?? 1
-      }));
+      const list = Object.entries(e.committees)
+        .filter(([id]) => id !== '__shiftsMeta')
+        .map(([id, data]) => ({
+          id,
+          name: data.name,
+          description: data.description,
+          coordinatorId: data.coordinatorId || null,
+          members: data.members || [],
+          hours: data.hours ?? 1
+        }));
       setFormCommittees(list);
     } else {
       setFormCommittees([]);
@@ -448,11 +466,6 @@ export function EventsView({ isAdmin, members = [], currentUserId, onUpdateMembe
     const hr = parseInt(hour, 10);
     const min = parseInt(minute, 10);
     const selectedDateTime = new Date(yr, mo - 1, dy, hr, min).getTime();
-    
-    if (!editingEvent && selectedDateTime < Date.now()) {
-      toast.error('Nu poți programa un eveniment nou în trecut (înainte de data și ora curentă).');
-      return;
-    }
 
     const hasEmptyName = formCommittees.some(c => !c.name.trim());
     if (hasEmptyName) {
@@ -532,12 +545,12 @@ export function EventsView({ isAdmin, members = [], currentUserId, onUpdateMembe
     }
   };
 
-  // Calculate the current month and the next 2 months
-  const nowObj = new Date();
+  // Calculate the current month and the next 2 months in Romania Time
+  const romNowParts = getRomaniaDateParts();
   const monthsToShow: string[] = [];
   for (let i = 0; i < 3; i++) {
-    const tempDate = new Date(nowObj.getFullYear(), nowObj.getMonth() + i, 1);
-    const monthYear = new Intl.DateTimeFormat("ro-RO", { month: "long", year: "numeric" }).format(tempDate).toUpperCase();
+    const tempDate = new Date(Date.UTC(romNowParts.year, romNowParts.month - 1 + i, 1, 12, 0, 0));
+    const monthYear = formatRomaniaMonthYear(tempDate);
     monthsToShow.push(monthYear);
   }
 
@@ -553,34 +566,31 @@ export function EventsView({ isAdmin, members = [], currentUserId, onUpdateMembe
     ? events.filter(e => !e.attendanceClosed)
     : events.filter(e => e.attendanceClosed);
 
-  filteredEventsForTab.forEach(ev => {
-    const d = new Date(`${ev.date}T12:00:00`); // force noon to avoid tz issues
-    const monthYear = new Intl.DateTimeFormat("ro-RO", { month: "long", year: "numeric" }).format(d).toUpperCase();
-    
-    if (activeViewTab === 'upcoming') {
-      if (monthsToShow.includes(monthYear)) {
-        groupedEvents[monthYear].push(ev);
-      }
-    } else {
-      if (!groupedEvents[monthYear]) {
-        groupedEvents[monthYear] = [];
-      }
-      groupedEvents[monthYear].push(ev);
-    }
+  const sortedEventsForTab = [...filteredEventsForTab].sort((a, b) => {
+    const tA = getRomaniaDateTimeMs(a.date, a.time);
+    const tB = getRomaniaDateTimeMs(b.date, b.time);
+    return activeViewTab === 'upcoming' ? tA - tB : tB - tA;
   });
 
-  // Calculate Next Event
-  const now = Date.now();
-  const futureEvents = events.filter(e => !e.attendanceClosed && new Date(`${e.date}T${e.time}`).getTime() >= now);
+  sortedEventsForTab.forEach(ev => {
+    const monthYear = formatRomaniaMonthYear(ev.date);
+    if (!groupedEvents[monthYear]) {
+      groupedEvents[monthYear] = [];
+    }
+    groupedEvents[monthYear].push(ev);
+  });
+
+  // Calculate Next Event based on Romania Time
+  const nowMs = Date.now();
+  const futureEvents = events.filter(e => !e.attendanceClosed && getRomaniaDateTimeMs(e.date, e.time) >= nowMs);
   const nextEvent = futureEvents.length > 0 ? futureEvents[0] : null;
 
   let nextEventDaysRemaining = 0;
   if (nextEvent) {
-    // timestamp-ul în milisecunde pentru miezul nopții din ziua evenimentului programat.
-    const eventMidnight = new Date(`${nextEvent.date}T00:00:00`).getTime();
-    const currentTimestamp = Date.now();
+    const eventMidnightMs = getRomaniaDateTimeMs(nextEvent.date, '00:00');
+    const todayMidnightMs = getRomaniaDateTimeMs(getRomaniaTodayString(), '00:00');
     const msInDay = 86400000;
-    nextEventDaysRemaining = Math.max(0, Math.ceil((eventMidnight - currentTimestamp) / msInDay));
+    nextEventDaysRemaining = Math.max(0, Math.round((eventMidnightMs - todayMidnightMs) / msInDay));
   }
 
   const getTypeColor = (t: string) => {
@@ -632,7 +642,7 @@ export function EventsView({ isAdmin, members = [], currentUserId, onUpdateMembe
                 <div className="space-y-1.5 flex-1 font-anthropic">
                   <h4 className="text-lg sm:text-xl font-bold font-title text-slate-900 dark:text-white leading-snug">{nextEvent.title}</h4>
                   <div className="text-xs sm:text-sm font-medium text-slate-600 dark:text-slate-300 flex flex-wrap items-center gap-x-3.5 gap-y-1">
-                    <span>📅 {new Intl.DateTimeFormat('ro-RO', { weekday: 'long', day: 'numeric', month: 'long' }).format(new Date(nextEvent.date))}</span>
+                    <span>📅 {formatRomaniaDate(nextEvent.date, { weekday: 'long', day: 'numeric', month: 'long' })}</span>
                     <span>⏰ {nextEvent.time}</span>
                     {nextEvent.location && <span>📍 {nextEvent.location}</span>}
                   </div>
@@ -721,10 +731,10 @@ export function EventsView({ isAdmin, members = [], currentUserId, onUpdateMembe
                             {/* Date Badge Box */}
                             <div className="bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 p-3 rounded-[2px] text-center min-w-[85px] shrink-0 font-title">
                               <div className="text-xs font-bold uppercase text-slate-500 dark:text-slate-400 mb-0.5">
-                                {new Intl.DateTimeFormat('ro-RO', { weekday: 'short' }).format(new Date(event.date))}
+                                {formatRomaniaDate(event.date, { weekday: 'short' })}
                               </div>
                               <div className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white leading-none font-data">
-                                {new Date(event.date).getDate()}
+                                {getRomaniaDateParts(event.date).day}
                               </div>
                               <div className="text-xs font-bold text-indigo-600 dark:text-indigo-400 mt-1 font-data">
                                 {event.time}
@@ -748,7 +758,7 @@ export function EventsView({ isAdmin, members = [], currentUserId, onUpdateMembe
                                 {event.location && <span className="flex items-center gap-1"><MapPin size={14} className="text-slate-400" /> {event.location}</span>}
                                 {event.type === 'project' && event.endDate && event.endTime && (
                                   <span className="flex items-center gap-1 font-data">
-                                    <Clock size={14} className="text-slate-400" /> Până la {new Date(event.endDate).toLocaleDateString('ro-RO', { day: '2-digit', month: 'short' })}, {event.endTime}
+                                    <Clock size={14} className="text-slate-400" /> Până la {formatRomaniaDate(event.endDate, { day: '2-digit', month: 'short' })}, {event.endTime}
                                   </span>
                                 )}
                               </div>
@@ -850,7 +860,7 @@ export function EventsView({ isAdmin, members = [], currentUserId, onUpdateMembe
                                           )}
                                         </div>
                                         <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs font-medium text-slate-600 dark:text-slate-300 mt-1 font-data">
-                                          <span>📅 {new Date(shift.date).toLocaleDateString('ro-RO', { weekday: 'short', day: 'numeric', month: 'short' })}</span>
+                                          <span>📅 {formatRomaniaDate(shift.date, { weekday: 'short', day: 'numeric', month: 'short' })}</span>
                                           <span>·</span>
                                           <span>⏰ {shift.startTime} - {shift.endTime}</span>
                                           <span>·</span>
@@ -1060,7 +1070,13 @@ export function EventsView({ isAdmin, members = [], currentUserId, onUpdateMembe
                     <input 
                       type="date" 
                       value={date}
-                      onChange={e => setDate(e.target.value)}
+                      onChange={e => {
+                        const newDate = e.target.value;
+                        setDate(newDate);
+                        if (!endDate || endDate < newDate) {
+                          setEndDate(newDate);
+                        }
+                      }}
                       required
                       className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-[2px] text-sm font-medium text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 transition-colors font-anthropic" 
                     />

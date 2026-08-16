@@ -4,6 +4,7 @@ import { FileText, Trash2, Globe } from 'lucide-react';
 import { EmptyState } from '../../ui/EmptyState';
 import { toast } from '../../ui/Toast';
 import { SkeletonCard, Skeleton } from '../../ui/Skeleton';
+import { formatRomaniaDate } from '../../../utils/romaniaTime';
 
 interface ProjectPitch {
   id: string;
@@ -141,7 +142,7 @@ export const CommunityIdeasView: React.FC<CommunityIdeasViewProps> = ({ isAdmin 
               
               <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 flex flex-col gap-2.5">
                 <div className="text-xs text-slate-400 font-data">
-                  {pitch.createdAt ? new Date(pitch.createdAt).toLocaleDateString('ro-RO') : ''}
+                  {pitch.createdAt ? formatRomaniaDate(pitch.createdAt) : ''}
                 </div>
                 {isSafePdfUrl(pitch.pdfUrl) ? (
                   <a

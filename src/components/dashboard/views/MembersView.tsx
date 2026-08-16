@@ -11,6 +11,7 @@ import { calculateDebt, calculateQualification } from '../../../utils/finance';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../ui/table';
 import { downloadXlsx } from '../../../utils/xlsx';
 import { deleteMemberFromDB, logScoreAudit, isSystemAccount } from '../../../utils/supabaseService';
+import { formatRomaniaDate, getRomaniaTodayString } from '../../../utils/romaniaTime';
 import { toast } from '../../ui/Toast';
 
 interface MembersViewProps {
@@ -246,12 +247,12 @@ export function MembersView({
           ['Total Încasări Cotizații (RON)', totalIncasat],
           ['Total Restanțe de Încasat (RON)', totalDatorii],
           ['Rată Retenție', `${rataRetentie}%`],
-          ['Data Generării', new Date().toLocaleDateString('ro-RO')]
+          ['Data Generării', formatRomaniaDate(new Date())]
         ]
       }
     ];
 
-    downloadXlsx(`Raport_Membri_Interact_Camena_${new Date().toISOString().slice(0, 10)}.xlsx`, sheets);
+    downloadXlsx(`Raport_Membri_Interact_Camena_${getRomaniaTodayString()}.xlsx`, sheets);
   };
 
   return (

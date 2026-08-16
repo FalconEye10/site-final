@@ -4,6 +4,7 @@ import { Bell, CheckCheck, Heart, Megaphone, CheckCircle2, XCircle, PieChart, Sp
 import { supabase } from '../../supabase';
 import { PushNotificationToggle } from './PushNotificationToggle';
 import { sendSystemNotification } from '../../utils/pushNotifications';
+import { formatRomaniaDateTime } from '../../utils/romaniaTime';
 
 export interface NotificationItem {
   id: string;
@@ -443,7 +444,7 @@ export const NotificationsDropdown: React.FC<NotificationsDropdownProps> = ({
 
                         <div className="flex items-center justify-between mt-1.5 pt-1 text-xs text-slate-400">
                           <span className="font-data">
-                            {item.timestamp ? new Date(item.timestamp).toLocaleDateString('ro-RO', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : 'Recent'}
+                            {item.timestamp ? formatRomaniaDateTime(item.timestamp, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : 'Recent'}
                           </span>
                           <span className="font-bold text-blue-600 dark:text-blue-400 flex items-center gap-0.5 font-title">
                             Vezi <ChevronRight size={12} />

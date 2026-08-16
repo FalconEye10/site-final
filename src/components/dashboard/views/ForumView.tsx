@@ -4,6 +4,7 @@ import { MessageSquare, Send, Trash2, Edit3, Heart, ThumbsUp, ThumbsDown, X, Che
 import { toast } from '../../ui/Toast';
 import { EmptyState } from '../../ui/EmptyState';
 import { SkeletonCard, Skeleton } from '../../ui/Skeleton';
+import { formatRomaniaDateTime } from '../../../utils/romaniaTime';
 
 interface ForumPost {
   id: string;
@@ -266,7 +267,7 @@ export const ForumView: React.FC<ForumViewProps> = ({ isAdmin, currentUserId, cu
                         <span className="font-bold text-slate-700 dark:text-slate-300 font-title">{post.authorName}</span>
                         <span>•</span>
                         <span>
-                          {post.createdAt ? new Date(post.createdAt).toLocaleDateString('ro-RO', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : ''}
+                          {post.createdAt ? formatRomaniaDateTime(post.createdAt, { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : ''}
                         </span>
                       </div>
                     </div>

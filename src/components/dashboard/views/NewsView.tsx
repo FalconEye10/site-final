@@ -5,6 +5,7 @@ import { NewsAdminForm } from './NewsAdminForm';
 import { EmptyState } from '../../ui/EmptyState';
 import { Skeleton, SkeletonCard } from '../../ui/Skeleton';
 import { toast } from '../../ui/Toast';
+import { formatRomaniaDateTime } from '../../../utils/romaniaTime';
 
 interface NewsComment {
   id: string;
@@ -243,7 +244,7 @@ export const NewsView: React.FC<NewsViewProps> = ({ isAdmin, currentUserId, curr
                     <div className="flex-1">
                       <h2 className="text-xl sm:text-2xl font-bold font-anthropicSerif text-slate-900 dark:text-slate-100 mb-1">{item.title}</h2>
                       <span className="text-xs sm:text-sm font-data text-slate-500 dark:text-slate-400">
-                        {item.createdAt ? new Date(item.createdAt).toLocaleDateString('ro-RO', { day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : ''}
+                        {item.createdAt ? formatRomaniaDateTime(item.createdAt, { day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : ''}
                       </span>
                     </div>
                     {isAdmin && (
@@ -303,7 +304,7 @@ export const NewsView: React.FC<NewsViewProps> = ({ isAdmin, currentUserId, curr
                           <div className="flex items-center gap-2 mb-1">
                             <span className="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200 font-title">{comment.authorName}</span>
                             <span className="text-xs text-slate-400 font-data">
-                              {new Date(comment.createdAt).toLocaleDateString('ro-RO', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                              {formatRomaniaDateTime(comment.createdAt, { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
                             </span>
                           </div>
                           <p className="text-xs sm:text-sm text-slate-700 dark:text-slate-300 font-anthropic leading-relaxed">{comment.text}</p>

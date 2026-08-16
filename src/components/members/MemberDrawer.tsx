@@ -10,6 +10,7 @@ import { toast } from '../ui/Toast';
 import { calculateDebt, calculateQualification, generateMemberLedger, COTIZATIE_LUNARA } from '../../utils/finance';
 import { computeMemberMilestones } from '../../utils/milestones';
 import { updateMemberFields, applyMemberScoreAdjustment, revertLatestTreasuryPayment, deleteMemberFromDB, TreasuryPayment, MAX_SCORE_ADJUSTMENT, MIN_SCORE_ADJUSTMENT, logScoreAudit } from '../../utils/supabaseService';
+import { formatRomaniaDate } from '../../utils/romaniaTime';
 import { PaymentModal } from '../finance/PaymentModal';
 import { ScoringReferenceGuide, ScoringPreset } from '../dashboard/views/ScoringReferenceGuide';
 import { supabase } from '../../supabase';
@@ -657,7 +658,7 @@ export function MemberDrawer({ member, onClose, onUpdateMember, isAdmin, current
                               {lastReceipt.amount} Lei
                             </span>
                             <span className="block text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1 font-anthropic">
-                              {lastReceipt.month} ({new Date(lastReceipt.date).toLocaleDateString('ro-RO')})
+                              {lastReceipt.month} ({formatRomaniaDate(lastReceipt.date)})
                             </span>
                           </>
                         ) : (
@@ -759,7 +760,7 @@ export function MemberDrawer({ member, onClose, onUpdateMember, isAdmin, current
                               return (
                                 <tr key={r.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
                                   <td className="py-2.5 px-3.5 font-mono font-medium text-slate-900 dark:text-slate-100">{r.id}</td>
-                                  <td className="py-2.5 px-3.5 text-slate-600 dark:text-slate-400">{new Date(r.date).toLocaleDateString('ro-RO')}</td>
+                                  <td className="py-2.5 px-3.5 text-slate-600 dark:text-slate-400">{formatRomaniaDate(r.date)}</td>
                                   <td className="py-2.5 px-3.5 font-semibold text-slate-800 dark:text-slate-200">{r.month}</td>
                                   <td className="py-2.5 px-3.5 text-right font-bold text-emerald-700 dark:text-emerald-400">{r.amount} Lei</td>
                                   <td className="py-2.5 px-3.5 text-right font-title">
@@ -871,7 +872,7 @@ export function MemberDrawer({ member, onClose, onUpdateMember, isAdmin, current
                       })()}
                     </span>
                     <span className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 block font-anthropic">
-                      Data intrării: {member.joinDate ? new Date(member.joinDate).toLocaleDateString('ro-RO') : 'N/A'}
+                      Data intrării: {member.joinDate ? formatRomaniaDate(member.joinDate) : 'N/A'}
                     </span>
                   </div>
                 </div>
@@ -914,7 +915,7 @@ export function MemberDrawer({ member, onClose, onUpdateMember, isAdmin, current
                       </div>
                       <div className="p-3.5 rounded-[2px] bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
                         <span className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 block font-title">Data Înregistrării</span>
-                        <span className="font-semibold text-slate-900 dark:text-slate-100 text-sm sm:text-base block mt-1 font-data">{member.joinDate ? new Date(member.joinDate).toLocaleDateString('ro-RO') : 'N/A'}</span>
+                        <span className="font-semibold text-slate-900 dark:text-slate-100 text-sm sm:text-base block mt-1 font-data">{member.joinDate ? formatRomaniaDate(member.joinDate) : 'N/A'}</span>
                       </div>
                     </div>
                   </div>
@@ -1128,7 +1129,7 @@ export function MemberDrawer({ member, onClose, onUpdateMember, isAdmin, current
                                   </div>
                                   <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 mt-1 font-anthropic">{cm.desc}</p>
                                   <span className="text-xs text-slate-400 dark:text-slate-500 font-data block mt-1.5">
-                                    Acordat: {new Date(cm.date).toLocaleDateString('ro-RO')}
+                                    Acordat: {formatRomaniaDate(cm.date)}
                                   </span>
                                 </div>
                               </div>
@@ -1218,7 +1219,7 @@ export function MemberDrawer({ member, onClose, onUpdateMember, isAdmin, current
                 </div>
                 <div className="flex justify-between py-1.5 border-b border-slate-100 dark:border-slate-800">
                   <span className="text-slate-500 dark:text-slate-400 font-title font-bold text-xs uppercase tracking-wider">Data încasării:</span>
-                  <span className="font-semibold text-slate-800 dark:text-slate-200 font-data">{new Date(selectedReceipt.date).toLocaleDateString('ro-RO')}</span>
+                  <span className="font-semibold text-slate-800 dark:text-slate-200 font-data">{formatRomaniaDate(selectedReceipt.date)}</span>
                 </div>
                 <div className="flex justify-between py-1.5 border-b border-slate-100 dark:border-slate-800">
                   <span className="text-slate-500 dark:text-slate-400 font-title font-bold text-xs uppercase tracking-wider">Lună acoperită:</span>

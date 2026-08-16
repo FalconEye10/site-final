@@ -6,6 +6,7 @@ import {
 import { supabase } from '../../../supabase';
 import { toast } from '../../ui/Toast';
 import { isSystemAccount } from '../../../utils/supabaseService';
+import { formatRomaniaDate } from '../../../utils/romaniaTime';
 
 interface Committee {
   id: string;
@@ -339,7 +340,7 @@ export function RepartizareView({ isAdmin, members }: RepartizareViewProps) {
                     <div>
                       <span className="font-bold text-sm text-slate-900 dark:text-white block font-title">{shift.name}</span>
                       <span className="text-xs text-slate-600 dark:text-slate-400 block mt-0.5 font-anthropic">
-                        📅 {new Date(shift.date).toLocaleDateString('ro-RO', { weekday: 'short', day: 'numeric', month: 'short' })} · ⏰ {shift.startTime} - {shift.endTime}
+                        📅 {formatRomaniaDate(shift.date, { weekday: 'short', day: 'numeric', month: 'short' })} · ⏰ {shift.startTime} - {shift.endTime}
                       </span>
                     </div>
                     <span className="text-xs font-extrabold px-2.5 py-0.5 rounded-[2px] bg-purple-200 text-purple-900 shrink-0 font-data">

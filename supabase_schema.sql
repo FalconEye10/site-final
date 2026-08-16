@@ -67,6 +67,9 @@ CREATE TABLE IF NOT EXISTS public.events (
   rsvps JSONB DEFAULT '{}'::jsonb,
   "attendanceClosed" BOOLEAN DEFAULT FALSE,
   committees JSONB DEFAULT '{}'::jsonb,
+  "isShiftBased" BOOLEAN DEFAULT FALSE,
+  shifts JSONB DEFAULT '[]'::jsonb,
+  "durationHours" NUMERIC DEFAULT 0,
   "createdAt" TIMESTAMPTZ DEFAULT NOW()
 );
 

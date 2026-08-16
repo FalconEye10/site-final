@@ -823,11 +823,20 @@ export async function fetchEvents(): Promise<EventData[]> {
       .select('*');
 
     if (error) throw error;
-    const list = (data || []) as EventData[];
+    const list = (data || []).map((raw: any) => {
+      const ev: EventData = { ...raw };
+      // Fallback: If shifts meta was packed into committees
+      if (!ev.shifts && raw.committees?.__shiftsMeta) {
+        ev.isShiftBased = raw.committees.__shiftsMeta.isShiftBased;
+        ev.shifts = raw.committees.__shiftsMeta.shifts;
+      }
+      return ev;
+    });
+
     return list.sort((a, b) => {
       const dateA = new Date(`${a.date}T${a.time}`).getTime();
       const dateB = new Date(`${b.date}T${b.time}`).getTime();
-      return dateA - dateB;
+      return (Number.isFinite(dateA) ? dateA : 0) - (Number.isFinite(dateB) ? dateB : 0);
     });
   } catch (error) {
     console.error("Error fetching events from Supabase:", error);
@@ -838,7 +847,34 @@ export async function fetchEvents(): Promise<EventData[]> {
 export async function saveEvent(event: EventData): Promise<void> {
   try {
     const { error } = await supabase.from('events').upsert(event);
-    if (error) throw error;
+    if (error) {
+      // If error is caused by missing columns in older DB schema, fallback to core payload with packed shifts
+      console.warn("Standard event upsert warning, retrying with schema fallback:", error.message);
+      const fallbackCommittees = {
+        ...(event.committees || {}),
+        ...(event.isShiftBased || (event.shifts && event.shifts.length > 0)
+          ? { __shiftsMeta: { isShiftBased: event.isShiftBased, shifts: event.shifts } }
+          : {})
+      };
+
+      const fallbackPayload: Record<string, any> = {
+        id: event.id,
+        title: event.title,
+        date: event.date,
+        time: event.time,
+        endDate: event.endDate || null,
+        endTime: event.endTime || null,
+        location: event.location || '',
+        type: event.type || 'meeting',
+        description: event.description || '',
+        rsvps: event.rsvps || {},
+        attendanceClosed: event.attendanceClosed || false,
+        committees: fallbackCommittees
+      };
+
+      const { error: fallbackErr } = await supabase.from('events').upsert(fallbackPayload);
+      if (fallbackErr) throw fallbackErr;
+    }
   } catch (error) {
     console.error("Error saving event to Supabase:", error);
     throw error;

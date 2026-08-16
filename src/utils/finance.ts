@@ -1,3 +1,5 @@
+import { formatRomaniaDateTime } from './romaniaTime';
+
 export const COTIZATIE_LUNARA = 15;
 
 export interface MemberMonth {
@@ -240,7 +242,7 @@ export function processDynamicPayment(
   }
 
   const dateNow = new Date();
-  const dateFormatted = dateNow.toLocaleDateString('ro-RO', { 
+  const dateFormatted = formatRomaniaDateTime(dateNow, { 
     day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' 
   });
 

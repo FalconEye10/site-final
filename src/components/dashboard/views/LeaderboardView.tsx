@@ -8,6 +8,7 @@ import { applyMemberScoreAdjustment, revertMemberScoreAdjustment, MAX_SCORE_ADJU
 import { isBoardMember } from '../../../utils/permissions';
 import { ScoreAuditLogModal } from './ScoreAuditLogModal';
 import { toast } from '../../ui/Toast';
+import { formatRomaniaDateTime } from '../../../utils/romaniaTime';
 
 interface LeaderboardViewProps {
   members: any[];
@@ -1105,7 +1106,7 @@ export function LeaderboardView({ members, events = [], isAdmin = false, onUpdat
                             </span>
                           )}
                           <span className="text-[11px] text-slate-500 dark:text-slate-400 font-semibold font-data">
-                            {new Date(item.date).toLocaleDateString('ro-RO', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                            {formatRomaniaDateTime(item.date, { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                           </span>
                         </div>
                         <p className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white break-words leading-snug">{item.reason || 'Fără descriere'}</p>
