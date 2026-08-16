@@ -361,33 +361,33 @@ export async function broadcastPushNotification({
   sendSystemNotification({ title, body, url });
 
   // 2. Apelează endpoint-ul de Web Push pentru a trezi toate telefoanele / dispozitivele
-  try {
-    const endpoints = ['/api/send-push', '/api/send-push.php'];
-    for (const ep of endpoints) {
-      try {
-        const res = await fetch(ep, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            title,
-            body,
-            url,
-            icon,
-            targetMemberId,
-            targetMemberIds,
-          }),
-        });
-        if (res.ok) {
-          const json = await res.json().catch(() => ({}));
-          console.log(`📡 [Web Push Broadcast] Notificări trimise cu succes prin ${ep}:`, json);
+  const endpoints = ['/api/send-push', '/api/send-push.php'];
+  for (const ep of endpoints) {
+    try {
+      const res = await fetch(ep, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title,
+          body,
+          url,
+          icon,
+          targetMemberId,
+          targetMemberIds,
+        }),
+      });
+
+      const contentType = res.headers.get('content-type') || '';
+      if (res.ok && contentType.includes('application/json')) {
+        const json = await res.json().catch(() => ({}));
+        if (json.success) {
+          console.log(`📡 [Web Push Broadcast] Notificări trimise cu succes prin ${ep} (${json.sent}/${json.total} dispozitive):`, json);
           return;
         }
-      } catch {
-        // Încearcă următorul endpoint de rezervă
       }
+    } catch (err) {
+      console.warn(`Tentativă de trimitere push prin ${ep} eșuată:`, err);
     }
-  } catch (err) {
-    console.warn('Eroare la trimiterea broadcast-ului push:', err);
   }
 }
 

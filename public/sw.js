@@ -111,22 +111,35 @@ self.addEventListener('push', (event) => {
     }
   }
 
+  const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent || '');
+
   const options = {
     body: data.body,
-    icon: data.icon,
-    badge: data.badge,
+    icon: data.icon || '/logo.png',
+    badge: data.badge || '/logo.png',
     data: data.data,
-    vibrate: [150, 50, 150],
-    tag: data.data?.tag || 'interact-notification',
+    tag: (data.data && data.data.tag) || `interact_${Date.now()}`,
     renotify: true,
     requireInteraction: false,
-    actions: [
-      { action: 'open_app', title: 'Deschide' },
-      { action: 'dismiss', title: 'Închide' },
-    ],
   };
 
-  event.waitUntil(self.registration.showNotification(data.title, options));
+  if (!isIOS) {
+    options.vibrate = [150, 50, 150];
+    options.actions = [
+      { action: 'open_app', title: 'Deschide' },
+      { action: 'dismiss', title: 'Închide' },
+    ];
+  }
+
+  event.waitUntil(
+    self.registration.showNotification(data.title, options).catch((err) => {
+      console.warn('showNotification standard failed, retrying with minimal options:', err);
+      return self.registration.showNotification(data.title, {
+        body: data.body,
+        icon: '/logo.png',
+      });
+    })
+  );
 });
 
 // Listener pentru click pe notificare
