@@ -13,6 +13,7 @@ import {
   getRomaniaDateParts 
 } from '../../../utils/romaniaTime';
 import { toast } from '../../ui/Toast';
+import { triggerEventPushNotification } from '../../../utils/pushNotifications';
 
 const easeOut: [number, number, number, number] = [0.23, 1, 0.32, 1];
 
@@ -537,6 +538,9 @@ export function EventsView({ isAdmin, members = [], currentUserId, onUpdateMembe
 
     try {
       await saveEvent(newEvent);
+      if (!editingEvent) {
+        triggerEventPushNotification(newEvent.title, newEvent.date, newEvent.time, newEvent.location);
+      }
       toast.success(editingEvent ? 'Eveniment actualizat cu succes!' : 'Eveniment creat cu succes!');
       setIsModalOpen(false);
       loadEvents();

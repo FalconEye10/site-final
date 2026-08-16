@@ -394,3 +394,16 @@ export function triggerForumPushNotification(ideaTitle: string, submitterName?: 
     url: '/#comunitate',
   });
 }
+
+/**
+ * Notificare la adăugarea unui eveniment nou în calendar
+ */
+export function triggerEventPushNotification(eventTitle: string, eventDate: string, eventTime?: string, location?: string) {
+  sendSystemNotification({
+    title: `📅 Eveniment nou: ${eventTitle}`,
+    body: `${eventDate}${eventTime ? ` la ora ${eventTime}` : ''}${location ? ` · ${location}` : ''}`,
+    tag: `event_${Date.now()}`,
+    url: '/#calendar',
+  });
+}
+

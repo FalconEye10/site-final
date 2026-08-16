@@ -170,6 +170,16 @@ export const NotificationsDropdown: React.FC<NotificationsDropdownProps> = ({
           });
         }
       })
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'events' }, (payload: any) => {
+        fetchData();
+        if (payload?.new) {
+          sendSystemNotification({
+            title: `📅 Eveniment nou în Calendar: ${payload.new.title}`,
+            body: `${payload.new.date || ''} la ${payload.new.time || '18:00'}${payload.new.location ? ` · ${payload.new.location}` : ''}`,
+            url: '/#calendar',
+          });
+        }
+      })
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'members' }, (payload: any) => {
         if (payload?.new && (payload.new.id === currentUserId || payload.new.username === currentUsername)) {
           setCurrentMemberData(payload.new);
