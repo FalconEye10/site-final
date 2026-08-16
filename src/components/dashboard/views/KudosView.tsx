@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { supabase } from '../../../supabase';
 import { Heart, Send, Sparkles, Search, Award } from 'lucide-react';
 import { toast } from '../../ui/Toast';
+import { triggerKudosPushNotification } from '../../../utils/pushNotifications';
 import { formatRomaniaDate } from '../../../utils/romaniaTime';
 
 interface KudosItem {
@@ -99,6 +100,7 @@ export const KudosView: React.FC<KudosViewProps> = ({ currentUserId, currentUser
       const { error } = await supabase.from('kudos').insert([newKudos]);
       if (error) throw error;
 
+      triggerKudosPushNotification(recipient.id, sender?.name || currentUsername, kudosMessage.trim());
       toast.success(`I-ai trimis o apreciere lui ${recipient.name}! 👏`);
       setShowSendModal(false);
       setSelectedRecipientId('');

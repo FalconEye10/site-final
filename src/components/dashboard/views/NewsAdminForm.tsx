@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { supabase } from '../../../supabase';
+import { triggerNewsPushNotification } from '../../../utils/pushNotifications';
 import { Megaphone, Send, Image as ImageIcon, Link as LinkIcon, AlertCircle, CheckCircle2 } from 'lucide-react';
 
 interface NewsAdminFormProps {
@@ -46,6 +47,7 @@ export const NewsAdminForm: React.FC<NewsAdminFormProps> = ({ isAdmin, onClose }
 
       if (insertErr) throw insertErr;
 
+      triggerNewsPushNotification(title.trim(), content.trim());
       setSubmitted(true);
     } catch (err) {
       console.error('Error creating news:', err);

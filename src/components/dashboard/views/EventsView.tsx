@@ -13,7 +13,7 @@ import {
   getRomaniaDateParts 
 } from '../../../utils/romaniaTime';
 import { toast } from '../../ui/Toast';
-import { triggerEventPushNotification } from '../../../utils/pushNotifications';
+import { triggerEventPushNotification, triggerAdminAbsenceRequestNotification } from '../../../utils/pushNotifications';
 
 const easeOut: [number, number, number, number] = [0.23, 1, 0.32, 1];
 
@@ -443,6 +443,9 @@ export function EventsView({ isAdmin, members = [], currentUserId, onUpdateMembe
         status: 'pending',
         timestamp: new Date().toISOString()
       });
+      const memberObj = members.find(m => m.id === currentUserId);
+      const memberName = memberObj?.name || 'Un voluntar';
+      triggerAdminAbsenceRequestNotification(memberName, absenceReason.trim());
       toast.success('Cererea de învoire a fost trimisă cu succes!');
       setRequestingAbsenceFor(null);
       setAbsenceReason('');

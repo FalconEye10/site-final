@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { CheckCircle2, XCircle, Clock, ChevronDown, Lock, Loader2, MessageSquare, Search, RotateCcw, Check, X } from 'lucide-react';
 import { EventData, AbsenceRequest, fetchAbsenceRequests, saveAbsenceRequest, deleteAbsenceRequest, recordAttendance, fetchEvents, saveEvent, applyMemberScoreAdjustment, isSystemAccount } from '../../../utils/supabaseService';
 import { toast } from '../../ui/Toast';
+import { triggerAbsencePushNotification } from '../../../utils/pushNotifications';
 import { Badge } from '../../ui/Badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../ui/table';
 
@@ -270,6 +271,7 @@ export function AttendanceView({ members, onUpdateMember, isAdmin, currentUserId
       setEvents(prev => prev.map(e => e.id === updatedEvent.id ? updatedEvent : e));
       onUpdateMember({ ...member, ...updatedStats });
 
+      triggerAbsencePushNotification('approved', member.id, 'Motivat direct via WhatsApp');
       toast.success(`✅ Absența lui ${member.name} a fost motivată via WhatsApp!`);
     } catch (err) {
       console.error(err);
@@ -482,6 +484,7 @@ export function AttendanceView({ members, onUpdateMember, isAdmin, currentUserId
         }
       }
 
+      triggerAbsencePushNotification('approved', req.memberId, req.reason);
       toast.success('Cererea a fost aprobată.');
     } catch (err) {
       toast.error('Eroare la aprobare.');
@@ -534,6 +537,7 @@ export function AttendanceView({ members, onUpdateMember, isAdmin, currentUserId
         }
       }
 
+      triggerAbsencePushNotification('rejected', rejectingReq.memberId, rejectReason.trim());
       toast.success('Cererea a fost respinsă.');
       setRejectingReq(null);
       setRejectReason('');

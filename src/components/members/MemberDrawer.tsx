@@ -14,6 +14,7 @@ import { formatRomaniaDate } from '../../utils/romaniaTime';
 import { PaymentModal } from '../finance/PaymentModal';
 import { ScoringReferenceGuide, ScoringPreset } from '../dashboard/views/ScoringReferenceGuide';
 import { supabase } from '../../supabase';
+import { triggerScorePushNotification } from '../../utils/pushNotifications';
 
 interface MemberDrawerProps {
   member: any;
@@ -284,6 +285,7 @@ export function MemberDrawer({ member, onClose, onUpdateMember, isAdmin, current
     setIsSubmittingScore(true);
     try {
       await applyMemberScoreAdjustment(member.id, val, newAdjustment);
+      triggerScorePushNotification(val, cleanReason, member.id, member.name);
       onUpdateMember(updatedMember);
       setIsScoreModalOpen(false);
       setScoreAdjustValue('');

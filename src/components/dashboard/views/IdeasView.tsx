@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../../../supabase';
 import { Trash2, CheckCircle2, BarChart3, Plus, ChevronDown, ChevronUp } from 'lucide-react';
 import { toast } from '../../ui/Toast';
+import { triggerPollPushNotification } from '../../../utils/pushNotifications';
 import { formatRomaniaDate } from '../../../utils/romaniaTime';
 
 interface Poll {
@@ -136,6 +137,7 @@ export const IdeasView: React.FC<IdeasViewProps> = ({ isAdmin, currentUserId }) 
 
       if (error) throw error;
 
+      triggerPollPushNotification(newPollQuestion.trim());
       toast.success('Sondajul a fost creat cu succes!');
       setNewPollQuestion('');
       setNewPollOptionsStr('');

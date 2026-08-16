@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../../../supabase';
 import { MessageSquare, Send, Trash2, Edit3, Heart, ThumbsUp, ThumbsDown, X, Check, Plus } from 'lucide-react';
 import { toast } from '../../ui/Toast';
+import { triggerForumPushNotification } from '../../../utils/pushNotifications';
 import { EmptyState } from '../../ui/EmptyState';
 import { SkeletonCard, Skeleton } from '../../ui/Skeleton';
 import { formatRomaniaDateTime } from '../../../utils/romaniaTime';
@@ -91,6 +92,7 @@ export const ForumView: React.FC<ForumViewProps> = ({ isAdmin, currentUserId, cu
 
       if (error) throw error;
 
+      triggerForumPushNotification(newPostTitle.trim(), currentUsername || 'Un coleg');
       toast.success('Subiectul a fost publicat pe forum!');
       setNewPostTitle('');
       setNewPostContent('');

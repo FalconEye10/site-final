@@ -13,9 +13,8 @@ import webPush from 'web-push';
 import { createClient } from '@supabase/supabase-js';
 
 // 1. Supabase Project Configuration
-const SUPABASE_URL = process.env.SUPABASE_URL || 'https://vnoegytosymjnhmclgvb.supabase.co';
-// În producție folosește SERVICE_ROLE_KEY pentru acces complet fără restricții RLS
-const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || 'CHEIE_SUPABASE_SERVICE_ROLE_AICI';
+const SUPABASE_URL = process.env.SUPABASE_URL || 'https://lsuxzfblbkqpcolujdlo.supabase.co';
+const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxzdXh6ZmJsYmtxcGNvbHVqZGxvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYwNTA1ODksImV4cCI6MjEwMTYyNjU4OX0.YWO1JIeEuXTdtm-MAWFdKNHSYb4YPcOOEPmllMu02sU';
 
 // 2. VAPID Keys Oficiale (P-256 Curve)
 const VAPID_PUBLIC_KEY =

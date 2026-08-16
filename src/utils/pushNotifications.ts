@@ -338,72 +338,160 @@ export async function sendSystemNotification({
 }
 
 /**
- * Notificare la acordarea sau scăderea de puncte
+ * Trimite notificarea către endpoint-ul serverless (/api/send-push) pentru a fi livrată
+ * instantaneu prin Web Push (FCM / APNs / Mozilla) pe toate telefoanele și PC-urile abonate.
  */
-export function triggerScorePushNotification(points: number, reason: string, memberName?: string) {
+export async function broadcastPushNotification({
+  title,
+  body,
+  url = '/#dashboard',
+  icon = '/logo.png',
+  targetMemberId,
+  targetMemberIds,
+}: {
+  title: string;
+  body: string;
+  url?: string;
+  icon?: string;
+  targetMemberId?: string;
+  targetMemberIds?: string[];
+}): Promise<void> {
+  // 1. Arată notificare locală imediată
+  sendSystemNotification({ title, body, url });
+
+  // 2. Apelează endpoint-ul de Web Push pentru a trezi toate telefoanele / dispozitivele
+  try {
+    const endpoints = ['/api/send-push', '/api/send-push.php'];
+    for (const ep of endpoints) {
+      try {
+        const res = await fetch(ep, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            title,
+            body,
+            url,
+            icon,
+            targetMemberId,
+            targetMemberIds,
+          }),
+        });
+        if (res.ok) {
+          const json = await res.json().catch(() => ({}));
+          console.log(`📡 [Web Push Broadcast] Notificări trimise cu succes prin ${ep}:`, json);
+          return;
+        }
+      } catch {
+        // Încearcă următorul endpoint de rezervă
+      }
+    }
+  } catch (err) {
+    console.warn('Eroare la trimiterea broadcast-ului push:', err);
+  }
+}
+
+/**
+ * 🏆 Notificare NOMINALĂ: Punctaj adăugat sau scăzut (+/- puncte)
+ */
+export function triggerScorePushNotification(points: number, reason: string, memberId?: string, memberName?: string) {
   const isPositive = points > 0;
-  sendSystemNotification({
-    title: isPositive ? `🏆 Ai primit +${points} puncte!` : `⚠️ Ajustare punctaj: ${points} puncte`,
-    body: memberName ? `Pentru ${memberName}: "${reason}". Vezi clasamentul.` : `Acțiune: "${reason}". Vezi clasamentul actualizat.`,
-    tag: `score_${Date.now()}`,
+  const title = isPositive ? `🏆 Ai primit +${points} puncte!` : `⚠️ Ajustare punctaj: ${points} puncte`;
+  const body = memberName ? `Pentru ${memberName}: "${reason}". Vezi clasamentul actualizat.` : `Motiv: "${reason}". Vezi clasamentul actualizat.`;
+
+  broadcastPushNotification({
+    title,
+    body,
     url: '/#clasament',
+    targetMemberId: memberId,
   });
 }
 
 /**
- * Notificare la aprobarea sau respingerea cererii de motivare a absenței
+ * 📅 Notificare NOMINALĂ: Aprobare sau Respingere cerere de învoire
  */
-export function triggerAbsencePushNotification(status: 'approved' | 'rejected', reason?: string) {
+export function triggerAbsencePushNotification(status: 'approved' | 'rejected', memberId?: string, reason?: string) {
   if (status === 'approved') {
-    sendSystemNotification({
+    broadcastPushNotification({
       title: '📅 Cerere de Motivare Aprobată! ✅',
       body: 'Absența ta a fost motivată oficial de către Board.',
-      tag: `absence_${Date.now()}`,
       url: '/#prezenta',
+      targetMemberId: memberId,
     });
   } else {
-    sendSystemNotification({
+    broadcastPushNotification({
       title: '📅 Cerere de Motivare Respinsă ❌',
       body: `Cererea ta a fost respinsă. Motiv: ${reason || 'Verifică în secțiunea Prezență'}.`,
-      tag: `absence_${Date.now()}`,
       url: '/#prezenta',
+      targetMemberId: memberId,
     });
   }
 }
 
 /**
- * Notificare la publicarea unei știri noi sau anunț oficial
+ * 📋 Notificare pentru Conducere/Admini: Cerere nouă de învoire depusă
+ */
+export function triggerAdminAbsenceRequestNotification(memberName: string, reason?: string) {
+  broadcastPushNotification({
+    title: '📋 Cerere nouă de învoire',
+    body: `${memberName} a solicitat învoire: "${reason || 'Motiv specificat'}"`,
+    url: '/#prezenta',
+  });
+}
+
+/**
+ * 📢 Notificare GENERALĂ: Știre nouă sau Anunț oficial
  */
 export function triggerNewsPushNotification(newsTitle: string, summary?: string) {
-  sendSystemNotification({
+  broadcastPushNotification({
     title: `📢 Știre nouă: ${newsTitle}`,
     body: summary ? (summary.slice(0, 80) + '...') : 'Află ultimele noutăți din clubul Interact Camena.',
-    tag: `news_${Date.now()}`,
     url: '/#stiri',
   });
 }
 
 /**
- * Notificare la postarea unei idei noi pe forumul comunității
+ * 📊 Notificare GENERALĂ: Sondaj nou creat
+ */
+export function triggerPollPushNotification(question: string) {
+  broadcastPushNotification({
+    title: `📊 Sondaj nou: ${question}`,
+    body: 'Exprimă-ți votul democratic pentru deciziile clubului.',
+    url: '/#idei',
+  });
+}
+
+/**
+ * 💬 Notificare GENERALĂ: Idee sau propunere nouă pe Forum
  */
 export function triggerForumPushNotification(ideaTitle: string, submitterName?: string) {
-  sendSystemNotification({
+  broadcastPushNotification({
     title: `💬 Forum: Propunere nouă!`,
-    body: `"${ideaTitle}" propusă de ${submitterName || 'un voluntar'}. Intră să votezi!`,
-    tag: `forum_${Date.now()}`,
+    body: `"${ideaTitle}" de la ${submitterName || 'un voluntar'}. Intră să votezi!`,
     url: '/#comunitate',
   });
 }
 
 /**
- * Notificare la adăugarea unui eveniment nou în calendar
+ * 📅 Notificare GENERALĂ: Eveniment nou adăugat în Calendar
  */
 export function triggerEventPushNotification(eventTitle: string, eventDate: string, eventTime?: string, location?: string) {
-  sendSystemNotification({
+  broadcastPushNotification({
     title: `📅 Eveniment nou: ${eventTitle}`,
     body: `${eventDate}${eventTime ? ` la ora ${eventTime}` : ''}${location ? ` · ${location}` : ''}`,
-    tag: `event_${Date.now()}`,
     url: '/#calendar',
   });
 }
+
+/**
+ * 💖 Notificare NOMINALĂ: Kudos primit
+ */
+export function triggerKudosPushNotification(recipientId: string, fromName?: string, message?: string) {
+  broadcastPushNotification({
+    title: `💖 Kudos primit de la ${fromName || 'un coleg'}!`,
+    body: `"${message || 'Felicitări pentru implicare!'}"`,
+    url: '/#kudos',
+    targetMemberId: recipientId,
+  });
+}
+
 
