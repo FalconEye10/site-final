@@ -3,8 +3,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Bell, CheckCheck, Heart, Megaphone, CheckCircle2, XCircle, PieChart, Sparkles, ChevronRight, Trophy, Calendar } from 'lucide-react';
 import { supabase } from '../../supabase';
 import { PushNotificationToggle } from './PushNotificationToggle';
-import { sendSystemNotification } from '../../utils/pushNotifications';
+import { sendSystemNotification, broadcastPushNotification } from '../../utils/pushNotifications';
 import { formatRomaniaDateTime } from '../../utils/romaniaTime';
+import { toast } from '../ui/Toast';
 
 export interface NotificationItem {
   id: string;
@@ -32,7 +33,8 @@ export const NotificationsDropdown: React.FC<NotificationsDropdownProps> = ({
   const [isOpen, setIsOpen] = useState(false);
   const [readIds, setReadIds] = useState<string[]>(() => {
     try {
-      return JSON.parse(localStorage.getItem('read_notifications_v2') || '[]');
+      const saved = localStorage.getItem('camena_read_notifications');
+      return saved ? JSON.parse(saved) : [];
     } catch {
       return [];
     }
@@ -45,7 +47,26 @@ export const NotificationsDropdown: React.FC<NotificationsDropdownProps> = ({
   const [rawPitches, setRawPitches] = useState<any[]>([]);
   const [rawEvents, setRawEvents] = useState<any[]>([]);
   const [currentMemberData, setCurrentMemberData] = useState<any>(null);
+  const [isSendingTest, setIsSendingTest] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  const handleSendTestPush = async () => {
+    if (isSendingTest) return;
+    setIsSendingTest(true);
+    toast.info('Se trimite notificarea push de test către toate dispozitivele...');
+    try {
+      await broadcastPushNotification({
+        title: '🔔 Test Notificare Push (Interact Camena)',
+        body: 'Dacă citești acest mesaj, notificările push pe telefonul tău funcționează 100%!',
+        url: '/#dashboard',
+      });
+      toast.success('Notificarea push a fost expediată către rețea!');
+    } catch {
+      toast.error('Eroare la trimiterea notificării de test.');
+    } finally {
+      setIsSendingTest(false);
+    }
+  };
 
   // Close dropdown on click outside
   useEffect(() => {
@@ -483,6 +504,18 @@ export const NotificationsDropdown: React.FC<NotificationsDropdownProps> = ({
             {/* Push Notifications Opt-in Toggle Banner */}
             <div className="p-2.5 bg-slate-100/70 dark:bg-slate-950/40 border-b border-slate-200 dark:border-slate-800">
               <PushNotificationToggle memberId={currentUserId || currentUsername || 'member'} />
+              {isAdmin && (
+                <div className="pt-2 flex justify-end">
+                  <button
+                    onClick={handleSendTestPush}
+                    disabled={isSendingTest}
+                    className="text-[11px] font-bold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 flex items-center gap-1.5 cursor-pointer bg-blue-50 dark:bg-blue-950/40 px-2.5 py-1 rounded-[2px] border border-blue-200 dark:border-blue-800 transition-colors"
+                  >
+                    <Bell size={12} />
+                    {isSendingTest ? 'Se trimite testul...' : 'Testează Push pe Toate Telefoanele'}
+                  </button>
+                </div>
+              )}
             </div>
 
             {/* Notification Items List */}
