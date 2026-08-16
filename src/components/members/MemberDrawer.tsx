@@ -1192,12 +1192,13 @@ export function MemberDrawer({ member, onClose, onUpdateMember, isAdmin, current
       {/* Receipt View Modal */}
       <AnimatePresence>
         {selectedReceipt && (
-          <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm font-anthropic">
+          <div className="fixed inset-0 z-[200] overflow-y-auto overscroll-contain p-2.5 sm:p-4 flex min-h-full items-center justify-center bg-slate-900/60 backdrop-blur-sm font-anthropic">
             <motion.div
               initial={{ opacity: 0, scale: 0.97 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.97 }}
-              className="relative w-full max-w-md bg-white dark:bg-[#161B22] border border-slate-300 dark:border-slate-800 rounded-[2px] shadow-2xl p-6 z-[201] text-slate-900 dark:text-slate-100 space-y-4 font-anthropic"
+              className="relative w-full max-w-md max-h-[calc(100dvh-1.5rem)] sm:max-h-[88vh] overflow-y-auto overscroll-contain bg-white dark:bg-[#161B22] border border-slate-300 dark:border-slate-800 rounded-[2px] shadow-2xl p-5 sm:p-6 z-[201] text-slate-900 dark:text-slate-100 space-y-4 font-anthropic my-auto touch-pan-y scrollbar-thin"
+              style={{ WebkitOverflowScrolling: 'touch' }}
             >
               <div className="flex justify-between items-start pb-3 border-b border-slate-200 dark:border-slate-800">
                 <div>
@@ -1269,19 +1270,28 @@ export function MemberDrawer({ member, onClose, onUpdateMember, isAdmin, current
       {/* Score Adjustment Modal */}
       <AnimatePresence>
         {isScoreModalOpen && (
-          <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm font-anthropic">
+          <div className="fixed inset-0 z-[200] overflow-y-auto overscroll-contain p-2.5 sm:p-4 flex min-h-full items-start sm:items-center justify-center bg-slate-900/60 backdrop-blur-sm font-anthropic">
             <motion.div
               initial={{ opacity: 0, scale: 0.97 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.97 }}
-              className="relative w-full max-w-xl max-h-[90vh] overflow-y-auto bg-white dark:bg-[#161B22] border border-slate-300 dark:border-slate-800 rounded-[2px] shadow-2xl p-6 z-[201] text-slate-900 dark:text-slate-100 space-y-4 font-anthropic"
+              className="relative w-full max-w-xl max-h-[calc(100dvh-1.5rem)] sm:max-h-[88vh] flex flex-col bg-white dark:bg-[#161B22] border border-slate-300 dark:border-slate-800 rounded-[2px] shadow-2xl p-4 sm:p-6 z-[201] text-slate-900 dark:text-slate-100 font-anthropic my-auto touch-pan-y"
+              style={{ WebkitOverflowScrolling: 'touch' }}
             >
-              <div>
-                <h3 className="font-bold text-lg sm:text-xl text-slate-900 dark:text-slate-100 font-anthropicSerif">Ajustare Scor Voluntar</h3>
-                <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1 font-anthropic">Acordare sau scădere puncte de activitate</p>
+              <div className="flex justify-between items-start pb-3 mb-3 border-b border-slate-200 dark:border-slate-800 shrink-0">
+                <div>
+                  <h3 className="font-bold text-lg sm:text-xl text-slate-900 dark:text-slate-100 font-anthropicSerif">Ajustare Scor Voluntar</h3>
+                  <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5 font-anthropic">Acordare sau scădere puncte de activitate</p>
+                </div>
+                <button
+                  onClick={() => setIsScoreModalOpen(false)}
+                  className="p-1.5 rounded-[2px] hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 hover:text-slate-900 dark:hover:text-slate-100 cursor-pointer"
+                >
+                  <X size={18} />
+                </button>
               </div>
 
-              <form onSubmit={handleAdjustScore} className="space-y-4 font-anthropic">
+              <form onSubmit={handleAdjustScore} className="space-y-4 overflow-y-auto overscroll-contain flex-1 pr-1 -mr-1 scrollbar-thin touch-pan-y font-anthropic" style={{ WebkitOverflowScrolling: 'touch' }}>
                 <div>
                   <label className="block text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1 font-title">Puncte (ex: 5 sau -2)</label>
                   <input
@@ -1314,7 +1324,7 @@ export function MemberDrawer({ member, onClose, onUpdateMember, isAdmin, current
                   }}
                 />
 
-                <div className="pt-2 flex gap-3 font-title">
+                <div className="pt-3 pb-1 sticky bottom-0 bg-white dark:bg-[#161B22] border-t border-slate-100 dark:border-slate-800 z-10 flex gap-3 font-title shrink-0">
                   <button
                     type="button"
                     onClick={() => setIsScoreModalOpen(false)}
@@ -1340,12 +1350,13 @@ export function MemberDrawer({ member, onClose, onUpdateMember, isAdmin, current
       {/* Revert Payment Modal */}
       <AnimatePresence>
         {receiptToRevert && (
-          <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm font-anthropic">
+          <div className="fixed inset-0 z-[200] overflow-y-auto overscroll-contain p-2.5 sm:p-4 flex min-h-full items-center justify-center bg-slate-900/60 backdrop-blur-sm font-anthropic">
             <motion.div
               initial={{ opacity: 0, scale: 0.97 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.97 }}
-              className="relative w-full max-w-sm bg-white dark:bg-[#161B22] border border-slate-300 dark:border-slate-800 rounded-[2px] shadow-2xl p-6 z-[201] text-slate-900 dark:text-slate-100 space-y-4 font-anthropic"
+              className="relative w-full max-w-sm max-h-[calc(100dvh-1.5rem)] sm:max-h-[88vh] overflow-y-auto bg-white dark:bg-[#161B22] border border-slate-300 dark:border-slate-800 rounded-[2px] shadow-2xl p-5 sm:p-6 z-[201] text-slate-900 dark:text-slate-100 space-y-4 font-anthropic my-auto touch-pan-y"
+              style={{ WebkitOverflowScrolling: 'touch' }}
             >
               <div className="flex items-center gap-2.5 text-rose-700 dark:text-rose-400">
                 <AlertCircle size={22} />

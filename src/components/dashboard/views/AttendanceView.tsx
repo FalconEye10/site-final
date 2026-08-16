@@ -1146,9 +1146,12 @@ export function AttendanceView({ members, onUpdateMember, isAdmin, currentUserId
       )}
 
       {rejectingReq && (
-        <div className="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 font-anthropic">
-          <div className="bg-white dark:bg-slate-900 rounded-[2px] w-full max-w-md overflow-hidden shadow-2xl border border-slate-200 dark:border-slate-800 font-anthropic">
-            <div className="p-6">
+        <div className="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-50 overflow-y-auto overscroll-contain p-2.5 sm:p-4 flex min-h-full items-center justify-center font-anthropic">
+          <div 
+            className="bg-white dark:bg-slate-900 rounded-[2px] w-full max-w-md max-h-[calc(100dvh-1.5rem)] sm:max-h-[88vh] overflow-y-auto overscroll-contain shadow-2xl border border-slate-200 dark:border-slate-800 font-anthropic my-auto touch-pan-y"
+            style={{ WebkitOverflowScrolling: 'touch' }}
+          >
+            <div className="p-5 sm:p-6">
               <h3 className="text-lg font-bold font-anthropicSerif text-slate-900 dark:text-white mb-2">Respinge Cererea</h3>
               <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mb-4 font-anthropic">Te rugăm să introduci motivul pentru care cererea de învoire este respinsă.</p>
               
@@ -1183,9 +1186,12 @@ export function AttendanceView({ members, onUpdateMember, isAdmin, currentUserId
       )}
 
       {showFinalizeModal && selectedEvent && (
-        <div className="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 font-anthropic">
-          <div className="bg-white dark:bg-slate-900 rounded-[2px] w-full max-w-md overflow-hidden shadow-2xl border border-slate-200 dark:border-slate-800 font-anthropic">
-            <div className="p-6">
+        <div className="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-50 overflow-y-auto overscroll-contain p-2.5 sm:p-4 flex min-h-full items-center justify-center font-anthropic">
+          <div 
+            className="bg-white dark:bg-slate-900 rounded-[2px] w-full max-w-md max-h-[calc(100dvh-1.5rem)] sm:max-h-[88vh] overflow-y-auto overscroll-contain shadow-2xl border border-slate-200 dark:border-slate-800 font-anthropic my-auto touch-pan-y"
+            style={{ WebkitOverflowScrolling: 'touch' }}
+          >
+            <div className="p-5 sm:p-6">
               <div className="flex items-center gap-3 mb-4">
                 <div className="p-2.5 bg-amber-500/10 text-amber-600 dark:text-amber-400 rounded-[2px]">
                   <Clock size={22} />
@@ -1252,8 +1258,11 @@ export function AttendanceView({ members, onUpdateMember, isAdmin, currentUserId
       )}
 
       {showWhatsappModal && selectedEvent && (
-        <div className="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 font-anthropic">
-          <div className="bg-white dark:bg-slate-900 rounded-[2px] w-full max-w-lg overflow-hidden shadow-2xl border border-slate-200 dark:border-slate-800 flex flex-col max-h-[85vh] font-anthropic">
+        <div className="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-50 overflow-y-auto overscroll-contain p-2.5 sm:p-4 flex min-h-full items-center justify-center font-anthropic">
+          <div 
+            className="bg-white dark:bg-slate-900 rounded-[2px] w-full max-w-lg overflow-hidden shadow-2xl border border-slate-200 dark:border-slate-800 flex flex-col max-h-[calc(100dvh-1.5rem)] sm:max-h-[85vh] font-anthropic my-auto touch-pan-y"
+            style={{ WebkitOverflowScrolling: 'touch' }}
+          >
             <div className="p-5 bg-slate-900 text-white shrink-0 font-anthropic">
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-3">

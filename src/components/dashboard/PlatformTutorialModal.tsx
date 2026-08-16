@@ -766,13 +766,13 @@ export const PlatformTutorialModal: React.FC<PlatformTutorialModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-[250] flex items-center justify-center p-3 md:p-4 font-anthropic">
+    <div className="fixed inset-0 z-[250] overflow-y-auto overscroll-contain p-2 sm:p-4 flex min-h-full items-start sm:items-center justify-center font-anthropic">
       {/* Backdrop */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="absolute inset-0 bg-slate-950/80 backdrop-blur-md"
+        className="fixed inset-0 bg-slate-950/80 backdrop-blur-md"
         onClick={() => {
           if (!isMandatoryFirstTime) handleSkipIfAllowed();
         }}
@@ -784,7 +784,8 @@ export const PlatformTutorialModal: React.FC<PlatformTutorialModalProps> = ({
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.9, y: 25 }}
         transition={{ duration: 0.35, ease: [0.23, 1, 0.32, 1] }}
-        className="relative w-full max-w-4xl h-[92vh] max-h-[720px] min-h-[540px] bg-white dark:bg-[#0F1219] rounded-[2px] border border-slate-200/90 dark:border-white/10 shadow-2xl overflow-hidden flex flex-col font-anthropic"
+        className="relative w-full max-w-4xl h-[92dvh] sm:h-[88vh] max-h-[760px] bg-white dark:bg-[#0F1219] rounded-[2px] border border-slate-200/90 dark:border-white/10 shadow-2xl overflow-hidden flex flex-col font-anthropic my-auto touch-pan-y"
+        style={{ WebkitOverflowScrolling: 'touch' }}
         onClick={e => e.stopPropagation()}
       >
         {/* Top Gradient Progress bar */}
@@ -836,7 +837,7 @@ export const PlatformTutorialModal: React.FC<PlatformTutorialModalProps> = ({
         </div>
 
         {/* Modal Scrollable Body */}
-        <div className="flex-1 overflow-y-auto px-5 sm:px-8 py-5 overscroll-contain font-anthropic">
+        <div className="flex-1 overflow-y-auto px-4 sm:px-8 py-4 sm:py-5 overscroll-contain touch-pan-y font-anthropic" style={{ WebkitOverflowScrolling: 'touch' }}>
           <AnimatePresence mode="wait" custom={direction}>
             <motion.div
               key={step.id}

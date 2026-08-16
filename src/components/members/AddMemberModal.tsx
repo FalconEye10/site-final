@@ -168,12 +168,12 @@ export function AddMemberModal({ isOpen, onClose, members, onAddMember, currentU
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center p-0 sm:p-4">
+        <div className="fixed inset-0 z-[200] overflow-y-auto overscroll-contain p-2 sm:p-4 flex min-h-full items-start sm:items-center justify-center">
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="absolute inset-0 bg-black/60 backdrop-blur-md"
+            className="fixed inset-0 bg-black/60 backdrop-blur-md"
             onClick={onClose}
           />
           <motion.div
@@ -181,12 +181,13 @@ export function AddMemberModal({ isOpen, onClose, members, onAddMember, currentU
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
             transition={{ duration: 0.2, ease: easeOut }}
-            className="relative w-full max-w-3xl bg-white dark:bg-[#161B22] rounded-[2px] shadow-2xl p-5 sm:p-8 overflow-y-auto overflow-x-hidden max-h-[94vh] sm:max-h-[92vh] scrollbar-thin font-anthropic border border-slate-300 dark:border-slate-700"
+            className="relative w-full max-w-3xl bg-white dark:bg-[#161B22] rounded-[2px] shadow-2xl p-4 sm:p-8 max-h-[calc(100dvh-1rem)] sm:max-h-[88vh] flex flex-col my-auto touch-pan-y font-anthropic border border-slate-300 dark:border-slate-700"
+            style={{ WebkitOverflowScrolling: 'touch' }}
           >
-            <div className="flex justify-between items-center mb-6 relative z-10 border-b border-slate-200 dark:border-slate-800 pb-4">
+            <div className="flex justify-between items-center mb-4 sm:mb-6 pb-3 sm:pb-4 border-b border-slate-200 dark:border-slate-800 shrink-0">
               <div>
-                <h2 className="text-xl sm:text-2xl font-bold font-anthropicSerif text-slate-900 dark:text-slate-100">Adaugă Membru Nou</h2>
-                <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1 font-anthropic">
+                <h2 className="text-lg sm:text-2xl font-bold font-anthropicSerif text-slate-900 dark:text-slate-100">Adaugă Membru Nou</h2>
+                <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5 font-anthropic">
                   Creează profilul și generează automat parola temporară distinctă.
                 </p>
               </div>
@@ -199,7 +200,7 @@ export function AddMemberModal({ isOpen, onClose, members, onAddMember, currentU
             </div>
 
             {createdCredentials ? (
-              <div className="space-y-5 py-3 animate-in fade-in zoom-in-95 duration-200 font-anthropic">
+              <div className="space-y-5 py-3 overflow-y-auto overscroll-contain flex-1 pr-1 -mr-1 touch-pan-y animate-in fade-in zoom-in-95 duration-200 font-anthropic" style={{ WebkitOverflowScrolling: 'touch' }}>
                 <div className="p-6 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 rounded-[2px] text-center space-y-3">
                   <div className="w-12 h-12 bg-emerald-100 dark:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300 rounded-[2px] flex items-center justify-center mx-auto shadow-xs">
                     <ShieldCheck size={26} />
@@ -236,7 +237,7 @@ export function AddMemberModal({ isOpen, onClose, members, onAddMember, currentU
                 </div>
               </div>
             ) : (
-              <form className="space-y-4 relative z-10 font-anthropic" onSubmit={handleSubmit}>
+              <form className="space-y-4 overflow-y-auto overscroll-contain flex-1 pr-1 -mr-1 scrollbar-thin touch-pan-y font-anthropic" style={{ WebkitOverflowScrolling: 'touch' }} onSubmit={handleSubmit}>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5 font-title">
@@ -374,7 +375,7 @@ export function AddMemberModal({ isOpen, onClose, members, onAddMember, currentU
                   </div>
                 )}
 
-                <div className="pt-4">
+                <div className="pt-3 pb-1 sticky bottom-0 bg-white dark:bg-[#161B22] border-t border-slate-100 dark:border-slate-800 z-10 font-title shrink-0">
                   <button
                     type="submit"
                     disabled={isSubmitting}

@@ -1021,12 +1021,12 @@ export function EventsView({ isAdmin, members = [], currentUserId, onUpdateMembe
       {/* Add / Edit Event Modal */}
       <AnimatePresence>
         {isModalOpen && (
-          <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 font-anthropic">
+          <div className="fixed inset-0 z-[200] overflow-y-auto overscroll-contain p-2 sm:p-4 flex min-h-full items-start sm:items-center justify-center font-anthropic">
             <motion.div 
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm"
+              className="fixed inset-0 bg-slate-950/60 backdrop-blur-sm"
               onClick={() => setIsModalOpen(false)}
             />
             <motion.div 
@@ -1034,10 +1034,11 @@ export function EventsView({ isAdmin, members = [], currentUserId, onUpdateMembe
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
               transition={{ duration: 0.2, ease: easeOut }}
-              className="relative w-full max-w-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[2px] shadow-2xl p-6 sm:p-7 overflow-y-auto overflow-x-hidden max-h-[92vh] scrollbar-thin font-anthropic"
+              className="relative w-full max-w-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[2px] shadow-2xl p-4 sm:p-7 max-h-[calc(100dvh-1rem)] sm:max-h-[88vh] flex flex-col my-auto touch-pan-y font-anthropic"
+              style={{ WebkitOverflowScrolling: 'touch' }}
             >
-              <div className="flex justify-between items-center mb-5 relative z-10 border-b border-slate-200 dark:border-slate-800 pb-3.5">
-                <h2 className="text-xl sm:text-2xl font-bold font-anthropicSerif text-slate-900 dark:text-white">
+              <div className="flex justify-between items-center mb-3 sm:mb-4 pb-3 border-b border-slate-200 dark:border-slate-800 shrink-0">
+                <h2 className="text-lg sm:text-2xl font-bold font-anthropicSerif text-slate-900 dark:text-white">
                   {editingEvent ? 'Editează Eveniment' : 'Eveniment Nou'}
                 </h2>
                 <button onClick={() => setIsModalOpen(false)} className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 rounded-[2px] transition-colors cursor-pointer">
@@ -1045,7 +1046,7 @@ export function EventsView({ isAdmin, members = [], currentUserId, onUpdateMembe
                 </button>
               </div>
               
-              <form className="space-y-4 relative z-10 font-anthropic" onSubmit={handleSubmit}>
+              <form className="space-y-4 overflow-y-auto overscroll-contain flex-1 pr-1 -mr-1 scrollbar-thin touch-pan-y font-anthropic" style={{ WebkitOverflowScrolling: 'touch' }} onSubmit={handleSubmit}>
                 {/* Title */}
                 <div>
                   <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5 font-title">
@@ -1634,7 +1635,7 @@ export function EventsView({ isAdmin, members = [], currentUserId, onUpdateMembe
                   </div>
                 )}
 
-                <div className="pt-4 font-title">
+                <div className="pt-3 pb-1 sticky bottom-0 bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800 z-10 font-title shrink-0">
                   <button type="submit" className="w-full py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-[2px] font-bold uppercase tracking-wider text-xs sm:text-sm shadow-xs cursor-pointer">
                     {editingEvent ? 'Salvează Modificările' : 'Creează Eveniment'}
                   </button>
@@ -1648,15 +1649,16 @@ export function EventsView({ isAdmin, members = [], currentUserId, onUpdateMembe
       {/* Request Absence Member Modal */}
       <AnimatePresence>
         {requestingAbsenceFor && (
-          <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 font-anthropic">
+          <div className="fixed inset-0 z-[200] overflow-y-auto overscroll-contain p-3 sm:p-4 flex min-h-full items-center justify-center font-anthropic">
             <motion.div 
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm"
+              className="fixed inset-0 bg-slate-950/60 backdrop-blur-sm"
               onClick={() => setRequestingAbsenceFor(null)}
             />
             <motion.div 
               initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="relative w-full max-w-sm bg-white dark:bg-slate-900 rounded-[2px] shadow-2xl p-5 sm:p-6 font-anthropic border border-slate-200 dark:border-slate-800"
+              className="relative w-full max-w-sm bg-white dark:bg-slate-900 rounded-[2px] shadow-2xl p-5 sm:p-6 font-anthropic border border-slate-200 dark:border-slate-800 my-auto touch-pan-y max-h-[90dvh] overflow-y-auto overscroll-contain"
+              style={{ WebkitOverflowScrolling: 'touch' }}
             >
               <div className="flex justify-between items-start mb-3.5 font-title">
                 <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">Cere Învoire</h3>

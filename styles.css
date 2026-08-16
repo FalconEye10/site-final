@@ -2541,3 +2541,28 @@ html[data-theme="light"] input[type="date"] {
 .score-audit-modal .text-white {
   color: #ffffff !important;
 }
+
+/* Mobile Touch & Modal Scroll Smoothness Optimization */
+@supports (-webkit-overflow-scrolling: touch) {
+  .overflow-y-auto,
+  .overflow-x-auto,
+  .scrollbar-thin {
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+.touch-pan-y {
+  touch-action: pan-y;
+}
+
+.touch-pan-x {
+  touch-action: pan-x;
+}
+
+/* Mobile responsive dialog heights */
+@media screen and (max-width: 640px) {
+  .modal-dialog-mobile {
+    max-height: calc(100dvh - 1rem) !important;
+  }
+}
+

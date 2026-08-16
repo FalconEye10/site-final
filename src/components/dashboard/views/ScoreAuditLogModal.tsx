@@ -52,12 +52,12 @@ export function ScoreAuditLogModal({ isOpen, onClose }: ScoreAuditLogModalProps)
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-[200] flex items-center justify-center p-3 sm:p-6 bg-slate-950/70 backdrop-blur-md font-anthropic">
+      <div className="fixed inset-0 z-[200] overflow-y-auto overscroll-contain p-2 sm:p-6 flex min-h-full items-start sm:items-center justify-center bg-slate-950/70 backdrop-blur-md font-anthropic">
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="absolute inset-0"
+          className="fixed inset-0"
           onClick={onClose}
         />
 
@@ -65,7 +65,8 @@ export function ScoreAuditLogModal({ isOpen, onClose }: ScoreAuditLogModalProps)
           initial={{ opacity: 0, scale: 0.96, y: 16 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.96, y: 16 }}
-          className="relative w-full max-w-5xl lg:max-w-6xl max-h-[90vh] flex flex-col bg-white dark:bg-[#161B22] text-slate-900 dark:text-slate-100 border border-slate-300 dark:border-slate-800 rounded-[2px] shadow-2xl overflow-hidden z-[201] score-audit-modal font-anthropic"
+          className="relative w-full max-w-5xl lg:max-w-6xl max-h-[calc(100dvh-1rem)] sm:max-h-[90vh] flex flex-col bg-white dark:bg-[#161B22] text-slate-900 dark:text-slate-100 border border-slate-300 dark:border-slate-800 rounded-[2px] shadow-2xl overflow-hidden z-[201] score-audit-modal font-anthropic my-auto touch-pan-y"
+          style={{ WebkitOverflowScrolling: 'touch' }}
           onClick={e => e.stopPropagation()}
         >
           {/* Modal Header Bar */}
