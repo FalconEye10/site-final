@@ -542,7 +542,7 @@ export function EventsView({ isAdmin, members = [], currentUserId, onUpdateMembe
     try {
       await saveEvent(newEvent);
       if (!editingEvent) {
-        triggerEventPushNotification(newEvent.title, newEvent.date, newEvent.time, newEvent.location);
+        triggerEventPushNotification(newEvent);
       }
       toast.success(editingEvent ? 'Eveniment actualizat cu succes!' : 'Eveniment creat cu succes!');
       setIsModalOpen(false);

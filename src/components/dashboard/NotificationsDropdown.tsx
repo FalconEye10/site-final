@@ -207,9 +207,21 @@ export const NotificationsDropdown: React.FC<NotificationsDropdownProps> = ({
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'events' }, (payload: any) => {
         fetchData();
         if (payload?.new) {
+          const ev = payload.new;
+          let pushTitle = `📅 Întâlnire Nouă: ${ev.title || 'Eveniment Interact'}`;
+          if (ev.type === 'project') pushTitle = `🚀 Proiect Nou: ${ev.title}`;
+          else if (ev.type === 'social') pushTitle = `🎉 Social & Teambuilding: ${ev.title}`;
+          else if (ev.type === 'meeting') pushTitle = `🏛️ Ședință Nouă: ${ev.title}`;
+
+          const details: string[] = ['Te așteptăm cu drag!'];
+          if (ev.date) details.push(`🗓️ Data: ${ev.date}`);
+          if (ev.time) details.push(`⏰ Ora: ${ev.time}`);
+          if (ev.location) details.push(`📍 Locație: ${ev.location}`);
+          if (ev.description) details.push(`📝 Detalii: ${ev.description.slice(0, 85)}...`);
+
           sendSystemNotification({
-            title: `📅 Eveniment nou: ${payload.new.title}`,
-            body: `${payload.new.date || ''} la ${payload.new.time || '18:00'}${payload.new.location ? ` · ${payload.new.location}` : ''}`,
+            title: pushTitle,
+            body: details.join(' · '),
             url: '/#calendar',
           });
         }
