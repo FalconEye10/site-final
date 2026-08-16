@@ -19,12 +19,14 @@ export interface NotificationItem {
 interface NotificationsDropdownProps {
   currentUserId?: string;
   currentUsername?: string;
+  isAdmin?: boolean;
   onNavigateToSection: (sectionId: string) => void;
 }
 
 export const NotificationsDropdown: React.FC<NotificationsDropdownProps> = ({
   currentUserId,
   currentUsername,
+  isAdmin,
   onNavigateToSection,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -111,8 +113,8 @@ export const NotificationsDropdown: React.FC<NotificationsDropdownProps> = ({
 
     // Subscribe to channels for live updates
     const channel = supabase
-      .channel('notifications_realtime_channel_v2')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'kudos' }, (payload: any) => {
+      .channel('notifications_realtime_channel_v3')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'kudos' }, (payload: any) => {
         fetchData();
         if (payload?.new && (payload.new.toId === currentUserId || payload.new.toName?.toLowerCase() === currentUsername?.toLowerCase())) {
           sendSystemNotification({
@@ -122,7 +124,17 @@ export const NotificationsDropdown: React.FC<NotificationsDropdownProps> = ({
           });
         }
       })
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'absence_requests' }, (payload: any) => {
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'absence_requests' }, (payload: any) => {
+        fetchData();
+        if (payload?.new && isAdmin) {
+          sendSystemNotification({
+            title: '📋 Cerere nouă de învoire',
+            body: `${payload.new.memberName || 'Un voluntar'} a solicitat învoire: "${payload.new.reason || ''}"`,
+            url: '/#prezenta',
+          });
+        }
+      })
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'absence_requests' }, (payload: any) => {
         fetchData();
         if (payload?.new && (payload.new.memberId === currentUserId || payload.new.memberName?.toLowerCase() === currentUsername?.toLowerCase())) {
           if (payload.new.status === 'approved') {
@@ -138,6 +150,18 @@ export const NotificationsDropdown: React.FC<NotificationsDropdownProps> = ({
               url: '/#prezenta',
             });
           }
+        }
+      })
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'score_audit_logs' }, (payload: any) => {
+        fetchData();
+        if (payload?.new && (payload.new.targetMemberId === currentUserId || payload.new.targetMemberName?.toLowerCase() === currentUsername?.toLowerCase())) {
+          const pts = Number(payload.new.points) || 0;
+          const isPos = pts > 0;
+          sendSystemNotification({
+            title: isPos ? `🏆 Ai primit +${pts} puncte!` : `⚠️ Ajustare punctaj: ${pts} puncte`,
+            body: `Motiv: "${payload.new.reason || 'Ajustare scor'}" (acordat de ${payload.new.adminName || 'Board'})`,
+            url: '/#clasament',
+          });
         }
       })
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'news' }, (payload: any) => {
@@ -170,11 +194,21 @@ export const NotificationsDropdown: React.FC<NotificationsDropdownProps> = ({
           });
         }
       })
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'forum_posts' }, (payload: any) => {
+        fetchData();
+        if (payload?.new) {
+          sendSystemNotification({
+            title: `💬 Discuție nouă pe Forum: ${payload.new.title}`,
+            body: `${payload.new.author || 'Un coleg'}: ${payload.new.content ? payload.new.content.slice(0, 75) + '...' : ''}`,
+            url: '/#comunitate',
+          });
+        }
+      })
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'events' }, (payload: any) => {
         fetchData();
         if (payload?.new) {
           sendSystemNotification({
-            title: `📅 Eveniment nou în Calendar: ${payload.new.title}`,
+            title: `📅 Eveniment nou: ${payload.new.title}`,
             body: `${payload.new.date || ''} la ${payload.new.time || '18:00'}${payload.new.location ? ` · ${payload.new.location}` : ''}`,
             url: '/#calendar',
           });
@@ -190,7 +224,7 @@ export const NotificationsDropdown: React.FC<NotificationsDropdownProps> = ({
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [currentUserId, currentUsername]);
+  }, [currentUserId, currentUsername, isAdmin]);
 
   // Transform raw data into structured notifications
   const notifications: NotificationItem[] = useMemo(() => {

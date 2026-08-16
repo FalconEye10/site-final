@@ -3161,6 +3161,7 @@ export function Dashboard({ username, onLogout }: DashboardProps) {
             <NotificationsDropdown
               currentUserId={currentUserObj?.id}
               currentUsername={currentUserObj?.username || username}
+              isAdmin={isAdmin}
               onNavigateToSection={setActiveSection}
             />
 

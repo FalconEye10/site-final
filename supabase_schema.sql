@@ -451,3 +451,38 @@ CREATE POLICY "push_select_policy" ON public.push_subscriptions FOR SELECT TO au
 CREATE POLICY "push_insert_policy" ON public.push_subscriptions FOR INSERT TO authenticated WITH CHECK ((SELECT auth.uid()) IS NOT NULL OR member_id IS NOT NULL);
 CREATE POLICY "push_update_policy" ON public.push_subscriptions FOR UPDATE TO authenticated USING (private.is_admin() OR member_id = (SELECT auth.uid())::text) WITH CHECK (private.is_admin() OR member_id = (SELECT auth.uid())::text);
 CREATE POLICY "push_delete_policy" ON public.push_subscriptions FOR DELETE TO authenticated USING (private.is_admin() OR member_id = (SELECT auth.uid())::text);
+
+-- ==============================================================================
+-- Realtime Publication for Live Push Notifications & Sync
+-- ==============================================================================
+DO $$
+BEGIN
+  BEGIN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.events;
+  EXCEPTION WHEN others THEN NULL; END;
+  BEGIN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.news;
+  EXCEPTION WHEN others THEN NULL; END;
+  BEGIN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.polls;
+  EXCEPTION WHEN others THEN NULL; END;
+  BEGIN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.absence_requests;
+  EXCEPTION WHEN others THEN NULL; END;
+  BEGIN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.score_audit_logs;
+  EXCEPTION WHEN others THEN NULL; END;
+  BEGIN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.kudos;
+  EXCEPTION WHEN others THEN NULL; END;
+  BEGIN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.project_pitches;
+  EXCEPTION WHEN others THEN NULL; END;
+  BEGIN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.forum_posts;
+  EXCEPTION WHEN others THEN NULL; END;
+  BEGIN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.members;
+  EXCEPTION WHEN others THEN NULL; END;
+END $$;
+
