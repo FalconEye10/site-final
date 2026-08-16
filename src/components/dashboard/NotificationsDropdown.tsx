@@ -226,6 +226,28 @@ export const NotificationsDropdown: React.FC<NotificationsDropdownProps> = ({
           });
         }
       })
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'events' }, (payload: any) => {
+        fetchData();
+        if (payload?.new) {
+          const ev = payload.new;
+          let pushTitle = `🔄 SCHIMBARE EVENIMENT: ${ev.title || 'Eveniment Interact'}`;
+          if (ev.type === 'project') pushTitle = `🔄 SCHIMBARE PROIECT: ${ev.title}`;
+          else if (ev.type === 'social') pushTitle = `🔄 SCHIMBARE PROGRAM: ${ev.title}`;
+          else if (ev.type === 'meeting') pushTitle = `🔄 SCHIMBARE PROGRAM ȘEDINȚĂ: ${ev.title}`;
+
+          const details: string[] = ['Au intervenit modificări în program!'];
+          if (ev.date) details.push(`🗓️ Noua Dată: ${ev.date}`);
+          if (ev.time) details.push(`⏰ Noua Oră: ${ev.time}`);
+          if (ev.location) details.push(`📍 Locație: ${ev.location}`);
+          if (ev.description) details.push(`📝 Detalii: ${ev.description.slice(0, 85)}...`);
+
+          sendSystemNotification({
+            title: pushTitle,
+            body: details.join(' · '),
+            url: '/#calendar',
+          });
+        }
+      })
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'members' }, (payload: any) => {
         if (payload?.new && (payload.new.id === currentUserId || payload.new.username === currentUsername)) {
           setCurrentMemberData(payload.new);

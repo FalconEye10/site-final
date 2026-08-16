@@ -554,6 +554,78 @@ export function triggerEventPushNotification(
 }
 
 /**
+ * 🔄 Notificare GENERALĂ: Modificare / Schimbare Program Eveniment existent în Calendar
+ */
+export function triggerEventUpdatePushNotification(
+  eventDataOrTitle:
+    | {
+        title: string;
+        date: string;
+        time?: string;
+        endDate?: string;
+        endTime?: string;
+        location?: string;
+        type?: 'meeting' | 'project' | 'social' | 'other';
+        description?: string;
+      }
+    | string,
+  eventDate?: string,
+  eventTime?: string,
+  location?: string,
+  description?: string,
+  type?: string
+) {
+  let title = '';
+  let date = '';
+  let time = '';
+  let loc = '';
+  let desc = '';
+  let evType = 'meeting';
+
+  if (typeof eventDataOrTitle === 'object' && eventDataOrTitle !== null) {
+    title = eventDataOrTitle.title || 'Eveniment Interact';
+    date = eventDataOrTitle.date || '';
+    time = eventDataOrTitle.time || '';
+    loc = eventDataOrTitle.location || '';
+    desc = eventDataOrTitle.description || '';
+    evType = eventDataOrTitle.type || 'meeting';
+  } else {
+    title = eventDataOrTitle || 'Eveniment Interact';
+    date = eventDate || '';
+    time = eventTime || '';
+    loc = location || '';
+    desc = description || '';
+    evType = type || 'meeting';
+  }
+
+  let pushTitle = `🔄 SCHIMBARE EVENIMENT: ${title}`;
+  if (evType === 'project') pushTitle = `🔄 SCHIMBARE PROIECT: ${title}`;
+  else if (evType === 'meeting') pushTitle = `🔄 SCHIMBARE PROGRAM ȘEDINȚĂ: ${title}`;
+
+  let dateDisplay = date;
+  try {
+    if (date) {
+      dateDisplay = formatRomaniaDate(date, { weekday: 'long', day: 'numeric', month: 'long' });
+    }
+  } catch {
+    dateDisplay = date;
+  }
+
+  const detailsParts: string[] = [];
+  detailsParts.push('Au intervenit modificări în program!');
+  if (dateDisplay) detailsParts.push(`🗓️ Noua Dată: ${dateDisplay}`);
+  if (time) detailsParts.push(`⏰ Noua Oră: ${time}`);
+  if (loc) detailsParts.push(`📍 Locație: ${loc}`);
+  if (desc) detailsParts.push(`📝 Detalii: ${desc.length > 90 ? desc.slice(0, 87) + '...' : desc}`);
+
+  broadcastPushNotification({
+    title: pushTitle,
+    body: detailsParts.join(' · '),
+    url: '/#calendar',
+  });
+}
+
+/**
  * 💖 Notificare NOMINALĂ: Kudos primit
  */
 export function triggerKudosPushNotification(recipientId: string, fromName?: string, message?: string) {
@@ -564,6 +636,7 @@ export function triggerKudosPushNotification(recipientId: string, fromName?: str
     targetMemberId: recipientId,
   });
 }
+
 
 
 
