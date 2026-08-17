@@ -10,6 +10,7 @@ interface MemberActivityHubProps {
   onUpdateMember: (m: any) => void;
   isAdmin: boolean;
   currentUserId: string;
+  currentUserObj?: any;
   preselectedEventId?: string;
 }
 
@@ -19,6 +20,7 @@ export const MemberActivityHub: React.FC<MemberActivityHubProps> = ({
   onUpdateMember,
   isAdmin,
   currentUserId,
+  currentUserObj,
   preselectedEventId,
 }) => {
   const [subtab, setSubtab] = useState<'prezenta' | 'calendar'>(initialSubtab);
@@ -73,6 +75,7 @@ export const MemberActivityHub: React.FC<MemberActivityHubProps> = ({
             onUpdateMember={onUpdateMember}
             isAdmin={isAdmin}
             currentUserId={currentUserId}
+            currentUserObj={currentUserObj}
             preselectedEventId={preselectedEventId}
           />
         )}
@@ -81,6 +84,7 @@ export const MemberActivityHub: React.FC<MemberActivityHubProps> = ({
             isAdmin={isAdmin}
             members={members}
             currentUserId={currentUserId}
+            currentUserObj={currentUserObj}
             onUpdateMember={onUpdateMember}
           />
         )}

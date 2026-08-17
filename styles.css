@@ -2553,10 +2553,17 @@ html[data-theme="light"] input[type="date"] {
 
 .touch-pan-y {
   touch-action: pan-y;
+  -webkit-overflow-scrolling: touch;
 }
 
 .touch-pan-x {
   touch-action: pan-x;
+  -webkit-overflow-scrolling: touch;
+}
+
+.overscroll-contain {
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
 }
 
 /* Mobile responsive dialog heights */
@@ -2565,4 +2572,5 @@ html[data-theme="light"] input[type="date"] {
     max-height: calc(100dvh - 1rem) !important;
   }
 }
+
 

@@ -8,6 +8,7 @@ import {
 import { fetchScoreAuditLogs, ScoreAuditLog } from '../../../utils/supabaseService';
 import { downloadXlsx } from '../../../utils/xlsx';
 import { toast } from '../../ui/Toast';
+import { useBodyScrollLock } from '../../../utils/useBodyScrollLock';
 
 interface MasterAuditViewProps {
   currentUserObj?: any;
@@ -24,6 +25,8 @@ export function MasterAuditView({ currentUserObj }: MasterAuditViewProps) {
   const [selectedTimeRange, setSelectedTimeRange] = useState<'ALL' | 'TODAY' | 'WEEK' | 'MONTH'>('ALL');
   const [viewMode, setViewMode] = useState<'table' | 'timeline'>('table');
   const [inspectedLog, setInspectedLog] = useState<ScoreAuditLog | null>(null);
+
+  useBodyScrollLock(!!inspectedLog);
 
   // Check Master Authorization: EXCLUSIVELY Stefan Stan
   const isMasterAuthorized = useMemo(() => {
@@ -523,12 +526,12 @@ export function MasterAuditView({ currentUserObj }: MasterAuditViewProps) {
       {/* 5. Inspection Modal */}
       <AnimatePresence>
         {inspectedLog && (
-          <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm font-anthropic">
+          <div className="fixed inset-0 z-[200] flex items-center justify-center p-3 sm:p-4 bg-slate-950/70 backdrop-blur-sm font-anthropic">
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="absolute inset-0"
+              className="fixed inset-0"
               onClick={() => setInspectedLog(null)}
             />
 
@@ -536,10 +539,10 @@ export function MasterAuditView({ currentUserObj }: MasterAuditViewProps) {
               initial={{ opacity: 0, scale: 0.96, y: 16 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.96, y: 16 }}
-              className="relative w-full max-w-lg bg-white dark:bg-[#161B22] border border-slate-300 dark:border-slate-800 rounded-[2px] shadow-2xl overflow-hidden z-[201] text-slate-900 dark:text-slate-100 font-anthropic"
+              className="relative w-full max-w-lg h-[88vh] max-h-[640px] flex flex-col bg-white dark:bg-[#161B22] border border-slate-300 dark:border-slate-800 rounded-[2px] shadow-2xl overflow-hidden z-[201] text-slate-900 dark:text-slate-100 font-anthropic"
               onClick={e => e.stopPropagation()}
             >
-              <div className="p-4 sm:p-5 bg-slate-900 dark:bg-slate-950 text-white flex items-center justify-between border-b border-slate-800 font-title">
+              <div className="p-4 sm:p-5 bg-slate-900 dark:bg-slate-950 text-white flex items-center justify-between border-b border-slate-800 font-title shrink-0">
                 <div className="flex items-center gap-2.5">
                   <ShieldAlert size={20} className="text-amber-400" />
                   <h3 className="font-bold text-base text-white">
@@ -554,7 +557,10 @@ export function MasterAuditView({ currentUserObj }: MasterAuditViewProps) {
                 </button>
               </div>
 
-              <div className="p-5 sm:p-6 space-y-4 text-xs sm:text-sm font-anthropic">
+              <div 
+                className="p-5 sm:p-6 space-y-4 text-xs sm:text-sm font-anthropic flex-1 min-h-0 overflow-y-auto overscroll-contain touch-pan-y"
+                style={{ WebkitOverflowScrolling: 'touch' }}
+              >
                 <div className="grid grid-cols-2 gap-3 bg-slate-50 dark:bg-slate-900 p-3.5 rounded-[2px] border border-slate-200 dark:border-slate-800">
                   <div>
                     <div className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 font-title">ID Înregistrare</div>

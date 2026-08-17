@@ -47,7 +47,8 @@ function getOfficialClubRoster(): any[] {
     const fullName = match ? match[1].trim() : raw;
     const role = match ? match[2].trim() : 'member';
     const username = fullName.toLowerCase().replace(/\s+/g, '.').replace(/ț/g, 't').replace(/ș/g, 's').replace(/ă/g, 'a').replace(/î/g, 'i').replace(/â/g, 'a');
-    const isStefan = username === 'stan.stefan' || username === 'admin';
+    const isStefan = username === 'stan.stefan';
+    const isBoardAdmin = isStefan || role === 'admin';
     const id = `M${counter.toString().padStart(3, '0')}`;
     counter++;
 
@@ -55,7 +56,7 @@ function getOfficialClubRoster(): any[] {
       id,
       name: fullName,
       username,
-      role: isStefan ? 'admin' : role,
+      role: isBoardAdmin ? 'admin' : role,
       avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(fullName)}&background=101D34&color=FAF9F5`,
       nickname: fullName.split(' ')[0] || fullName,
       email: `${username}@club.ro`,
@@ -72,8 +73,8 @@ function getOfficialClubRoster(): any[] {
       stats: { totalHours: 0 },
       login_count: 0,
       has_seen_tutorial: false,
-      committee: isStefan ? 'Board Executiv' : 'Comitet Voluntariat',
-      boardPosition: isStefan ? 'Președinte' : undefined
+      committee: isBoardAdmin ? 'Board Executiv' : 'Comitet Voluntariat',
+      boardPosition: isStefan ? 'Președinte' : (role === 'admin' ? 'Membru Board' : undefined)
     };
   });
 }
@@ -292,10 +293,19 @@ export async function fetchScoreAuditLogs(): Promise<ScoreAuditLog[]> {
         const m = memberLookup.get(rawAdminName.toLowerCase())!;
         return { name: m.nickname || m.name, username: m.username || adminUsername };
       }
-      if (rawAdminName && rawAdminName !== 'Admin' && rawAdminName !== 'Sistem' && rawAdminName !== 'Trezorier' && rawAdminName !== 'Board') {
+      if (rawAdminName && rawAdminName.trim() !== '' && rawAdminName !== 'Admin' && rawAdminName !== 'Sistem' && rawAdminName !== 'Trezorier' && rawAdminName !== 'Board') {
         return { name: rawAdminName, username: adminUsername };
       }
-      return { name: 'Ștefan Stan', username: 'stan.stefan' };
+      if (rawAdminName === 'Trezorier' || rawAdminName === 'Casierie') {
+        return { name: 'Trezorerie / Încasări', username: adminUsername || 'trezorerie' };
+      }
+      if (rawAdminName === 'Board' || rawAdminName === 'Conducere') {
+        return { name: 'Conducere / Board', username: adminUsername || 'board' };
+      }
+      if (rawAdminName === 'Sistem') {
+        return { name: 'Sistem Automat', username: 'sistem' };
+      }
+      return { name: rawAdminName || 'Conducere / Admin', username: adminUsername || 'admin' };
     };
 
     // Fetch payments to ensure financial transactions always appear in master audit
@@ -412,17 +422,38 @@ export async function fetchScoreAuditLogs(): Promise<ScoreAuditLog[]> {
       absenceData.forEach((a: any) => {
         const absId = `abs_${a.id}`;
         if (!compiledMap.has(absId)) {
-          const time = a.timestamp || new Date().toISOString();
-          const resolved = resolveAdmin(a.reviewedBy, undefined, undefined);
+          const time = a.reviewedAt || a.timestamp || new Date().toISOString();
+          
+          let actorName = 'Conducere / Board';
+          let actorUsername: string | undefined = undefined;
+          let actorId: string | undefined = a.reviewedById;
+
+          if (a.status === 'pending') {
+            const memberInfo = memberLookup.get((a.memberId || '').toLowerCase());
+            actorName = memberInfo?.name || a.memberName || 'Membru';
+            actorUsername = memberInfo?.username;
+          } else if (a.reviewedBy || a.reviewedById || a.reviewedByUsername) {
+            const resolved = resolveAdmin(a.reviewedBy, a.reviewedById, a.reviewedByUsername);
+            actorName = resolved.name;
+            actorUsername = resolved.username;
+          }
+
           compiledMap.set(absId, {
             id: absId,
-            adminName: resolved.name,
-            adminUsername: resolved.username,
+            adminId: actorId,
+            adminName: actorName,
+            adminUsername: actorUsername,
             targetMemberId: a.memberId,
-            targetMemberName: a.memberName || 'Membru',
+            targetMemberName: a.memberName || memberLookup.get((a.memberId || '').toLowerCase())?.name || 'Membru',
             action: a.status === 'approved' ? 'ABSENCE_APPROVED' : a.status === 'rejected' ? 'ABSENCE_REJECTED' : 'ABSENCE_REQUEST',
             points: 0,
-            reason: `Cerere învoire (${a.status || 'în așteptare'}): ${a.reason || 'Fără motiv specificat'}`,
+            reason: a.status === 'approved'
+              ? (a.reason?.startsWith('Confirmat pe WhatsApp') 
+                  ? a.reason 
+                  : `Învoire aprobată de ${actorName}: "${a.reason || 'Confirmat'}"`)
+              : a.status === 'rejected'
+              ? `Învoire respinsă de ${actorName} (Motiv respingere: "${a.rejectReason || 'Respins'}")`
+              : `Cerere învoire trimisă de membru: "${a.reason || 'Fără motiv specificat'}"`,
             createdAt: time
           });
         }
@@ -653,6 +684,9 @@ export interface TreasuryPayment {
   createdAt?: any;
   memberSignature: string; // Base64 JPEG Compressed
   treasurerSignature: string; // Base64 JPEG Compressed
+  recordedBy?: string;
+  treasurerId?: string;
+  treasurerUsername?: string;
 }
 
 /**
@@ -805,6 +839,7 @@ export interface EventData {
   description: string;
   rsvps: Record<string, string>;
   attendanceClosed?: boolean;
+  durationHours?: number;
   isShiftBased?: boolean;
   shifts?: EventShift[];
   committees?: Record<string, {
@@ -899,10 +934,13 @@ export interface AbsenceRequest {
   id: string;
   eventId: string;
   memberId: string;
+  memberName?: string;
   reason: string;
   status: 'pending' | 'approved' | 'rejected';
   timestamp: string;
   reviewedBy?: string | null;
+  reviewedById?: string | null;
+  reviewedByUsername?: string | null;
   reviewedAt?: string | null;
   rejectReason?: string | null;
 }

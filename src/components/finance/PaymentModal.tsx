@@ -4,12 +4,14 @@ import { X, CheckCircle, AlertTriangle, Eraser } from 'lucide-react';
 import { TreasuryPayment, processTreasuryPayment } from '../../utils/supabaseService';
 import { getTargetMonthForPayment, generateSmartTransactionId } from '../../utils/finance';
 import { toast } from '../ui/Toast';
+import { useBodyScrollLock } from '../../utils/useBodyScrollLock';
 
 interface PaymentModalProps {
   memberId: string;
   memberName: string;
   totalPaid: number;
   joinDateStr?: string;
+  currentUserObj?: any;
   onClose: () => void;
   /** Receives the authoritative post-write values from the transaction, not a client-guessed estimate. */
   onSuccess: (newTotalPaid: number, newStatus: string) => void;
@@ -22,62 +24,70 @@ const SignatureCanvas = ({ title, onSign }: { title: string, onSign: (b64: strin
 
   useEffect(() => {
     const canvas = canvasRef.current;
-    if (canvas) {
-      const ctx = canvas.getContext('2d');
-      if (ctx) {
-        ctx.fillStyle = '#ffffff'; // White background for JPEG
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        ctx.strokeStyle = '#000000'; // Black ink
-        ctx.lineWidth = 2;
-        ctx.lineCap = 'round';
-        ctx.lineJoin = 'round';
-      }
-    }
-  }, []);
-
-  const startDrawing = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
-    setIsDrawing(true);
-    setHasSignature(true);
-    draw(e);
-  };
-
-  const endDrawing = () => {
-    setIsDrawing(false);
-    const canvas = canvasRef.current;
-    if (canvas) {
-      const ctx = canvas.getContext('2d');
-      if (ctx) ctx.beginPath();
-      // Compress and export immediately on mouse up
-      exportCompressed();
-    }
-  };
-
-  const draw = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
-    if (!isDrawing) return;
-    const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
+    ctx.strokeStyle = '#000000';
+    ctx.lineWidth = 2.5;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+  }, []);
 
-    e.preventDefault();
+  const getCoordinates = (e: React.MouseEvent | React.TouchEvent) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return { x: 0, y: 0 };
     const rect = canvas.getBoundingClientRect();
-    let clientX, clientY;
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+
+    let clientX = 0;
+    let clientY = 0;
 
     if ('touches' in e) {
       clientX = e.touches[0].clientX;
       clientY = e.touches[0].clientY;
     } else {
-      clientX = e.clientX;
-      clientY = e.clientY;
+      clientX = (e as React.MouseEvent).clientX;
+      clientY = (e as React.MouseEvent).clientY;
     }
 
-    const x = clientX - rect.left;
-    const y = clientY - rect.top;
+    return {
+      x: (clientX - rect.left) * scaleX,
+      y: (clientY - rect.top) * scaleY
+    };
+  };
 
-    ctx.lineTo(x, y);
-    ctx.stroke();
+  const startDrawing = (e: React.MouseEvent | React.TouchEvent) => {
+    e.preventDefault();
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    const { x, y } = getCoordinates(e);
+    setIsDrawing(true);
+    setHasSignature(true);
     ctx.beginPath();
     ctx.moveTo(x, y);
+  };
+
+  const draw = (e: React.MouseEvent | React.TouchEvent) => {
+    if (!isDrawing) return;
+    e.preventDefault();
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    const { x, y } = getCoordinates(e);
+    ctx.lineTo(x, y);
+    ctx.stroke();
+  };
+
+  const endDrawing = () => {
+    if (!isDrawing) return;
+    setIsDrawing(false);
+    exportCompressed();
   };
 
   const clear = () => {
@@ -143,7 +153,7 @@ const SignatureCanvas = ({ title, onSign }: { title: string, onSign: (b64: strin
         height={150}
         onMouseDown={startDrawing}
         onMouseUp={endDrawing}
-        onMouseOut={endDrawing}
+        onMouseLeave={endDrawing}
         onMouseMove={draw}
         onTouchStart={startDrawing}
         onTouchEnd={endDrawing}
@@ -154,10 +164,12 @@ const SignatureCanvas = ({ title, onSign }: { title: string, onSign: (b64: strin
   );
 };
 
-export const PaymentModal: React.FC<PaymentModalProps> = ({ memberId, memberName, totalPaid, joinDateStr, onClose, onSuccess }) => {
+export const PaymentModal: React.FC<PaymentModalProps> = ({ memberId, memberName, totalPaid, joinDateStr, currentUserObj, onClose, onSuccess }) => {
   const [memberSig, setMemberSig] = useState<string | null>(null);
   const [treasurerSig, setTreasurerSig] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useBodyScrollLock(true);
 
   const targetMonth = getTargetMonthForPayment(joinDateStr, totalPaid);
   const transactionId = generateSmartTransactionId(memberName, new Date());
@@ -167,6 +179,10 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({ memberId, memberName
       toast.error("Ambele semnături sunt obligatorii pentru tranzacție.");
       return;
     }
+
+    const treasurerName = currentUserObj?.name || currentUserObj?.nickname || (currentUserObj?.username ? `@${currentUserObj.username}` : 'Trezorerie');
+    const treasurerId = currentUserObj?.id;
+    const treasurerUsername = currentUserObj?.username;
 
     setIsSubmitting(true);
     try {
@@ -179,6 +195,9 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({ memberId, memberName
         date: new Date().toISOString(),
         memberSignature: memberSig,
         treasurerSignature: treasurerSig,
+        recordedBy: treasurerName,
+        treasurerId: treasurerId,
+        treasurerUsername: treasurerUsername
       };
 
       const result = await processTreasuryPayment(memberId, paymentDoc);
@@ -195,20 +214,19 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({ memberId, memberName
   };
 
   return (
-    <div className="fixed inset-0 z-[300] overflow-y-auto overscroll-contain p-2.5 sm:p-4 flex min-h-full items-start sm:items-center justify-center font-anthropic">
+    <div className="fixed inset-0 z-[300] flex items-center justify-center p-2.5 sm:p-4 font-anthropic">
       <motion.div 
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 bg-slate-950/60 backdrop-blur-sm"
+        className="fixed inset-0 bg-slate-950/70 backdrop-blur-sm"
         onClick={onClose}
       />
       <motion.div 
         initial={{ opacity: 0, scale: 0.95, y: 20 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95, y: 20 }}
-        className="relative w-full max-w-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-[2px] p-4 sm:p-7 shadow-2xl max-h-[calc(100dvh-1rem)] sm:max-h-[88vh] flex flex-col my-auto touch-pan-y font-anthropic"
-        style={{ WebkitOverflowScrolling: 'touch' }}
+        className="relative w-full max-w-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-[2px] p-4 sm:p-7 shadow-2xl h-[90vh] max-h-[640px] flex flex-col font-anthropic z-10 overflow-hidden"
       >
         <div className="flex justify-between items-start mb-3 pb-2 border-b border-slate-100 dark:border-slate-800 shrink-0">
           <div>
@@ -220,7 +238,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({ memberId, memberName
           </button>
         </div>
 
-        <div className="overflow-y-auto overscroll-contain flex-1 pr-1 -mr-1 scrollbar-thin touch-pan-y space-y-4" style={{ WebkitOverflowScrolling: 'touch' }}>
+        <div className="overflow-y-auto overscroll-contain flex-1 min-h-0 pr-1 -mr-1 scrollbar-thin touch-pan-y space-y-4" style={{ WebkitOverflowScrolling: 'touch' }}>
           <div className="bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-[2px] p-3.5 flex flex-col items-center font-anthropic">
             <span className="text-[10px] uppercase tracking-wider font-bold text-slate-500 dark:text-slate-400 mb-1 font-title">Cotizație Acoperită</span>
             <span className="text-base sm:text-lg font-bold text-slate-900 dark:text-white mb-1.5 font-title">{targetMonth}</span>

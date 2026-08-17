@@ -99,6 +99,7 @@ export const AdminTeamHub: React.FC<AdminTeamHubProps> = ({
             onUpdateMember={onUpdateMember}
             isAdmin={isAdmin}
             currentUserId={currentUserId}
+            currentUserObj={currentUserObj}
             preselectedEventId={preselectedEventId}
           />
         )}

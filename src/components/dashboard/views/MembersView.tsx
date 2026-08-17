@@ -13,6 +13,7 @@ import { downloadXlsx } from '../../../utils/xlsx';
 import { deleteMemberFromDB, logScoreAudit, isSystemAccount } from '../../../utils/supabaseService';
 import { formatRomaniaDate, getRomaniaTodayString } from '../../../utils/romaniaTime';
 import { toast } from '../../ui/Toast';
+import { useBodyScrollLock } from '../../../utils/useBodyScrollLock';
 
 interface MembersViewProps {
   members: any[];
@@ -47,6 +48,8 @@ export function MembersView({
 
   const [memberToDelete, setMemberToDelete] = useState<any | null>(null);
   const [isDeletingMember, setIsDeletingMember] = useState(false);
+
+  useBodyScrollLock(!!memberToDelete || !!selectedMember);
 
   const handleConfirmDelete = async () => {
     if (!memberToDelete) return;

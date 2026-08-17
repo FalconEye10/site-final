@@ -5,6 +5,7 @@ import { toast } from '../ui/Toast';
 import { calculateDebt } from '../../utils/finance';
 import { updateMemberInDB, logScoreAudit } from '../../utils/supabaseService';
 import { supabase } from '../../supabase';
+import { useBodyScrollLock } from '../../utils/useBodyScrollLock';
 
 interface AddMemberModalProps {
   isOpen: boolean;
@@ -28,6 +29,8 @@ export function AddMemberModal({ isOpen, onClose, members, onAddMember, currentU
   const [tempPassword, setTempPassword] = useState('');
   const [createdCredentials, setCreatedCredentials] = useState<{ name: string; username: string; pass: string } | null>(null);
   const [copied, setCopied] = useState(false);
+
+  useBodyScrollLock(isOpen);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const generateAutoPassword = (selectedRole: string) => {
@@ -168,7 +171,7 @@ export function AddMemberModal({ isOpen, onClose, members, onAddMember, currentU
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-[200] overflow-y-auto overscroll-contain p-2 sm:p-4 flex min-h-full items-start sm:items-center justify-center">
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-2 sm:p-4 font-anthropic">
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -181,8 +184,7 @@ export function AddMemberModal({ isOpen, onClose, members, onAddMember, currentU
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
             transition={{ duration: 0.2, ease: easeOut }}
-            className="relative w-full max-w-3xl bg-white dark:bg-[#161B22] rounded-[2px] shadow-2xl p-4 sm:p-8 max-h-[calc(100dvh-1rem)] sm:max-h-[88vh] flex flex-col my-auto touch-pan-y font-anthropic border border-slate-300 dark:border-slate-700"
-            style={{ WebkitOverflowScrolling: 'touch' }}
+            className="relative w-full max-w-3xl bg-white dark:bg-[#161B22] rounded-[2px] shadow-2xl p-4 sm:p-8 h-[90vh] max-h-[740px] flex flex-col font-anthropic border border-slate-300 dark:border-slate-700 z-10 overflow-hidden"
           >
             <div className="flex justify-between items-center mb-4 sm:mb-6 pb-3 sm:pb-4 border-b border-slate-200 dark:border-slate-800 shrink-0">
               <div>
@@ -200,7 +202,7 @@ export function AddMemberModal({ isOpen, onClose, members, onAddMember, currentU
             </div>
 
             {createdCredentials ? (
-              <div className="space-y-5 py-3 overflow-y-auto overscroll-contain flex-1 pr-1 -mr-1 touch-pan-y animate-in fade-in zoom-in-95 duration-200 font-anthropic" style={{ WebkitOverflowScrolling: 'touch' }}>
+              <div className="space-y-5 py-3 overflow-y-auto overscroll-contain flex-1 min-h-0 pr-1 -mr-1 touch-pan-y animate-in fade-in zoom-in-95 duration-200 font-anthropic" style={{ WebkitOverflowScrolling: 'touch' }}>
                 <div className="p-6 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 rounded-[2px] text-center space-y-3">
                   <div className="w-12 h-12 bg-emerald-100 dark:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300 rounded-[2px] flex items-center justify-center mx-auto shadow-xs">
                     <ShieldCheck size={26} />
@@ -237,7 +239,7 @@ export function AddMemberModal({ isOpen, onClose, members, onAddMember, currentU
                 </div>
               </div>
             ) : (
-              <form className="space-y-4 overflow-y-auto overscroll-contain flex-1 pr-1 -mr-1 scrollbar-thin touch-pan-y font-anthropic" style={{ WebkitOverflowScrolling: 'touch' }} onSubmit={handleSubmit}>
+              <form className="space-y-4 overflow-y-auto overscroll-contain flex-1 min-h-0 pr-1 -mr-1 scrollbar-thin touch-pan-y font-anthropic" style={{ WebkitOverflowScrolling: 'touch' }} onSubmit={handleSubmit}>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5 font-title">

@@ -9,6 +9,7 @@ import { isBoardMember } from '../../../utils/permissions';
 import { ScoreAuditLogModal } from './ScoreAuditLogModal';
 import { toast } from '../../ui/Toast';
 import { formatRomaniaDateTime } from '../../../utils/romaniaTime';
+import { useBodyScrollLock } from '../../../utils/useBodyScrollLock';
 
 interface LeaderboardViewProps {
   members: any[];
@@ -32,6 +33,8 @@ export function LeaderboardView({ members, events = [], isAdmin = false, onUpdat
   // History & Audit Log Modal states
   const [historyModalMember, setHistoryModalMember] = useState<any | null>(null);
   const [isAuditLogOpen, setIsAuditLogOpen] = useState(false);
+
+  useBodyScrollLock(!!scoreModalMember || !!historyModalMember);
 
   // Check Master Authorization: EXCLUSIVELY Stefan Stan
   const isStefanMaster = useMemo(() => {
@@ -914,21 +917,21 @@ export function LeaderboardView({ members, events = [], isAdmin = false, onUpdat
       {/* Score Adjustment Modal */}
       <AnimatePresence>
         {scoreModalMember && (
-          <div className="fixed inset-0 z-[120] flex items-center justify-center p-4">
+          <div className="fixed inset-0 z-[120] flex items-center justify-center p-3 sm:p-4 font-anthropic">
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm"
+              className="fixed inset-0 bg-slate-950/70 backdrop-blur-sm"
               onClick={() => !isSubmittingScore && setScoreModalMember(null)}
             />
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="relative w-full max-w-xl max-h-[90vh] overflow-y-auto rounded-[2px] shadow-2xl p-6 md:p-7 z-[121] bg-white dark:bg-[#161B22] text-slate-900 dark:text-slate-100 border border-slate-200 dark:border-slate-800 font-anthropic"
+              className="relative w-full max-w-xl h-[88vh] max-h-[720px] flex flex-col rounded-[2px] shadow-2xl p-5 sm:p-7 z-[121] bg-white dark:bg-[#161B22] text-slate-900 dark:text-slate-100 border border-slate-200 dark:border-slate-800 font-anthropic overflow-hidden"
             >
-              <div className="mb-5 flex items-center gap-3.5">
+              <div className="mb-4 flex items-center gap-3.5 shrink-0">
                 <img
                   src={scoreModalMember.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(scoreModalMember.nickname || scoreModalMember.name)}&background=0f172a&color=f8fafc`}
                   className="w-12 h-12 rounded-[2px] border border-slate-200 dark:border-slate-700 object-cover"
@@ -940,7 +943,7 @@ export function LeaderboardView({ members, events = [], isAdmin = false, onUpdat
                 </div>
               </div>
 
-              <form onSubmit={handleAdjustScore} className="space-y-4 font-anthropic">
+              <form onSubmit={handleAdjustScore} className="space-y-4 font-anthropic flex-1 min-h-0 overflow-y-auto overscroll-contain pr-1 touch-pan-y" style={{ WebkitOverflowScrolling: 'touch' }}>
                 <div>
                   <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5 font-title">
                     Puncte (folosește minus pentru scădere, ex: -3)
@@ -1017,19 +1020,19 @@ export function LeaderboardView({ members, events = [], isAdmin = false, onUpdat
       {/* Score History Modal */}
       <AnimatePresence>
         {liveHistoryMember && (
-          <div className="fixed inset-0 z-[120] flex items-center justify-center p-4">
+          <div className="fixed inset-0 z-[120] flex items-center justify-center p-3 sm:p-4 font-anthropic">
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="absolute inset-0 bg-slate-950/70 backdrop-blur-sm"
+              className="fixed inset-0 bg-slate-950/70 backdrop-blur-sm"
               onClick={() => setHistoryModalMember(null)}
             />
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="relative w-full max-w-lg max-h-[85vh] flex flex-col rounded-[2px] shadow-2xl p-5 sm:p-7 z-[121] bg-white dark:bg-[#161B22] text-slate-900 dark:text-slate-100 border border-slate-200 dark:border-slate-800 font-anthropic"
+              className="relative w-full max-w-lg h-[85vh] max-h-[640px] flex flex-col rounded-[2px] shadow-2xl p-5 sm:p-7 z-[121] bg-white dark:bg-[#161B22] text-slate-900 dark:text-slate-100 border border-slate-200 dark:border-slate-800 font-anthropic overflow-hidden"
             >
               <div className="mb-4 flex items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
@@ -1087,7 +1090,10 @@ export function LeaderboardView({ members, events = [], isAdmin = false, onUpdat
                 );
               })()}
 
-              <div className="overflow-y-auto pr-1 space-y-2.5 flex-1 font-anthropic">
+              <div 
+                className="overflow-y-auto overscroll-contain pr-1 space-y-2.5 flex-1 min-h-0 font-anthropic touch-pan-y"
+                style={{ WebkitOverflowScrolling: 'touch' }}
+              >
                 {sortedHistory.length === 0 ? (
                   <div className="text-center text-slate-500 dark:text-slate-400 text-xs sm:text-sm font-medium py-8">
                     Nicio activitate sau punctaj înregistrat pentru acest membru.

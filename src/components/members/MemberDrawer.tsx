@@ -15,6 +15,7 @@ import { PaymentModal } from '../finance/PaymentModal';
 import { ScoringReferenceGuide, ScoringPreset } from '../dashboard/views/ScoringReferenceGuide';
 import { supabase } from '../../supabase';
 import { triggerScorePushNotification } from '../../utils/pushNotifications';
+import { useBodyScrollLock } from '../../utils/useBodyScrollLock';
 
 interface MemberDrawerProps {
   member: any;
@@ -29,6 +30,8 @@ export function MemberDrawer({ member, onClose, onUpdateMember, isAdmin, current
   const [isEditing, setIsEditing] = useState(false);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [selectedReceipt, setSelectedReceipt] = useState<TreasuryPayment | null>(null);
+
+  useBodyScrollLock(true);
 
   // Score Adjustment Modal states
   const [isScoreModalOpen, setIsScoreModalOpen] = useState(false);
@@ -215,7 +218,7 @@ export function MemberDrawer({ member, onClose, onUpdateMember, isAdmin, current
       // Dacă s-a introdus o parolă nouă pentru membru de către admin
       if (adminNewPassword && adminNewPassword.trim().length > 0) {
         const { data: passRes, error: passErr } = await supabase.rpc('admin_set_member_password', {
-          p_admin_member_id: currentUserObj?.id || currentUserObj?.username || 'stan.stefan',
+          p_admin_member_id: currentUserObj?.id || currentUserObj?.username || '',
           p_target_member_id: member.id,
           p_new_password: adminNewPassword.trim()
         });
@@ -502,7 +505,10 @@ export function MemberDrawer({ member, onClose, onUpdateMember, isAdmin, current
         )}
 
         {/* Content Area */}
-        <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-5 sm:space-y-6 bg-white dark:bg-[#161B22] font-anthropic">
+        <div 
+          className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-4 sm:p-6 space-y-5 sm:space-y-6 bg-white dark:bg-[#161B22] font-anthropic touch-pan-y"
+          style={{ WebkitOverflowScrolling: 'touch' }}
+        >
           {isEditing ? (
             /* Edit Form */
             <form onSubmit={handleSaveProfile} className="space-y-5 max-w-2xl mx-auto font-anthropic">
@@ -1182,6 +1188,7 @@ export function MemberDrawer({ member, onClose, onUpdateMember, isAdmin, current
             memberName={member.name}
             totalPaid={member.totalPaid || 0}
             joinDateStr={member.joinDate}
+            currentUserObj={currentUserObj}
             onClose={() => setIsPaymentModalOpen(false)}
             onSuccess={(newTotalPaid, newStatus) => {
               setIsPaymentModalOpen(false);
@@ -1272,13 +1279,12 @@ export function MemberDrawer({ member, onClose, onUpdateMember, isAdmin, current
       {/* Score Adjustment Modal */}
       <AnimatePresence>
         {isScoreModalOpen && (
-          <div className="fixed inset-0 z-[200] overflow-y-auto overscroll-contain p-2.5 sm:p-4 flex min-h-full items-start sm:items-center justify-center bg-slate-900/60 backdrop-blur-sm font-anthropic">
+          <div className="fixed inset-0 z-[200] flex items-center justify-center p-2.5 sm:p-4 bg-slate-900/70 backdrop-blur-sm font-anthropic">
             <motion.div
               initial={{ opacity: 0, scale: 0.97 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.97 }}
-              className="relative w-full max-w-xl max-h-[calc(100dvh-1.5rem)] sm:max-h-[88vh] flex flex-col bg-white dark:bg-[#161B22] border border-slate-300 dark:border-slate-800 rounded-[2px] shadow-2xl p-4 sm:p-6 z-[201] text-slate-900 dark:text-slate-100 font-anthropic my-auto touch-pan-y"
-              style={{ WebkitOverflowScrolling: 'touch' }}
+              className="relative w-full max-w-xl h-[88vh] max-h-[720px] flex flex-col bg-white dark:bg-[#161B22] border border-slate-300 dark:border-slate-800 rounded-[2px] shadow-2xl p-4 sm:p-6 z-[201] text-slate-900 dark:text-slate-100 font-anthropic overflow-hidden"
             >
               <div className="flex justify-between items-start pb-3 mb-3 border-b border-slate-200 dark:border-slate-800 shrink-0">
                 <div>
@@ -1293,7 +1299,7 @@ export function MemberDrawer({ member, onClose, onUpdateMember, isAdmin, current
                 </button>
               </div>
 
-              <form onSubmit={handleAdjustScore} className="space-y-4 overflow-y-auto overscroll-contain flex-1 pr-1 -mr-1 scrollbar-thin touch-pan-y font-anthropic" style={{ WebkitOverflowScrolling: 'touch' }}>
+              <form onSubmit={handleAdjustScore} className="space-y-4 overflow-y-auto overscroll-contain flex-1 min-h-0 pr-1 -mr-1 scrollbar-thin touch-pan-y font-anthropic" style={{ WebkitOverflowScrolling: 'touch' }}>
                 <div>
                   <label className="block text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1 font-title">Puncte (ex: 5 sau -2)</label>
                   <input

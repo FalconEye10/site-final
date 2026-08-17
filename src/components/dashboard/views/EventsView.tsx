@@ -14,6 +14,7 @@ import {
 } from '../../../utils/romaniaTime';
 import { toast } from '../../ui/Toast';
 import { triggerEventPushNotification, triggerEventUpdatePushNotification, triggerAdminAbsenceRequestNotification } from '../../../utils/pushNotifications';
+import { useBodyScrollLock } from '../../../utils/useBodyScrollLock';
 
 const easeOut: [number, number, number, number] = [0.23, 1, 0.32, 1];
 
@@ -21,10 +22,11 @@ interface EventsViewProps {
   isAdmin: boolean;
   members?: any[];
   currentUserId?: string;
+  currentUserObj?: any;
   onUpdateMember?: (updatedMember: any) => void;
 }
 
-export function EventsView({ isAdmin, members = [], currentUserId, onUpdateMember }: EventsViewProps) {
+export function EventsView({ isAdmin, members = [], currentUserId, currentUserObj, onUpdateMember }: EventsViewProps) {
   const [events, setEvents] = useState<EventData[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeViewTab, setActiveViewTab] = useState<'upcoming' | 'history'>('upcoming');
@@ -34,6 +36,8 @@ export function EventsView({ isAdmin, members = [], currentUserId, onUpdateMembe
 
   // Absence Requests
   const [requestingAbsenceFor, setRequestingAbsenceFor] = useState<EventData | null>(null);
+  
+  useBodyScrollLock(isModalOpen || !!requestingAbsenceFor);
   const [absenceReason, setAbsenceReason] = useState('');
 
   // Form states with strict Romania Time defaults
@@ -388,6 +392,10 @@ export function EventsView({ isAdmin, members = [], currentUserId, onUpdateMembe
       try {
         const affectedMembers = members.filter(member => member.role !== 'admin' && creditsByMember.has(member.id));
 
+        const adminActorName = currentUserObj?.name || currentUserObj?.nickname || (currentUserObj?.username ? `@${currentUserObj.username}` : (isAdmin ? 'Admin' : 'Sistem'));
+        const adminActorId = currentUserObj?.id;
+        const adminActorUsername = currentUserObj?.username;
+
         for (const member of affectedMembers) {
           const credits = creditsByMember.get(member.id) || [];
           const totalHours = credits.reduce((sum, c) => sum + c.hours, 0);
@@ -398,7 +406,9 @@ export function EventsView({ isAdmin, members = [], currentUserId, onUpdateMembe
             points: Math.round(credit.hours * 2),
             reason: `${credit.committeeName} (${credit.hours}h): ${event.title}`,
             date: new Date().toISOString(),
-            adminName: 'Admin'
+            adminId: adminActorId,
+            adminName: adminActorName,
+            adminUsername: adminActorUsername
           }));
           const totalPoints = newAdjustments.reduce((sum, a) => sum + a.points, 0);
 
@@ -435,16 +445,17 @@ export function EventsView({ isAdmin, members = [], currentUserId, onUpdateMembe
     if (!requestingAbsenceFor || !currentUserId || !absenceReason.trim()) return;
 
     try {
+      const memberObj = members.find(m => m.id === currentUserId);
+      const memberName = memberObj?.name || 'Un voluntar';
       await saveAbsenceRequest({
         id: `abs_${Date.now()}`,
         eventId: requestingAbsenceFor.id,
         memberId: currentUserId,
+        memberName: memberName,
         reason: absenceReason.trim(),
         status: 'pending',
         timestamp: new Date().toISOString()
       });
-      const memberObj = members.find(m => m.id === currentUserId);
-      const memberName = memberObj?.name || 'Un voluntar';
       triggerAdminAbsenceRequestNotification(memberName, absenceReason.trim());
       toast.success('Cererea de învoire a fost trimisă cu succes!');
       setRequestingAbsenceFor(null);
@@ -1030,12 +1041,12 @@ export function EventsView({ isAdmin, members = [], currentUserId, onUpdateMembe
       {/* Add / Edit Event Modal */}
       <AnimatePresence>
         {isModalOpen && (
-          <div className="fixed inset-0 z-[200] overflow-y-auto overscroll-contain p-2 sm:p-4 flex min-h-full items-start sm:items-center justify-center font-anthropic">
+          <div className="fixed inset-0 z-[200] flex items-center justify-center p-2.5 sm:p-4 font-anthropic">
             <motion.div 
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-slate-950/60 backdrop-blur-sm"
+              className="fixed inset-0 bg-slate-950/70 backdrop-blur-sm"
               onClick={() => setIsModalOpen(false)}
             />
             <motion.div 
@@ -1043,8 +1054,7 @@ export function EventsView({ isAdmin, members = [], currentUserId, onUpdateMembe
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
               transition={{ duration: 0.2, ease: easeOut }}
-              className="relative w-full max-w-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[2px] shadow-2xl p-4 sm:p-7 max-h-[calc(100dvh-1rem)] sm:max-h-[88vh] flex flex-col my-auto touch-pan-y font-anthropic"
-              style={{ WebkitOverflowScrolling: 'touch' }}
+              className="relative w-full max-w-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[2px] shadow-2xl p-4 sm:p-7 h-[90vh] max-h-[720px] flex flex-col font-anthropic z-10 overflow-hidden"
             >
               <div className="flex justify-between items-center mb-3 sm:mb-4 pb-3 border-b border-slate-200 dark:border-slate-800 shrink-0">
                 <h2 className="text-lg sm:text-2xl font-bold font-anthropicSerif text-slate-900 dark:text-white">
@@ -1055,7 +1065,7 @@ export function EventsView({ isAdmin, members = [], currentUserId, onUpdateMembe
                 </button>
               </div>
               
-              <form className="space-y-4 overflow-y-auto overscroll-contain flex-1 pr-1 -mr-1 scrollbar-thin touch-pan-y font-anthropic" style={{ WebkitOverflowScrolling: 'touch' }} onSubmit={handleSubmit}>
+              <form className="space-y-4 overflow-y-auto overscroll-contain flex-1 min-h-0 pr-1 -mr-1 scrollbar-thin touch-pan-y font-anthropic" style={{ WebkitOverflowScrolling: 'touch' }} onSubmit={handleSubmit}>
                 {/* Title */}
                 <div>
                   <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5 font-title">
@@ -1658,15 +1668,15 @@ export function EventsView({ isAdmin, members = [], currentUserId, onUpdateMembe
       {/* Request Absence Member Modal */}
       <AnimatePresence>
         {requestingAbsenceFor && (
-          <div className="fixed inset-0 z-[200] overflow-y-auto overscroll-contain p-3 sm:p-4 flex min-h-full items-center justify-center font-anthropic">
+          <div className="fixed inset-0 z-[200] flex items-center justify-center p-3 sm:p-4 font-anthropic">
             <motion.div 
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-slate-950/60 backdrop-blur-sm"
+              className="fixed inset-0 bg-slate-950/70 backdrop-blur-sm"
               onClick={() => setRequestingAbsenceFor(null)}
             />
             <motion.div 
               initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="relative w-full max-w-sm bg-white dark:bg-slate-900 rounded-[2px] shadow-2xl p-5 sm:p-6 font-anthropic border border-slate-200 dark:border-slate-800 my-auto touch-pan-y max-h-[90dvh] overflow-y-auto overscroll-contain"
+              className="relative w-full max-w-sm bg-white dark:bg-slate-900 rounded-[2px] shadow-2xl p-5 sm:p-6 font-anthropic border border-slate-200 dark:border-slate-800 z-10 max-h-[calc(100dvh-2rem)] sm:max-h-[90dvh] overflow-y-auto overscroll-contain touch-pan-y"
               style={{ WebkitOverflowScrolling: 'touch' }}
             >
               <div className="flex justify-between items-start mb-3.5 font-title">

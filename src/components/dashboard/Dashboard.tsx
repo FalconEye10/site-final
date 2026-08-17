@@ -19,6 +19,7 @@ import { formatRomaniaDate, formatRomaniaDateTime, getRomaniaDateTimeMs, ROMANIA
 import { canEditMemberPassword, isBoardMember } from '../../utils/permissions';
 import { supabase } from '../../supabase';
 import { toast } from '../ui/Toast';
+import { useBodyScrollLock } from '../../utils/useBodyScrollLock';
 import { NotificationsDropdown } from './NotificationsDropdown';
 import { MemberActivityHub } from './hubs/MemberActivityHub';
 import { MemberCommunityHub } from './hubs/MemberCommunityHub';
@@ -1159,6 +1160,8 @@ const ViewPayments = ({ members, onUpdateMember, isAdmin }: { members: any[], on
   const [searchQuery, setSearchQuery] = useState('');
   const [receiptToRevert, setReceiptToRevert] = useState<any | null>(null);
 
+  useBodyScrollLock(!!receiptToRevert);
+
   useEffect(() => {
     setLoading(true);
     const fetchPayments = async () => {
@@ -1339,19 +1342,19 @@ const ViewPayments = ({ members, onUpdateMember, isAdmin }: { members: any[], on
       {/* Revert Warning Modal */}
       <AnimatePresence>
         {receiptToRevert && (
-          <div className="fixed inset-0 z-[70] overflow-y-auto overscroll-contain p-2.5 sm:p-4 flex min-h-full items-center justify-center font-anthropic">
+          <div className="fixed inset-0 z-[150] flex items-center justify-center p-3 sm:p-4 font-anthropic">
             <motion.div 
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/60 backdrop-blur-sm"
+              className="fixed inset-0 bg-slate-950/70 backdrop-blur-sm"
               onClick={() => setReceiptToRevert(null)}
             />
             <motion.div 
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="relative w-full max-w-md max-h-[calc(100dvh-1.5rem)] sm:max-h-[88vh] overflow-y-auto overscroll-contain bg-white dark:bg-[#161B22] rounded-[2px] p-5 sm:p-8 shadow-2xl border border-slate-300 dark:border-slate-700 font-anthropic my-auto touch-pan-y"
+              className="relative w-full max-w-md max-h-[calc(100dvh-2rem)] sm:max-h-[88vh] overflow-y-auto overscroll-contain bg-white dark:bg-[#161B22] rounded-[2px] p-5 sm:p-8 shadow-2xl border border-slate-300 dark:border-slate-700 font-anthropic z-10 touch-pan-y"
               style={{ WebkitOverflowScrolling: 'touch' }}
             >
               <div className="absolute top-0 left-0 w-full h-1.5 bg-rose-600"></div>
@@ -1398,6 +1401,8 @@ const ViewReports = ({ members }: ViewReportsProps) => {
   const [selectedYear, setSelectedYear] = useState('2026');
   const [isExporting, setIsExporting] = useState(false);
   const [showWarning, setShowWarning] = useState(false);
+
+  useBodyScrollLock(showWarning);
 
   const LUNI_DISPONIBILE = ['Ianuarie', 'Februarie', 'Martie', 'Aprilie', 'Mai', 'Iunie', 'Iulie', 'August', 'Septembrie', 'Octombrie', 'Noiembrie', 'Decembrie'];
 
@@ -1480,16 +1485,16 @@ const ViewReports = ({ members }: ViewReportsProps) => {
       {/* Warning Modal */}
       <AnimatePresence>
         {showWarning && (
-          <div className="fixed inset-0 z-[120] overflow-y-auto overscroll-contain p-2.5 sm:p-4 flex min-h-full items-center justify-center font-anthropic">
+          <div className="fixed inset-0 z-[150] flex items-center justify-center p-3 sm:p-4 font-anthropic">
             <motion.div 
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm"
+              className="fixed inset-0 bg-slate-950/70 backdrop-blur-sm"
               onClick={() => setShowWarning(false)}
             />
             
             <motion.div 
               initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="relative w-full max-w-md max-h-[calc(100dvh-1.5rem)] sm:max-h-[88vh] overflow-y-auto overscroll-contain bg-white dark:bg-[#161B22] rounded-[2px] shadow-2xl p-5 sm:p-8 z-[121] border border-slate-300 dark:border-slate-700 font-anthropic my-auto touch-pan-y"
+              className="relative w-full max-w-md max-h-[calc(100dvh-2rem)] sm:max-h-[88vh] overflow-y-auto overscroll-contain bg-white dark:bg-[#161B22] rounded-[2px] shadow-2xl p-5 sm:p-8 z-10 border border-slate-300 dark:border-slate-700 font-anthropic touch-pan-y"
               style={{ WebkitOverflowScrolling: 'touch' }}
             >
               <div className="flex items-center gap-3 text-amber-600 mb-4">
@@ -1629,6 +1634,8 @@ const ViewProfile = ({ currentUserObj, onUpdateMember, members }: ViewProfilePro
   const [cropOffsetY, setCropOffsetY] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+
+  useBodyScrollLock(!!tempImageSrc);
 
   // Sync state if effectiveUser updates
   useEffect(() => {
@@ -1788,7 +1795,7 @@ const ViewProfile = ({ currentUserObj, onUpdateMember, members }: ViewProfilePro
         }
 
         const { data: passRes, error: passErr } = await supabase.rpc('admin_set_member_password', {
-          p_admin_member_id: currentUserObj?.id || currentUserObj?.username || 'stan.stefan',
+          p_admin_member_id: currentUserObj?.id || currentUserObj?.username || effectiveUser.id || effectiveUser.username || '',
           p_target_member_id: effectiveUser.id,
           p_new_password: newPassword.trim()
         });
@@ -2142,9 +2149,13 @@ const ViewProfile = ({ currentUserObj, onUpdateMember, members }: ViewProfilePro
 
       {/* Cropper Modal */}
       {tempImageSrc && (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[150] overflow-y-auto overscroll-contain p-2.5 sm:p-4 flex min-h-full items-center justify-center font-anthropic">
+        <div className="fixed inset-0 z-[150] flex items-center justify-center p-3 sm:p-4 font-anthropic">
           <div 
-            className="bg-white dark:bg-slate-900 rounded-[2px] p-5 sm:p-6 max-w-md w-full max-h-[calc(100dvh-1.5rem)] sm:max-h-[90vh] overflow-y-auto overscroll-contain border border-slate-300 dark:border-slate-800 shadow-2xl flex flex-col items-center font-anthropic my-auto touch-pan-y"
+            className="fixed inset-0 bg-black/70 backdrop-blur-sm"
+            onClick={() => setTempImageSrc(null)}
+          />
+          <div 
+            className="relative bg-white dark:bg-slate-900 rounded-[2px] p-5 sm:p-6 max-w-md w-full max-h-[calc(100dvh-2rem)] sm:max-h-[90vh] overflow-y-auto overscroll-contain border border-slate-300 dark:border-slate-800 shadow-2xl flex flex-col items-center font-anthropic z-10 touch-pan-y"
             style={{ WebkitOverflowScrolling: 'touch' }}
           >
             <h3 className="text-lg font-black text-slate-900 dark:text-white mb-4 font-title">Ajustare Poza de Profil</h3>
@@ -2404,12 +2415,13 @@ export function Dashboard({ username, onLogout }: DashboardProps) {
            m.name?.toLowerCase().includes(username?.toLowerCase())
     );
     if (found) return found;
-    const isStefan = username?.toLowerCase() === 'stan.stefan' || username?.toLowerCase() === 'admin';
+    const isStefan = username?.toLowerCase() === 'stan.stefan';
+    const isAdminUser = username?.toLowerCase() === 'admin';
     return {
-      id: isStefan ? 'M053' : `M_${username}`,
-      name: isStefan ? 'STAN STEFAN' : username?.toUpperCase() || 'MEMBRU',
+      id: isStefan ? 'M053' : (isAdminUser ? 'ADMIN_SYS' : `M_${username}`),
+      name: isStefan ? 'STAN STEFAN' : (isAdminUser ? 'ADMINISTRATOR CONDUCERE' : (username?.toUpperCase() || 'MEMBRU')),
       username: username || 'user',
-      role: isStefan ? 'admin' : 'member',
+      role: (isStefan || isAdminUser) ? 'admin' : 'member',
       status: 'active',
       score: 100,
       hours: 24,
@@ -2750,6 +2762,7 @@ export function Dashboard({ username, onLogout }: DashboardProps) {
               onUpdateMember={handleUpdateMember}
               isAdmin={isAdmin}
               currentUserId={currentUserObj?.id || ''}
+              currentUserObj={currentUserObj}
               preselectedEventId={preselectedEventIdForExcuse}
             />
           );
@@ -2808,6 +2821,7 @@ export function Dashboard({ username, onLogout }: DashboardProps) {
           onUpdateMember={handleUpdateMember} 
           isAdmin={isAdmin} 
           currentUserId={currentUserObj?.id || ''}
+          currentUserObj={currentUserObj}
           preselectedEventId={preselectedEventIdForExcuse}
         />
       );
@@ -2838,6 +2852,7 @@ export function Dashboard({ username, onLogout }: DashboardProps) {
             isAdmin={isAdmin} 
             members={members}
             currentUserId={currentUserObj?.id || ''}
+            currentUserObj={currentUserObj}
             onUpdateMember={handleUpdateMember}
           />
         );

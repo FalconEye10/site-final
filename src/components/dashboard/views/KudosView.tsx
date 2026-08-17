@@ -4,6 +4,7 @@ import { Heart, Send, Sparkles, Search, Award } from 'lucide-react';
 import { toast } from '../../ui/Toast';
 import { triggerKudosPushNotification } from '../../../utils/pushNotifications';
 import { formatRomaniaDate } from '../../../utils/romaniaTime';
+import { useBodyScrollLock } from '../../../utils/useBodyScrollLock';
 
 interface KudosItem {
   id: string;
@@ -42,6 +43,8 @@ export const KudosView: React.FC<KudosViewProps> = ({ currentUserId, currentUser
   const [selectedCategory, setSelectedCategory] = useState(KUDOS_CATEGORIES[0].id);
   const [kudosMessage, setKudosMessage] = useState('');
   const [sending, setSending] = useState(false);
+
+  useBodyScrollLock(showSendModal);
 
   const fetchKudos = async () => {
     try {
@@ -295,9 +298,13 @@ export const KudosView: React.FC<KudosViewProps> = ({ currentUserId, currentUser
 
       {/* Modal Send Kudos */}
       {showSendModal && (
-        <div className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 font-anthropic">
-          <div className="bg-white dark:bg-slate-900 rounded-[2px] max-w-lg w-full p-5 sm:p-6 shadow-2xl border border-slate-200 dark:border-slate-800 space-y-4 animate-in zoom-in-95">
-            <div className="flex items-center justify-between">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 font-anthropic">
+          <div 
+            className="fixed inset-0 bg-slate-950/70 backdrop-blur-sm"
+            onClick={() => setShowSendModal(false)}
+          />
+          <div className="relative bg-white dark:bg-slate-900 rounded-[2px] max-w-lg w-full p-5 sm:p-6 shadow-2xl border border-slate-200 dark:border-slate-800 h-[90vh] max-h-[640px] flex flex-col z-10 overflow-hidden font-anthropic animate-in zoom-in-95">
+            <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-100 dark:border-slate-800 shrink-0">
               <div className="flex items-center gap-2.5">
                 <div className="w-9 h-9 rounded-[2px] bg-rose-50 dark:bg-rose-950/30 text-rose-600 dark:text-rose-400 flex items-center justify-center font-bold">
                   <Sparkles size={20} />
@@ -312,7 +319,7 @@ export const KudosView: React.FC<KudosViewProps> = ({ currentUserId, currentUser
               </button>
             </div>
 
-            <form onSubmit={handleSendKudos} className="space-y-4 font-anthropic">
+            <form onSubmit={handleSendKudos} className="space-y-4 font-anthropic flex-1 min-h-0 overflow-y-auto overscroll-contain pr-1 touch-pan-y" style={{ WebkitOverflowScrolling: 'touch' }}>
               <div>
                 <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5 font-title">
                   Alege Destinatarul

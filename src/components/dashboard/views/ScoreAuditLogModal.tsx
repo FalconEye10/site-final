@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ShieldAlert, Search, RefreshCw, X, ArrowUpRight, ArrowDownRight, RotateCcw, Lock, UserX, UserPlus, Key } from 'lucide-react';
 import { fetchScoreAuditLogs, ScoreAuditLog } from '../../../utils/supabaseService';
 import { formatRomaniaDateTime } from '../../../utils/romaniaTime';
+import { useBodyScrollLock } from '../../../utils/useBodyScrollLock';
 
 interface ScoreAuditLogModalProps {
   isOpen: boolean;
@@ -50,9 +51,11 @@ export function ScoreAuditLogModal({ isOpen, onClose }: ScoreAuditLogModalProps)
     );
   });
 
+  useBodyScrollLock(true);
+
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-[200] overflow-y-auto overscroll-contain p-2 sm:p-6 flex min-h-full items-start sm:items-center justify-center bg-slate-950/70 backdrop-blur-md font-anthropic">
+      <div className="fixed inset-0 z-[200] flex items-center justify-center p-2 sm:p-4 bg-slate-950/70 backdrop-blur-md font-anthropic">
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -65,8 +68,7 @@ export function ScoreAuditLogModal({ isOpen, onClose }: ScoreAuditLogModalProps)
           initial={{ opacity: 0, scale: 0.96, y: 16 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.96, y: 16 }}
-          className="relative w-full max-w-5xl lg:max-w-6xl max-h-[calc(100dvh-1rem)] sm:max-h-[90vh] flex flex-col bg-white dark:bg-[#161B22] text-slate-900 dark:text-slate-100 border border-slate-300 dark:border-slate-800 rounded-[2px] shadow-2xl overflow-hidden z-[201] score-audit-modal font-anthropic my-auto touch-pan-y"
-          style={{ WebkitOverflowScrolling: 'touch' }}
+          className="relative w-full max-w-5xl lg:max-w-6xl h-[88vh] max-h-[850px] flex flex-col bg-white dark:bg-[#161B22] text-slate-900 dark:text-slate-100 border border-slate-300 dark:border-slate-800 rounded-[2px] shadow-2xl overflow-hidden z-[201] score-audit-modal font-anthropic"
           onClick={e => e.stopPropagation()}
         >
           {/* Modal Header Bar */}
@@ -145,7 +147,10 @@ export function ScoreAuditLogModal({ isOpen, onClose }: ScoreAuditLogModalProps)
           </div>
 
           {/* Table Container */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-2 custom-scrollbar bg-slate-100/60 dark:bg-slate-950 font-anthropic">
+          <div 
+            className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-3 sm:p-4 space-y-2 custom-scrollbar bg-slate-100/60 dark:bg-slate-950 font-anthropic touch-pan-y"
+            style={{ WebkitOverflowScrolling: 'touch' }}
+          >
             {loading ? (
               <div className="text-center py-16 text-slate-700 dark:text-slate-300 text-sm font-semibold flex flex-col items-center gap-2">
                 <RefreshCw size={22} className="animate-spin text-amber-600 dark:text-amber-400" />
