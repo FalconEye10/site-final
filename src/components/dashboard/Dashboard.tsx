@@ -47,6 +47,7 @@ const SuggestionsView = lazy(() => import('./views/SuggestionsView').then(m => (
 const MasterAuditView = lazy(() => import('./views/MasterAuditView').then(m => ({ default: m.MasterAuditView })));
 const AddMemberModal = lazy(() => import('../members/AddMemberModal').then(m => ({ default: m.AddMemberModal })));
 const PlatformTutorialModal = lazy(() => import('./PlatformTutorialModal').then(m => ({ default: m.PlatformTutorialModal })));
+const ScoringUpdateModal = lazy(() => import('./ScoringUpdateModal').then(m => ({ default: m.ScoringUpdateModal })));
 
 function ViewLoadingSkeleton() {
   return (
@@ -2305,6 +2306,7 @@ export function Dashboard({ username, onLogout }: DashboardProps) {
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [isTutorialOpen, setIsTutorialOpen] = useState(false);
+  const [isScoringUpdateModalOpen, setIsScoringUpdateModalOpen] = useState(false);
   const [membersViewSeed, setMembersViewSeed] = useState<{ search?: string; memberId?: string }>({});
   const [themeMode, setThemeMode] = useState<'dark' | 'light'>(() => {
     if (typeof window === 'undefined') return 'dark';
@@ -2324,6 +2326,25 @@ export function Dashboard({ username, onLogout }: DashboardProps) {
       }
     }
   }, [members, username]);
+
+  // Scoring System Announcement / Update Log on Next Login for all members
+  useEffect(() => {
+    if (!username) return;
+    const updateSeenKey = `camena_update_scoring_v1_${username.toLowerCase()}`;
+    const alreadySeenUpdate = localStorage.getItem(updateSeenKey);
+    // Trigger if not seen and not currently displaying the onboarding tutorial
+    if (!alreadySeenUpdate && !isTutorialOpen) {
+      setIsScoringUpdateModalOpen(true);
+    }
+  }, [username, isTutorialOpen]);
+
+  const handleCloseScoringUpdate = () => {
+    setIsScoringUpdateModalOpen(false);
+    if (username) {
+      const updateSeenKey = `camena_update_scoring_v1_${username.toLowerCase()}`;
+      localStorage.setItem(updateSeenKey, 'true');
+    }
+  };
 
   // Auto-close mobile sidebar on resize to desktop (lg) or Escape key
   useEffect(() => {
@@ -2349,6 +2370,12 @@ export function Dashboard({ username, onLogout }: DashboardProps) {
     setIsTutorialOpen(false);
     const localKey = `tutorial_seen_v3_${username.toLowerCase()}`;
     localStorage.setItem(localKey, 'true');
+
+    // Trigger update log if unseen
+    const updateSeenKey = `camena_update_scoring_v1_${username.toLowerCase()}`;
+    if (!localStorage.getItem(updateSeenKey)) {
+      setIsScoringUpdateModalOpen(true);
+    }
 
     // Update in Supabase so login count is saved and has_seen_tutorial is marked true
     try {
@@ -3364,6 +3391,17 @@ export function Dashboard({ username, onLogout }: DashboardProps) {
             isOpen={isTutorialOpen}
             onClose={handleCloseTutorial}
             isMandatoryFirstTime={Boolean(currentUserObj && (currentUserObj.login_count === 0 || !currentUserObj.has_seen_tutorial))}
+            currentUser={currentUserObj}
+          />
+        </Suspense>
+      )}
+
+      {/* Scoring System Update Log Modal - Triggers on next login for all members */}
+      {isScoringUpdateModalOpen && (
+        <Suspense fallback={null}>
+          <ScoringUpdateModal
+            isOpen={isScoringUpdateModalOpen}
+            onClose={handleCloseScoringUpdate}
             currentUser={currentUserObj}
           />
         </Suspense>
