@@ -537,6 +537,56 @@ export async function fetchScoreAuditLogs(): Promise<ScoreAuditLog[]> {
  * Aplică o ajustare de scor (și, opțional, ore/proiecte) pe un membru.
  * Limitează punctajul la maxim +35 și minim -35 per acțiune (conform ghidului de punctare).
  */
+/**
+ * Calculează scorul istoric total și scorul bilunar pentru un membru.
+ * - Scor Istoric Total (Permanent): însumează TOATE punctele (pozitive și negative) acumulate vreodată. Nu se resetează niciodată.
+ * - Scor Bilunar (Ciclu Curent): însumează STRICT punctele din perioada curentă de 2 luni. La fiecare ciclu nou, pornește de la 0 pentru toți.
+ */
+export function calculateMemberScores(
+  member: any,
+  targetDate: Date = new Date()
+): {
+  totalScore: number;
+  biMonthlyScore: number;
+  biMonthlyAdjustments: ScoreAdjustment[];
+  allAdjustments: ScoreAdjustment[];
+} {
+  const adjustments: ScoreAdjustment[] = Array.isArray(member?.scoreAdjustments) ? member.scoreAdjustments : [];
+  
+  // 1. Permanent All-Time Total Score (never resets, aggregates every positive and negative adjustment)
+  const totalAdjustmentsSum = adjustments.reduce((sum: number, adj: any) => sum + (Number(adj.points) || 0), 0);
+  const totalScore = adjustments.length > 0 
+    ? totalAdjustmentsSum 
+    : (typeof member?.score === 'number' ? member.score : 0);
+
+  // 2. Bi-Monthly Current Cycle Score (strictly the sum of adjustments dated within the current 2-month window)
+  const curYear = targetDate.getFullYear();
+  const curMonth = targetDate.getMonth(); // 0..11
+  const biMonthIndex = Math.floor(curMonth / 2); // 0..5
+  const startMonth = biMonthIndex * 2;
+  const endMonth = biMonthIndex * 2 + 1;
+
+  const biMonthlyAdjustments = adjustments.filter((adj: any) => {
+    if (!adj.date) return false;
+    const d = new Date(adj.date);
+    if (isNaN(d.getTime())) return false;
+    return (
+      d.getFullYear() === curYear &&
+      d.getMonth() >= startMonth &&
+      d.getMonth() <= endMonth
+    );
+  });
+
+  const biMonthlyScore = biMonthlyAdjustments.reduce((sum: number, adj: any) => sum + (Number(adj.points) || 0), 0);
+
+  return {
+    totalScore,
+    biMonthlyScore,
+    biMonthlyAdjustments,
+    allAdjustments: adjustments
+  };
+}
+
 export async function applyMemberScoreAdjustment(
   memberId: string,
   pointsDelta: number,
@@ -558,7 +608,6 @@ export async function applyMemberScoreAdjustment(
     if (fetchErr) throw fetchErr;
 
     const list = Array.isArray(adjustments) ? adjustments : [adjustments];
-    const currentScore = Number(member?.score || 0);
     const currentAdjustments = Array.isArray(member?.scoreAdjustments) ? member.scoreAdjustments : [];
     const currentStats = member?.stats || {};
 
@@ -569,6 +618,10 @@ export async function applyMemberScoreAdjustment(
       console.warn("Ajustare de punctaj duplicată ignorată:", list);
       return;
     }
+
+    const updatedAdjustments = [...currentAdjustments, ...newItems];
+    // Exact mathematical sum of all positive and negative adjustments in record
+    const newTotalScore = updatedAdjustments.reduce((sum: number, a: any) => sum + (Number(a.points) || 0), 0);
 
     const updatedStats = { ...currentStats };
     if (extra?.hoursDelta) {
@@ -581,8 +634,8 @@ export async function applyMemberScoreAdjustment(
     const { error: updateErr } = await supabase
       .from('members')
       .update({
-        score: currentScore + pointsDelta,
-        scoreAdjustments: [...currentAdjustments, ...newItems],
+        score: newTotalScore,
+        scoreAdjustments: updatedAdjustments,
         stats: updatedStats
       })
       .eq('id', memberId.toString());
@@ -598,8 +651,8 @@ export async function applyMemberScoreAdjustment(
         adminUsername: adj.adminUsername,
         targetMemberId: memberId,
         targetMemberName: member.name || 'Membru',
-        action: pointsDelta >= 0 ? 'ADDED' : 'SUBTRACTED',
-        points: pointsDelta,
+        action: (adj.points || 0) >= 0 ? 'ADDED' : 'SUBTRACTED',
+        points: adj.points || 0,
         reason: adj.reason,
         createdAt: adj.date || new Date().toISOString()
       });
@@ -636,7 +689,7 @@ export async function revertMemberScoreAdjustment(
 
     const updatedAdjustments = currentAdjustments.filter(a => a.id !== adjustmentId);
     const pointsToRemove = targetAdj.points || 0;
-    const newScore = (member.score || 0) - pointsToRemove;
+    const newScore = updatedAdjustments.reduce((sum: number, a: any) => sum + (Number(a.points) || 0), 0);
 
     const { error: updateErr } = await supabase
       .from('members')
@@ -649,7 +702,7 @@ export async function revertMemberScoreAdjustment(
     if (updateErr) throw updateErr;
 
     // Înregistrăm acțiunea de REVERT în jurnalul de audit cu un ID determinist
-    const revertAuditId = `revert_${adjustmentId}`;
+    const revertAuditId = `revert_${adjustmentId}_${Date.now()}`;
     await logScoreAudit({
       id: revertAuditId,
       adminId: adminInfo.id,
@@ -659,7 +712,8 @@ export async function revertMemberScoreAdjustment(
       targetMemberName: member.name || 'Membru',
       action: 'REVERTED',
       points: -pointsToRemove,
-      reason: `ANULAT: ${targetAdj.reason} (${pointsToRemove > 0 ? '+' : ''}${pointsToRemove} pct)`
+      reason: `ANULAT: ${targetAdj.reason} (${pointsToRemove > 0 ? '+' : ''}${pointsToRemove} pct)`,
+      createdAt: new Date().toISOString()
     });
 
     return { newScore, updatedAdjustments };

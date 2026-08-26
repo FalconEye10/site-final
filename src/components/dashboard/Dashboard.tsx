@@ -601,6 +601,7 @@ const ViewDashboard = ({ members, currentUserObj, isAdmin, onNavigateToSection, 
       <VolunteerSpotlightCard
         members={members}
         currentUserId={currentUserObj?.id}
+        isAdmin={currentUserObj?.role === 'admin'}
         onNavigateToLeaderboard={() => onNavigateToSection('clasament')}
       />
 

@@ -808,26 +808,26 @@ export function MemberDrawer({ member, onClose, onUpdateMember, isAdmin, current
               {/* TAB 2: ACTIVITATE & PREZENȚE */}
               {activeTab === 'activity' && (
                 <div className="space-y-6 font-anthropic">
-                  {/* Score Card */}
-                  <div className="p-4 sm:p-5 rounded-[2px] border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 flex items-center justify-between">
-                    <div>
-                      <span className="text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 block mb-1 font-title">
-                        Scor Total Voluntar
-                      </span>
-                      <span className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-slate-100 font-data">
-                        {member.score || 0} Puncte
-                      </span>
-                    </div>
+                  {/* Score Card (Admin Only) */}
+                  {isAdmin && (
+                    <div className="p-4 sm:p-5 rounded-[2px] border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 flex items-center justify-between">
+                      <div>
+                        <span className="text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 block mb-1 font-title">
+                          Scor Total Voluntar (Evidență Admin)
+                        </span>
+                        <span className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-slate-100 font-data">
+                          {member.score || 0} Puncte
+                        </span>
+                      </div>
 
-                    {isAdmin && (
                       <button
                         onClick={() => setIsScoreModalOpen(true)}
                         className="px-4 py-2 rounded-[2px] btn-civic-primary text-xs sm:text-sm uppercase tracking-wider font-bold transition-colors font-title cursor-pointer"
                       >
                         Ajustează Scor
                       </button>
-                    )}
-                  </div>
+                    </div>
+                  )}
 
                   {/* Prezențe */}
                   <div className="p-4 sm:p-5 rounded-[2px] border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 space-y-4">

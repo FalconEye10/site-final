@@ -9,12 +9,14 @@ import { isBoardMember } from '../../utils/permissions';
 interface VolunteerSpotlightCardProps {
   members: any[];
   currentUserId?: string;
+  isAdmin?: boolean;
   onNavigateToLeaderboard?: () => void;
 }
 
 export const VolunteerSpotlightCard: React.FC<VolunteerSpotlightCardProps> = ({
   members,
   currentUserId,
+  isAdmin = false,
   onNavigateToLeaderboard,
 }) => {
   const [showHistory, setShowHistory] = useState(false);
@@ -49,9 +51,9 @@ export const VolunteerSpotlightCard: React.FC<VolunteerSpotlightCardProps> = ({
     const d = new Date();
     const month = d.getMonth(); // 0 - 11
     const year = d.getFullYear();
-    const biMonthIndex = Math.floor(month / 2);
+    const biMonthIndex = Math.floor(month / 2); // 0 - 5
 
-    const periods = [
+    const periodNames = [
       'Ianuarie – Februarie',
       'Martie – Aprilie',
       'Mai – Iunie',
@@ -61,7 +63,8 @@ export const VolunteerSpotlightCard: React.FC<VolunteerSpotlightCardProps> = ({
     ];
 
     return {
-      name: `${periods[biMonthIndex]} ${year}`,
+      index: biMonthIndex,
+      name: `${periodNames[biMonthIndex]} ${year}`,
       months: [biMonthIndex * 2, biMonthIndex * 2 + 1],
       year
     };
@@ -73,20 +76,20 @@ export const VolunteerSpotlightCard: React.FC<VolunteerSpotlightCardProps> = ({
     let maxScore = -1;
 
     members.forEach(m => {
-      if (m.role?.toLowerCase() === 'admin') return;
+      if (m.role?.toLowerCase() === 'admin' || isBoardMember(m)) return;
 
-      const adjustments = m.scoreAdjustments || [];
+      const adjustments = Array.isArray(m.scoreAdjustments) ? m.scoreAdjustments : [];
       const pointsInPeriod = adjustments.reduce((sum: number, adj: any) => {
         if (!adj.date) return sum;
         const d = new Date(adj.date);
         if (biMonthlyPeriod.months.includes(d.getMonth()) && d.getFullYear() === biMonthlyPeriod.year) {
-          return sum + (adj.points || 0);
+          return sum + (Number(adj.points) || 0);
         }
         return sum;
       }, 0);
 
-      const totalPresences = m.presences || 0;
-      const effectiveScore = pointsInPeriod > 0 ? pointsInPeriod * 2 + totalPresences : totalPresences;
+      const totalPresences = Number(m.presences || 0);
+      const effectiveScore = pointsInPeriod > 0 ? pointsInPeriod : (totalPresences > 0 ? totalPresences : 0);
 
       if (effectiveScore > maxScore && effectiveScore > 0) {
         maxScore = effectiveScore;
@@ -109,7 +112,7 @@ export const VolunteerSpotlightCard: React.FC<VolunteerSpotlightCardProps> = ({
 
         topMember = {
           ...m,
-          biMonthlyScore: pointsInPeriod > 0 ? pointsInPeriod : totalPresences,
+          biMonthlyScore: pointsInPeriod,
           isPresencesFallback: pointsInPeriod <= 0,
           hoursCalculated,
           kudosCount,
@@ -232,7 +235,9 @@ export const VolunteerSpotlightCard: React.FC<VolunteerSpotlightCardProps> = ({
         return {
           period: p.label,
           name: topMember.name,
-          achievement: `Câștigător Ediție • ${topMember.points} Puncte Acumulate`,
+          achievement: isAdmin 
+            ? `Câștigător Ediție • ${topMember.points} Puncte Acumulate`
+            : `Câștigător Ediție • Activitate Exemplară`,
           badge: '👑 Locul 1',
           hasData: true
         };
@@ -246,7 +251,7 @@ export const VolunteerSpotlightCard: React.FC<VolunteerSpotlightCardProps> = ({
         hasData: false
       };
     });
-  }, [members]);
+  }, [members, isAdmin]);
 
   const handleCelebrate = () => {
     if (!spotlightWinner) return;
@@ -344,10 +349,10 @@ export const VolunteerSpotlightCard: React.FC<VolunteerSpotlightCardProps> = ({
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3.5 w-full lg:w-auto bg-white/70 dark:bg-white/5 border border-amber-400/30 rounded-[2px] p-3.5 shadow-xs">
           <div className="text-center px-2.5 border-r border-amber-300/40 dark:border-white/10">
             <div className="text-2xl md:text-3xl font-black text-amber-600 dark:text-amber-400 leading-none font-data">
-              {spotlightWinner.biMonthlyScore}
+              {isAdmin ? (spotlightWinner.biMonthlyScore > 0 ? `+${spotlightWinner.biMonthlyScore}` : spotlightWinner.biMonthlyScore) : '👑 #1'}
             </div>
             <div className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mt-1.5 flex items-center justify-center gap-1 font-title">
-              <Trophy size={12} /> Puncte 2 Luni
+              <Trophy size={12} /> {isAdmin ? 'Puncte 2 Luni' : 'Lider Ediție'}
             </div>
           </div>
 

@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Trophy, Medal, TrendingUp, TrendingDown, Search, ChevronLeft, ChevronRight, Plus, Minus, History, X, RotateCcw, ShieldAlert } from 'lucide-react';
+import { Trophy, Medal, TrendingUp, TrendingDown, Search, ChevronLeft, ChevronRight, Plus, Minus, History, X, RotateCcw, ShieldAlert, Award, Sparkles } from 'lucide-react';
 import { ScoringReferenceGuide, ScoringPreset } from './ScoringReferenceGuide';
 import { Badge } from '../../ui/Badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../ui/table';
@@ -19,7 +19,7 @@ interface LeaderboardViewProps {
   currentUserObj?: any;
 }
 
-export function LeaderboardView({ members, events = [], isAdmin = false, onUpdateMember, currentUserObj }: LeaderboardViewProps) {
+export function LeaderboardView({ members, isAdmin = false, onUpdateMember, currentUserObj }: LeaderboardViewProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
@@ -94,16 +94,16 @@ export function LeaderboardView({ members, events = [], isAdmin = false, onUpdat
   const [scoreMode, setScoreMode] = useState<'bimonthly' | 'total'>('bimonthly');
 
   // 2. Sort all members by selected score mode (bimonthly or total all-time) descending (EXCLUDING BOARD MEMBERS)
+  // - biMonthlyScore: starts at 0 at each new cycle; sums strictly adjustments dated within the current 2 months.
+  // - totalScore: permanent all-time lifetime score; sums every positive and negative adjustment ever recorded.
   const sortedMembers = useMemo(() => {
     return [...members]
-      .filter(m => !isSystemAccount(m) && !isBoardMember(m)) // Excludem membrii Board-ului și administratorii din clasament
+      .filter(m => !isSystemAccount(m) && !isBoardMember(m))
       .map(m => {
-        const adjustments = m.scoreAdjustments || [];
-        
-        // Puncte din prezență/absențe: +1 punct per prezență, -2 puncte per absență nemotivată, +0 puncte per motivată
-        const attendanceScore = ((Number(m.presences) || 0) * 1) + ((Number(m.unexcusedAbsences) || 0) * -2);
+        const adjustments = Array.isArray(m.scoreAdjustments) ? m.scoreAdjustments : [];
 
-        const biMonthlyAdjustments = adjustments.reduce((sum: number, adj: any) => {
+        // Calculate current cycle bi-monthly score strictly from dated adjustments
+        const biMonthlyScore = adjustments.reduce((sum: number, adj: any) => {
           if (!adj.date) return sum;
           const d = new Date(adj.date);
           if (
@@ -111,21 +111,20 @@ export function LeaderboardView({ members, events = [], isAdmin = false, onUpdat
             d.getMonth() >= biMonthlyInfo.startMonth &&
             d.getMonth() <= biMonthlyInfo.endMonth
           ) {
-            return sum + (adj.points || 0);
+            return sum + (Number(adj.points) || 0);
           }
           return sum;
         }, 0);
 
-        const biMonthlyScore = biMonthlyAdjustments + attendanceScore;
-
-        const totalAdjustments = adjustments.reduce((sum: number, adj: any) => sum + (adj.points || 0), 0);
-        const totalScore = (typeof m.score === 'number' && m.score !== 0)
-          ? m.score
-          : totalAdjustments + attendanceScore;
+        // Calculate permanent total score as exact sum of all adjustments
+        const totalAdjustmentsSum = adjustments.reduce((sum: number, adj: any) => sum + (Number(adj.points) || 0), 0);
+        const totalScore = adjustments.length > 0 
+          ? totalAdjustmentsSum 
+          : (typeof m.score === 'number' ? m.score : 0);
 
         const displayScore = scoreMode === 'total' ? totalScore : biMonthlyScore;
 
-        return { ...m, biMonthlyScore, totalScore, displayScore, attendanceScore };
+        return { ...m, biMonthlyScore, totalScore, displayScore };
       })
       .sort((a, b) => b.displayScore - a.displayScore);
   }, [members, biMonthlyInfo, scoreMode]);
@@ -141,9 +140,8 @@ export function LeaderboardView({ members, events = [], isAdmin = false, onUpdat
     let winner: any = null;
 
     members.forEach(m => {
-      if (isBoardMember(m)) return; // Excludem membrii Board-ului din calcul
-      const adjustments = m.scoreAdjustments || [];
-      const attendanceScore = ((Number(m.presences) || 0) * 1) + ((Number(m.unexcusedAbsences) || 0) * -2);
+      if (isBoardMember(m) || isSystemAccount(m)) return;
+      const adjustments = Array.isArray(m.scoreAdjustments) ? m.scoreAdjustments : [];
 
       // Current Bi-Monthly Score
       const currentScore = adjustments.reduce((sum: number, adj: any) => {
@@ -154,10 +152,10 @@ export function LeaderboardView({ members, events = [], isAdmin = false, onUpdat
           d.getMonth() >= biMonthlyInfo.startMonth &&
           d.getMonth() <= biMonthlyInfo.endMonth
         ) {
-          return sum + (adj.points || 0);
+          return sum + (Number(adj.points) || 0);
         }
         return sum;
-      }, 0) + attendanceScore;
+      }, 0);
 
       // Previous Bi-Monthly Score
       const prevScore = adjustments.reduce((sum: number, adj: any) => {
@@ -168,7 +166,7 @@ export function LeaderboardView({ members, events = [], isAdmin = false, onUpdat
           d.getMonth() >= biMonthlyInfo.prevStartMonth &&
           d.getMonth() <= biMonthlyInfo.prevEndMonth
         ) {
-          return sum + (adj.points || 0);
+          return sum + (Number(adj.points) || 0);
         }
         return sum;
       }, 0);
@@ -184,15 +182,14 @@ export function LeaderboardView({ members, events = [], isAdmin = false, onUpdat
     return winner;
   }, [members, biMonthlyInfo]);
 
-  // 4. Cea Mai Mare Involuție (Diferența negativă / scăderea între perioada bimensuală curentă și cea anterioară)
+  // 4. Cea Mai Mare Involuție (Diferența negativă între perioada bimensuală curentă și cea anterioară)
   const ceaMaiMareInvolutie = useMemo(() => {
     let minDiff = 0;
     let candidate: any = null;
 
     members.forEach(m => {
-      if (isBoardMember(m)) return; // Excludem membrii Board-ului din calcul
-      const adjustments = m.scoreAdjustments || [];
-      const attendanceScore = ((Number(m.presences) || 0) * 1) + ((Number(m.unexcusedAbsences) || 0) * -2);
+      if (isBoardMember(m) || isSystemAccount(m)) return;
+      const adjustments = Array.isArray(m.scoreAdjustments) ? m.scoreAdjustments : [];
 
       // Current Bi-Monthly Score
       const currentScore = adjustments.reduce((sum: number, adj: any) => {
@@ -203,10 +200,10 @@ export function LeaderboardView({ members, events = [], isAdmin = false, onUpdat
           d.getMonth() >= biMonthlyInfo.startMonth &&
           d.getMonth() <= biMonthlyInfo.endMonth
         ) {
-          return sum + (adj.points || 0);
+          return sum + (Number(adj.points) || 0);
         }
         return sum;
-      }, 0) + attendanceScore;
+      }, 0);
 
       // Previous Bi-Monthly Score
       const prevScore = adjustments.reduce((sum: number, adj: any) => {
@@ -217,7 +214,7 @@ export function LeaderboardView({ members, events = [], isAdmin = false, onUpdat
           d.getMonth() >= biMonthlyInfo.prevStartMonth &&
           d.getMonth() <= biMonthlyInfo.prevEndMonth
         ) {
-          return sum + (adj.points || 0);
+          return sum + (Number(adj.points) || 0);
         }
         return sum;
       }, 0);
@@ -252,7 +249,7 @@ export function LeaderboardView({ members, events = [], isAdmin = false, onUpdat
 
   const handleAdjustScore = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (isSubmittingScore) return; // Anti-duplicate double click prevention
+    if (isSubmittingScore) return;
     if (!scoreModalMember) return;
     const val = parseInt(scoreAdjustValue, 10);
     if (isNaN(val) || val === 0) return toast.error('Introdu o valoare numerică diferită de zero.');
@@ -262,7 +259,6 @@ export function LeaderboardView({ members, events = [], isAdmin = false, onUpdat
     const cleanReason = scoreAdjustReason.trim();
     if (!cleanReason) return toast.error('Motivul este obligatoriu.');
 
-    // Read the freshest copy from the live members list to avoid stale scores.
     const liveMember = members.find(m => m.id === scoreModalMember.id) || scoreModalMember;
     const memberName = liveMember.name || liveMember.nickname || 'Membru';
 
@@ -282,13 +278,14 @@ export function LeaderboardView({ members, events = [], isAdmin = false, onUpdat
       targetMemberName: memberName
     };
 
-    // No floor at 0 — scores are allowed to go negative.
-    const newScore = (liveMember.score || 0) + val;
+    const currentAdjustments = Array.isArray(liveMember.scoreAdjustments) ? liveMember.scoreAdjustments : [];
+    const updatedAdjustments = [...currentAdjustments, newAdjustment];
+    const newTotalScore = updatedAdjustments.reduce((sum: number, a: any) => sum + (Number(a.points) || 0), 0);
 
     const updatedMember = {
       ...liveMember,
-      score: newScore,
-      scoreAdjustments: [...(liveMember.scoreAdjustments || []), newAdjustment]
+      score: newTotalScore,
+      scoreAdjustments: updatedAdjustments
     };
 
     setIsSubmittingScore(true);
@@ -299,141 +296,26 @@ export function LeaderboardView({ members, events = [], isAdmin = false, onUpdat
       setScoreAdjustValue('');
       setScoreAdjustReason('');
       if (val > 0) {
-        toast.success(`✅ Ai acordat +${val} puncte pentru ${memberName} (Acțiune: "${cleanReason}").`);
+        toast.success(`✅ Ai acordat +${val} puncte pentru ${memberName}!`);
       } else {
-        toast.success(`⚠️ Ai scăzut ${Math.abs(val)} puncte pentru ${memberName} (Motiv: "${cleanReason}").`);
+        toast.success(`⚠️ Ai scăzut ${Math.abs(val)} puncte pentru ${memberName}!`);
       }
     } catch (err: any) {
-      console.error(err);
-      toast.error(err.message || 'Eroare la ajustarea scorului.');
+      toast.error(err.message || 'Eroare la salvarea punctajului.');
     } finally {
       setIsSubmittingScore(false);
     }
   };
 
-  // Always resolve the history modal against the live members list so it
-  // reflects the latest adjustments (e.g. right after adjusting a score).
   const liveHistoryMember = historyModalMember
     ? members.find(m => m.id === historyModalMember.id) || historyModalMember
     : null;
 
   const sortedHistory = useMemo(() => {
     if (!liveHistoryMember) return [];
-    
-    const items: any[] = [];
-
-    // 1. Manual and project adjustments
-    (liveHistoryMember.scoreAdjustments || []).forEach((adj: any) => {
-      items.push({
-        id: adj.id || `adj_${Math.random()}`,
-        reason: adj.reason || 'Ajustare punctaj',
-        points: adj.points || 0,
-        date: adj.date || new Date().toISOString(),
-        adminName: adj.adminName,
-        isAttendance: false,
-        isAdjustment: true,
-        badge: 'AJUSTARE',
-      });
-    });
-
-    // 2. Attendance entries from loaded events
-    let eventPresences = 0;
-    let eventUnexcused = 0;
-    let eventExcused = 0;
-
-    if (Array.isArray(events)) {
-      events.forEach(ev => {
-        const rsvp = ev.rsvps?.[liveHistoryMember.id];
-        if (!rsvp || rsvp === 'none') return;
-
-        const evDate = ev.date ? `${ev.date}T${ev.time || '18:00'}` : new Date().toISOString();
-
-        if (rsvp === 'present') {
-          eventPresences++;
-          items.push({
-            id: `ev_pres_${ev.id}`,
-            reason: `Prezență Confirmată: "${ev.title}"`,
-            points: 1,
-            date: evDate,
-            adminName: 'Pontaj Prezență',
-            isAttendance: true,
-            badge: 'PREZENȚĂ (+1 pct)',
-            badgeColor: 'bg-emerald-100 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800'
-          });
-        } else if (rsvp === 'unexcused' || rsvp === 'absent') {
-          eventUnexcused++;
-          items.push({
-            id: `ev_unex_${ev.id}`,
-            reason: `Absență Nemotivată: "${ev.title}"`,
-            points: -2,
-            date: evDate,
-            adminName: 'Pontaj Prezență',
-            isAttendance: true,
-            badge: 'ABSENȚĂ NEMOTIVATĂ (-2 pct)',
-            badgeColor: 'bg-rose-100 dark:bg-rose-950/40 text-rose-800 dark:text-rose-300 border-rose-300 dark:border-rose-800'
-          });
-        } else if (rsvp === 'excused') {
-          eventExcused++;
-          items.push({
-            id: `ev_exc_${ev.id}`,
-            reason: `Absență Motivată: "${ev.title}"`,
-            points: 0,
-            date: evDate,
-            adminName: 'Pontaj Prezență',
-            isAttendance: true,
-            badge: 'MOTIVATĂ (0 pct)',
-            badgeColor: 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-300 dark:border-slate-700'
-          });
-        }
-      });
-    }
-
-    // 3. Fallback for member attendance counters not already detailed by specific events
-    const remainingPresences = Math.max(0, (Number(liveHistoryMember.presences) || 0) - eventPresences);
-    const remainingUnexcused = Math.max(0, (Number(liveHistoryMember.unexcusedAbsences) || 0) - eventUnexcused);
-    const remainingExcused = Math.max(0, (Number(liveHistoryMember.excusedAbsences) || 0) - eventExcused);
-
-    if (remainingUnexcused > 0) {
-      items.push({
-        id: `cnt_unex_${liveHistoryMember.id}`,
-        reason: `${remainingUnexcused} ${remainingUnexcused === 1 ? 'Absență Nemotivată Înregistrată' : 'Absențe Nemotivate Înregistrate'} (-2 pct fiecare)`,
-        points: remainingUnexcused * -2,
-        date: new Date().toISOString(),
-        adminName: 'Registru Prezențe',
-        isAttendance: true,
-        badge: 'ABSENȚĂ NEMOTIVATĂ',
-        badgeColor: 'bg-rose-100 dark:bg-rose-950/40 text-rose-800 dark:text-rose-300 border-rose-300 dark:border-rose-800'
-      });
-    }
-
-    if (remainingPresences > 0) {
-      items.push({
-        id: `cnt_pres_${liveHistoryMember.id}`,
-        reason: `${remainingPresences} ${remainingPresences === 1 ? 'Prezență Confirmată Înregistrată' : 'Prezențe Confirmate Înregistrate'} (+1 pct fiecare)`,
-        points: remainingPresences * 1,
-        date: new Date().toISOString(),
-        adminName: 'Registru Prezențe',
-        isAttendance: true,
-        badge: 'PREZENȚĂ',
-        badgeColor: 'bg-emerald-100 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800'
-      });
-    }
-
-    if (remainingExcused > 0) {
-      items.push({
-        id: `cnt_exc_${liveHistoryMember.id}`,
-        reason: `${remainingExcused} ${remainingExcused === 1 ? 'Absență Motivată Înregistrată' : 'Absențe Motivate Înregistrate'} (0 pct)`,
-        points: 0,
-        date: new Date().toISOString(),
-        adminName: 'Registru Prezențe',
-        isAttendance: true,
-        badge: 'MOTIVATĂ',
-        badgeColor: 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-300 dark:border-slate-700'
-      });
-    }
-
-    return items.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-  }, [liveHistoryMember, events]);
+    const adjustments = Array.isArray(liveHistoryMember.scoreAdjustments) ? liveHistoryMember.scoreAdjustments : [];
+    return [...adjustments].sort((a: any, b: any) => new Date(b.date || 0).getTime() - new Date(a.date || 0).getTime());
+  }, [liveHistoryMember]);
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -450,6 +332,7 @@ export function LeaderboardView({ members, events = [], isAdmin = false, onUpdat
 
   return (
     <div className="space-y-8 font-anthropic">
+      
       {/* 👑 Spotlight: Voluntarul Bimensual - Locul 1 (Ediția Curentă) */}
       {locul1 && (
         <motion.div
@@ -473,9 +356,11 @@ export function LeaderboardView({ members, events = [], isAdmin = false, onUpdat
               <div>
                 <div className="flex items-center gap-2 mb-1.5 flex-wrap">
                   <span className="px-3 py-1 rounded-[2px] bg-amber-500 text-slate-950 font-black text-xs uppercase tracking-widest shadow-xs font-title">
-                    👑 LOCUL 1 — VOLUNTARUL BIMENSUAL
+                    {scoreMode === 'bimonthly' ? '👑 LOCUL 1 — VOLUNTARUL BIMENSUAL' : '👑 LOCUL 1 — CLASAMENT GENERAL'}
                   </span>
-                  <span className="text-xs sm:text-sm text-amber-800 dark:text-amber-300 font-bold font-data">{biMonthlyInfo.periodLabel}</span>
+                  <span className="text-xs sm:text-sm text-amber-800 dark:text-amber-300 font-bold font-data">
+                    {scoreMode === 'bimonthly' ? biMonthlyInfo.periodLabel : 'Permanent All-Time'}
+                  </span>
                 </div>
                 <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold font-anthropicSerif text-slate-900 dark:text-white leading-tight">
                   {locul1.nickname || locul1.name}
@@ -487,43 +372,56 @@ export function LeaderboardView({ members, events = [], isAdmin = false, onUpdat
             </div>
 
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
-              <div className="flex items-center justify-around sm:justify-center gap-5 sm:gap-6 bg-white/95 dark:bg-slate-900/95 px-5 py-3 rounded-[2px] border border-amber-400/30 shadow-xs">
-                <div className="text-center">
-                  <div className="text-[10px] sm:text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider font-title">Scor Bilunar</div>
-                  <div className="text-2xl sm:text-3xl font-black text-amber-500 font-data leading-none mt-1">
-                    {locul1.biMonthlyScore > 0 ? `+${locul1.biMonthlyScore}` : locul1.biMonthlyScore} pct
+              {/* Score Display (Visible for Admins, Anonymized / Status Badge for Volunteers) */}
+              {isAdmin ? (
+                <div className="flex items-center justify-around sm:justify-center gap-5 sm:gap-6 bg-white/95 dark:bg-slate-900/95 px-5 py-3 rounded-[2px] border border-amber-400/30 shadow-xs font-anthropic">
+                  <div className="text-center">
+                    <div className="text-[10px] sm:text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider font-title">Scor Bilunar</div>
+                    <div className="text-2xl sm:text-3xl font-black text-amber-500 font-data leading-none mt-1">
+                      {locul1.biMonthlyScore > 0 ? `+${locul1.biMonthlyScore}` : locul1.biMonthlyScore} pct
+                    </div>
+                  </div>
+                  <div className="w-px h-10 bg-slate-200 dark:bg-slate-800" />
+                  <div className="text-center">
+                    <div className="text-[10px] sm:text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider font-title">Total Istoric</div>
+                    <div className="text-xl sm:text-2xl font-bold text-slate-800 dark:text-slate-200 font-data leading-none mt-1">
+                      {locul1.totalScore} pct
+                    </div>
                   </div>
                 </div>
-                <div className="w-px h-10 bg-slate-200 dark:bg-slate-800" />
-                <div className="text-center">
-                  <div className="text-[10px] sm:text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider font-title">Total Istoric</div>
-                  <div className="text-xl sm:text-2xl font-bold text-slate-800 dark:text-slate-200 font-data leading-none mt-1">
-                    {locul1.totalScore} pct
+              ) : (
+                <div className="flex items-center gap-3 bg-white/95 dark:bg-slate-900/95 px-5 py-3.5 rounded-[2px] border border-amber-400/30 shadow-xs font-anthropic">
+                  <div className="w-10 h-10 rounded-full bg-amber-100 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center font-bold">
+                    <Sparkles size={20} />
+                  </div>
+                  <div>
+                    <div className="text-sm font-bold font-title text-slate-900 dark:text-white uppercase tracking-wider">Rang Oficial: #1</div>
+                    <div className="text-xs text-amber-700 dark:text-amber-400 font-semibold font-anthropic">Liderul curent al clasamentului</div>
                   </div>
                 </div>
-              </div>
+              )}
 
               {/* Admin Actions for Locul 1 */}
-              <div className="flex flex-wrap sm:flex-nowrap items-center justify-center gap-2.5 font-title">
-                {isAdmin && isStefanMaster && (
+              {isAdmin && (
+                <div className="flex flex-wrap sm:flex-nowrap items-center justify-center gap-2.5 font-title">
+                  {isStefanMaster && (
+                    <button
+                      onClick={() => setIsAuditLogOpen(true)}
+                      title="Vezi Audit Log Puncte"
+                      className="inline-flex items-center justify-center gap-2 h-11 px-4 bg-slate-900 dark:bg-slate-800 text-amber-400 hover:bg-slate-800 dark:hover:bg-slate-700 rounded-[2px] border border-amber-400/40 shadow-xs transition-all text-xs font-bold uppercase tracking-wider cursor-pointer"
+                    >
+                      <ShieldAlert size={16} />
+                      <span>Audit Log</span>
+                    </button>
+                  )}
                   <button
-                    onClick={() => setIsAuditLogOpen(true)}
-                    title="Vezi Audit Log Puncte"
-                    className="inline-flex items-center justify-center gap-2 h-11 px-4 bg-slate-900 dark:bg-slate-800 text-amber-400 hover:bg-slate-800 dark:hover:bg-slate-700 rounded-[2px] border border-amber-400/40 shadow-xs transition-all text-xs font-bold uppercase tracking-wider cursor-pointer"
+                    onClick={() => setHistoryModalMember(locul1)}
+                    title="Istoric detaliat puncte"
+                    className="inline-flex items-center justify-center gap-2 h-11 px-4 bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-800 dark:text-slate-200 rounded-[2px] border border-slate-300 dark:border-slate-700 shadow-xs transition-all text-xs font-bold uppercase tracking-wider cursor-pointer"
                   >
-                    <ShieldAlert size={16} />
-                    <span>Audit Log</span>
+                    <History size={16} />
+                    <span>Istoric</span>
                   </button>
-                )}
-                <button
-                  onClick={() => setHistoryModalMember(locul1)}
-                  title="Istoric detaliat puncte"
-                  className="inline-flex items-center justify-center gap-2 h-11 px-4 bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-800 dark:text-slate-200 rounded-[2px] border border-slate-300 dark:border-slate-700 shadow-xs transition-all text-xs font-bold uppercase tracking-wider cursor-pointer"
-                >
-                  <History size={16} />
-                  <span>Istoric</span>
-                </button>
-                {isAdmin && (
                   <button
                     onClick={() => { setScoreModalMember(locul1); setScoreAdjustValue(''); setScoreAdjustReason(''); }}
                     className="inline-flex items-center justify-center gap-2 h-11 px-4 bg-amber-500 hover:bg-amber-400 text-slate-950 rounded-[2px] text-xs font-bold uppercase tracking-wider shadow-xs transition-all cursor-pointer"
@@ -531,8 +429,8 @@ export function LeaderboardView({ members, events = [], isAdmin = false, onUpdat
                     <Plus size={16} />
                     <span>Ajustează Scor</span>
                   </button>
-                )}
-              </div>
+                </div>
+              )}
             </div>
           </div>
         </motion.div>
@@ -550,7 +448,7 @@ export function LeaderboardView({ members, events = [], isAdmin = false, onUpdat
           <div className="flex items-center gap-2.5 mb-6 relative z-10">
             <Trophy className="text-slate-500 dark:text-slate-400" size={24} />
             <h2 className="text-lg sm:text-xl font-anthropicSerif font-bold text-slate-900 dark:text-white">
-              Podium Bimensual (Locul 2 · 3 · 4) — {biMonthlyInfo.periodLabel}
+              {scoreMode === 'bimonthly' ? `Podium Bimensual (Locul 2 · 3 · 4) — ${biMonthlyInfo.periodLabel}` : 'Podium Clasament Permanent'}
             </h2>
           </div>
 
@@ -570,26 +468,27 @@ export function LeaderboardView({ members, events = [], isAdmin = false, onUpdat
                 </div>
                 <div className="w-16 sm:w-20 h-22 bg-amber-900/10 dark:bg-amber-950/30 rounded-t-[2px] border-t-2 border-amber-700 flex flex-col items-center justify-start pt-2 shadow-xs">
                   <span className="text-2xl sm:text-3xl font-black text-amber-700 dark:text-amber-400 font-data">3</span>
-                  <span className="text-xs font-bold text-amber-800 dark:text-amber-300 mt-1 truncate px-0.5 font-data">{scoreMode === 'total' ? locul3.totalScore : locul3.biMonthlyScore} pts</span>
+                  <span className="text-xs font-bold text-amber-800 dark:text-amber-300 mt-1 truncate px-0.5 font-title uppercase">
+                    {isAdmin ? `${scoreMode === 'total' ? locul3.totalScore : locul3.biMonthlyScore} pts` : 'Bronz'}
+                  </span>
                 </div>
-                {/* Actions Locul 3 */}
-                <div className="flex items-center gap-1.5 mt-2.5 font-title">
-                  <button
-                    onClick={() => setHistoryModalMember(locul3)}
-                    title="Istoric puncte"
-                    className="p-1.5 rounded-[2px] border border-amber-700/30 dark:border-amber-600/40 bg-white dark:bg-slate-800 hover:bg-amber-50 dark:hover:bg-amber-950/40 text-amber-800 dark:text-amber-300 transition-colors cursor-pointer"
-                  >
-                    <History size={14} />
-                  </button>
-                  {isAdmin && (
+                {isAdmin && (
+                  <div className="flex items-center gap-1.5 mt-2.5 font-title">
+                    <button
+                      onClick={() => setHistoryModalMember(locul3)}
+                      title="Istoric puncte"
+                      className="p-1.5 rounded-[2px] border border-amber-700/30 dark:border-amber-600/40 bg-white dark:bg-slate-800 hover:bg-amber-50 dark:hover:bg-amber-950/40 text-amber-800 dark:text-amber-300 transition-colors cursor-pointer"
+                    >
+                      <History size={14} />
+                    </button>
                     <button
                       onClick={() => { setScoreModalMember(locul3); setScoreAdjustValue(''); setScoreAdjustReason(''); }}
                       className="px-2.5 py-1 rounded-[2px] bg-amber-700 hover:bg-amber-800 text-white font-bold text-xs shadow-xs transition-colors cursor-pointer"
                     >
                       Ajustează
                     </button>
-                  )}
-                </div>
+                  </div>
+                )}
               </div>
             )}
 
@@ -609,26 +508,27 @@ export function LeaderboardView({ members, events = [], isAdmin = false, onUpdat
                 </div>
                 <div className="w-18 sm:w-24 h-30 bg-slate-100 dark:bg-slate-800 rounded-t-[2px] border-t-4 border-slate-400 flex flex-col items-center justify-start pt-4 shadow-xs">
                   <span className="text-3xl sm:text-4xl font-black text-slate-600 dark:text-slate-300 font-data">2</span>
-                  <span className="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200 mt-1 truncate px-0.5 font-data">{scoreMode === 'total' ? locul2.totalScore : locul2.biMonthlyScore} pts</span>
+                  <span className="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200 mt-1 truncate px-0.5 font-title uppercase">
+                    {isAdmin ? `${scoreMode === 'total' ? locul2.totalScore : locul2.biMonthlyScore} pts` : 'Argint'}
+                  </span>
                 </div>
-                {/* Actions Locul 2 */}
-                <div className="flex items-center gap-1.5 mt-2.5 font-title">
-                  <button
-                    onClick={() => setHistoryModalMember(locul2)}
-                    title="Istoric puncte"
-                    className="p-1.5 rounded-[2px] border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 transition-colors cursor-pointer"
-                  >
-                    <History size={14} />
-                  </button>
-                  {isAdmin && (
+                {isAdmin && (
+                  <div className="flex items-center gap-1.5 mt-2.5 font-title">
+                    <button
+                      onClick={() => setHistoryModalMember(locul2)}
+                      title="Istoric puncte"
+                      className="p-1.5 rounded-[2px] border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 transition-colors cursor-pointer"
+                    >
+                      <History size={14} />
+                    </button>
                     <button
                       onClick={() => { setScoreModalMember(locul2); setScoreAdjustValue(''); setScoreAdjustReason(''); }}
                       className="px-3 py-1 rounded-[2px] bg-slate-900 dark:bg-slate-700 hover:bg-slate-800 dark:hover:bg-slate-600 text-white font-bold text-xs shadow-xs transition-colors cursor-pointer"
                     >
                       Ajustează
                     </button>
-                  )}
-                </div>
+                  </div>
+                )}
               </div>
             )}
 
@@ -647,26 +547,27 @@ export function LeaderboardView({ members, events = [], isAdmin = false, onUpdat
                 </div>
                 <div className="w-16 sm:w-20 h-18 bg-indigo-50 dark:bg-indigo-950/30 rounded-t-[2px] border-t-2 border-indigo-400 flex flex-col items-center justify-start pt-1.5 shadow-xs">
                   <span className="text-xl sm:text-2xl font-black text-indigo-600 dark:text-indigo-400 font-data">4</span>
-                  <span className="text-xs font-bold text-indigo-700 dark:text-indigo-300 mt-0.5 truncate px-0.5 font-data">{scoreMode === 'total' ? locul4.totalScore : locul4.biMonthlyScore} pts</span>
+                  <span className="text-xs font-bold text-indigo-700 dark:text-indigo-300 mt-0.5 truncate px-0.5 font-title uppercase">
+                    {isAdmin ? `${scoreMode === 'total' ? locul4.totalScore : locul4.biMonthlyScore} pts` : 'Top 4'}
+                  </span>
                 </div>
-                {/* Actions Locul 4 */}
-                <div className="flex items-center gap-1.5 mt-2.5 font-title">
-                  <button
-                    onClick={() => setHistoryModalMember(locul4)}
-                    title="Istoric puncte"
-                    className="p-1.5 rounded-[2px] border border-indigo-300 dark:border-indigo-800 bg-white dark:bg-slate-800 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 transition-colors cursor-pointer"
-                  >
-                    <History size={14} />
-                  </button>
-                  {isAdmin && (
+                {isAdmin && (
+                  <div className="flex items-center gap-1.5 mt-2.5 font-title">
+                    <button
+                      onClick={() => setHistoryModalMember(locul4)}
+                      title="Istoric puncte"
+                      className="p-1.5 rounded-[2px] border border-indigo-300 dark:border-indigo-800 bg-white dark:bg-slate-800 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 transition-colors cursor-pointer"
+                    >
+                      <History size={14} />
+                    </button>
                     <button
                       onClick={() => { setScoreModalMember(locul4); setScoreAdjustValue(''); setScoreAdjustReason(''); }}
                       className="px-2.5 py-1 rounded-[2px] bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-xs transition-colors cursor-pointer"
                     >
                       Ajustează
                     </button>
-                  )}
-                </div>
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -690,7 +591,9 @@ export function LeaderboardView({ members, events = [], isAdmin = false, onUpdat
                   />
                   <div className="min-w-0">
                     <div className="text-base sm:text-lg font-bold text-slate-900 dark:text-white leading-tight mb-0.5 truncate font-title">{ceaMaiMareEvolutie.nickname || ceaMaiMareEvolutie.name}</div>
-                    <div className="text-emerald-800 dark:text-emerald-300 font-bold text-xs sm:text-sm font-data">+{ceaMaiMareEvolutie.evolution} pct vs perioada anterioară</div>
+                    <div className="text-emerald-800 dark:text-emerald-300 font-bold text-xs sm:text-sm font-data">
+                      {isAdmin ? `+${ceaMaiMareEvolutie.evolution} pct vs perioada anterioară` : '🚀 Cea mai activă ascensiune'}
+                    </div>
                   </div>
                 </div>
                 {isAdmin && (
@@ -723,7 +626,9 @@ export function LeaderboardView({ members, events = [], isAdmin = false, onUpdat
                   />
                   <div className="min-w-0">
                     <div className="text-base sm:text-lg font-bold text-slate-900 dark:text-white leading-tight mb-0.5 truncate font-title">{ceaMaiMareInvolutie.nickname || ceaMaiMareInvolutie.name}</div>
-                    <div className="text-rose-800 dark:text-rose-300 font-bold text-xs sm:text-sm font-data">{ceaMaiMareInvolutie.involution} pct vs perioada anterioară</div>
+                    <div className="text-rose-800 dark:text-rose-300 font-bold text-xs sm:text-sm font-data">
+                      {isAdmin ? `${ceaMaiMareInvolutie.involution} pct vs perioada anterioară` : '⚠️ Scădere activitate'}
+                    </div>
                   </div>
                 </div>
                 {isAdmin && (
@@ -779,7 +684,7 @@ export function LeaderboardView({ members, events = [], isAdmin = false, onUpdat
                     : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                 }`}
               >
-                Total Istoric (Toate Punctele)
+                Total Istoric (Permanent)
               </button>
             </div>
           </div>
@@ -796,21 +701,18 @@ export function LeaderboardView({ members, events = [], isAdmin = false, onUpdat
           </div>
         </div>
 
-        {/* Attendance scoring rule strip */}
+        {/* Informational rule strip */}
         <div className="mb-4 px-3.5 py-2 rounded-[2px] bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex items-center justify-between gap-3 flex-wrap text-xs text-slate-700 dark:text-slate-300 font-anthropic">
           <div className="flex items-center gap-2 font-bold font-title">
-            <span className="text-slate-900 dark:text-white uppercase tracking-wider">🎯 Regulă Punctaj Prezență:</span>
+            <Award size={15} className="text-amber-500" />
+            <span className="text-slate-900 dark:text-white uppercase tracking-wider">
+              {scoreMode === 'bimonthly' ? `Ciclu Bilunar Activ: ${biMonthlyInfo.periodLabel}` : 'Evidență Permanentă: Scor Total Istoric'}
+            </span>
           </div>
-          <div className="flex items-center gap-3 font-data font-bold flex-wrap">
-            <span className="text-emerald-800 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-950/50 px-2 py-0.5 rounded-[2px] border border-emerald-300 dark:border-emerald-800">
-              +1 pct / Prezență
-            </span>
-            <span className="text-rose-800 dark:text-rose-300 bg-rose-100 dark:bg-rose-950/50 px-2 py-0.5 rounded-[2px] border border-rose-300 dark:border-rose-800">
-              -2 pct / Absență Nemotivată
-            </span>
-            <span className="text-slate-700 dark:text-slate-300 bg-slate-200 dark:bg-slate-800 px-2 py-0.5 rounded-[2px] border border-slate-300 dark:border-slate-700">
-              0 pct / Absență Motivată
-            </span>
+          <div className="text-[11px] text-slate-500 dark:text-slate-400 font-anthropic">
+            {scoreMode === 'bimonthly' 
+              ? 'La fiecare ciclu de 2 luni, toți membrii pornesc de la 0 puncte.' 
+              : 'Însumează toate punctele din istoria clubului (nu se resetează niciodată).'}
           </div>
         </div>
 
@@ -822,9 +724,11 @@ export function LeaderboardView({ members, events = [], isAdmin = false, onUpdat
                 <TableHead className="font-title text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-900 dark:text-slate-100">Membru</TableHead>
                 <TableHead className="font-title text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-900 dark:text-slate-100">Rol</TableHead>
                 <TableHead className="text-right font-title text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-900 dark:text-slate-100">
-                  {scoreMode === 'bimonthly' ? `Punctaj Bilunar (${biMonthlyInfo.periodLabel})` : 'Punctaj Total (Incl. Negativ)'}
+                  {isAdmin ? (scoreMode === 'bimonthly' ? `Punctaj Bilunar (${biMonthlyInfo.periodLabel})` : 'Punctaj Total Istoric') : 'Poziție în Clasament'}
                 </TableHead>
-                <TableHead className="text-right font-title text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-900 dark:text-slate-100">Acțiuni</TableHead>
+                {isAdmin && (
+                  <TableHead className="text-right font-title text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-900 dark:text-slate-100">Acțiuni</TableHead>
+                )}
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -847,43 +751,55 @@ export function LeaderboardView({ members, events = [], isAdmin = false, onUpdat
                       </div>
                     </TableCell>
                     <TableCell><Badge variant="neutral">{m.role || 'Voluntar'}</Badge></TableCell>
+                    
+                    {/* Score / Rank Display */}
                     <TableCell className="text-right font-black font-data text-base sm:text-lg">
-                      <div className="flex items-center justify-end gap-2">
-                        {isNegative && (
-                          <span className="text-xs font-black uppercase px-2.5 py-0.5 rounded-[2px] bg-rose-100 dark:bg-rose-950/60 text-rose-900 dark:text-rose-300 border border-rose-300 dark:border-rose-800 font-title">
-                            Scor Negativ
+                      {isAdmin ? (
+                        <div className="flex items-center justify-end gap-2">
+                          {isNegative && (
+                            <span className="text-xs font-black uppercase px-2.5 py-0.5 rounded-[2px] bg-rose-100 dark:bg-rose-950/60 text-rose-900 dark:text-rose-300 border border-rose-300 dark:border-rose-800 font-title">
+                              Scor Negativ
+                            </span>
+                          )}
+                          <span className={isNegative ? 'text-rose-700 dark:text-rose-400' : 'text-emerald-700 dark:text-emerald-400'}>
+                            {scoreValue > 0 ? `+${scoreValue}` : scoreValue}
                           </span>
-                        )}
-                        <span className={isNegative ? 'text-rose-700 dark:text-rose-400' : 'text-emerald-700 dark:text-emerald-400'}>
-                          {scoreValue > 0 ? `+${scoreValue}` : scoreValue}
-                        </span>
-                      </div>
+                        </div>
+                      ) : (
+                        <div className="flex items-center justify-end gap-1.5 font-title">
+                          <span className="px-2.5 py-1 rounded-[2px] bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 text-xs font-bold uppercase tracking-wider">
+                            {globalRank <= 3 ? `🏆 Locul #${globalRank}` : globalRank <= 10 ? `⭐ Top ${globalRank}` : `Voluntar Activ`}
+                          </span>
+                        </div>
+                      )}
                     </TableCell>
-                    <TableCell className="text-right font-title">
-                      <div className="flex items-center justify-end gap-2">
-                        <button
-                          onClick={() => setHistoryModalMember(m)}
-                          title="Istoric puncte"
-                          className="p-2 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-[2px] hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 hover:text-slate-900 dark:hover:text-white transition-all cursor-pointer"
-                        >
-                          <History size={15} />
-                        </button>
-                        {isAdmin && (
+
+                    {/* Admin Actions */}
+                    {isAdmin && (
+                      <TableCell className="text-right font-title">
+                        <div className="flex items-center justify-end gap-2">
+                          <button
+                            onClick={() => setHistoryModalMember(m)}
+                            title="Istoric puncte"
+                            className="p-2 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-[2px] hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 hover:text-slate-900 dark:hover:text-white transition-all cursor-pointer"
+                          >
+                            <History size={15} />
+                          </button>
                           <button
                             onClick={() => { setScoreModalMember(m); setScoreAdjustValue(''); setScoreAdjustReason(''); }}
                             className="px-3 py-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-900 dark:text-slate-100 rounded-[2px] text-xs font-bold uppercase tracking-wider transition-colors border border-slate-300 dark:border-slate-700 cursor-pointer"
                           >
                             Ajustează
                           </button>
-                        )}
-                      </div>
-                    </TableCell>
+                        </div>
+                      </TableCell>
+                    )}
                   </TableRow>
                 );
               })}
               {paginatedMembers.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center text-slate-500 dark:text-slate-400 font-semibold h-24 text-sm">Niciun membru găsit.</TableCell>
+                  <TableCell colSpan={isAdmin ? 5 : 4} className="text-center text-slate-500 dark:text-slate-400 font-semibold h-24 text-sm">Niciun membru găsit.</TableCell>
                 </TableRow>
               )}
             </TableBody>
@@ -914,9 +830,9 @@ export function LeaderboardView({ members, events = [], isAdmin = false, onUpdat
         )}
       </motion.div>
 
-      {/* Score Adjustment Modal */}
+      {/* Score Adjustment Modal (Admin Only) */}
       <AnimatePresence>
-        {scoreModalMember && (
+        {isAdmin && scoreModalMember && (
           <div className="fixed inset-0 z-[120] flex items-center justify-center p-3 sm:p-4 font-anthropic">
             <motion.div
               initial={{ opacity: 0 }}
@@ -1017,9 +933,9 @@ export function LeaderboardView({ members, events = [], isAdmin = false, onUpdat
         )}
       </AnimatePresence>
 
-      {/* Score History Modal */}
+      {/* Score History Modal (Admin Only) */}
       <AnimatePresence>
-        {liveHistoryMember && (
+        {isAdmin && liveHistoryMember && (
           <div className="fixed inset-0 z-[120] flex items-center justify-center p-3 sm:p-4 font-anthropic">
             <motion.div
               initial={{ opacity: 0 }}
@@ -1054,37 +970,20 @@ export function LeaderboardView({ members, events = [], isAdmin = false, onUpdat
                 </button>
               </div>
 
-              {/* Attendance & Score Summary Strip */}
+              {/* Total Score Header Strip */}
               {(() => {
-                const pres = Number(liveHistoryMember.presences) || 0;
-                const unex = Number(liveHistoryMember.unexcusedAbsences) || 0;
-                const exc = Number(liveHistoryMember.excusedAbsences) || 0;
-                const adjSum = (liveHistoryMember.scoreAdjustments || []).reduce((s: number, a: any) => s + (a.points || 0), 0);
-                const computedTotal = (typeof liveHistoryMember.score === 'number' && liveHistoryMember.score !== 0) 
-                  ? liveHistoryMember.score 
-                  : adjSum + (pres * 1) + (unex * -2);
+                const adjSum = (liveHistoryMember.scoreAdjustments || []).reduce((s: number, a: any) => s + (Number(a.points) || 0), 0);
+                const computedTotal = (liveHistoryMember.scoreAdjustments?.length > 0)
+                  ? adjSum 
+                  : (typeof liveHistoryMember.score === 'number' ? liveHistoryMember.score : 0);
 
                 return (
-                  <div className="mb-4 p-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[2px] space-y-2">
+                  <div className="mb-4 p-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[2px]">
                     <div className="flex items-center justify-between text-xs font-bold font-title text-slate-700 dark:text-slate-300">
-                      <span className="uppercase tracking-wider">Scor Total Calculat:</span>
+                      <span className="uppercase tracking-wider">Scor Total Permanent:</span>
                       <span className={`font-data font-black text-sm ${computedTotal < 0 ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-700 dark:text-emerald-400'}`}>
                         {computedTotal > 0 ? `+${computedTotal}` : computedTotal} pct
                       </span>
-                    </div>
-                    <div className="grid grid-cols-3 gap-2 pt-1 border-t border-slate-200 dark:border-slate-800 text-center font-data text-xs font-bold">
-                      <div className="bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 p-1.5 rounded-[2px]">
-                        <div className="text-[10px] uppercase font-title font-bold">Prezențe (+1)</div>
-                        <div className="font-black text-sm">{pres} (+{pres}p)</div>
-                      </div>
-                      <div className="bg-rose-50 dark:bg-rose-950/40 text-rose-800 dark:text-rose-300 border border-rose-200 dark:border-rose-800 p-1.5 rounded-[2px]">
-                        <div className="text-[10px] uppercase font-title font-bold">Nemotivate (-2)</div>
-                        <div className="font-black text-sm">{unex} ({unex * -2}p)</div>
-                      </div>
-                      <div className="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 p-1.5 rounded-[2px]">
-                        <div className="text-[10px] uppercase font-title font-bold">Motivate (0)</div>
-                        <div className="font-black text-sm">{exc} (0p)</div>
-                      </div>
                     </div>
                   </div>
                 );
@@ -1096,7 +995,7 @@ export function LeaderboardView({ members, events = [], isAdmin = false, onUpdat
               >
                 {sortedHistory.length === 0 ? (
                   <div className="text-center text-slate-500 dark:text-slate-400 text-xs sm:text-sm font-medium py-8">
-                    Nicio activitate sau punctaj înregistrat pentru acest membru.
+                    Nicio ajustare de punctaj înregistrată pentru acest membru.
                   </div>
                 ) : (
                   sortedHistory.map((item: any) => (
@@ -1106,62 +1005,55 @@ export function LeaderboardView({ members, events = [], isAdmin = false, onUpdat
                     >
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2 mb-1 flex-wrap">
-                          {item.badge && (
-                            <span className={`text-[9px] font-black uppercase px-1.5 py-0.5 rounded-[2px] border font-title ${item.badgeColor || 'bg-slate-200 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border-slate-300 dark:border-slate-700'}`}>
-                              {item.badge}
-                            </span>
-                          )}
                           <span className="text-[11px] text-slate-500 dark:text-slate-400 font-semibold font-data">
                             {formatRomaniaDateTime(item.date, { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                           </span>
                         </div>
-                        <p className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white break-words leading-snug">{item.reason || 'Fără descriere'}</p>
+                        <p className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white break-words leading-snug">{item.reason || 'Ajustare punctaj'}</p>
                         {item.adminName && (
                           <p className="text-[11px] text-slate-500 dark:text-slate-400 font-semibold mt-0.5 font-anthropic">
-                            {item.adminName}
+                            Înregistrat de: {item.adminName}
                           </p>
                         )}
                       </div>
                       <div className="flex items-center gap-2 shrink-0">
                         <span
                           className={`font-black font-data text-xs sm:text-sm px-2.5 py-1 rounded-[2px] ${
-                            item.points > 0
+                            (item.points || 0) > 0
                               ? 'bg-emerald-100 dark:bg-emerald-950/50 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800'
-                              : item.points < 0
+                              : (item.points || 0) < 0
                               ? 'bg-rose-100 dark:bg-rose-950/50 text-rose-800 dark:text-rose-300 border border-rose-300 dark:border-rose-800'
                               : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700'
                           }`}
                         >
-                          {item.points > 0 ? `+${item.points}` : item.points}
+                          {(item.points || 0) > 0 ? `+${item.points}` : item.points}
                         </span>
 
-                        {isAdmin && item.isAdjustment && (
-                          <button
-                            onClick={async () => {
-                              try {
-                                const adminName = currentUserObj?.name || currentUserObj?.username || 'Admin';
-                                const adminUsername = currentUserObj?.username;
-                                const { newScore, updatedAdjustments } = await revertMemberScoreAdjustment(
-                                  liveHistoryMember.id,
-                                  item.id,
-                                  { name: adminName, username: adminUsername, id: currentUserObj?.id }
-                                );
-                                onUpdateMember?.({
-                                  ...liveHistoryMember,
-                                  score: newScore,
-                                  scoreAdjustments: updatedAdjustments
-                                });
-                                toast.success(`Ajustarea de punctaj (${item.points > 0 ? '+' : ''}${item.points} pct) a fost anulată!`);
-                              } catch (err: any) {
-                                toast.error(err.message || 'Eroare la anularea punctajului.');
-                              }
-                            }}
-                            className="p-1.5 rounded-[2px] text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
-                            title="Anulează această ajustare (Revert)"
-                          >
-                            <RotateCcw size={14} />
-                          </button>
-                        )}
+                        <button
+                          onClick={async () => {
+                            try {
+                              const adminName = currentUserObj?.name || currentUserObj?.username || 'Admin';
+                              const adminUsername = currentUserObj?.username;
+                              const { newScore, updatedAdjustments } = await revertMemberScoreAdjustment(
+                                liveHistoryMember.id,
+                                item.id,
+                                { name: adminName, username: adminUsername, id: currentUserObj?.id }
+                              );
+                              onUpdateMember?.({
+                                ...liveHistoryMember,
+                                score: newScore,
+                                scoreAdjustments: updatedAdjustments
+                              });
+                              toast.success(`Ajustarea de punctaj (${item.points > 0 ? '+' : ''}${item.points} pct) a fost anulată!`);
+                            } catch (err: any) {
+                              toast.error(err.message || 'Eroare la anularea punctajului.');
+                            }
+                          }}
+                          className="p-1.5 rounded-[2px] text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
+                          title="Anulează această ajustare (Revert)"
+                        >
+                          <RotateCcw size={14} />
+                        </button>
                       </div>
                     </div>
                   ))
@@ -1181,4 +1073,3 @@ export function LeaderboardView({ members, events = [], isAdmin = false, onUpdat
     </div>
   );
 }
-
