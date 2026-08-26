@@ -5,7 +5,9 @@ import {
   subscribeUserToPush,
   unsubscribeUserFromPush,
   showLocalTestNotification,
+  broadcastPushNotification,
 } from '../../utils/pushNotifications';
+import { toast } from '../ui/Toast';
 
 interface PushNotificationToggleProps {
   memberId: string;
@@ -58,16 +60,27 @@ export const PushNotificationToggle: React.FC<PushNotificationToggleProps> = ({
 
   const handleTestNotification = async () => {
     setTestLoading(true);
-    const ok = await showLocalTestNotification(
-      '🌟 Interact Camena — Test Notificare',
-      'Aceasta este o notificare de test trimisă prin Service Worker.'
-    );
-    if (ok) {
-      setStatusMessage('Notificare de test trimisă pe ecran!');
-    } else {
-      setStatusMessage('Permisiunea pentru notificări este necesară.');
+    setStatusMessage('Se trimite notificarea de test către toate dispozitivele...');
+    try {
+      // 1. Notificare locală imediată
+      await showLocalTestNotification(
+        '🌟 Test Notificare Push — Interact Camena',
+        'Aceasta este o notificare de test trimisă prin rețeaua Web Push!'
+      );
+      // 2. Broadcast către TOATE dispozitivele și telefoanele abonate
+      await broadcastPushNotification({
+        title: '🌟 Test Notificare Push — Interact Camena',
+        body: 'Dacă vezi acest mesaj, notificările push funcționează perfect pe telefon și PC!',
+        url: '/#dashboard'
+      });
+      setStatusMessage('Notificare de test expediată cu succes către toți abonații!');
+      toast.success('Notificarea push de test a fost expediată către toți membrii!');
+    } catch (err: any) {
+      setStatusMessage('Eroare la trimiterea notificării.');
+      toast.error('Eroare la trimiterea notificării de test.');
+    } finally {
+      setTestLoading(false);
     }
-    setTestLoading(false);
   };
 
   if (!supported) {

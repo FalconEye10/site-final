@@ -31,14 +31,32 @@ export const NotificationsDropdown: React.FC<NotificationsDropdownProps> = ({
   onNavigateToSection,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const storageKey = useMemo(() => {
+    return currentUserId ? `camena_read_notifications_${currentUserId}` : 'camena_read_notifications_global';
+  }, [currentUserId]);
+
   const [readIds, setReadIds] = useState<string[]>(() => {
     try {
-      const saved = localStorage.getItem('camena_read_notifications');
+      const key = currentUserId ? `camena_read_notifications_${currentUserId}` : 'camena_read_notifications_global';
+      const saved = localStorage.getItem(key) || localStorage.getItem('read_notifications_v2') || localStorage.getItem('camena_read_notifications');
       return saved ? JSON.parse(saved) : [];
     } catch {
       return [];
     }
   });
+
+  // Re-sync when currentUserId changes or when user logs in
+  useEffect(() => {
+    try {
+      const key = currentUserId ? `camena_read_notifications_${currentUserId}` : 'camena_read_notifications_global';
+      const saved = localStorage.getItem(key) || localStorage.getItem('read_notifications_v2') || localStorage.getItem('camena_read_notifications');
+      if (saved) {
+        setReadIds(JSON.parse(saved));
+      }
+    } catch {
+      // ignore
+    }
+  }, [currentUserId]);
 
   const [rawKudos, setRawKudos] = useState<any[]>([]);
   const [rawAbsences, setRawAbsences] = useState<any[]>([]);
@@ -50,17 +68,29 @@ export const NotificationsDropdown: React.FC<NotificationsDropdownProps> = ({
   const [isSendingTest, setIsSendingTest] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
+  const saveReadNotifications = (ids: string[]) => {
+    setReadIds(ids);
+    try {
+      const jsonStr = JSON.stringify(ids);
+      localStorage.setItem(storageKey, jsonStr);
+      localStorage.setItem('camena_read_notifications', jsonStr);
+      localStorage.setItem('read_notifications_v2', jsonStr);
+    } catch (e) {
+      console.warn('Eroare la salvarea notificărilor citite în localStorage:', e);
+    }
+  };
+
   const handleSendTestPush = async () => {
     if (isSendingTest) return;
     setIsSendingTest(true);
-    toast.info('Se trimite notificarea push de test către toate dispozitivele...');
+    toast.info('Se trimite notificarea push de test către TOATE dispozitivele abonate...');
     try {
       await broadcastPushNotification({
         title: '🔔 Test Notificare Push (Interact Camena)',
         body: 'Dacă citești acest mesaj, notificările push pe telefonul tău funcționează 100%!',
         url: '/#dashboard',
       });
-      toast.success('Notificarea push a fost expediată către rețea!');
+      toast.success('Notificarea push de test a fost expediată către toate dispozitivele!');
     } catch {
       toast.error('Eroare la trimiterea notificării de test.');
     } finally {
@@ -398,16 +428,15 @@ export const NotificationsDropdown: React.FC<NotificationsDropdownProps> = ({
   const unreadCount = notifications.filter(n => !readIds.includes(n.id)).length;
 
   const markAllAsRead = () => {
-    const allIds = notifications.map(n => n.id);
-    setReadIds(allIds);
-    localStorage.setItem('read_notifications_v2', JSON.stringify(allIds));
+    const allIds = Array.from(new Set([...readIds, ...notifications.map(n => n.id)]));
+    saveReadNotifications(allIds);
+    toast.success('Toate notificările au fost marcate ca citite.');
   };
 
   const handleNotificationClick = (item: NotificationItem) => {
     if (!readIds.includes(item.id)) {
-      const updated = [...readIds, item.id];
-      setReadIds(updated);
-      localStorage.setItem('read_notifications_v2', JSON.stringify(updated));
+      const updated = Array.from(new Set([...readIds, item.id]));
+      saveReadNotifications(updated);
     }
     setIsOpen(false);
     onNavigateToSection(item.targetSection);
