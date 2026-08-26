@@ -54,18 +54,18 @@ export function WelcomeLogin({ onLoginSuccess }: WelcomeLoginProps) {
   const easeInOut: [number, number, number, number] = [0.77, 0, 0.175, 1];
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center py-12 px-6 bg-[#FAF9F5] font-['Hanken_Grotesk'] text-brand-accent overflow-y-auto overflow-x-hidden relative">
+    <div className="min-h-screen flex flex-col items-center justify-center py-12 px-6 bg-[#FAF9F5] dark:bg-[#070A0F] font-anthropic text-slate-900 dark:text-white overflow-y-auto overflow-x-hidden relative transition-colors duration-300">
       
       {/* Dynamic Animated Ambient Background */}
       <LiveBackground themeColor="#89cff0" />
       
       {/* Decorative blurred background blobs */}
-      <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-brand-primary/20 blur-[120px] rounded-full pointer-events-none" />
-      <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-brand-primary/10 blur-[120px] rounded-full pointer-events-none" />
+      <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-sky-400/20 dark:bg-sky-500/10 blur-[120px] rounded-full pointer-events-none" />
+      <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-blue-600/15 dark:bg-blue-600/10 blur-[120px] rounded-full pointer-events-none" />
 
       {/* Floating 3D Geometric Shape 1: Glass Torus/Ring (Top Left) */}
       <motion.div
-        className="absolute top-[12%] left-[15%] w-28 h-28 rounded-full border border-white/20 bg-white/5 backdrop-blur-md shadow-[0_8px_32px_rgba(137,207,240,0.15)] flex items-center justify-center pointer-events-none hidden md:flex z-10"
+        className="absolute top-[12%] left-[15%] w-28 h-28 rounded-full border border-white/20 dark:border-white/10 bg-white/5 dark:bg-white/5 backdrop-blur-md shadow-[0_8px_32px_rgba(137,207,240,0.15)] flex items-center justify-center pointer-events-none hidden md:flex z-10"
         animate={{
           y: [0, -15, 0],
           rotateY: [0, 360],
@@ -100,7 +100,7 @@ export function WelcomeLogin({ onLoginSuccess }: WelcomeLoginProps) {
  
       {/* Floating 3D Geometric Shape 2: Isometric Glass Cube (Bottom Right) */}
       <motion.div
-        className="absolute bottom-[15%] right-[12%] w-28 h-28 rounded-[2px] border border-slate-200 bg-white/40 backdrop-blur-md shadow-sm flex items-center justify-center pointer-events-none hidden md:flex z-10"
+        className="absolute bottom-[15%] right-[12%] w-28 h-28 rounded-[2px] border border-slate-200 dark:border-slate-800 bg-white/40 dark:bg-slate-900/40 backdrop-blur-md shadow-sm flex items-center justify-center pointer-events-none hidden md:flex z-10"
         animate={{
           y: [0, 18, 0],
           rotateX: [0, 360],
@@ -135,7 +135,7 @@ export function WelcomeLogin({ onLoginSuccess }: WelcomeLoginProps) {
  
       {/* Floating 3D Geometric Shape 3: Glossy Glass Frame (Middle Right) */}
       <motion.div
-        className="absolute top-[40%] right-[20%] w-16 h-16 rounded-[2px] bg-slate-100/40 border border-slate-200 backdrop-blur-sm pointer-events-none hidden lg:block z-0"
+        className="absolute top-[40%] right-[20%] w-16 h-16 rounded-[2px] bg-slate-100/40 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800 backdrop-blur-sm pointer-events-none hidden lg:block z-0"
         animate={{
           y: [0, -25, 0],
           x: [0, 15, 0],
@@ -178,7 +178,7 @@ export function WelcomeLogin({ onLoginSuccess }: WelcomeLoginProps) {
       <AnimatePresence>
         {showIntro && (
           <motion.div 
-            className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-[#FAF9F5] font-anthropic"
+            className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-[#FAF9F5] dark:bg-[#070A0F] font-anthropic text-slate-900 dark:text-white"
             initial={{ opacity: 1 }}
             exit={{ opacity: 0, filter: 'blur(10px)', scale: 1.05 }}
             transition={{ duration: 1.4, ease: easeInOut }}
@@ -189,7 +189,7 @@ export function WelcomeLogin({ onLoginSuccess }: WelcomeLoginProps) {
               transition={{ duration: 1.8, ease: easeOut, delay: 0.2 }}
               className="flex items-center justify-center mb-6"
             >
-              <div className="w-14 h-14 rounded-[2px] bg-slate-900 text-white flex items-center justify-center border border-slate-800 shadow-xs">
+              <div className="w-14 h-14 rounded-[2px] bg-slate-900 dark:bg-white text-white dark:text-slate-950 flex items-center justify-center border border-slate-800 dark:border-slate-200 shadow-md">
                 <span className="font-anthropicSerif text-2xl font-bold">IC</span>
               </div>
             </motion.div>
@@ -198,16 +198,16 @@ export function WelcomeLogin({ onLoginSuccess }: WelcomeLoginProps) {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 1.8, ease: easeOut, delay: 0.5 }}
-              className="font-anthropicSerif text-4xl sm:text-5xl font-bold text-slate-900"
+              className="font-anthropicSerif text-4xl sm:text-5xl font-bold text-slate-900 dark:text-white"
             >
               Interact Camena
             </motion.h1>
             
             <motion.p
               initial={{ opacity: 0 }}
-              animate={{ opacity: 0.6 }}
+              animate={{ opacity: 0.7 }}
               transition={{ duration: 1.8, ease: easeOut, delay: 1.0 }}
-              className="mt-3 font-title text-xs tracking-[0.2em] uppercase text-slate-600 font-bold"
+              className="mt-3 font-title text-xs tracking-[0.2em] uppercase text-slate-600 dark:text-slate-300 font-bold"
             >
               Service Above Self
             </motion.p>
@@ -220,30 +220,30 @@ export function WelcomeLogin({ onLoginSuccess }: WelcomeLoginProps) {
         initial={{ opacity: 0, scale: 0.95 }}
         animate={!showIntro ? { opacity: 1, scale: 1 } : {}}
         transition={{ duration: 1.2, ease: easeOut, delay: showIntro ? 0 : 0.3 }}
-        className="w-full max-w-[480px] bg-white/95 backdrop-blur-md rounded-[2px] p-8 md:p-10 shadow-xl border border-slate-200 relative z-10 flex flex-col items-center animate-in fade-in duration-700 font-anthropic"
+        className="w-full max-w-[480px] bg-white/95 dark:bg-[#0E131F]/95 backdrop-blur-md rounded-[2px] p-8 md:p-10 shadow-2xl border border-slate-200 dark:border-slate-800 relative z-10 flex flex-col items-center animate-in fade-in duration-700 font-anthropic text-slate-900 dark:text-white"
       >
         {/* Logo */}
-        <div className="relative z-20 pointer-events-none mt-1 mb-3">
+        <div className="relative z-20 pointer-events-none mt-1 mb-3 bg-white/80 dark:bg-white/10 p-2.5 rounded-[2px] border border-slate-200/60 dark:border-white/10 shadow-xs backdrop-blur-sm">
           <img 
             src="/logo.png" 
             alt="Interact Logo" 
-            className="w-full h-auto max-h-[85px] object-contain mix-blend-multiply" 
+            className="w-full h-auto max-h-[75px] object-contain dark:brightness-110" 
             referrerPolicy="no-referrer" 
           />
         </div>
 
-        <h2 className="text-2xl md:text-3xl font-bold font-anthropicSerif text-slate-900 text-center mb-0.5">Interact Camena</h2>
-        <p className="text-xs font-title uppercase tracking-wider font-bold text-slate-500 text-center mb-3">Portal Administrație</p>
+        <h2 className="text-2xl md:text-3xl font-bold font-anthropicSerif text-slate-900 dark:text-white text-center mb-0.5">Interact Camena</h2>
+        <p className="text-xs font-title uppercase tracking-wider font-bold text-slate-500 dark:text-slate-400 text-center mb-3">Portal Administrație</p>
 
         {/* Copywriting */}
-        <p className="text-xs text-slate-600 font-anthropic text-center leading-relaxed max-w-[380px] mb-6 px-2">
-          Arhitectura schimbării locale începe prin organizare. Unificăm membrii, inițiativele și resursele comunității sub deviza <span className="font-bold text-slate-900">Service Above Self</span>.
+        <p className="text-xs text-slate-600 dark:text-slate-300 font-anthropic text-center leading-relaxed max-w-[380px] mb-6 px-2">
+          Arhitectura schimbării locale începe prin organizare. Unificăm membrii, inițiativele și resursele comunității sub deviza <span className="font-bold text-slate-900 dark:text-sky-400">Service Above Self</span>.
         </p>
 
         <form onSubmit={handleLogin} className="w-full space-y-4 font-anthropic">
           {/* Username Input */}
           <div>
-            <label className="block text-[10px] font-bold font-title uppercase tracking-wider text-slate-700 mb-1">Utilizator</label>
+            <label className="block text-[10px] font-bold font-title uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1">Utilizator</label>
             <input
               type="text"
               placeholder="Ex: ITC"
@@ -252,14 +252,14 @@ export function WelcomeLogin({ onLoginSuccess }: WelcomeLoginProps) {
                 setUsername(e.target.value);
                 setError('');
               }}
-              className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-[2px] focus:outline-none focus:border-slate-800 transition-all font-anthropic text-xs text-slate-900 font-medium"
+              className="w-full px-3.5 py-2.5 rounded-[2px] border transition-all font-anthropic text-xs font-medium bg-slate-50 border-slate-300 text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-slate-900 focus:outline-none dark:bg-[#141A28] dark:border-slate-700 dark:text-white dark:placeholder:text-slate-500 dark:focus:bg-[#1A2234] dark:focus:border-sky-400"
               required
             />
           </div>
 
           {/* Password Input */}
           <div>
-            <label className="block text-[10px] font-bold font-title uppercase tracking-wider text-slate-700 mb-1">Parolă</label>
+            <label className="block text-[10px] font-bold font-title uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1">Parolă</label>
             <input
               type="password"
               placeholder="••••••••"
@@ -268,7 +268,7 @@ export function WelcomeLogin({ onLoginSuccess }: WelcomeLoginProps) {
                 setPassword(e.target.value);
                 setError('');
               }}
-              className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-[2px] focus:outline-none focus:border-slate-800 transition-all font-anthropic text-xs text-slate-900 font-medium"
+              className="w-full px-3.5 py-2.5 rounded-[2px] border transition-all font-anthropic text-xs font-medium bg-slate-50 border-slate-300 text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-slate-900 focus:outline-none dark:bg-[#141A28] dark:border-slate-700 dark:text-white dark:placeholder:text-slate-500 dark:focus:bg-[#1A2234] dark:focus:border-sky-400"
               required
             />
           </div>
@@ -280,9 +280,9 @@ export function WelcomeLogin({ onLoginSuccess }: WelcomeLoginProps) {
                 initial={{ opacity: 0, y: -5, height: 0 }} 
                 animate={{ opacity: 1, y: 0, height: 'auto' }}
                 exit={{ opacity: 0, y: -5, height: 0 }}
-                className="text-rose-600 text-xs font-medium font-anthropic overflow-hidden text-center"
+                className="bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/80 text-rose-700 dark:text-rose-300 text-xs font-medium font-anthropic overflow-hidden text-center rounded-[2px] p-2.5"
               >
-                <div className="pt-1">{error}</div>
+                <div>{error}</div>
               </motion.div>
             )}
           </AnimatePresence>
@@ -291,7 +291,7 @@ export function WelcomeLogin({ onLoginSuccess }: WelcomeLoginProps) {
           <button
             type="submit"
             disabled={isLoading}
-            className={`w-full mt-4 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-[2px] font-title font-bold text-xs uppercase tracking-wider shadow-xs transition-all cursor-pointer ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+            className={`w-full mt-4 py-2.5 bg-slate-900 hover:bg-slate-800 text-white dark:bg-sky-500 dark:hover:bg-sky-400 dark:text-slate-950 rounded-[2px] font-title font-bold text-xs uppercase tracking-wider shadow-md transition-all cursor-pointer ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
           >
             {isLoading ? 'Se conectează...' : 'Autentificare'}
           </button>
@@ -302,7 +302,7 @@ export function WelcomeLogin({ onLoginSuccess }: WelcomeLoginProps) {
             onClick={() => {
               window.location.hash = '';
             }}
-            className="w-full py-2 border border-slate-300 hover:border-slate-400 text-slate-600 hover:text-slate-900 rounded-[2px] text-xs font-bold font-title transition-all flex items-center justify-center gap-1.5 uppercase tracking-wider cursor-pointer group"
+            className="w-full py-2 border border-slate-300 hover:border-slate-400 text-slate-700 hover:text-slate-900 bg-white hover:bg-slate-50 dark:border-slate-700 dark:hover:border-slate-600 dark:text-slate-200 dark:hover:text-white dark:bg-slate-800/40 dark:hover:bg-slate-800 rounded-[2px] text-xs font-bold font-title transition-all flex items-center justify-center gap-1.5 uppercase tracking-wider cursor-pointer group"
           >
             <svg 
               width="13" 
@@ -322,7 +322,7 @@ export function WelcomeLogin({ onLoginSuccess }: WelcomeLoginProps) {
           </button>
         </form>
 
-        <p className="text-[10px] text-slate-400 text-center mt-6 font-anthropic leading-relaxed">
+        <p className="text-[10px] text-slate-400 dark:text-slate-500 text-center mt-6 font-anthropic leading-relaxed">
           © {new Date().getFullYear()} Interact Camena Piatra Neamț.<br />
           Serviciu Digital Securizat.
         </p>
