@@ -302,7 +302,7 @@ export const VolunteerSpotlightCard: React.FC<VolunteerSpotlightCardProps> = ({
         <div className="flex items-center gap-2">
           <button
             onClick={() => setShowMilestones(v => !v)}
-            className="px-3.5 py-2 rounded-[2px] bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/25 text-amber-800 dark:text-amber-300 text-xs font-bold uppercase tracking-wider transition-colors flex items-center gap-1.5 font-title cursor-pointer"
+            className="px-3.5 py-1.5 rounded-[2px] bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/25 text-amber-800 dark:text-amber-300 text-xs font-bold uppercase tracking-wider transition-colors flex items-center gap-1.5 font-title cursor-pointer"
           >
             <Rocket size={15} className="text-amber-600 dark:text-amber-400" />
             <span>{showMilestones ? 'Ascunde Milestone-uri' : 'Milestone-uri Speciale'}</span>
@@ -310,11 +310,12 @@ export const VolunteerSpotlightCard: React.FC<VolunteerSpotlightCardProps> = ({
         </div>
       </div>
 
-      <div className="relative z-10 flex flex-col xl:flex-row items-start xl:items-center justify-between gap-6">
+      {/* Row 1: Profile Avatar & Details + Action Buttons (No Collisions) */}
+      <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-5 w-full">
         {/* Left: Trophy Avatar & Member Details */}
         <div className="flex items-center gap-4 sm:gap-5 flex-1 min-w-0">
           <div className="relative shrink-0">
-            <div className="w-18 h-18 sm:w-22 sm:h-22 rounded-[2px] bg-amber-400 p-0.5 shadow-xs border border-amber-500/30">
+            <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-[2px] bg-amber-400 p-0.5 shadow-xs border border-amber-500/30">
               <div className="w-full h-full rounded-[2px] bg-slate-900 flex items-center justify-center text-white text-2xl sm:text-3xl font-black uppercase overflow-hidden relative font-title">
                 {spotlightWinner.photo_url || spotlightWinner.avatar ? (
                   <img
@@ -328,8 +329,8 @@ export const VolunteerSpotlightCard: React.FC<VolunteerSpotlightCardProps> = ({
               </div>
             </div>
             {/* Crown */}
-            <div className="absolute -top-2 -right-2 w-7 h-7 rounded-[2px] bg-amber-400 text-slate-950 flex items-center justify-center shadow-xs border border-white dark:border-slate-900">
-              <Crown size={16} className="fill-slate-950" />
+            <div className="absolute -top-2 -right-2 w-6 h-6 sm:w-7 sm:h-7 rounded-[2px] bg-amber-400 text-slate-950 flex items-center justify-center shadow-xs border border-white dark:border-slate-900">
+              <Crown size={15} className="fill-slate-950" />
             </div>
           </div>
 
@@ -349,91 +350,89 @@ export const VolunteerSpotlightCard: React.FC<VolunteerSpotlightCardProps> = ({
           </div>
         </div>
 
-        {/* Center: Expanded Rich Statistics Grid (4 Key Metrics - No Overlap) */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 w-full xl:w-auto shrink-0">
-          {/* Metric 1: Points / Rank */}
-          <div className="flex flex-col items-center justify-center p-3 sm:px-4 rounded-[2px] bg-white/80 dark:bg-slate-900/80 border border-amber-400/30 min-w-[105px] text-center shadow-xs">
-            <div className="text-xl sm:text-2xl lg:text-3xl font-black text-amber-600 dark:text-amber-400 leading-none font-data">
-              {isAdmin ? (spotlightWinner.biMonthlyScore > 0 ? `+${spotlightWinner.biMonthlyScore}` : spotlightWinner.biMonthlyScore) : '👑 #1'}
-            </div>
-            <div className="text-[10px] sm:text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider mt-2 flex items-center justify-center gap-1 font-title whitespace-nowrap">
-              <Trophy size={12} className="shrink-0 text-amber-500" />
-              <span>{isAdmin ? 'Puncte 2 Luni' : 'Lider Ediție'}</span>
-            </div>
-          </div>
-
-          {/* Metric 2: Ore Voluntariat */}
-          <div className="flex flex-col items-center justify-center p-3 sm:px-4 rounded-[2px] bg-white/80 dark:bg-slate-900/80 border border-amber-400/30 min-w-[105px] text-center shadow-xs">
-            <div className="text-xl sm:text-2xl lg:text-3xl font-black text-slate-900 dark:text-white leading-none font-data">
-              {spotlightWinner.hoursCalculated}h
-            </div>
-            <div className="text-[10px] sm:text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider mt-2 flex items-center justify-center gap-1 font-title whitespace-nowrap">
-              <Clock size={12} className="shrink-0 text-sky-500" />
-              <span>Ore Voluntariat</span>
-            </div>
-          </div>
-
-          {/* Metric 3: Prezență */}
-          <div className="flex flex-col items-center justify-center p-3 sm:px-4 rounded-[2px] bg-white/80 dark:bg-slate-900/80 border border-amber-400/30 min-w-[105px] text-center shadow-xs">
-            <div className="text-xl sm:text-2xl lg:text-3xl font-black text-emerald-600 dark:text-emerald-400 leading-none font-data">
-              {spotlightWinner.attendanceRate}%
-            </div>
-            <div className="text-[10px] sm:text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider mt-2 flex items-center justify-center gap-1 font-title whitespace-nowrap">
-              <CheckCircle2 size={12} className="shrink-0 text-emerald-500" />
-              <span>Prezență</span>
-            </div>
-          </div>
-
-          {/* Metric 4: Kudos */}
-          <div className="flex flex-col items-center justify-center p-3 sm:px-4 rounded-[2px] bg-white/80 dark:bg-slate-900/80 border border-amber-400/30 min-w-[105px] text-center shadow-xs">
-            <div className="text-xl sm:text-2xl lg:text-3xl font-black text-purple-600 dark:text-purple-400 leading-none font-data">
-              {spotlightWinner.kudosCount}
-            </div>
-            <div className="text-[10px] sm:text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider mt-2 flex items-center justify-center gap-1 font-title whitespace-nowrap">
-              <Star size={12} className="shrink-0 text-purple-500" />
-              <span>Kudos</span>
-            </div>
-          </div>
-        </div>
-
         {/* Right: Actions */}
-        <div className="flex flex-wrap lg:flex-col items-center gap-2.5 w-full lg:w-auto">
+        <div className="flex flex-wrap items-center gap-2.5 w-full md:w-auto shrink-0 font-title">
           {!isSelf && (
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               onClick={handleCelebrate}
-              className={`w-full sm:w-auto px-5 py-3 rounded-[2px] font-bold text-xs md:text-sm uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-xs font-title cursor-pointer ${
+              className={`flex-1 sm:flex-initial px-4 py-2.5 rounded-[2px] font-bold text-xs sm:text-sm uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-xs cursor-pointer ${
                 congratsSent[spotlightWinner.id]
                   ? 'bg-emerald-600 text-white shadow-emerald-600/20'
                   : 'bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white shadow-amber-500/20'
               }`}
             >
-              <PartyPopper size={16} />
+              <PartyPopper size={15} />
               <span>{congratsSent[spotlightWinner.id] ? 'Felicitat! ✓' : 'Trimite Felicitări! 🎉'}</span>
             </motion.button>
           )}
 
-          <div className="flex items-center gap-2 w-full sm:w-auto">
-            {onNavigateToLeaderboard && (
-              <button
-                onClick={onNavigateToLeaderboard}
-                className="flex-1 px-4 py-2.5 rounded-[2px] bg-white/60 dark:bg-white/5 hover:bg-white dark:hover:bg-white/10 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 text-xs font-bold uppercase tracking-wider transition-colors flex items-center justify-center gap-1.5 font-title cursor-pointer"
-              >
-                <Trophy size={14} className="text-amber-500" />
-                <span>Vezi Clasament</span>
-                <ChevronRight size={14} />
-              </button>
-            )}
-
+          {onNavigateToLeaderboard && (
             <button
-              onClick={() => setShowHistory(v => !v)}
-              title="Galeria Campionilor Bimensuali"
-              className="px-4 py-2.5 rounded-[2px] bg-white/60 dark:bg-white/5 hover:bg-white dark:hover:bg-white/10 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 text-xs font-bold uppercase tracking-wider transition-colors flex items-center justify-center gap-1 font-title cursor-pointer"
+              onClick={onNavigateToLeaderboard}
+              className="px-3.5 py-2.5 rounded-[2px] bg-white/60 dark:bg-white/5 hover:bg-white dark:hover:bg-white/10 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 text-xs font-bold uppercase tracking-wider transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
             >
-              <History size={14} className="text-slate-400" />
-              <span>Istoric</span>
+              <Trophy size={14} className="text-amber-500" />
+              <span>Clasament</span>
+              <ChevronRight size={14} />
             </button>
+          )}
+
+          <button
+            onClick={() => setShowHistory(v => !v)}
+            title="Galeria Campionilor Bimensuali"
+            className="px-3.5 py-2.5 rounded-[2px] bg-white/60 dark:bg-white/5 hover:bg-white dark:hover:bg-white/10 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 text-xs font-bold uppercase tracking-wider transition-colors flex items-center justify-center gap-1 cursor-pointer"
+          >
+            <History size={14} className="text-slate-400" />
+            <span>Istoric</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Row 2: Full-Width 4-Column Statistics Grid (Zero Overlap Guaranteed) */}
+      <div className="relative z-10 grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 w-full mt-5 pt-5 border-t border-amber-500/20">
+        {/* Metric 1: Points / Rank */}
+        <div className="flex flex-col items-center justify-center p-3.5 sm:p-4 rounded-[2px] bg-white/80 dark:bg-slate-900/80 border border-amber-400/30 text-center shadow-xs">
+          <div className="text-2xl sm:text-3xl font-black text-amber-600 dark:text-amber-400 leading-none font-data">
+            {isAdmin ? (spotlightWinner.biMonthlyScore > 0 ? `+${spotlightWinner.biMonthlyScore}` : spotlightWinner.biMonthlyScore) : '👑 #1'}
+          </div>
+          <div className="text-[11px] sm:text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider mt-2 flex items-center justify-center gap-1.5 font-title whitespace-nowrap">
+            <Trophy size={13} className="shrink-0 text-amber-500" />
+            <span>{isAdmin ? 'Puncte 2 Luni' : 'Lider Ediție'}</span>
+          </div>
+        </div>
+
+        {/* Metric 2: Ore Voluntariat */}
+        <div className="flex flex-col items-center justify-center p-3.5 sm:p-4 rounded-[2px] bg-white/80 dark:bg-slate-900/80 border border-amber-400/30 text-center shadow-xs">
+          <div className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white leading-none font-data">
+            {spotlightWinner.hoursCalculated}h
+          </div>
+          <div className="text-[11px] sm:text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider mt-2 flex items-center justify-center gap-1.5 font-title whitespace-nowrap">
+            <Clock size={13} className="shrink-0 text-sky-500" />
+            <span>Ore Voluntariat</span>
+          </div>
+        </div>
+
+        {/* Metric 3: Prezență */}
+        <div className="flex flex-col items-center justify-center p-3.5 sm:p-4 rounded-[2px] bg-white/80 dark:bg-slate-900/80 border border-amber-400/30 text-center shadow-xs">
+          <div className="text-2xl sm:text-3xl font-black text-emerald-600 dark:text-emerald-400 leading-none font-data">
+            {spotlightWinner.attendanceRate}%
+          </div>
+          <div className="text-[11px] sm:text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider mt-2 flex items-center justify-center gap-1.5 font-title whitespace-nowrap">
+            <CheckCircle2 size={13} className="shrink-0 text-emerald-500" />
+            <span>Prezență</span>
+          </div>
+        </div>
+
+        {/* Metric 4: Kudos */}
+        <div className="flex flex-col items-center justify-center p-3.5 sm:p-4 rounded-[2px] bg-white/80 dark:bg-slate-900/80 border border-amber-400/30 text-center shadow-xs">
+          <div className="text-2xl sm:text-3xl font-black text-purple-600 dark:text-purple-400 leading-none font-data">
+            {spotlightWinner.kudosCount}
+          </div>
+          <div className="text-[11px] sm:text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider mt-2 flex items-center justify-center gap-1.5 font-title whitespace-nowrap">
+            <Star size={13} className="shrink-0 text-purple-500" />
+            <span>Kudos</span>
           </div>
         </div>
       </div>
