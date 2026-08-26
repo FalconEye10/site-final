@@ -341,31 +341,31 @@ export function LeaderboardView({ members, isAdmin = false, onUpdateMember, curr
           animate="show"
           className="relative rounded-[2px] bg-gradient-to-br from-amber-500/15 via-amber-400/5 to-amber-600/15 border border-amber-400/40 p-6 md:p-8 shadow-md font-anthropic"
         >
-          <div className="flex flex-col md:flex-row items-center justify-between gap-6 relative z-10">
-            <div className="flex items-center gap-5">
+          <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6 relative z-10">
+            <div className="flex items-center gap-4 sm:gap-5 flex-1 min-w-0">
               <div className="relative shrink-0">
                 <img
                   src={locul1.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(locul1.nickname || locul1.name)}&background=fbbf24&color=0F172A`}
-                  className="w-20 h-20 md:w-24 md:h-24 rounded-full border-4 border-amber-400 object-cover shadow-[0_0_20px_rgba(251,191,36,0.35)]"
+                  className="w-18 h-18 sm:w-22 sm:h-22 rounded-full border-4 border-amber-400 object-cover shadow-[0_0_20px_rgba(251,191,36,0.35)]"
                   alt={locul1.name}
                 />
                 <div className="absolute -bottom-1 -right-1 bg-amber-400 text-slate-950 p-1.5 rounded-full shadow-md border-2 border-white dark:border-slate-900">
                   <Trophy size={16} />
                 </div>
               </div>
-              <div>
+              <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2 mb-1.5 flex-wrap">
-                  <span className="px-3 py-1 rounded-[2px] bg-amber-500 text-slate-950 font-black text-xs uppercase tracking-widest shadow-xs font-title">
+                  <span className="px-3 py-1 rounded-[2px] bg-amber-500 text-slate-950 font-black text-xs uppercase tracking-widest shadow-xs font-title shrink-0">
                     {scoreMode === 'bimonthly' ? '👑 LOCUL 1 — VOLUNTARUL BIMENSUAL' : '👑 LOCUL 1 — CLASAMENT GENERAL'}
                   </span>
-                  <span className="text-xs sm:text-sm text-amber-800 dark:text-amber-300 font-bold font-data">
+                  <span className="text-xs sm:text-sm text-amber-800 dark:text-amber-300 font-bold font-data shrink-0">
                     {scoreMode === 'bimonthly' ? biMonthlyInfo.periodLabel : 'Permanent All-Time'}
                   </span>
                 </div>
-                <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold font-anthropicSerif text-slate-900 dark:text-white leading-tight">
+                <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold font-anthropicSerif text-slate-900 dark:text-white leading-tight truncate">
                   {locul1.nickname || locul1.name}
                 </h2>
-                <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 font-bold mt-1">
+                <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 font-bold mt-1 truncate">
                   Rol: {locul1.role} · Comisie: {locul1.committee || 'Membru General'}
                 </p>
               </div>

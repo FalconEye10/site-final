@@ -310,12 +310,12 @@ export const VolunteerSpotlightCard: React.FC<VolunteerSpotlightCardProps> = ({
         </div>
       </div>
 
-      <div className="relative z-10 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
+      <div className="relative z-10 flex flex-col xl:flex-row items-start xl:items-center justify-between gap-6">
         {/* Left: Trophy Avatar & Member Details */}
-        <div className="flex items-center gap-5">
+        <div className="flex items-center gap-4 sm:gap-5 flex-1 min-w-0">
           <div className="relative shrink-0">
-            <div className="w-20 h-20 md:w-24 md:h-24 rounded-[2px] bg-amber-400 p-0.5 shadow-xs border border-amber-500/30">
-              <div className="w-full h-full rounded-[2px] bg-slate-900 flex items-center justify-center text-white text-3xl font-black uppercase overflow-hidden relative font-title">
+            <div className="w-18 h-18 sm:w-22 sm:h-22 rounded-[2px] bg-amber-400 p-0.5 shadow-xs border border-amber-500/30">
+              <div className="w-full h-full rounded-[2px] bg-slate-900 flex items-center justify-center text-white text-2xl sm:text-3xl font-black uppercase overflow-hidden relative font-title">
                 {spotlightWinner.photo_url || spotlightWinner.avatar ? (
                   <img
                     src={spotlightWinner.photo_url || spotlightWinner.avatar}
@@ -333,53 +333,65 @@ export const VolunteerSpotlightCard: React.FC<VolunteerSpotlightCardProps> = ({
             </div>
           </div>
 
-          <div>
-            <h3 className="text-2xl sm:text-3xl lg:text-4xl font-black text-slate-900 dark:text-white tracking-tight leading-tight flex items-center gap-2.5 font-anthropicSerif">
-              <span>{spotlightWinner.name || spotlightWinner.nickname}</span>
-              <span className="text-xs px-2.5 py-0.5 rounded-[2px] bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30 font-bold uppercase font-title">Ediție Activă</span>
-            </h3>
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-2 flex-wrap mb-1">
+              <h3 className="text-xl sm:text-2xl lg:text-3xl font-black text-slate-900 dark:text-white tracking-tight leading-tight font-anthropicSerif truncate max-w-full">
+                {spotlightWinner.name || spotlightWinner.nickname}
+              </h3>
+              <span className="text-[10px] sm:text-xs px-2.5 py-0.5 rounded-[2px] bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30 font-bold uppercase font-title shrink-0">
+                Ediție Activă
+              </span>
+            </div>
 
-            <p className="text-xs sm:text-sm font-semibold text-slate-600 dark:text-slate-400 mt-1 font-anthropic">
+            <p className="text-xs sm:text-sm font-semibold text-slate-600 dark:text-slate-400 font-anthropic truncate">
               {spotlightWinner.role || 'Voluntar Activ'} • {spotlightWinner.city || 'Piatra Neamț'}
             </p>
           </div>
         </div>
 
-        {/* Center: Expanded Rich Statistics Grid (4 Key Metrics) */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3.5 w-full lg:w-auto bg-white/70 dark:bg-white/5 border border-amber-400/30 rounded-[2px] p-3.5 shadow-xs">
-          <div className="text-center px-2.5 border-r border-amber-300/40 dark:border-white/10">
-            <div className="text-2xl md:text-3xl font-black text-amber-600 dark:text-amber-400 leading-none font-data">
+        {/* Center: Expanded Rich Statistics Grid (4 Key Metrics - No Overlap) */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 w-full xl:w-auto shrink-0">
+          {/* Metric 1: Points / Rank */}
+          <div className="flex flex-col items-center justify-center p-3 sm:px-4 rounded-[2px] bg-white/80 dark:bg-slate-900/80 border border-amber-400/30 min-w-[105px] text-center shadow-xs">
+            <div className="text-xl sm:text-2xl lg:text-3xl font-black text-amber-600 dark:text-amber-400 leading-none font-data">
               {isAdmin ? (spotlightWinner.biMonthlyScore > 0 ? `+${spotlightWinner.biMonthlyScore}` : spotlightWinner.biMonthlyScore) : '👑 #1'}
             </div>
-            <div className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mt-1.5 flex items-center justify-center gap-1 font-title">
-              <Trophy size={12} /> {isAdmin ? 'Puncte 2 Luni' : 'Lider Ediție'}
+            <div className="text-[10px] sm:text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider mt-2 flex items-center justify-center gap-1 font-title whitespace-nowrap">
+              <Trophy size={12} className="shrink-0 text-amber-500" />
+              <span>{isAdmin ? 'Puncte 2 Luni' : 'Lider Ediție'}</span>
             </div>
           </div>
 
-          <div className="text-center px-2.5 border-r border-amber-300/40 dark:border-white/10">
-            <div className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white leading-none font-data">
+          {/* Metric 2: Ore Voluntariat */}
+          <div className="flex flex-col items-center justify-center p-3 sm:px-4 rounded-[2px] bg-white/80 dark:bg-slate-900/80 border border-amber-400/30 min-w-[105px] text-center shadow-xs">
+            <div className="text-xl sm:text-2xl lg:text-3xl font-black text-slate-900 dark:text-white leading-none font-data">
               {spotlightWinner.hoursCalculated}h
             </div>
-            <div className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mt-1.5 flex items-center justify-center gap-1 font-title">
-              <Clock size={12} /> Ore Voluntariat
+            <div className="text-[10px] sm:text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider mt-2 flex items-center justify-center gap-1 font-title whitespace-nowrap">
+              <Clock size={12} className="shrink-0 text-sky-500" />
+              <span>Ore Voluntariat</span>
             </div>
           </div>
 
-          <div className="text-center px-2.5 border-r border-amber-300/40 dark:border-white/10">
-            <div className="text-2xl md:text-3xl font-black text-emerald-600 dark:text-emerald-400 leading-none font-data">
+          {/* Metric 3: Prezență */}
+          <div className="flex flex-col items-center justify-center p-3 sm:px-4 rounded-[2px] bg-white/80 dark:bg-slate-900/80 border border-amber-400/30 min-w-[105px] text-center shadow-xs">
+            <div className="text-xl sm:text-2xl lg:text-3xl font-black text-emerald-600 dark:text-emerald-400 leading-none font-data">
               {spotlightWinner.attendanceRate}%
             </div>
-            <div className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mt-1.5 flex items-center justify-center gap-1 font-title">
-              <CheckCircle2 size={12} /> Prezență
+            <div className="text-[10px] sm:text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider mt-2 flex items-center justify-center gap-1 font-title whitespace-nowrap">
+              <CheckCircle2 size={12} className="shrink-0 text-emerald-500" />
+              <span>Prezență</span>
             </div>
           </div>
 
-          <div className="text-center px-2.5">
-            <div className="text-2xl md:text-3xl font-black text-purple-600 dark:text-purple-400 leading-none font-data">
+          {/* Metric 4: Kudos */}
+          <div className="flex flex-col items-center justify-center p-3 sm:px-4 rounded-[2px] bg-white/80 dark:bg-slate-900/80 border border-amber-400/30 min-w-[105px] text-center shadow-xs">
+            <div className="text-xl sm:text-2xl lg:text-3xl font-black text-purple-600 dark:text-purple-400 leading-none font-data">
               {spotlightWinner.kudosCount}
             </div>
-            <div className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mt-1.5 flex items-center justify-center gap-1 font-title">
-              <Star size={12} /> Kudos
+            <div className="text-[10px] sm:text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider mt-2 flex items-center justify-center gap-1 font-title whitespace-nowrap">
+              <Star size={12} className="shrink-0 text-purple-500" />
+              <span>Kudos</span>
             </div>
           </div>
         </div>
