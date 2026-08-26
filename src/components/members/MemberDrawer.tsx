@@ -611,7 +611,7 @@ export function MemberDrawer({ member, onClose, onUpdateMember, isAdmin, current
               </div>
 
               <div className="pt-2">
-                <button type="submit" className="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-md font-semibold text-xs transition-colors font-title">
+                <button type="submit" className="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white dark:bg-sky-500 dark:hover:bg-sky-400 dark:text-slate-950 rounded-[2px] font-bold text-xs uppercase tracking-wider transition-colors font-title cursor-pointer">
                   Salvează Profilul
                 </button>
               </div>

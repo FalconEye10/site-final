@@ -1049,7 +1049,7 @@ export function LeaderboardView({ members, isAdmin = false, onUpdateMember, curr
                               toast.error(err.message || 'Eroare la anularea punctajului.');
                             }
                           }}
-                          className="p-1.5 rounded-[2px] text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
+                          className="p-1.5 rounded-[2px] text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors cursor-pointer"
                           title="Anulează această ajustare (Revert)"
                         >
                           <RotateCcw size={14} />
