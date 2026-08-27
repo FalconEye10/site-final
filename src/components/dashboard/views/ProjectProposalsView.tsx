@@ -237,27 +237,27 @@ export const ProjectProposalsView: React.FC<ProjectProposalsViewProps> = ({ isAd
           )}
 
           {isAdmin && (
-            <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-[2px] border border-slate-200 dark:border-slate-700 font-title">
+            <div className="flex bg-slate-100 dark:bg-slate-800 p-0.5 rounded-[2px] border border-slate-200 dark:border-slate-700 font-title">
               <button
                 onClick={() => setActiveCategory('toate')}
-                className={`px-3.5 py-2 rounded-[2px] text-xs sm:text-sm font-bold uppercase tracking-wider transition-all font-title cursor-pointer ${
-                  activeCategory === 'toate' ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs' : 'text-slate-500'
+                className={`px-3 py-1.5 rounded-[2px] text-xs font-bold uppercase tracking-wider transition-all font-title cursor-pointer ${
+                  activeCategory === 'toate' ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs' : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
                 }`}
               >
                 Toate ({proposals.length})
               </button>
               <button
                 onClick={() => setActiveCategory('semnate')}
-                className={`px-3.5 py-2 rounded-[2px] text-xs sm:text-sm font-bold uppercase tracking-wider transition-all font-title cursor-pointer ${
-                  activeCategory === 'semnate' ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs' : 'text-slate-500'
+                className={`px-3 py-1.5 rounded-[2px] text-xs font-bold uppercase tracking-wider transition-all font-title cursor-pointer ${
+                  activeCategory === 'semnate' ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs' : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
                 }`}
               >
                 Semnate ({signedProposals.length})
               </button>
               <button
                 onClick={() => setActiveCategory('anonime')}
-                className={`px-3.5 py-2 rounded-[2px] text-xs sm:text-sm font-bold uppercase tracking-wider transition-all font-title cursor-pointer ${
-                  activeCategory === 'anonime' ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs' : 'text-slate-500'
+                className={`px-3 py-1.5 rounded-[2px] text-xs font-bold uppercase tracking-wider transition-all font-title cursor-pointer ${
+                  activeCategory === 'anonime' ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs' : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
                 }`}
               >
                 Anonime ({anonymousProposals.length})

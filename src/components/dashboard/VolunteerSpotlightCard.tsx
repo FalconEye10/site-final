@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Trophy, Sparkles, Award, Crown, ChevronRight, History, PartyPopper, Star, Rocket, Clock, CheckCircle2 } from 'lucide-react';
-import { toast } from '../ui/Toast';
+import { Trophy, Sparkles, Award, Crown, ChevronRight, History, Star, Rocket, Clock, CheckCircle2 } from 'lucide-react';
 import { supabase } from '../../supabase';
 import { computeMemberMilestones } from '../../utils/milestones';
 import { isBoardMember } from '../../utils/permissions';
@@ -15,14 +14,11 @@ interface VolunteerSpotlightCardProps {
 
 export const VolunteerSpotlightCard: React.FC<VolunteerSpotlightCardProps> = ({
   members,
-  currentUserId,
   isAdmin = false,
   onNavigateToLeaderboard,
 }) => {
   const [showHistory, setShowHistory] = useState(false);
   const [showMilestones, setShowMilestones] = useState(false);
-  const [congratsSent, setCongratsSent] = useState<Record<string, boolean>>({});
-  const [showConfetti, setShowConfetti] = useState(false);
   const [kudosCounts, setKudosCounts] = useState<Record<string, number>>({});
 
   useEffect(() => {
@@ -147,7 +143,7 @@ export const VolunteerSpotlightCard: React.FC<VolunteerSpotlightCardProps> = ({
         emoji: '⚡',
         color: 'from-[#28FAFC]/20 to-blue-500/20 text-[#28FAFC] border-[#28FAFC]/40',
         title: 'Punctaj Ediție',
-        desc: `A acumulat ${spotlightWinner.biMonthlyScore} puncte în ediția bimensuală curentă.`,
+        desc: `A acumulat ${spotlightWinner.biMonthlyScore} puncte în această ediție.`,
         badge: 'SCOR REAL'
       },
       {
@@ -161,7 +157,7 @@ export const VolunteerSpotlightCard: React.FC<VolunteerSpotlightCardProps> = ({
         emoji: '🌱',
         color: 'from-purple-500/20 to-indigo-500/20 text-purple-400 border-purple-500/40',
         title: 'Ore Voluntariat',
-        desc: `${spotlightWinner.hoursCalculated} ore de implicare comunitară validate.`,
+        desc: `${spotlightWinner.hoursCalculated} ore de implicare validate.`,
         badge: 'ORE REALE'
       },
       {
@@ -199,6 +195,7 @@ export const VolunteerSpotlightCard: React.FC<VolunteerSpotlightCardProps> = ({
         y -= 1;
       }
       pastPeriods.push({
+        index: bIndex,
         label: `${periods[bIndex]} ${y}`,
         months: [bIndex * 2, bIndex * 2 + 1],
         year: y
@@ -206,37 +203,34 @@ export const VolunteerSpotlightCard: React.FC<VolunteerSpotlightCardProps> = ({
     }
 
     return pastPeriods.map(p => {
-      let topMember: any = null;
-      let maxScore = 0;
+      let topPastMember: any = null;
+      let maxPastScore = -1;
 
       members.forEach(m => {
         if (m.role?.toLowerCase() === 'admin' || isBoardMember(m)) return;
-        const adjustments = m.scoreAdjustments || [];
-        const pointsInPeriod = adjustments.reduce((sum: number, adj: any) => {
+
+        const adjustments = Array.isArray(m.scoreAdjustments) ? m.scoreAdjustments : [];
+        const score = adjustments.reduce((sum: number, adj: any) => {
           if (!adj.date) return sum;
           const d = new Date(adj.date);
           if (p.months.includes(d.getMonth()) && d.getFullYear() === p.year) {
-            return sum + (adj.points || 0);
+            return sum + (Number(adj.points) || 0);
           }
           return sum;
         }, 0);
 
-        if (pointsInPeriod > maxScore) {
-          maxScore = pointsInPeriod;
-          topMember = {
-            name: m.nickname || m.name,
-            points: pointsInPeriod,
-            role: m.role || 'Voluntar'
-          };
+        if (score > maxPastScore && score > 0) {
+          maxPastScore = score;
+          topPastMember = { ...m, periodScore: score };
         }
       });
 
-      if (topMember && maxScore > 0) {
+      if (topPastMember) {
         return {
           period: p.label,
-          name: topMember.name,
-          achievement: isAdmin 
-            ? `Câștigător Ediție • ${topMember.points} Puncte Acumulate`
+          name: topPastMember.name || topPastMember.nickname,
+          achievement: isAdmin
+            ? `${topPastMember.periodScore} puncte acumulate`
             : `Câștigător Ediție • Activitate Exemplară`,
           badge: '👑 Locul 1',
           hasData: true
@@ -246,57 +240,24 @@ export const VolunteerSpotlightCard: React.FC<VolunteerSpotlightCardProps> = ({
       return {
         period: p.label,
         name: 'N/A',
-        achievement: 'N/A — Fără date înregistrate în această perioadă',
+        achievement: 'Fără date înregistrate în această perioadă',
         badge: '⚪ N/A',
         hasData: false
       };
     });
   }, [members, isAdmin]);
 
-  const handleCelebrate = () => {
-    if (!spotlightWinner) return;
-    setShowConfetti(true);
-    setCongratsSent(prev => ({ ...prev, [spotlightWinner.id]: true }));
-    toast.success(`Ai trimis felicitări către ${spotlightWinner.name || spotlightWinner.nickname || 'voluntar'}! 🎉`);
-    setTimeout(() => setShowConfetti(false), 3000);
-  };
-
   if (!spotlightWinner) {
     return null;
   }
 
-  const isSelf = currentUserId && (
-    spotlightWinner.id === currentUserId || 
-    (spotlightWinner.username || '').toLowerCase() === currentUserId.toLowerCase() ||
-    (spotlightWinner.name || '').toLowerCase() === currentUserId.toLowerCase()
-  );
-
   return (
     <div className="relative overflow-hidden rounded-[2px] bg-gradient-to-br from-amber-500/10 via-orange-500/5 to-amber-600/10 border border-amber-500/30 p-6 md:p-8 backdrop-blur-md shadow-xs font-anthropic">
-      {/* Confetti Animation Effect */}
-      <AnimatePresence>
-        {showConfetti && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.5 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 1.5 }}
-            className="absolute inset-0 z-20 flex items-center justify-center pointer-events-none bg-amber-500/10 backdrop-blur-sm rounded-[2px]"
-          >
-            <div className="text-center">
-              <span className="text-5xl block">👑</span>
-              <span className="text-xs font-bold text-amber-700 dark:text-amber-300 uppercase tracking-widest mt-2 block font-title">
-                Felicitări transmise cu succes!
-              </span>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
       {/* Top Header & Bi-Monthly Badge */}
       <div className="flex flex-wrap items-center justify-between gap-3 mb-6 relative z-10 border-b border-amber-500/20 pb-4">
         <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-[2px] bg-amber-500/10 text-amber-800 dark:text-amber-300 border border-amber-500/20 text-xs font-bold uppercase tracking-wider font-title">
           <Sparkles size={16} className="text-amber-600 dark:text-amber-400" />
-          <span>Voluntarul Ediției Bimensuale • {biMonthlyPeriod.name}</span>
+          <span>Voluntarul Lunii • {biMonthlyPeriod.name}</span>
         </div>
 
         <div className="flex items-center gap-2">
@@ -310,7 +271,7 @@ export const VolunteerSpotlightCard: React.FC<VolunteerSpotlightCardProps> = ({
         </div>
       </div>
 
-      {/* Row 1: Profile Avatar & Details + Action Buttons (No Collisions) */}
+      {/* Row 1: Profile Avatar & Details + Action Buttons */}
       <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-5 w-full">
         {/* Left: Trophy Avatar & Member Details */}
         <div className="flex items-center gap-4 sm:gap-5 flex-1 min-w-0">
@@ -335,39 +296,14 @@ export const VolunteerSpotlightCard: React.FC<VolunteerSpotlightCardProps> = ({
           </div>
 
           <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-2 flex-wrap mb-1">
-              <h3 className="text-xl sm:text-2xl lg:text-3xl font-black text-slate-900 dark:text-white tracking-tight leading-tight font-anthropicSerif truncate max-w-full">
-                {spotlightWinner.name || spotlightWinner.nickname}
-              </h3>
-              <span className="text-[10px] sm:text-xs px-2.5 py-0.5 rounded-[2px] bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30 font-bold uppercase font-title shrink-0">
-                Ediție Activă
-              </span>
-            </div>
-
-            <p className="text-xs sm:text-sm font-semibold text-slate-600 dark:text-slate-400 font-anthropic truncate">
-              {spotlightWinner.role || 'Voluntar Activ'} • {spotlightWinner.city || 'Piatra Neamț'}
-            </p>
+            <h3 className="text-xl sm:text-2xl lg:text-3xl font-black text-slate-900 dark:text-white tracking-tight leading-tight font-title truncate max-w-full">
+              {spotlightWinner.name || spotlightWinner.nickname}
+            </h3>
           </div>
         </div>
 
         {/* Right: Actions */}
         <div className="flex flex-wrap items-center gap-2.5 w-full md:w-auto shrink-0 font-title">
-          {!isSelf && (
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={handleCelebrate}
-              className={`flex-1 sm:flex-initial px-4 py-2.5 rounded-[2px] font-bold text-xs sm:text-sm uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-xs cursor-pointer ${
-                congratsSent[spotlightWinner.id]
-                  ? 'bg-emerald-600 text-white shadow-emerald-600/20'
-                  : 'bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white shadow-amber-500/20'
-              }`}
-            >
-              <PartyPopper size={15} />
-              <span>{congratsSent[spotlightWinner.id] ? 'Felicitat! ✓' : 'Trimite Felicitări! 🎉'}</span>
-            </motion.button>
-          )}
-
           {onNavigateToLeaderboard && (
             <button
               onClick={onNavigateToLeaderboard}
@@ -449,9 +385,9 @@ export const VolunteerSpotlightCard: React.FC<VolunteerSpotlightCardProps> = ({
           >
             <div className="flex items-center justify-between mb-3.5">
               <span className="text-xs font-black text-amber-800 dark:text-amber-300 uppercase tracking-widest flex items-center gap-1.5 font-title">
-                <Rocket size={15} className="text-amber-500" /> Milestone-uri Crazy & Realizări Unice
+                <Rocket size={15} className="text-amber-500" /> Milestone-uri Speciale
               </span>
-              <span className="text-xs text-slate-500 dark:text-slate-400 font-anthropic">Recorduri & Insigne Speciale</span>
+              <span className="text-xs text-slate-500 dark:text-slate-400 font-anthropic">Insigne & Recorduri</span>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
@@ -498,9 +434,9 @@ export const VolunteerSpotlightCard: React.FC<VolunteerSpotlightCardProps> = ({
           >
             <div className="flex items-center justify-between mb-3.5">
               <span className="text-xs font-black text-amber-800 dark:text-amber-300 uppercase tracking-widest flex items-center gap-1.5 font-title">
-                <Award size={16} /> Galeria Campionilor Bimensuali (Hall of Fame)
+                <Award size={16} /> Istoric Câștigători Bimensuali
               </span>
-              <span className="text-xs text-slate-500 dark:text-slate-400 font-anthropic">Câștigătorii Edițiilor Anterioare</span>
+              <span className="text-xs text-slate-500 dark:text-slate-400 font-anthropic">Ediții Anterioare</span>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
@@ -538,4 +474,3 @@ export const VolunteerSpotlightCard: React.FC<VolunteerSpotlightCardProps> = ({
     </div>
   );
 };
-

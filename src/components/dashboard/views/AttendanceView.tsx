@@ -794,7 +794,9 @@ export function AttendanceView({ members, onUpdateMember, isAdmin, currentUserId
   // Compute archive targeted members and detailed statistics
   const targetArchiveMembers = useMemo(() => {
     if (!selectedEvent) return [];
-    return members.filter(m => !isSystemAccount(m) && m.role !== 'admin');
+    return members
+      .filter(m => !isSystemAccount(m) && m.role !== 'admin')
+      .sort((a, b) => (a.name || '').localeCompare(b.name || '', 'ro', { sensitivity: 'base' }));
   }, [members, selectedEvent]);
 
   const archiveStats = useMemo(() => {
@@ -1000,12 +1002,12 @@ export function AttendanceView({ members, onUpdateMember, isAdmin, currentUserId
               )}
 
               {/* Action Toolbar */}
-              <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-3 mb-5 shrink-0 border-b border-slate-200 dark:border-slate-800 pb-4 font-title">
+              <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2.5 mb-4 shrink-0 border-b border-slate-200 dark:border-slate-800 pb-3 font-title">
                 <div className="flex flex-wrap items-center gap-2">
                   <button 
                     type="button"
                     onClick={() => setActiveTab('attendance')}
-                    className={`px-3.5 py-2 rounded-[2px] text-xs font-bold uppercase tracking-wider transition-all cursor-pointer ${
+                    className={`px-3 py-1.5 rounded-[2px] text-xs font-bold uppercase tracking-wider transition-all cursor-pointer ${
                       activeTab === 'attendance'
                         ? 'bg-slate-900 text-white dark:bg-sky-500 dark:text-slate-950 shadow-xs'
                         : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-50'
@@ -1016,7 +1018,7 @@ export function AttendanceView({ members, onUpdateMember, isAdmin, currentUserId
                   <button 
                     type="button"
                     onClick={() => setActiveTab('requests')}
-                    className={`px-3.5 py-2 rounded-[2px] text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer ${
+                    className={`px-3 py-1.5 rounded-[2px] text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer ${
                       activeTab === 'requests'
                         ? 'bg-slate-900 text-white dark:bg-sky-500 dark:text-slate-950 shadow-xs'
                         : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-50'
@@ -1029,18 +1031,18 @@ export function AttendanceView({ members, onUpdateMember, isAdmin, currentUserId
                   </button>
                   <button
                     onClick={() => { setWhatsappSearchTerm(''); setShowWhatsappModal(true); }}
-                    className="px-3.5 py-2 rounded-[2px] text-xs font-bold uppercase tracking-wider bg-emerald-600 hover:bg-emerald-700 text-white flex items-center gap-1.5 shadow-xs transition-all cursor-pointer"
+                    className="px-3 py-1.5 rounded-[2px] text-xs font-bold uppercase tracking-wider bg-emerald-600 hover:bg-emerald-700 text-white flex items-center gap-1.5 shadow-xs transition-all cursor-pointer"
                   >
-                    <MessageSquare size={14} /> Confirmat WhatsApp
+                    <MessageSquare size={13} /> Confirmat WhatsApp
                   </button>
                 </div>
 
                 {!isTimeLocked && (
                   <button
                     onClick={handleOpenFinalizeModal}
-                    className="px-4 py-2 btn-civic-danger text-xs font-title uppercase tracking-wider flex items-center justify-center gap-1.5 cursor-pointer"
+                    className="px-3.5 py-1.5 btn-civic-danger text-xs font-title uppercase tracking-wider flex items-center justify-center gap-1.5 cursor-pointer"
                   >
-                    <Lock size={14} /> Finalizează & Salvează în Arhivă
+                    <Lock size={13} /> Finalizează & Salvează
                   </button>
                 )}
               </div>
@@ -1063,6 +1065,7 @@ export function AttendanceView({ members, onUpdateMember, isAdmin, currentUserId
                         <TableBody>
                           {members
                             .filter(m => !isSystemAccount(m) && m.role !== 'admin')
+                            .sort((a, b) => (a.name || '').localeCompare(b.name || '', 'ro', { sensitivity: 'base' }))
                             .map(m => {
                               const status = selectedEvent.rsvps?.[m.id] || 'none';
                               const isButtonLocked = isTimeLocked;
@@ -1097,7 +1100,7 @@ export function AttendanceView({ members, onUpdateMember, isAdmin, currentUserId
                                       <button 
                                         disabled={isButtonLocked}
                                         onClick={() => handleMarkAttendance(m.id, 'present')}
-                                        className={`px-3 py-1.5 rounded-[2px] text-xs font-bold uppercase tracking-wider transition-all cursor-pointer ${
+                                        className={`px-2.5 py-1 rounded-[2px] text-xs font-bold uppercase tracking-wider transition-all cursor-pointer ${
                                           status === 'present' ? 'bg-emerald-600 text-white shadow-xs' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 border border-slate-200 dark:border-slate-700'
                                         } disabled:opacity-50 disabled:cursor-not-allowed`}
                                       >
@@ -1106,7 +1109,7 @@ export function AttendanceView({ members, onUpdateMember, isAdmin, currentUserId
                                       <button 
                                         disabled={isButtonLocked}
                                         onClick={() => handleMarkAttendance(m.id, 'absent')}
-                                        className={`px-3 py-1.5 rounded-[2px] text-xs font-bold uppercase tracking-wider transition-all cursor-pointer ${
+                                        className={`px-2.5 py-1 rounded-[2px] text-xs font-bold uppercase tracking-wider transition-all cursor-pointer ${
                                           status === 'absent' || status === 'unexcused' ? 'bg-rose-600 text-white shadow-xs' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-rose-50 dark:hover:bg-rose-950/30 border border-slate-200 dark:border-slate-700'
                                         } disabled:opacity-50 disabled:cursor-not-allowed`}
                                       >
@@ -1115,7 +1118,7 @@ export function AttendanceView({ members, onUpdateMember, isAdmin, currentUserId
                                       <button 
                                         disabled={isButtonLocked}
                                         onClick={() => handleMarkAttendance(m.id, 'excused')}
-                                        className={`px-3 py-1.5 rounded-[2px] text-xs font-bold uppercase tracking-wider transition-all cursor-pointer ${
+                                        className={`px-2.5 py-1 rounded-[2px] text-xs font-bold uppercase tracking-wider transition-all cursor-pointer ${
                                           status === 'excused' ? 'bg-amber-500 text-slate-950 shadow-xs' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-amber-50 dark:hover:bg-amber-950/30 border border-slate-200 dark:border-slate-700'
                                         } disabled:opacity-50 disabled:cursor-not-allowed`}
                                       >
@@ -1690,8 +1693,9 @@ export function AttendanceView({ members, onUpdateMember, isAdmin, currentUserId
                 style={{ WebkitOverflowScrolling: 'touch' }}
               >
                 {members
-                  .filter(m => m.role !== 'admin')
-                  .filter(m => m.name.toLowerCase().includes(whatsappSearchTerm.toLowerCase()))
+                  .filter(m => !isSystemAccount(m) && m.role !== 'admin')
+                  .filter(m => (m.name || '').toLowerCase().includes(whatsappSearchTerm.toLowerCase()))
+                  .sort((a, b) => (a.name || '').localeCompare(b.name || '', 'ro', { sensitivity: 'base' }))
                   .map(m => {
                     const currentStatus = selectedEvent.rsvps?.[m.id];
                     const isExcused = currentStatus === 'excused';

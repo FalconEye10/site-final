@@ -20,7 +20,6 @@ export const DashboardTab: React.FC<{ transactions: Transaction[] }> = ({ transa
           emphasis
           accent={kpis.currentBalance >= 0 ? 'var(--adm-acc-emerald)' : 'var(--adm-acc-rose)'}
           icon={<Wallet className="h-5 w-5" />}
-          hint="Venituri încasate minus cheltuieli plătite"
         />
         <KpiCard
           label="Total Venituri Mandat"
@@ -41,7 +40,6 @@ export const DashboardTab: React.FC<{ transactions: Transaction[] }> = ({ transa
           value={formatRON(kpis.charityRedirected)}
           accent="var(--adm-acc-pink)"
           icon={<HeartHandshake className="h-5 w-5" />}
-          hint="Sume virate efectiv către cauze caritabile"
         />
       </div>
 

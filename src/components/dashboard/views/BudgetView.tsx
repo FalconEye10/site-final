@@ -234,10 +234,10 @@ export const BudgetView: React.FC<BudgetViewProps> = ({ isAdmin = false, current
               role="tab"
               aria-selected={isActive}
               onClick={() => setActiveTab(tab.id)}
-              className="relative flex shrink-0 items-center gap-2 px-4 py-3.5 text-xs sm:text-sm font-bold uppercase tracking-[0.1em] transition-colors cursor-pointer"
+              className="relative flex shrink-0 items-center gap-1.5 px-3 py-2 text-xs font-bold uppercase tracking-[0.1em] transition-colors cursor-pointer"
               style={{ color: isActive ? 'var(--adm-ink)' : 'var(--adm-ink-faint)' }}
             >
-              <Icon className="h-4 w-4" />
+              <Icon className="h-3.5 w-3.5" />
               {tab.label}
               {isActive && (
                 <motion.span

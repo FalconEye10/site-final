@@ -722,14 +722,14 @@ const ViewDashboard = ({ members, currentUserObj, isAdmin, onNavigateToSection, 
                 {activePoll.closed ? (
                   <button
                     onClick={handleArchivePoll}
-                    className="btn-civic-secondary py-2 px-4 text-xs sm:text-sm font-title uppercase tracking-wider"
+                    className="btn-civic-secondary py-1.5 px-3 text-xs font-title font-bold uppercase tracking-wider cursor-pointer"
                   >
                     Arhivează Rezultatele
                   </button>
                 ) : (
                   <button
                     onClick={handleClosePoll}
-                    className="btn-civic-primary py-2 px-4 text-xs sm:text-sm font-title uppercase tracking-wider"
+                    className="btn-civic-primary py-1.5 px-3 text-xs font-title font-bold uppercase tracking-wider cursor-pointer"
                   >
                     Închide Votarea
                   </button>
@@ -767,7 +767,7 @@ const ViewDashboard = ({ members, currentUserObj, isAdmin, onNavigateToSection, 
                       </div>
                       <button
                         onClick={() => onNavigateToSection('proiecte')}
-                        className="btn-civic-secondary py-1.5 px-3 text-xs sm:text-sm font-title font-bold uppercase tracking-wider"
+                        className="btn-civic-secondary py-1 px-2.5 text-xs font-title font-bold uppercase tracking-wider cursor-pointer"
                       >
                         Detalii
                       </button>
@@ -862,7 +862,7 @@ const ViewDashboard = ({ members, currentUserObj, isAdmin, onNavigateToSection, 
                     <div className="flex gap-2">
                       <button
                         onClick={() => handleRSVP('confirmed')}
-                        className={`flex-1 py-2.5 text-xs sm:text-sm font-title font-bold uppercase tracking-wider rounded-[2px] transition-colors border ${
+                        className={`flex-1 py-1.5 px-3 text-xs font-title font-bold uppercase tracking-wider rounded-[2px] transition-colors border ${
                           userRsvpStatus === 'confirmed'
                             ? 'bg-emerald-700 border-emerald-700 text-white'
                             : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/20'
@@ -872,7 +872,7 @@ const ViewDashboard = ({ members, currentUserObj, isAdmin, onNavigateToSection, 
                       </button>
                       <button
                         onClick={() => onRedirectToExcuse(nextEvent.id)}
-                        className={`flex-1 py-2.5 text-xs sm:text-sm font-title font-bold uppercase tracking-wider rounded-[2px] transition-colors border ${
+                        className={`flex-1 py-1.5 px-3 text-xs font-title font-bold uppercase tracking-wider rounded-[2px] transition-colors border ${
                           userRsvpStatus === 'declined'
                             ? 'bg-rose-700 border-rose-700 text-white'
                             : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-rose-700 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/20'
@@ -1373,13 +1373,13 @@ const ViewPayments = ({ members, onUpdateMember, isAdmin }: { members: any[], on
               <div className="flex gap-3">
                 <button 
                   onClick={() => setReceiptToRevert(null)}
-                  className="flex-1 py-2.5 btn-civic-secondary text-xs sm:text-sm font-title uppercase tracking-wider"
+                  className="flex-1 py-2 btn-civic-secondary text-xs font-title font-bold uppercase tracking-wider cursor-pointer"
                 >
                   Nu, renunță
                 </button>
                 <button 
                   onClick={handleConfirmRevert}
-                  className="flex-1 py-2.5 btn-civic-danger text-xs sm:text-sm font-title uppercase tracking-wider"
+                  className="flex-1 py-2 btn-civic-danger text-xs font-title font-bold uppercase tracking-wider cursor-pointer"
                 >
                   Da, anulează plata
                 </button>
@@ -1883,7 +1883,7 @@ const ViewProfile = ({ currentUserObj, onUpdateMember, members }: ViewProfilePro
                   <button
                     type="button"
                     onClick={() => document.getElementById('avatar-file-input')?.click()}
-                    className="px-4 py-2 rounded-[2px] bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-800 dark:text-slate-200 font-bold text-xs sm:text-sm flex items-center gap-1.5 transition-colors cursor-pointer font-title uppercase tracking-wider"
+                    className="px-3 py-1.5 rounded-[2px] bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-800 dark:text-slate-200 font-bold text-xs flex items-center gap-1.5 transition-colors cursor-pointer font-title uppercase tracking-wider"
                   >
                     <Upload size={14} /> Încarcă Poză
                   </button>
@@ -1891,7 +1891,7 @@ const ViewProfile = ({ currentUserObj, onUpdateMember, members }: ViewProfilePro
                     <button
                       type="button"
                       onClick={() => setAvatar('')}
-                      className="px-4 py-2 rounded-[2px] bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-100 dark:hover:bg-rose-900/50 text-rose-600 dark:text-rose-400 font-bold text-xs sm:text-sm transition-colors cursor-pointer font-title uppercase tracking-wider"
+                      className="px-3 py-1.5 rounded-[2px] bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-100 dark:hover:bg-rose-900/50 text-rose-600 dark:text-rose-400 font-bold text-xs transition-colors cursor-pointer font-title uppercase tracking-wider"
                     >
                       Șterge
                     </button>
@@ -1977,7 +1977,7 @@ const ViewProfile = ({ currentUserObj, onUpdateMember, members }: ViewProfilePro
               <button 
                 onClick={handleSave}
                 disabled={isSaving}
-                className="w-full py-3 btn-civic-primary font-bold flex items-center justify-center gap-2 rounded-[2px] text-xs sm:text-sm font-title uppercase tracking-wider"
+                className="w-full py-2.5 btn-civic-primary font-bold flex items-center justify-center gap-2 rounded-[2px] text-xs font-title uppercase tracking-wider cursor-pointer"
               >
                 {isSaving ? 'Se salvează...' : 'Salvează Modificările'}
               </button>

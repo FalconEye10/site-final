@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { 
   Users2, Plus, Trash2, Search, Check, Sparkles, FolderKanban, 
-  UserCheck, Shield, AlertCircle, Save
+  UserCheck, Shield, AlertCircle, Save, Calendar, Clock
 } from 'lucide-react';
 import { supabase } from '../../../supabase';
 import { toast } from '../../ui/Toast';
@@ -245,9 +245,9 @@ export function RepartizareView({ isAdmin, members }: RepartizareViewProps) {
           <button
             onClick={handleSave}
             disabled={isSaving || !selectedProjectId}
-            className="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-3 rounded-[2px] text-xs sm:text-sm font-bold font-title uppercase tracking-wider flex items-center gap-2 shrink-0 shadow-xs cursor-pointer"
+            className="bg-indigo-600 hover:bg-indigo-700 text-white px-3.5 py-2 rounded-[2px] text-xs font-bold font-title uppercase tracking-wider flex items-center gap-1.5 shrink-0 shadow-xs cursor-pointer"
           >
-            <Save size={16} />
+            <Save size={15} />
             {isSaving ? 'Se salvează...' : 'SALVEAZĂ REPARTIZAREA'}
           </button>
         )}
@@ -339,8 +339,10 @@ export function RepartizareView({ isAdmin, members }: RepartizareViewProps) {
                   <div className="flex items-start justify-between gap-2">
                     <div>
                       <span className="font-bold text-sm text-slate-900 dark:text-white block font-title">{shift.name}</span>
-                      <span className="text-xs text-slate-600 dark:text-slate-400 block mt-0.5 font-anthropic">
-                        📅 {formatRomaniaDate(shift.date, { weekday: 'short', day: 'numeric', month: 'short' })} · ⏰ {shift.startTime} - {shift.endTime}
+                      <span className="text-xs text-slate-600 dark:text-slate-400 flex items-center gap-2 mt-0.5 font-anthropic">
+                        <span className="flex items-center gap-1"><Calendar size={12} className="text-slate-400" /> {formatRomaniaDate(shift.date, { weekday: 'short', day: 'numeric', month: 'short' })}</span>
+                        <span>·</span>
+                        <span className="flex items-center gap-1"><Clock size={12} className="text-slate-400" /> {shift.startTime} - {shift.endTime}</span>
                       </span>
                     </div>
                     <span className="text-xs font-extrabold px-2.5 py-0.5 rounded-[2px] bg-purple-200 text-purple-900 shrink-0 font-data">

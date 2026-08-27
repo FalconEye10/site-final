@@ -575,7 +575,9 @@ export async function broadcastPushNotification({
         currentLocalMemberId = parsedSub.member_id || null;
       }
     }
-  } catch {}
+  } catch (err) {
+    console.debug('Failed to parse cached member session for push notification target filter:', err);
+  }
 
   // Afișează notificare locală DOAR dacă este generală sau dacă este nominală pentru utilizatorul curent
   const isTargetedToSomeoneElse = Boolean(

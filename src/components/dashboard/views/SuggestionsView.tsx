@@ -26,11 +26,11 @@ interface SuggestionsViewProps {
 }
 
 const TOPIC_TYPES = [
-  '💡 Idee de Proiect / Acțiune',
-  '🏛️ Propunere pentru Ședința de Board',
-  '🤝 Îmbunătățire Atmosferă & Coeziune',
-  '⚙️ Logistică & Organizare',
-  '💬 Altele / Feedback Liber'
+  'Idee de Proiect / Acțiune',
+  'Propunere pentru Ședința de Board',
+  'Îmbunătățire Atmosferă & Coeziune',
+  'Logistică & Organizare',
+  'Altele / Feedback Liber'
 ];
 
 export const SuggestionsView: React.FC<SuggestionsViewProps> = ({
@@ -217,16 +217,16 @@ export const SuggestionsView: React.FC<SuggestionsViewProps> = ({
                 />
               </div>
 
-              {/* Public Suggestion Reward Notification Banner */}
-              <div className={`p-3.5 rounded-[2px] border text-xs sm:text-sm leading-relaxed transition-all font-anthropic ${
+              {/* Public Suggestion Notice Banner */}
+              <div className={`p-3 rounded-[2px] border text-xs leading-relaxed transition-all font-anthropic ${
                 !isAnonymous
-                  ? 'bg-amber-500/10 border-amber-500/30 text-amber-900 dark:text-amber-300 font-bold'
-                  : 'bg-purple-500/10 border-purple-500/20 text-purple-900 dark:text-purple-300'
+                  ? 'bg-amber-500/10 border-amber-500/30 text-amber-900 dark:text-amber-300 font-semibold'
+                  : 'bg-slate-50 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400'
               }`}>
                 {!isAnonymous ? (
-                  <span>🎁 <strong>RECOMPENSĂ ACTIVĂ:</strong> Propunerile publice (cu numele tău) primesc <strong>+50% Puncte Bonus Bimensuale</strong> și recunoaștere în comunitate!</span>
+                  <span>Propunerea este semnată public cu numele tău și este eligibilă pentru punctaj suplimentar.</span>
                 ) : (
-                  <span>💡 <em>Sfat: Sugestiile trimise <strong>Public</strong> (debifează opțiunea anonimă) sunt răsplătite cu mai multe puncte și mai mult ajutor de la echipă!</em></span>
+                  <span>Propunerea este trimisă complet anonim către conducerea clubului.</span>
                 )}
               </div>
             </div>
@@ -234,9 +234,9 @@ export const SuggestionsView: React.FC<SuggestionsViewProps> = ({
             <button
               type="submit"
               disabled={submitting}
-              className="w-full btn-civic-primary py-3 text-xs sm:text-sm font-bold flex items-center justify-center gap-2 shadow-xs uppercase tracking-wider font-title cursor-pointer"
+              className="w-full btn-civic-primary py-2 px-3 text-xs font-bold flex items-center justify-center gap-1.5 shadow-xs uppercase tracking-wider font-title cursor-pointer"
             >
-              <Send size={16} /> {submitting ? 'Se trimite...' : 'Trimite Propunerea'}
+              <Send size={14} /> {submitting ? 'Se trimite...' : 'Trimite Propunerea'}
             </button>
           </form>
         </div>
@@ -244,14 +244,14 @@ export const SuggestionsView: React.FC<SuggestionsViewProps> = ({
         {/* Suggestions List Column */}
         <div className="lg:col-span-2 space-y-4">
           {/* Status Tabs */}
-          <div className="rounded-[2px] border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-3 sm:p-4 shadow-xs flex flex-wrap gap-2 items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Filter size={16} className="text-slate-400 dark:text-slate-500 ml-1.5" />
+          <div className="rounded-[2px] border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-2.5 sm:p-3 shadow-xs flex flex-wrap gap-1.5 items-center justify-between">
+            <div className="flex items-center gap-1.5">
+              <Filter size={14} className="text-slate-400 dark:text-slate-500 ml-1" />
               {(['all', 'nou', 'discutat', 'implementat'] as const).map(tab => (
                 <button
                   key={tab}
                   onClick={() => setActiveFilter(tab)}
-                  className={`px-3.5 py-1.5 rounded-[2px] text-xs sm:text-sm font-bold uppercase tracking-wider transition-all font-title cursor-pointer ${
+                  className={`px-2.5 py-1 rounded-[2px] text-xs font-bold uppercase tracking-wider transition-all font-title cursor-pointer ${
                     activeFilter === tab
                       ? 'bg-slate-900 dark:bg-sky-500 text-white dark:text-slate-950 shadow-xs'
                       : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'

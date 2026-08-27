@@ -426,7 +426,7 @@ export async function fetchScoreAuditLogs(): Promise<ScoreAuditLog[]> {
           
           let actorName = 'Conducere / Board';
           let actorUsername: string | undefined = undefined;
-          let actorId: string | undefined = a.reviewedById;
+          const actorId: string | undefined = a.reviewedById;
 
           if (a.status === 'pending') {
             const memberInfo = memberLookup.get((a.memberId || '').toLowerCase());

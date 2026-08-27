@@ -51,13 +51,13 @@ export const MemberCommunityHub: React.FC<MemberCommunityHubProps> = ({
               <button
                 key={tab.id}
                 onClick={() => setSubtab(tab.id)}
-                className={`flex items-center gap-2 px-3.5 py-2 rounded-[2px] text-xs sm:text-sm font-bold uppercase tracking-wider transition-all cursor-pointer shrink-0 ${
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-[2px] text-xs font-bold uppercase tracking-wider transition-all cursor-pointer shrink-0 ${
                   isActive
                     ? 'bg-slate-900 text-white dark:bg-slate-800 dark:text-sky-300 shadow-xs'
                     : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-white/60 dark:hover:bg-slate-800/40'
                 }`}
               >
-                <Icon size={16} />
+                <Icon size={14} />
                 <span>{tab.label}</span>
               </button>
             );

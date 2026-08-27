@@ -24,11 +24,11 @@ interface KudosViewProps {
 }
 
 const KUDOS_CATEGORIES = [
-  { id: 'Spirit de Echipă', label: '🤝 Spirit de Echipă', color: 'bg-blue-50 text-blue-700 border-blue-200' },
-  { id: 'Ajutor Logistic', label: '📦 Ajutor Logistic', color: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
-  { id: 'Creativitate', label: '🎨 Creativitate & Idei', color: 'bg-purple-50 text-purple-700 border-purple-200' },
-  { id: 'Energie Pozitivă', label: '⚡ Energie Pozitivă', color: 'bg-amber-50 text-amber-700 border-amber-200' },
-  { id: 'Leadership', label: '👑 Leadership & Implicare', color: 'bg-rose-50 text-rose-700 border-rose-200' },
+  { id: 'Spirit de Echipă', label: 'Spirit de Echipă', color: 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-800' },
+  { id: 'Ajutor Logistic', label: 'Ajutor Logistic', color: 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800' },
+  { id: 'Creativitate', label: 'Creativitate & Idei', color: 'bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-950/40 dark:text-purple-300 dark:border-purple-800' },
+  { id: 'Energie Pozitivă', label: 'Energie Pozitivă', color: 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800' },
+  { id: 'Leadership', label: 'Leadership & Implicare', color: 'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-800' },
 ];
 
 export const KudosView: React.FC<KudosViewProps> = ({ currentUserId, currentUsername, members }) => {
@@ -164,9 +164,9 @@ export const KudosView: React.FC<KudosViewProps> = ({ currentUserId, currentUser
 
         <button
           onClick={() => setShowSendModal(true)}
-          className="px-5 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-[2px] text-xs sm:text-sm font-bold font-title uppercase tracking-wider flex items-center justify-center gap-2 shadow-xs shrink-0 cursor-pointer"
+          className="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-[2px] text-xs font-bold font-title uppercase tracking-wider flex items-center justify-center gap-1.5 shadow-xs shrink-0 cursor-pointer"
         >
-          <Sparkles size={16} /> TRIMITE UN KUDOS
+          <Sparkles size={14} /> TRIMITE UN KUDOS
         </button>
       </div>
 

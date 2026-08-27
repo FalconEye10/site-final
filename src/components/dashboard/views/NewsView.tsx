@@ -195,9 +195,9 @@ export const NewsView: React.FC<NewsViewProps> = ({ isAdmin, currentUserId, curr
         {isAdmin && (
           <button
             onClick={() => setShowCreateForm(true)}
-            className="flex items-center gap-2 px-4 py-2.5 btn-civic-primary text-xs sm:text-sm font-title uppercase tracking-wider cursor-pointer"
+            className="flex items-center gap-1.5 px-3 py-1.5 btn-civic-primary text-xs font-title font-bold uppercase tracking-wider cursor-pointer"
           >
-            <Plus className="w-4 h-4" />
+            <Plus className="w-3.5 h-3.5" />
             Știre Nouă
           </button>
         )}

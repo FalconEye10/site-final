@@ -379,25 +379,25 @@ export function LeaderboardView({ members, isAdmin = false, onUpdateMember, curr
                   <button
                     onClick={() => setIsAuditLogOpen(true)}
                     title="Vezi Audit Log Puncte"
-                    className="inline-flex items-center justify-center gap-1.5 h-10 px-3.5 bg-slate-900 dark:bg-slate-800 text-amber-400 hover:bg-slate-800 dark:hover:bg-slate-700 rounded-[2px] border border-amber-400/40 shadow-xs transition-all text-xs font-bold uppercase tracking-wider cursor-pointer"
+                    className="inline-flex items-center justify-center gap-1.5 h-8 px-3 bg-slate-900 dark:bg-slate-800 text-amber-400 hover:bg-slate-800 dark:hover:bg-slate-700 rounded-[2px] border border-amber-400/40 shadow-xs transition-all text-xs font-bold uppercase tracking-wider cursor-pointer"
                   >
-                    <ShieldAlert size={15} />
+                    <ShieldAlert size={14} />
                     <span>Audit Log</span>
                   </button>
                 )}
                 <button
                   onClick={() => setHistoryModalMember(locul1)}
                   title="Istoric detaliat puncte"
-                  className="inline-flex items-center justify-center gap-1.5 h-10 px-3.5 bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-800 dark:text-slate-200 rounded-[2px] border border-slate-300 dark:border-slate-700 shadow-xs transition-all text-xs font-bold uppercase tracking-wider cursor-pointer"
+                  className="inline-flex items-center justify-center gap-1.5 h-8 px-3 bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-800 dark:text-slate-200 rounded-[2px] border border-slate-300 dark:border-slate-700 shadow-xs transition-all text-xs font-bold uppercase tracking-wider cursor-pointer"
                 >
-                  <History size={15} />
+                  <History size={14} />
                   <span>Istoric</span>
                 </button>
                 <button
                   onClick={() => { setScoreModalMember(locul1); setScoreAdjustValue(''); setScoreAdjustReason(''); }}
-                  className="inline-flex items-center justify-center gap-1.5 h-10 px-3.5 bg-amber-500 hover:bg-amber-400 text-slate-950 rounded-[2px] text-xs font-bold uppercase tracking-wider shadow-xs transition-all cursor-pointer"
+                  className="inline-flex items-center justify-center gap-1.5 h-8 px-3 bg-amber-500 hover:bg-amber-400 text-slate-950 rounded-[2px] text-xs font-bold uppercase tracking-wider shadow-xs transition-all cursor-pointer"
                 >
-                  <Plus size={15} />
+                  <Plus size={14} />
                   <span>Ajustează Scor</span>
                 </button>
               </div>

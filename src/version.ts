@@ -7,7 +7,7 @@
  * - Z (Patch): Corecții rapide, bug-fixuri mici / rușinoase, alinieri sau mici ajustări
  */
 
-export const APP_VERSION = '8.2.3';
+export const APP_VERSION = '8.2.9';
 
 export interface VersionLog {
   version: string;
@@ -17,6 +17,42 @@ export interface VersionLog {
 }
 
 export const VERSION_HISTORY: VersionLog[] = [
+  {
+    version: '8.2.9',
+    type: 'patch',
+    description: 'Optimizare dimensiuni butoane, eliminare redundanțe text și sortare alfabetică a membrilor la prezență',
+    timestamp: '2026-08-27'
+  },
+  {
+    version: '8.2.8',
+    type: 'patch',
+    description: 'Refactorizare completă LeaderboardView cu layout pe 2 niveluri și piloni podium flexibili fără coliziuni',
+    timestamp: '2026-08-26'
+  },
+  {
+    version: '8.2.7',
+    type: 'patch',
+    description: 'Refactorizare VolunteerSpotlightCard la layout curat pe 2 niveluri pentru eliminarea coliziunilor pe ecrane mici',
+    timestamp: '2026-08-26'
+  },
+  {
+    version: '8.2.6',
+    type: 'patch',
+    description: 'Audit complet de contrast UI, scroll lock și prevenire coliziuni în toate vederile',
+    timestamp: '2026-08-26'
+  },
+  {
+    version: '8.2.5',
+    type: 'patch',
+    description: 'Rezolvare suprapunere statistici pe spotlight card și adăugare reguli de prevenire a coliziunilor',
+    timestamp: '2026-08-26'
+  },
+  {
+    version: '8.2.4',
+    type: 'patch',
+    description: 'Rezolvare contrast pe pagina de autentificare în modurile Dark și Light',
+    timestamp: '2026-08-26'
+  },
   {
     version: '8.2.3',
     type: 'patch',
