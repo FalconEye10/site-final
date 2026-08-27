@@ -15,6 +15,7 @@ import {
 } from '../ui';
 import { ALL_CATEGORIES, BudgetLine, TX_TYPE_LABELS, Transaction, TxType, formatRON } from '../types';
 import { budgetLineRows } from '../selectors';
+import { toast } from '../../../../ui/Toast';
 
 interface Props {
   lines: BudgetLine[];
@@ -29,6 +30,8 @@ export const GeneralBudgetTab: React.FC<Props> = ({ lines, transactions, onSave,
   const [draft, setDraft] = useState<BudgetLine | null>(null);
   const [original, setOriginal] = useState<BudgetLine | undefined>();
   const [saving, setSaving] = useState(false);
+  const [pendingDelete, setPendingDelete] = useState<BudgetLine | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const rows = budgetLineRows(lines, transactions).sort((a, b) => {
     if (a.type !== b.type) return a.type === 'venit' ? -1 : 1;
@@ -60,9 +63,26 @@ export const GeneralBudgetTab: React.FC<Props> = ({ lines, transactions, onSave,
     setSaving(true);
     try {
       await onSave({ ...draft, planned: Number(draft.planned) || 0 }, original);
+      toast.success(`Linia bugetară „${draft.category}” a fost salvată.`);
       setDraft(null);
+    } catch (err) {
+      toast.error('Eroare la salvarea liniei bugetare.');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!pendingDelete) return;
+    setDeleting(true);
+    try {
+      await onDelete(pendingDelete);
+      toast.success(`Linia bugetară „${pendingDelete.category}” a fost ștearsă.`);
+      setPendingDelete(null);
+    } catch (err) {
+      toast.error('Eroare la ștergerea liniei bugetare.');
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -74,14 +94,31 @@ export const GeneralBudgetTab: React.FC<Props> = ({ lines, transactions, onSave,
   };
 
   return (
-    <>
+    <div className="space-y-4">
+      {/* Visual Workflow Guide Banner */}
+      <div className="p-3.5 sm:p-4 rounded-[2px] bg-sky-50/80 dark:bg-sky-950/30 border border-sky-200/80 dark:border-sky-800/60 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 font-anthropic">
+        <div className="flex items-start gap-3">
+          <div className="p-2 rounded-[2px] bg-sky-500 text-white shrink-0 mt-0.5 sm:mt-0">
+            <Wallet className="h-5 w-5" />
+          </div>
+          <div>
+            <h4 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider font-title">
+              1. Buget General (Planificat vs. Realizat)
+            </h4>
+            <p className="text-xs text-slate-600 dark:text-slate-300 mt-0.5 leading-relaxed">
+              Stabilește plafoanele anuale de cheltuieli și țintele de venituri. Cifrele „Realizat” sunt calculate <strong>automat</strong> din toate tranzacțiile înregistrate în <em>Registrul de Tranzacții</em>.
+            </p>
+          </div>
+        </div>
+      </div>
+
       <Panel
         title="Buget General — Planificat vs. Realizat"
-        subtitle="Execuția bugetară pe fiecare linie a mandatului"
+        subtitle="Execuția bugetară pe fiecare linie a mandatului (Sumele realizate provin din Registrul de Tranzacții)"
         bodyClassName="p-0"
         actions={
           <button type="button" className="adm-btn-primary" onClick={openCreate}>
-            <Plus className="h-3.5 w-3.5" /> Linie Nouă
+            <Plus className="h-3.5 w-3.5" /> Linie Bugetară Nouă
           </button>
         }
       >
@@ -109,10 +146,10 @@ export const GeneralBudgetTab: React.FC<Props> = ({ lines, transactions, onSave,
               rows.map(row => (
                 <tr
                   key={row.id}
-                  className="adm-table-row cursor-pointer"
+                  className="adm-table-row cursor-pointer hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition-colors"
                   onClick={() => openEdit(row)}
                 >
-                  <Td>{row.category}</Td>
+                  <Td className="font-semibold">{row.category}</Td>
                   <Td>
                     <Badge
                       label={TX_TYPE_LABELS[row.type]}
@@ -120,17 +157,17 @@ export const GeneralBudgetTab: React.FC<Props> = ({ lines, transactions, onSave,
                     />
                   </Td>
                   <Td numeric align="right">
-                    {formatRON(row.planned)}
+                    {formatRON(row.planned)} RON
                   </Td>
-                  <Td numeric align="right">
-                    {formatRON(row.realized)}
+                  <Td numeric align="right" className="font-bold">
+                    {formatRON(row.realized)} RON
                   </Td>
                   <Td
                     numeric
                     align="right"
                     style={{ color: row.difference < 0 ? 'var(--adm-acc-rose)' : 'var(--adm-ink)' }}
                   >
-                    {formatRON(row.difference)}
+                    {formatRON(row.difference)} RON
                   </Td>
                   <Td>
                     <div className="flex min-w-[120px] items-center gap-2">
@@ -143,11 +180,11 @@ export const GeneralBudgetTab: React.FC<Props> = ({ lines, transactions, onSave,
                   <Td align="right">
                     <button
                       type="button"
-                      className="adm-icon-btn"
+                      className="adm-icon-btn hover:text-rose-500"
                       aria-label={`Șterge linia ${row.category}`}
                       onClick={event => {
                         event.stopPropagation();
-                        onDelete(row);
+                        setPendingDelete(row);
                       }}
                     >
                       <Trash2 className="h-4 w-4" />
@@ -183,6 +220,7 @@ export const GeneralBudgetTab: React.FC<Props> = ({ lines, transactions, onSave,
         </TableWrap>
       </Panel>
 
+      {/* Edit / Add Modal */}
       <Modal
         open={draft !== null}
         title={original ? 'Editează Linia Bugetară' : 'Linie Bugetară Nouă'}
@@ -236,7 +274,32 @@ export const GeneralBudgetTab: React.FC<Props> = ({ lines, transactions, onSave,
           </div>
         )}
       </Modal>
-    </>
+
+      {/* Delete Confirmation Modal */}
+      <Modal
+        open={pendingDelete !== null}
+        title="Confirmă Ștergerea Liniei Bugetare"
+        onClose={() => setPendingDelete(null)}
+        width="max-w-md"
+        footer={
+          <>
+            <button type="button" className="adm-btn-ghost" onClick={() => setPendingDelete(null)} disabled={deleting}>
+              Anulează
+            </button>
+            <button type="button" className="adm-btn-danger" onClick={handleDeleteConfirm} disabled={deleting}>
+              <Trash2 className="h-3.5 w-3.5" /> {deleting ? 'Se șterge…' : 'Șterge linia'}
+            </button>
+          </>
+        }
+      >
+        {pendingDelete && (
+          <p className="text-sm font-medium leading-relaxed" style={{ color: 'var(--adm-ink-dim)' }}>
+            Ești sigur că vrei să elimini linia bugetară <strong style={{ color: 'var(--adm-ink)' }}>{pendingDelete.category}</strong>?
+            Tranzacțiile existente din această categorie nu vor fi șterse, dar nu vor mai fi grupate sub această linie planificată.
+          </p>
+        )}
+      </Modal>
+    </div>
   );
 };
 
@@ -254,20 +317,20 @@ const SummaryRow: React.FC<{
     <tr style={{ borderTop: '1px solid var(--adm-border-strong)', background: 'var(--adm-surface)' }}>
       <td className="px-4 py-3" colSpan={2}>
         <span
-          className="adm-meta-label"
+          className="adm-meta-label font-bold"
           style={{ color: emphasis ? color : 'var(--adm-ink-dim)', letterSpacing: '0.12em' }}
         >
           {label}
         </span>
       </td>
       <Td numeric align="right" style={{ color }}>
-        {formatRON(planned)}
+        {formatRON(planned)} RON
+      </Td>
+      <Td numeric align="right" className="font-bold" style={{ color }}>
+        {formatRON(realized)} RON
       </Td>
       <Td numeric align="right" style={{ color }}>
-        {formatRON(realized)}
-      </Td>
-      <Td numeric align="right" style={{ color }}>
-        {formatRON(difference)}
+        {formatRON(difference)} RON
       </Td>
       <Td numeric>{planned !== 0 ? `${Math.round(execution * 100)}%` : '—'}</Td>
       <Td />

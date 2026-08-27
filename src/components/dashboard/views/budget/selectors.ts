@@ -20,6 +20,7 @@ import {
   INCOME_CATEGORIES,
   QUARTERS,
   Transaction,
+  TreasuryPayment,
   TxType,
   mandateMonthIndex,
 } from './types';
@@ -44,10 +45,20 @@ export interface BudgetKpis {
   charityRedirected: number;
   pendingCount: number;
   pendingAmount: number;
+  directIncome: number;
+  duesIncome: number;
 }
 
-export function computeKpis(transactions: Transaction[]): BudgetKpis {
-  const settledIncome = sumWhere(transactions, tx => isSettled(tx) && tx.type === 'venit');
+export function computeKpis(
+  transactions: Transaction[],
+  duesPayments: TreasuryPayment[] = []
+): BudgetKpis {
+  const directIncome = sumWhere(transactions, tx => isSettled(tx) && tx.type === 'venit');
+  const duesIncome = duesPayments
+    .filter(p => p.status !== 'Anulat')
+    .reduce((acc, p) => acc + (Number(p.amount) || 0), 0);
+
+  const settledIncome = directIncome + duesIncome;
   const settledExpense = sumWhere(transactions, tx => isSettled(tx) && tx.type === 'cheltuiala');
   const pending = transactions.filter(tx => tx.status === 'asteptare');
 
@@ -55,7 +66,9 @@ export function computeKpis(transactions: Transaction[]): BudgetKpis {
     currentBalance: settledIncome - settledExpense,
     settledIncome,
     settledExpense,
-    mandateIncome: sumWhere(transactions, tx => isCommitted(tx) && tx.type === 'venit'),
+    directIncome,
+    duesIncome,
+    mandateIncome: sumWhere(transactions, tx => isCommitted(tx) && tx.type === 'venit') + duesIncome,
     mandateExpense: sumWhere(transactions, tx => isCommitted(tx) && tx.type === 'cheltuiala'),
     charityRedirected: sumWhere(
       transactions,
@@ -72,7 +85,11 @@ export interface CategorySlice {
 }
 
 /** Settled totals per category for one side of the ledger, largest first. */
-export function categoryBreakdown(transactions: Transaction[], type: TxType): CategorySlice[] {
+export function categoryBreakdown(
+  transactions: Transaction[],
+  type: TxType,
+  duesPayments: TreasuryPayment[] = []
+): CategorySlice[] {
   const categories = type === 'venit' ? INCOME_CATEGORIES : EXPENSE_CATEGORIES;
   const known = new Set<string>(categories);
 
@@ -81,9 +98,20 @@ export function categoryBreakdown(transactions: Transaction[], type: TxType): Ca
 
   for (const tx of transactions) {
     if (!isSettled(tx) || tx.type !== type) continue;
-    // Categories entered before a config change still get a bucket.
     const key = known.has(tx.category) ? tx.category : tx.category || 'Altele';
     totals.set(key, (totals.get(key) ?? 0) + (Number(tx.amount) || 0));
+  }
+
+  // Include member dues payments in income category breakdown
+  if (type === 'venit' && duesPayments.length > 0) {
+    const validDuesSum = duesPayments
+      .filter(p => p.status !== 'Anulat')
+      .reduce((acc, p) => acc + (Number(p.amount) || 0), 0);
+
+    if (validDuesSum > 0) {
+      const duesCategoryKey = 'Cotizații Lunare';
+      totals.set(duesCategoryKey, (totals.get(duesCategoryKey) ?? 0) + validDuesSum);
+    }
   }
 
   return [...totals.entries()]
@@ -99,21 +127,34 @@ export interface QuarterCashflow {
   expense: number;
 }
 
-/** Settled income vs expense per mandate quarter (Q1 = Jul–Sep). */
-export function quarterlyCashflow(transactions: Transaction[]): QuarterCashflow[] {
+/** Settled income vs expense per mandate quarter (Q1 = Jun–Aug). */
+export function quarterlyCashflow(
+  transactions: Transaction[],
+  duesPayments: TreasuryPayment[] = []
+): QuarterCashflow[] {
   return QUARTERS.map(quarter => {
-    const inQuarter = transactions.filter(tx => {
+    const inQuarterTx = transactions.filter(tx => {
       if (!isSettled(tx)) return false;
       const parsed = new Date(tx.date);
       if (Number.isNaN(parsed.getTime())) return false;
       return (quarter.months as readonly number[]).includes(mandateMonthIndex(parsed.getMonth()));
     });
 
+    const inQuarterDues = duesPayments.filter(p => {
+      if (p.status === 'Anulat' || !p.date) return false;
+      const parsed = new Date(p.date);
+      if (Number.isNaN(parsed.getTime())) return false;
+      return (quarter.months as readonly number[]).includes(mandateMonthIndex(parsed.getMonth()));
+    });
+
+    const txIncome = sumWhere(inQuarterTx, tx => tx.type === 'venit');
+    const duesIncome = inQuarterDues.reduce((acc, p) => acc + (Number(p.amount) || 0), 0);
+
     return {
       label: quarter.label,
       span: quarter.span,
-      income: sumWhere(inQuarter, tx => tx.type === 'venit'),
-      expense: sumWhere(inQuarter, tx => tx.type === 'cheltuiala'),
+      income: txIncome + duesIncome,
+      expense: sumWhere(inQuarterTx, tx => tx.type === 'cheltuiala'),
     };
   });
 }
@@ -197,3 +238,31 @@ export function nextTransactionCode(transactions: Transaction[]): string {
   }, 0);
   return `TX-${String(highest + 1).padStart(3, '0')}`;
 }
+
+/**
+ * Calculates progressive running balance in chronological order (earliest to latest)
+ * for all settled transactions ('platit'), returning a map of transaction ID -> running balance.
+ */
+export function computeRunningBalances(transactions: Transaction[]): Map<string, number> {
+  const sorted = [...transactions].sort((a, b) => {
+    if (a.date !== b.date) return a.date.localeCompare(b.date);
+    return (a.createdAt || 0) - (b.createdAt || 0);
+  });
+
+  const balanceMap = new Map<string, number>();
+  let running = 0;
+
+  for (const tx of sorted) {
+    if (tx.status === 'platit') {
+      if (tx.type === 'venit') {
+        running += Number(tx.amount) || 0;
+      } else {
+        running -= Number(tx.amount) || 0;
+      }
+    }
+    balanceMap.set(tx.id, running);
+  }
+
+  return balanceMap;
+}
+

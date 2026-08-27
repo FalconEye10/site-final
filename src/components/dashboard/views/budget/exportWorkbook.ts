@@ -38,8 +38,8 @@ function timestamp(value: number): string {
 }
 
 export function buildBudgetSheets(input: WorkbookInput): SheetSpec[] {
-  const { mandate, transactions, projects, lines, dues, audit } = input;
-  const kpis = computeKpis(transactions);
+  const { mandate, transactions, projects, lines, dues, audit, duesPayments = [] } = input;
+  const kpis = computeKpis(transactions, duesPayments);
 
   const summary: SheetSpec = {
     name: 'Sumar Executiv',
@@ -47,23 +47,22 @@ export function buildBudgetSheets(input: WorkbookInput): SheetSpec[] {
     widths: [38, 18],
     rows: [
       ['Mandat', mandate],
-      ['Sold Curent', kpis.currentBalance],
+      ['Sold Curent (Disponibil)', kpis.currentBalance],
       ['Total Venituri Mandat', kpis.mandateIncome],
       ['Total Cheltuieli Mandat', kpis.mandateExpense],
-      ['Venituri Încasate', kpis.settledIncome],
+      ['Venituri / Încasări Directe', kpis.directIncome],
+      ['Cotizații Încasate', kpis.duesIncome],
       ['Cheltuieli Plătite', kpis.settledExpense],
       ['Donații Caritabile Redirecționate', kpis.charityRedirected],
-      ['Tranzacții în așteptare', kpis.pendingCount],
-      ['Valoare în așteptare', kpis.pendingAmount],
       [],
       ['Distribuția Cheltuielilor', ''],
       ...categoryBreakdown(transactions, 'cheltuiala').map(slice => [slice.label, slice.value]),
       [],
       ['Surse de Venit', ''],
-      ...categoryBreakdown(transactions, 'venit').map(slice => [slice.label, slice.value]),
+      ...categoryBreakdown(transactions, 'venit', duesPayments).map(slice => [slice.label, slice.value]),
       [],
       ['Cashflow Trimestrial', 'Venituri', 'Cheltuieli', 'Net'],
-      ...quarterlyCashflow(transactions).map(quarter => [
+      ...quarterlyCashflow(transactions, duesPayments).map(quarter => [
         `${quarter.label} (${quarter.span})`,
         quarter.income,
         quarter.expense,

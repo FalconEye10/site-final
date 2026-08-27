@@ -19,8 +19,11 @@ export interface Transaction {
   status: TxStatus;
   /** Membru / sursă. */
   source: string;
-  /** Drive link, receipt photo or PDF invoice. Mandatory for expenses. */
+  /** Drive link, receipt photo or PDF invoice. Mandatory for expenses if not physical receipt. */
   documentUrl: string;
+  receiptImage?: string;
+  receiptType?: 'url' | 'image' | 'physical';
+  paymentMethod?: string;
   approvedBy: string;
   notes: string;
   createdAt?: number;
@@ -47,6 +50,17 @@ export interface DuesRecord {
   boardRole: string;
   /** 12 entries, mandate order July → June. */
   months: number[];
+}
+
+export interface TreasuryPayment {
+  id: string;
+  memberId?: string;
+  memberName?: string;
+  amount: number;
+  month?: string;
+  date?: string;
+  status?: string;
+  receiptNumber?: string;
 }
 
 export interface AuditEntry {
@@ -82,6 +96,16 @@ export const EXPENSE_CATEGORIES = [
 export const CHARITY_CATEGORY = 'Donație Caritabilă';
 
 export const ALL_CATEGORIES: string[] = [...INCOME_CATEGORIES, ...EXPENSE_CATEGORIES];
+
+export const PAYMENT_METHODS = [
+  'Transfer Bancar',
+  'Numerar / Casierie',
+  'Card / POS',
+  'Decont Cheltuieli',
+  'Sponsorizare Directă',
+] as const;
+
+export type PaymentMethod = (typeof PAYMENT_METHODS)[number];
 
 export function categoriesFor(type: TxType): string[] {
   return type === 'venit' ? [...INCOME_CATEGORIES] : [...EXPENSE_CATEGORIES];

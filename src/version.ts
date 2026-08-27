@@ -7,7 +7,7 @@
  * - Z (Patch): Corecții rapide, bug-fixuri mici / rușinoase, alinieri sau mici ajustări
  */
 
-export const APP_VERSION = '8.3.0';
+export const APP_VERSION = '8.4.0';
 
 export interface VersionLog {
   version: string;
@@ -17,6 +17,12 @@ export interface VersionLog {
 }
 
 export const VERSION_HISTORY: VersionLog[] = [
+  {
+    version: '8.4.0',
+    type: 'minor',
+    description: 'Modernizare completă modul Buget & Registru Financiar: sincronizare live 0ms, calcul automat Sold Curent din tranzacții și cotizații, chitanțe digitale cu print/export și rezolvare atenționări linting',
+    timestamp: '2026-08-28'
+  },
   {
     version: '8.3.0',
     type: 'minor',

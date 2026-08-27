@@ -170,51 +170,57 @@ CREATE TABLE IF NOT EXISTS public.forum_posts (
 -- 10. Budget Tables
 CREATE TABLE IF NOT EXISTS public.budget_transactions (
   id TEXT PRIMARY KEY,
+  code TEXT,
+  date TEXT,
   type TEXT,
   category TEXT,
-  amount NUMERIC,
-  description TEXT,
-  date TEXT,
-  mandate TEXT,
   "projectId" TEXT,
-  "lineId" TEXT,
+  amount NUMERIC,
+  status TEXT,
+  source TEXT,
+  "documentUrl" TEXT,
+  "receiptImage" TEXT,
+  "receiptType" TEXT,
+  "paymentMethod" TEXT,
+  "approvedBy" TEXT,
+  notes TEXT,
   "createdAt" TIMESTAMPTZ DEFAULT NOW()
 );
 
 CREATE TABLE IF NOT EXISTS public.budget_projects (
   id TEXT PRIMARY KEY,
   name TEXT,
-  allocated NUMERIC,
-  spent NUMERIC,
-  mandate TEXT,
+  status TEXT,
+  "estimatedIncome" NUMERIC DEFAULT 0,
+  "estimatedExpense" NUMERIC DEFAULT 0,
   "createdAt" TIMESTAMPTZ DEFAULT NOW()
 );
 
 CREATE TABLE IF NOT EXISTS public.budget_lines (
   id TEXT PRIMARY KEY,
   category TEXT,
-  allocated NUMERIC,
-  spent NUMERIC,
   type TEXT,
-  mandate TEXT,
+  planned NUMERIC DEFAULT 0,
   "createdAt" TIMESTAMPTZ DEFAULT NOW()
 );
 
 CREATE TABLE IF NOT EXISTS public.budget_dues (
   id TEXT PRIMARY KEY,
-  month TEXT,
-  year TEXT,
-  amount NUMERIC,
-  mandate TEXT,
+  "memberName" TEXT,
+  "boardRole" TEXT,
+  months JSONB DEFAULT '[0,0,0,0,0,0,0,0,0,0,0,0]'::jsonb,
   "createdAt" TIMESTAMPTZ DEFAULT NOW()
 );
 
 CREATE TABLE IF NOT EXISTS public.budget_audit (
   id TEXT PRIMARY KEY,
+  timestamp BIGINT,
+  "user" TEXT,
   action TEXT,
+  "txCode" TEXT,
+  "oldValue" TEXT,
+  "newValue" TEXT,
   details TEXT,
-  timestamp TEXT,
-  actor TEXT,
   "createdAt" TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -486,6 +492,24 @@ BEGIN
   EXCEPTION WHEN others THEN NULL; END;
   BEGIN
     ALTER PUBLICATION supabase_realtime ADD TABLE public.members;
+  EXCEPTION WHEN others THEN NULL; END;
+  BEGIN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.budget_transactions;
+  EXCEPTION WHEN others THEN NULL; END;
+  BEGIN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.budget_projects;
+  EXCEPTION WHEN others THEN NULL; END;
+  BEGIN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.budget_lines;
+  EXCEPTION WHEN others THEN NULL; END;
+  BEGIN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.budget_dues;
+  EXCEPTION WHEN others THEN NULL; END;
+  BEGIN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.budget_audit;
+  EXCEPTION WHEN others THEN NULL; END;
+  BEGIN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.budget_archives;
   EXCEPTION WHEN others THEN NULL; END;
 END $$;
 

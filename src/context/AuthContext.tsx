@@ -132,7 +132,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           try {
             const parsed = JSON.parse(stored);
             if (parsed?.id) fetchProfileById(parsed.id);
-          } catch {}
+          } catch (err) {
+            // Ignore JSON parse errors on invalid storage
+          }
         }
       }
     };

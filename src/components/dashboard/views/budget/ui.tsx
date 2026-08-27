@@ -249,8 +249,14 @@ export const Td: React.FC<{
   className?: string;
   numeric?: boolean;
   style?: React.CSSProperties;
-}> = ({ children, align = 'left', className = '', numeric, style }) => (
+  title?: string;
+  colSpan?: number;
+  onClick?: (e: React.MouseEvent) => void;
+}> = ({ children, align = 'left', className = '', numeric, style, title, colSpan, onClick }) => (
   <td
+    title={title}
+    colSpan={colSpan}
+    onClick={onClick}
     className={`px-4 py-3.5 text-xs sm:text-sm ${numeric ? 'tabular-nums font-semibold font-data' : 'font-medium font-anthropic'} ${className}`}
     style={{ textAlign: align, color: 'var(--adm-ink)', ...style }}
   >
