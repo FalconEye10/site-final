@@ -1,4 +1,5 @@
 import { supabase } from '../supabase';
+import { calculateDebt } from './finance';
 
 /**
  * Verifică dacă un membru este un cont tehnic de sistem (admin tehnic sau registrul de audit)
@@ -744,7 +745,7 @@ export interface TreasuryPayment {
 }
 
 /**
- * Crează plata în tabela 'payments' și updatează `totalPaid` pe membrul parinte.
+ * Crează plata în tabela 'payments', updatează `totalPaid` & `status` pe membrul părinte și înregistrează în jurnalul de audit.
  */
 export async function processTreasuryPayment(
   memberId: string,
@@ -753,15 +754,23 @@ export async function processTreasuryPayment(
   try {
     const { data: memberSnap, error: fetchErr } = await supabase
       .from('members')
-      .select('joinDate, totalPaid, status')
+      .select('joinDate, totalPaid, status, name, nickname, username')
       .eq('id', memberId.toString())
       .single();
 
     if (fetchErr || !memberSnap) throw new Error("Membrul nu a fost găsit.");
 
     const currentTotalPaid = Number(memberSnap.totalPaid || 0);
-    const newTotalPaid = currentTotalPaid + paymentDoc.amount;
+    const paymentAmount = Number(paymentDoc.amount || 15);
+    const newTotalPaid = currentTotalPaid + paymentAmount;
+    
+    // Recalculăm datoria rămasă pentru a actualiza statusul membrului
+    const remainingDebt = calculateDebt(memberSnap.joinDate, newTotalPaid);
     const currentStatus = memberSnap.status || 'active';
+    let updatedStatus = currentStatus;
+    if (currentStatus !== 'pasiv' && currentStatus !== 'admin') {
+      updatedStatus = remainingDebt === 0 ? 'active' : 'debtor';
+    }
 
     const { error: paymentErr } = await supabase
       .from('payments')
@@ -775,12 +784,26 @@ export async function processTreasuryPayment(
 
     const { error: memberErr } = await supabase
       .from('members')
-      .update({ totalPaid: newTotalPaid })
+      .update({ totalPaid: newTotalPaid, status: updatedStatus })
       .eq('id', memberId.toString());
 
     if (memberErr) throw memberErr;
 
-    return { newTotalPaid, newStatus: currentStatus };
+    // Înregistrare imediată în Jurnalul de Audit Executiv
+    const memberDisplayName = memberSnap.name || memberSnap.nickname || paymentDoc.memberName || 'Membru';
+    await logScoreAudit({
+      id: `audit_pay_${paymentDoc.id}`,
+      adminId: paymentDoc.treasurerId,
+      adminName: paymentDoc.recordedBy || 'Trezorier',
+      adminUsername: paymentDoc.treasurerUsername,
+      targetMemberId: memberId.toString(),
+      targetMemberName: memberDisplayName,
+      action: 'PAYMENT',
+      points: paymentAmount,
+      reason: `Încasare cotizație: ${paymentDoc.month} — ${paymentAmount} RON (Chitanță: ${paymentDoc.id})`
+    });
+
+    return { newTotalPaid, newStatus: updatedStatus };
   } catch (error) {
     console.error("Error processing treasury payment:", error);
     throw error;
@@ -835,7 +858,7 @@ export async function revertLatestTreasuryPayment(
   try {
     const { data: memberSnap, error: fetchErr } = await supabase
       .from('members')
-      .select('joinDate, totalPaid, status')
+      .select('joinDate, totalPaid, status, name, nickname')
       .eq('id', memberId.toString())
       .single();
 
@@ -843,7 +866,14 @@ export async function revertLatestTreasuryPayment(
 
     const currentTotalPaid = Number(memberSnap.totalPaid || 0);
     const newTotalPaid = Math.max(0, currentTotalPaid - paymentAmount);
+    
+    // Recalculăm datoria rămasă după anulare
+    const remainingDebt = calculateDebt(memberSnap.joinDate, newTotalPaid);
     const currentStatus = memberSnap.status || 'active';
+    let updatedStatus = currentStatus;
+    if (currentStatus !== 'pasiv' && currentStatus !== 'admin') {
+      updatedStatus = remainingDebt === 0 ? 'active' : 'debtor';
+    }
 
     const { error: delErr } = await supabase
       .from('payments')
@@ -854,12 +884,23 @@ export async function revertLatestTreasuryPayment(
 
     const { error: memberErr } = await supabase
       .from('members')
-      .update({ totalPaid: newTotalPaid })
+      .update({ totalPaid: newTotalPaid, status: updatedStatus })
       .eq('id', memberId.toString());
 
     if (memberErr) throw memberErr;
 
-    return { newTotalPaid, newStatus: currentStatus };
+    // Înregistrare anulare în Jurnalul de Audit Executiv
+    const memberDisplayName = memberSnap.name || memberSnap.nickname || 'Membru';
+    await logScoreAudit({
+      id: `audit_revert_${paymentId}_${Date.now()}`,
+      targetMemberId: memberId.toString(),
+      targetMemberName: memberDisplayName,
+      action: 'PAYMENT_REVERT',
+      points: -paymentAmount,
+      reason: `Anulare plată cotizație: Chitanță ${paymentId} (${paymentAmount} RON)`
+    });
+
+    return { newTotalPaid, newStatus: updatedStatus };
   } catch (error) {
     console.error("Error reverting treasury payment:", error);
     throw error;

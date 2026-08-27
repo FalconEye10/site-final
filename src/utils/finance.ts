@@ -39,12 +39,14 @@ export const INITIAL_COLLECTION_START = "2026-08-01"; // Start colectare cotiza�
  * Pentru membrii înscriși ulterior (după August 2026), se calculează de la luna efectivă de joinDate.
  */
 export function getEffectiveStartDate(joinDateStr: string | undefined | null): Date {
-  const collectionStart = new Date(INITIAL_COLLECTION_START);
+  const collectionStart = new Date(2026, 7, 1); // August 1, 2026 (luna 8, index 7)
   if (!joinDateStr) return collectionStart;
   const parsed = new Date(joinDateStr);
   if (Number.isNaN(parsed.getTime())) return collectionStart;
+  
+  const normalizedParsed = new Date(parsed.getFullYear(), parsed.getMonth(), 1);
   // Dacă s-a alăturat înainte de startul colectării pe site, startul este August 2026
-  return parsed < collectionStart ? collectionStart : parsed;
+  return normalizedParsed < collectionStart ? collectionStart : normalizedParsed;
 }
 
 /**
