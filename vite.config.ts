@@ -12,6 +12,9 @@ export default defineConfig({
   },
   build: {
     target: ['es2020', 'safari14', 'chrome87', 'edge88', 'firefox78'],
+    minify: 'esbuild',
+    cssCodeSplit: true,
+    reportCompressedSize: false,
     rollupOptions: {
       output: {
         manualChunks: {
