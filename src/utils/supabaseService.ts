@@ -772,13 +772,21 @@ export async function processTreasuryPayment(
       updatedStatus = remainingDebt === 0 ? 'active' : 'debtor';
     }
 
+    const paymentPayload = {
+      id: paymentDoc.id,
+      memberId: memberId.toString(),
+      memberName: memberSnap.name || memberSnap.nickname || paymentDoc.memberName || 'Membru',
+      amount: paymentAmount,
+      month: paymentDoc.month,
+      date: paymentDoc.date || new Date().toISOString(),
+      memberSignature: paymentDoc.memberSignature,
+      treasurerSignature: paymentDoc.treasurerSignature,
+      createdAt: new Date().toISOString()
+    };
+
     const { error: paymentErr } = await supabase
       .from('payments')
-      .upsert({
-        ...paymentDoc,
-        memberId: memberId.toString(),
-        createdAt: new Date().toISOString()
-      });
+      .upsert(paymentPayload);
 
     if (paymentErr) throw paymentErr;
 

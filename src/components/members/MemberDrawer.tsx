@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
@@ -80,26 +80,26 @@ export function MemberDrawer({ member, onClose, onUpdateMember, isAdmin, current
     loadKudos();
   }, [member.id, member.name]);
 
-  useEffect(() => {
+  const loadPayments = useCallback(async () => {
     setLoadingPayments(true);
-    const loadPayments = async () => {
-      try {
-        const { data, error } = await supabase
-          .from('payments')
-          .select('*')
-          .eq('memberId', member.id.toString());
-        if (error) throw error;
-        const list = (data || [])
-          .filter((p: any) => p.status !== 'Anulat')
-          .sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime());
-        setPayments(list);
-      } catch (err) {
-        console.error("Failed to load payments for member", err);
-      } finally {
-        setLoadingPayments(false);
-      }
-    };
+    try {
+      const { data, error } = await supabase
+        .from('payments')
+        .select('*')
+        .eq('memberId', member.id.toString());
+      if (error) throw error;
+      const list = (data || [])
+        .filter((p: any) => p.status !== 'Anulat')
+        .sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime());
+      setPayments(list);
+    } catch (err) {
+      console.error("Failed to load payments for member", err);
+    } finally {
+      setLoadingPayments(false);
+    }
+  }, [member.id]);
 
+  useEffect(() => {
     loadPayments();
 
     const channel = supabase
@@ -112,7 +112,7 @@ export function MemberDrawer({ member, onClose, onUpdateMember, isAdmin, current
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [member.id]);
+  }, [member.id, loadPayments]);
 
   // Edit profile form states
   const [name, setName] = useState(member.name);
@@ -1193,6 +1193,7 @@ export function MemberDrawer({ member, onClose, onUpdateMember, isAdmin, current
             onSuccess={(newTotalPaid, newStatus) => {
               setIsPaymentModalOpen(false);
               onUpdateMember({ ...member, totalPaid: newTotalPaid, status: newStatus });
+              loadPayments();
             }}
           />
         )}

@@ -50,7 +50,10 @@ CREATE TABLE IF NOT EXISTS public.payments (
   date TEXT,
   "createdAt" TIMESTAMPTZ DEFAULT NOW(),
   "memberSignature" TEXT,
-  "treasurerSignature" TEXT
+  "treasurerSignature" TEXT,
+  "recordedBy" TEXT,
+  "treasurerId" TEXT,
+  "treasurerUsername" TEXT
 );
 
 -- 3. Events

@@ -173,6 +173,7 @@ export async function generateTreasuryPDF({ month, year, members }: PDFGeneratio
       const memNameNorm = normalizeStr(member.name);
 
       const matchedPayment = allPayments.find(p => {
+        if (p.status === 'Anulat') return false;
         const pMemId = normalizeStr(p.memberId);
         const pMemName = normalizeStr(p.memberName);
         const pMonth = normalizeStr(p.month);
