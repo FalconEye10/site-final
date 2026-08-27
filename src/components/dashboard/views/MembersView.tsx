@@ -753,9 +753,13 @@ export function MembersView({
                         )}
                       </TableCell>
                       <TableCell>
-                        <div className={`font-bold text-sm font-data flex items-center gap-2 ${isClear ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
-                          {isClear ? '0 RON - Achitat' : `${debt} RON`}
-                          {!isClear && <span className="text-xs uppercase bg-red-100 dark:bg-red-950/60 text-red-700 dark:text-red-300 px-1.5 py-0.5 rounded-[2px] font-bold font-title">Restanță</span>}
+                        <div className={`font-bold text-sm font-data flex items-center gap-2 ${isClear ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
+                          <span>{isClear ? '0 RON' : `${debt} RON`}</span>
+                          {isClear ? (
+                            <span className="text-xs uppercase bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 px-1.5 py-0.5 rounded-[2px] font-bold font-title">La zi</span>
+                          ) : (
+                            <span className="text-xs uppercase bg-rose-100 dark:bg-rose-950/60 text-rose-800 dark:text-rose-300 border border-rose-300 dark:border-rose-800 px-1.5 py-0.5 rounded-[2px] font-bold font-title">Restanță</span>
+                          )}
                         </div>
                       </TableCell>
                       <TableCell className="text-right">

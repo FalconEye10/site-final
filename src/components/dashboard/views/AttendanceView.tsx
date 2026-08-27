@@ -1101,7 +1101,9 @@ export function AttendanceView({ members, onUpdateMember, isAdmin, currentUserId
                                         disabled={isButtonLocked}
                                         onClick={() => handleMarkAttendance(m.id, 'present')}
                                         className={`px-2.5 py-1 rounded-[2px] text-xs font-bold uppercase tracking-wider transition-all cursor-pointer ${
-                                          status === 'present' ? 'bg-emerald-600 text-white shadow-xs' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 border border-slate-200 dark:border-slate-700'
+                                          status === 'present' 
+                                            ? 'bg-emerald-600 text-white font-black shadow-xs ring-1 ring-emerald-700 border border-emerald-700' 
+                                            : 'bg-emerald-50 text-emerald-800 hover:bg-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-300 dark:hover:bg-emerald-900/60 border border-emerald-300 dark:border-emerald-700/60'
                                         } disabled:opacity-50 disabled:cursor-not-allowed`}
                                       >
                                         Prezent
@@ -1110,7 +1112,9 @@ export function AttendanceView({ members, onUpdateMember, isAdmin, currentUserId
                                         disabled={isButtonLocked}
                                         onClick={() => handleMarkAttendance(m.id, 'absent')}
                                         className={`px-2.5 py-1 rounded-[2px] text-xs font-bold uppercase tracking-wider transition-all cursor-pointer ${
-                                          status === 'absent' || status === 'unexcused' ? 'bg-rose-600 text-white shadow-xs' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-rose-50 dark:hover:bg-rose-950/30 border border-slate-200 dark:border-slate-700'
+                                          status === 'absent' || status === 'unexcused' 
+                                            ? 'bg-rose-600 text-white font-black shadow-xs ring-1 ring-rose-700 border border-rose-700' 
+                                            : 'bg-rose-50 text-rose-800 hover:bg-rose-100 dark:bg-rose-950/40 dark:text-rose-300 dark:hover:bg-rose-900/60 border border-rose-300 dark:border-rose-700/60'
                                         } disabled:opacity-50 disabled:cursor-not-allowed`}
                                       >
                                         Absent
@@ -1119,7 +1123,9 @@ export function AttendanceView({ members, onUpdateMember, isAdmin, currentUserId
                                         disabled={isButtonLocked}
                                         onClick={() => handleMarkAttendance(m.id, 'excused')}
                                         className={`px-2.5 py-1 rounded-[2px] text-xs font-bold uppercase tracking-wider transition-all cursor-pointer ${
-                                          status === 'excused' ? 'bg-amber-500 text-slate-950 shadow-xs' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-amber-50 dark:hover:bg-amber-950/30 border border-slate-200 dark:border-slate-700'
+                                          status === 'excused' 
+                                            ? 'bg-amber-500 text-slate-950 font-black shadow-xs ring-1 ring-amber-600 border border-amber-600' 
+                                            : 'bg-amber-50 text-amber-800 hover:bg-amber-100 dark:bg-amber-950/40 dark:text-amber-300 dark:hover:bg-amber-900/60 border border-amber-300 dark:border-amber-700/60'
                                         } disabled:opacity-50 disabled:cursor-not-allowed`}
                                       >
                                         Motivat

@@ -475,7 +475,7 @@ const ViewDashboard = ({ members, currentUserObj, isAdmin, onNavigateToSection, 
             </Card>
 
             <Card
-              className="cursor-pointer hover:border-rose-500 dark:hover:border-rose-500 group"
+              className={`cursor-pointer group ${totalGlobalDebt === 0 ? 'hover:border-emerald-500 dark:hover:border-emerald-500' : 'hover:border-rose-500 dark:hover:border-rose-500'}`}
               onClick={() => onNavigateToSection('istoric')}
             >
               <div className="flex items-start justify-between">
@@ -483,24 +483,30 @@ const ViewDashboard = ({ members, currentUserObj, isAdmin, onNavigateToSection, 
                   <span className="text-xs font-title font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 block mb-1.5">
                     Restanțe de Încasat
                   </span>
-                  <div className="text-2xl sm:text-3xl lg:text-4xl font-bold font-data text-rose-700 dark:text-rose-400">
-                    {totalGlobalDebt} <span className="text-base font-medium">Lei</span>
+                  <div className={`text-2xl sm:text-3xl lg:text-4xl font-bold font-data ${totalGlobalDebt === 0 ? 'text-emerald-700 dark:text-emerald-400' : 'text-rose-700 dark:text-rose-400'}`}>
+                    {totalGlobalDebt === 0 ? '0' : totalGlobalDebt} <span className="text-base font-medium">Lei</span>
                   </div>
                 </div>
-                <div className="w-10 h-10 rounded-[2px] bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-400 flex items-center justify-center shrink-0 border border-rose-200/60 dark:border-rose-800/60">
-                  <AlertCircle size={20} />
+                <div className={`w-10 h-10 rounded-[2px] flex items-center justify-center shrink-0 border ${
+                  totalGlobalDebt === 0 
+                    ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border-emerald-200/60 dark:border-emerald-800/60' 
+                    : 'bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-400 border-rose-200/60 dark:border-rose-800/60'
+                }`}>
+                  {totalGlobalDebt === 0 ? <CheckCircle size={20} /> : <AlertCircle size={20} />}
                 </div>
               </div>
               <div className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-3 flex items-center justify-between border-t border-slate-100 dark:border-slate-800/80 pt-2">
-                <span>Obligații restante club</span>
-                <span className="text-rose-700 dark:text-rose-400 font-title font-bold group-hover:translate-x-0.5 transition-transform">Detalii →</span>
+                <span>{totalGlobalDebt === 0 ? 'Toate cotizațiile sunt la zi' : 'Obligații restante club'}</span>
+                <span className={`font-title font-bold group-hover:translate-x-0.5 transition-transform ${totalGlobalDebt === 0 ? 'text-emerald-700 dark:text-emerald-400' : 'text-rose-700 dark:text-rose-400'}`}>
+                  {totalGlobalDebt === 0 ? 'Verifică →' : 'Detalii →'}
+                </span>
               </div>
             </Card>
           </>
         ) : (
           <>
             <Card
-              className="cursor-pointer hover:border-blue-500 dark:hover:border-blue-500 group"
+              className={`cursor-pointer group ${personalDebt === 0 ? 'hover:border-emerald-500 dark:hover:border-emerald-500' : 'hover:border-rose-500 dark:hover:border-rose-500'}`}
               onClick={() => onNavigateToSection('profil')}
             >
               <div className="flex items-start justify-between">
@@ -508,21 +514,27 @@ const ViewDashboard = ({ members, currentUserObj, isAdmin, onNavigateToSection, 
                   <span className="text-xs font-title font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 block mb-1.5">
                     Situație Cotizație
                   </span>
-                  <div className="text-xl sm:text-2xl lg:text-3xl font-bold font-data text-slate-900 dark:text-slate-100">
+                  <div className="text-xl sm:text-2xl lg:text-3xl font-bold font-data">
                     {personalDebt === 0 ? (
-                      <span className="text-emerald-700 dark:text-emerald-400 font-semibold">La zi</span>
+                      <span className="text-emerald-700 dark:text-emerald-400 font-bold flex items-center gap-1.5">
+                        0 Lei <span className="text-xs px-2 py-0.5 rounded-[2px] bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 font-title uppercase">La zi</span>
+                      </span>
                     ) : (
-                      <span className="text-rose-700 dark:text-rose-400">{personalDebt} Lei <span className="text-xs font-normal">restanță</span></span>
+                      <span className="text-rose-700 dark:text-rose-400 font-bold">{personalDebt} Lei <span className="text-xs font-normal">restanță</span></span>
                     )}
                   </div>
                 </div>
-                <div className="w-10 h-10 rounded-[2px] bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0 border border-blue-200/60 dark:border-blue-800/60">
-                  <CreditCard size={20} />
+                <div className={`w-10 h-10 rounded-[2px] flex items-center justify-center shrink-0 border ${
+                  personalDebt === 0 
+                    ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border-emerald-200/60 dark:border-emerald-800/60' 
+                    : 'bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-400 border-rose-200/60 dark:border-rose-800/60'
+                }`}>
+                  {personalDebt === 0 ? <CheckCircle size={20} /> : <CreditCard size={20} />}
                 </div>
               </div>
               <div className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-3 flex items-center justify-between border-t border-slate-100 dark:border-slate-800/80 pt-2">
-                <span>15 Lei / lună calendaristică</span>
-                <span className="text-blue-600 dark:text-blue-400 font-title font-bold group-hover:translate-x-0.5 transition-transform">Fișă →</span>
+                <span>{personalDebt === 0 ? 'Fără restanțe financiare' : '15 Lei / lună calendaristică'}</span>
+                <span className={`font-title font-bold group-hover:translate-x-0.5 transition-transform ${personalDebt === 0 ? 'text-emerald-700 dark:text-emerald-400' : 'text-rose-700 dark:text-rose-400'}`}>Fișă →</span>
               </div>
             </Card>
 
