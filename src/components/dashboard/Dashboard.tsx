@@ -66,6 +66,8 @@ function ViewLoadingSkeleton() {
 
 interface DashboardProps {
   username: string;
+  currentMember?: any;
+  currentMemberId?: string;
   onLogout: () => void;
 }
 
@@ -2305,7 +2307,7 @@ function MemberAlertsBar({ alerts, dismissedIds, onDismiss }: { alerts: MemberAl
 // ==========================================
 // MAIN DASHBOARD COMPONENT
 // ==========================================
-export function Dashboard({ username, onLogout }: DashboardProps) {
+export function Dashboard({ username, currentMember, currentMemberId, onLogout }: DashboardProps) {
   const [activeSection, setActiveSection] = useState('dashboard');
   const [members, setMembers] = useState<any[]>([]);
   const [events, setEvents] = useState<any[]>([]);
@@ -2328,12 +2330,12 @@ export function Dashboard({ username, onLogout }: DashboardProps) {
   // First Login Ever Check: Automatically trigger tutorial if user has 0 logins or unseen tutorial
   useEffect(() => {
     if (!members || members.length === 0) return;
-    const currentMember = members.find(m => m.username?.toLowerCase() === username.toLowerCase());
+    const currentMemberObj = members.find(m => m.username?.toLowerCase() === username.toLowerCase());
     const localKey = `tutorial_seen_v3_${username.toLowerCase()}`;
     const alreadySeenLocally = localStorage.getItem(localKey);
 
-    if (currentMember) {
-      if ((currentMember.login_count === 0 || !currentMember.has_seen_tutorial) && !alreadySeenLocally) {
+    if (currentMemberObj) {
+      if ((currentMemberObj.login_count === 0 || !currentMemberObj.has_seen_tutorial) && !alreadySeenLocally) {
         setIsTutorialOpen(true);
       }
     }
@@ -2391,8 +2393,8 @@ export function Dashboard({ username, onLogout }: DashboardProps) {
 
     // Update in Supabase so login count is saved and has_seen_tutorial is marked true
     try {
-      const currentMember = members.find(m => m.username?.toLowerCase() === username.toLowerCase());
-      const nextCount = Math.max(1, (currentMember?.login_count || 0) + 1);
+      const activeMember = members.find(m => m.username?.toLowerCase() === username.toLowerCase());
+      const nextCount = Math.max(1, (activeMember?.login_count || 0) + 1);
       await supabase
         .from('members')
         .update({
@@ -2450,15 +2452,57 @@ export function Dashboard({ username, onLogout }: DashboardProps) {
   }, []);
 
   const currentUserObj = useMemo(() => {
-    const found = members.find(
-      m => m.username?.toLowerCase() === username?.toLowerCase() ||
-           m.name?.toLowerCase().includes(username?.toLowerCase())
-    );
+    const targetId = (currentMemberId || currentMember?.id || '').toUpperCase().trim();
+    const targetUsername = (username || currentMember?.username || '').toLowerCase().trim();
+    const targetEmail = (currentMember?.email || '').toLowerCase().trim();
+    const cleanTargetName = (currentMember?.name || username || '')
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9]/g, '');
+
+    // 1. Potrivire exactă după ID-ul unic de membru (ex: M005)
+    let found = targetId ? members.find(m => (m.id || '').toUpperCase().trim() === targetId) : undefined;
+
+    // 2. Potrivire exactă după username (ex: dorneanu.madalina)
+    if (!found && targetUsername) {
+      found = members.find(m => (m.username || '').toLowerCase().trim() === targetUsername);
+    }
+
+    // 3. Potrivire exactă după email
+    if (!found && targetEmail) {
+      found = members.find(m => (m.email || '').toLowerCase().trim() === targetEmail);
+    }
+
+    // 4. Potrivire după nume curățat de diacritice / spații
+    if (!found && cleanTargetName) {
+      found = members.find(m => {
+        const cleanMName = (m.name || '')
+          .toLowerCase()
+          .normalize('NFD')
+          .replace(/[\u0300-\u036f]/g, '')
+          .replace(/[^a-z0-9]/g, '');
+        const cleanMUser = (m.username || '')
+          .toLowerCase()
+          .normalize('NFD')
+          .replace(/[\u0300-\u036f]/g, '')
+          .replace(/[^a-z0-9]/g, '');
+        return cleanMName === cleanTargetName || cleanMUser === cleanTargetName ||
+               (cleanMName.length > 3 && cleanTargetName.length > 3 && (cleanMName.includes(cleanTargetName) || cleanTargetName.includes(cleanMName)));
+      });
+    }
+
     if (found) return found;
-    const isStefan = username?.toLowerCase() === 'stan.stefan';
-    const isAdminUser = username?.toLowerCase() === 'admin';
+
+    // Dacă membrul este furnizat din sesiunea AuthContext, îl folosim direct pentru a evita afișarea datoriilor false
+    if (currentMember && currentMember.name) {
+      return currentMember;
+    }
+
+    const isStefan = targetUsername === 'stan.stefan' || targetId === 'M061' || targetId === 'M050';
+    const isAdminUser = targetUsername === 'admin' || targetId === 'M058';
     return {
-      id: isStefan ? 'M053' : (isAdminUser ? 'ADMIN_SYS' : `M_${username}`),
+      id: isStefan ? 'M061' : (isAdminUser ? 'ADMIN_SYS' : `M_${username || 'user'}`),
       name: isStefan ? 'STAN STEFAN' : (isAdminUser ? 'ADMINISTRATOR CONDUCERE' : (username?.toUpperCase() || 'MEMBRU')),
       username: username || 'user',
       role: (isStefan || isAdminUser) ? 'admin' : 'member',
@@ -2468,8 +2512,10 @@ export function Dashboard({ username, onLogout }: DashboardProps) {
       presences: 12,
       attendanceRate: '100%',
       qualification: 'Maxim',
+      totalPaid: 0,
+      totalDebt: 0,
     };
-  }, [members, username]);
+  }, [members, username, currentMember, currentMemberId]);
 
   const isAdmin = currentUserObj?.role?.toLowerCase() === 'admin' || username?.toLowerCase() === 'admin' || username?.toLowerCase() === 'stan.stefan';
 
@@ -2510,8 +2556,9 @@ export function Dashboard({ username, onLogout }: DashboardProps) {
     }
     loadData();
 
+    // 1. Supabase Realtime channel for live updates
     const channel = supabase
-      .channel('dashboard_members_realtime')
+      .channel('dashboard_members_realtime_' + Date.now())
       .on('postgres_changes', { event: '*', schema: 'public', table: 'members' }, () => {
         loadData();
       })
@@ -2520,8 +2567,28 @@ export function Dashboard({ username, onLogout }: DashboardProps) {
       })
       .subscribe();
 
+    // 2. Mobile wake-up & browser tab focus listeners
+    const handleWakeup = () => {
+      if (document.visibilityState === 'visible') {
+        loadData();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleWakeup);
+    window.addEventListener('focus', handleWakeup);
+
+    // 3. Fallback heartbeat poller (every 25s) to guarantee real-time sync on mobile networks
+    const pollInterval = setInterval(() => {
+      if (document.visibilityState === 'visible') {
+        loadData();
+      }
+    }, 25000);
+
     return () => {
       supabase.removeChannel(channel);
+      document.removeEventListener('visibilitychange', handleWakeup);
+      window.removeEventListener('focus', handleWakeup);
+      clearInterval(pollInterval);
     };
   }, []);
 

@@ -80,13 +80,55 @@ function getOfficialClubRoster(): any[] {
   });
 }
 
-// Preia toți membrii direct din Supabase (sau lista oficială a clubului dacă baza e goală/blocată)
+// Preia toți membrii direct din Supabase și sincronizează automat plățile reale din tabela 'payments'
 export async function fetchMembers(): Promise<any[]> {
   try {
-    const { data, error } = await supabase.from('members').select('*');
-    if (!error && data && data.length > 0) {
-      const filtered = data.filter((m: any) => !isSystemAccount(m));
-      if (filtered.length > 0) return filtered;
+    const [membersRes, paymentsRes] = await Promise.allSettled([
+      supabase.from('members').select('*'),
+      supabase.from('payments').select('*').order('date', { ascending: false })
+    ]);
+
+    const membersData = membersRes.status === 'fulfilled' && !membersRes.value.error && membersRes.value.data
+      ? membersRes.value.data
+      : [];
+
+    const paymentsData: any[] = paymentsRes.status === 'fulfilled' && !paymentsRes.value.error && paymentsRes.value.data
+      ? paymentsRes.value.data
+      : [];
+
+    if (membersData.length > 0) {
+      const filtered = membersData.filter((m: any) => !isSystemAccount(m));
+      if (filtered.length > 0) {
+        // Enriched members with guaranteed accurate payment synchronization
+        return filtered.map((m: any) => {
+          const mNameClean = (m.name || '').toLowerCase().trim();
+          const mUserClean = (m.username || '').toLowerCase().trim();
+          const mIdClean = (m.id || '').toUpperCase().trim();
+
+          const memPayments = paymentsData.filter((p: any) => {
+            const pMemId = (p.memberId || '').toUpperCase().trim();
+            const pMemName = (p.memberName || '').toLowerCase().trim();
+            return (
+              pMemId === mIdClean ||
+              pMemId === mUserClean ||
+              (pMemName && (pMemName === mNameClean || mNameClean.includes(pMemName) || pMemName.includes(mNameClean)))
+            );
+          });
+
+          const pSum = memPayments.reduce((acc, p) => acc + (Number(p.amount) || 0), 0);
+          const safeTotalPaid = Math.max(Number(m.totalPaid || 0), pSum);
+          const dynamicDebt = calculateDebt(m.joinDate, safeTotalPaid);
+          const isPassive = m.status === 'pasiv' || m.status === 'passive';
+
+          return {
+            ...m,
+            totalPaid: safeTotalPaid,
+            totalDebt: dynamicDebt,
+            payments: memPayments,
+            status: isPassive ? 'passive' : (dynamicDebt === 0 ? 'active' : 'debtor')
+          };
+        });
+      }
     }
     return getOfficialClubRoster();
   } catch (error) {
@@ -841,10 +883,11 @@ export async function fetchAllTreasuryPayments(): Promise<TreasuryPayment[]> {
  */
 export async function fetchTreasuryPaymentsForMember(memberId: string): Promise<TreasuryPayment[]> {
   try {
+    const cleanId = memberId.toString().trim();
     const { data, error } = await supabase
       .from('payments')
       .select('*')
-      .eq('memberId', memberId.toString())
+      .or(`memberId.eq.${cleanId},memberId.ilike.%${cleanId}%`)
       .order('date', { ascending: false });
 
     if (error) throw error;

@@ -52,7 +52,12 @@ function MainApp() {
     <>
       <div className="animate-in fade-in slide-in-from-bottom-4 duration-1000">
         <Suspense fallback={<DashboardFallback />}>
-          <Dashboard username={username} onLogout={logout} />
+          <Dashboard 
+            username={username} 
+            currentMember={memberProfile}
+            currentMemberId={memberProfile?.id || user.id}
+            onLogout={logout} 
+          />
         </Suspense>
       </div>
       <PushNotificationPromptModal memberId={memberProfile?.id || user.id} />

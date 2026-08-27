@@ -1,4 +1,4 @@
-import { formatRomaniaDateTime } from './romaniaTime';
+import { formatRomaniaDateTime, getRomaniaDateParts } from './romaniaTime';
 
 export const COTIZATIE_LUNARA = 15;
 
@@ -56,18 +56,17 @@ export function getEffectiveStartDate(joinDateStr: string | undefined | null): D
  */
 export function generateMemberLedger(joinDateStr: string | undefined | null, totalPaid: number = 0): MemberMonth[] {
   const startDate = getEffectiveStartDate(joinDateStr);
-  const currentDate = new Date();
+  const nowParts = getRomaniaDateParts(new Date());
+  const currentTargetY = nowParts.year;
+  const currentTargetM = nowParts.month - 1; // 0-indexed
   const months: MemberMonth[] = [];
 
-  // Guard: dacă joinDate este în viitor (eroare de introducere), returnăm array gol
-  if (startDate > currentDate) return months;
-  
   let currentY = startDate.getFullYear();
   let currentM = startDate.getMonth();
   
-  let remainingPaid = Math.max(0, totalPaid || 0);
+  let remainingPaid = Math.max(0, Number(totalPaid) || 0);
 
-  while (currentY < currentDate.getFullYear() || (currentY === currentDate.getFullYear() && currentM <= currentDate.getMonth())) {
+  while (currentY < currentTargetY || (currentY === currentTargetY && currentM <= currentTargetM)) {
     let status: 'Achitat' | 'Neachitat' = 'Neachitat';
     let amountPaidForThisMonth = 0;
 
@@ -102,15 +101,15 @@ export function generateMemberLedger(joinDateStr: string | undefined | null, tot
  */
 export function calculateDebt(joinDateStr: string | undefined | null, totalPaid: number = 0): number {
   const startDate = getEffectiveStartDate(joinDateStr);
-  const currentDate = new Date();
+  const nowParts = getRomaniaDateParts(new Date());
   
-  if (currentDate < startDate) return 0;
-  
-  const currentY = currentDate.getFullYear();
-  const currentM = currentDate.getMonth() + 1; // 1-indexed (Ian=1, Aug=8...)
+  const currentY = nowParts.year;
+  const currentM = nowParts.month; // 1-indexed (1-12)
   
   const startY = startDate.getFullYear();
-  const startM = startDate.getMonth() + 1; // 1-indexed
+  const startM = startDate.getMonth() + 1; // 1-indexed (1-12)
+  
+  if (currentY < startY || (currentY === startY && currentM < startM)) return 0;
   
   // Math.max(0, ...) — guard defensiv contra joinDate eronate care ar putea produce valori negative
   const totalMonths = Math.max(0, (currentY - startY) * 12 + (currentM - startM) + 1);

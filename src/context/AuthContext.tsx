@@ -32,15 +32,43 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const fetchProfileById = async (memberId: string) => {
     try {
-      const { data, error } = await supabase
-        .from('members')
-        .select('*')
-        .eq('id', memberId)
-        .maybeSingle();
+      const [mRes, pRes] = await Promise.allSettled([
+        supabase.from('members').select('*').eq('id', memberId).maybeSingle(),
+        supabase.from('payments').select('*').or(`memberId.eq.${memberId},memberId.ilike.%${memberId}%`)
+      ]);
 
-      if (!error && data) {
-        setMemberProfile(data);
-        localStorage.setItem('active_member_session', JSON.stringify(data));
+      const freshMember = mRes.status === 'fulfilled' && !mRes.value.error && mRes.value.data
+        ? mRes.value.data
+        : null;
+
+      const payments = pRes.status === 'fulfilled' && !pRes.value.error && pRes.value.data
+        ? pRes.value.data
+        : [];
+
+      if (freshMember) {
+        const pSum = payments.reduce((acc: number, p: any) => acc + (Number(p.amount) || 0), 0);
+        const safeTotalPaid = Math.max(Number(freshMember.totalPaid || 0), pSum);
+        const enrichedMember = {
+          ...freshMember,
+          totalPaid: safeTotalPaid,
+          payments
+        };
+
+        setMemberProfile(enrichedMember);
+        localStorage.setItem('active_member_session', JSON.stringify(enrichedMember));
+
+        const usrObj = {
+          id: enrichedMember.id,
+          email: enrichedMember.email,
+          role: enrichedMember.role,
+          user_metadata: {
+            name: enrichedMember.name,
+            role: enrichedMember.role,
+            username: enrichedMember.username,
+          },
+        };
+        setUser(usrObj);
+        setSession({ user: usrObj, token: `sess_${enrichedMember.id}` });
       }
     } catch (err) {
       console.warn('Eroare la reîmprospătarea profilului:', err);
@@ -79,6 +107,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               setMemberProfile(activeMember);
               setUser(usrObj);
               setSession({ user: usrObj, token: `sess_${activeMember.id}` });
+
+              if (freshMember) {
+                localStorage.setItem('active_member_session', JSON.stringify(freshMember));
+              }
             }
           }
         }
@@ -92,8 +124,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     initSession();
 
+    // Re-check profile on window focus or mobile tab resume (wake up)
+    const handleWakeup = () => {
+      if (document.visibilityState === 'visible') {
+        const stored = localStorage.getItem('active_member_session');
+        if (stored) {
+          try {
+            const parsed = JSON.parse(stored);
+            if (parsed?.id) fetchProfileById(parsed.id);
+          } catch {}
+        }
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleWakeup);
+    window.addEventListener('focus', handleWakeup);
+
+    // Supabase realtime channel for member session profile updates
+    const channel = supabase
+      .channel('auth_profile_sync_' + Date.now())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'members' }, () => {
+        handleWakeup();
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'payments' }, () => {
+        handleWakeup();
+      })
+      .subscribe();
+
     return () => {
       mounted = false;
+      document.removeEventListener('visibilitychange', handleWakeup);
+      window.removeEventListener('focus', handleWakeup);
+      supabase.removeChannel(channel);
     };
   }, []);
 
