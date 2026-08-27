@@ -7,7 +7,7 @@
  * - Z (Patch): Corecții rapide, bug-fixuri mici / rușinoase, alinieri sau mici ajustări
  */
 
-export const APP_VERSION = '8.2.9';
+export const APP_VERSION = '8.3.0';
 
 export interface VersionLog {
   version: string;
@@ -17,6 +17,12 @@ export interface VersionLog {
 }
 
 export const VERSION_HISTORY: VersionLog[] = [
+  {
+    version: '8.3.0',
+    type: 'minor',
+    description: 'Sincronizare completă schema Supabase payments, Pointer Events pe canvasul de semnături, contrast sporit butoane prezență și evidențiere verde balanță zero/prezență',
+    timestamp: '2026-08-27'
+  },
   {
     version: '8.2.9',
     type: 'patch',
