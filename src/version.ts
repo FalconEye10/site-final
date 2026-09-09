@@ -7,7 +7,7 @@
  * - Z (Patch): Corecții rapide, bug-fixuri mici / rușinoase, alinieri sau mici ajustări
  */
 
-export const APP_VERSION = '8.5.2';
+export const APP_VERSION = '8.5.3';
 
 export interface VersionLog {
   version: string;
@@ -17,6 +17,12 @@ export interface VersionLog {
 }
 
 export const VERSION_HISTORY: VersionLog[] = [
+  {
+    version: '8.5.3',
+    type: 'patch',
+    description: 'Corecție critică de securitate la permisiunile de editare/resetare parolă (izolare strictă pentru utilizatori simpli vs Board/SuperAdmin) și validare completă prin simulare sandbox pe 9 dispozitive (Android, iOS, PC)',
+    timestamp: '2026-09-09'
+  },
   {
     version: '8.5.2',
     type: 'patch',

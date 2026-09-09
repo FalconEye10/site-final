@@ -49,6 +49,10 @@ export function canEditMemberPassword(currentUser: any, targetMemberRole: string
   if (isSuperAdmin(currentUser)) {
     return true;
   }
-  // Alți admini pot schimba parola DOAR pentru membrii simpli (role !== 'admin')
-  return targetMemberRole !== 'admin';
+  // Membrii din Board / Admini pot schimba parola DOAR pentru membrii simpli (role !== 'admin')
+  if (isBoardMember(currentUser)) {
+    return targetMemberRole !== 'admin';
+  }
+  // Voluntarii simpli NU au voie să schimbe parola altor membri
+  return false;
 }
