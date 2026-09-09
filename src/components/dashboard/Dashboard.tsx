@@ -2338,28 +2338,30 @@ export function Dashboard({ username, currentMember, currentMemberId, onLogout }
     }
   }, [members, username]);
 
-  // Major Update Log Announcement - Triggers ONLY once after a new MAJOR release, NEVER on routine logins
+  // Update Log / What's New Announcement:
+  // Condiționat strict la primul login pe versiunea respectivă (vX.Y.Z), fără reapariție la login-uri de rutină.
   useEffect(() => {
     if (!username) return;
-    const currentMajor = (APP_VERSION || '8.4.2').split('.')[0];
-    const majorUpdateKey = `camena_update_seen_major_${currentMajor}_${username.toLowerCase()}`;
-    const legacyKey = `camena_update_scoring_v1_${username.toLowerCase()}`;
 
-    const alreadySeen = localStorage.getItem(majorUpdateKey) === 'true' || localStorage.getItem(legacyKey) === 'true';
+    const versionSeenKey = `camena_update_seen_v_${APP_VERSION}_${username.toLowerCase()}`;
+    const alreadySeenThisVersion = localStorage.getItem(versionSeenKey) === 'true';
 
-    // Trigger ONLY if this major release has never been seen by the user, and tutorial is not active
-    if (!alreadySeen && !isTutorialOpen) {
-      setIsScoringUpdateModalOpen(true);
+    // Dacă versiunea curentă a fost deja vizualizată sau dacă tutorialul de onboarding este deschis, nu afișăm
+    if (alreadySeenThisVersion || isTutorialOpen) {
+      return;
     }
+
+    // Este primul login pe această versiune: afișăm modalul de Update Log
+    setIsScoringUpdateModalOpen(true);
+    // Marcăm imediat în localStorage pentru a nu se repeta la reîncărcare de pagină
+    localStorage.setItem(versionSeenKey, 'true');
   }, [username, isTutorialOpen]);
 
   const handleCloseScoringUpdate = () => {
     setIsScoringUpdateModalOpen(false);
     if (username) {
-      const currentMajor = (APP_VERSION || '8.4.2').split('.')[0];
-      const majorUpdateKey = `camena_update_seen_major_${currentMajor}_${username.toLowerCase()}`;
-      localStorage.setItem(majorUpdateKey, 'true');
-      localStorage.setItem(`camena_update_scoring_v1_${username.toLowerCase()}`, 'true');
+      const versionSeenKey = `camena_update_seen_v_${APP_VERSION}_${username.toLowerCase()}`;
+      localStorage.setItem(versionSeenKey, 'true');
     }
   };
 
@@ -2388,13 +2390,12 @@ export function Dashboard({ username, currentMember, currentMemberId, onLogout }
     const localKey = `tutorial_seen_v3_${username.toLowerCase()}`;
     localStorage.setItem(localKey, 'true');
 
-    // Trigger update log ONLY if this major release has never been seen
-    const currentMajor = (APP_VERSION || '8.4.2').split('.')[0];
-    const majorUpdateKey = `camena_update_seen_major_${currentMajor}_${username.toLowerCase()}`;
-    const legacyKey = `camena_update_scoring_v1_${username.toLowerCase()}`;
-    const alreadySeen = localStorage.getItem(majorUpdateKey) === 'true' || localStorage.getItem(legacyKey) === 'true';
-    if (!alreadySeen) {
+    // Declanșare Update Log NUMAI dacă este primul login pe versiunea curentă
+    const versionSeenKey = `camena_update_seen_v_${APP_VERSION}_${username.toLowerCase()}`;
+    const alreadySeenThisVersion = localStorage.getItem(versionSeenKey) === 'true';
+    if (!alreadySeenThisVersion) {
       setIsScoringUpdateModalOpen(true);
+      localStorage.setItem(versionSeenKey, 'true');
     }
 
     // Update in Supabase so login count is saved and has_seen_tutorial is marked true

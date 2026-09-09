@@ -7,7 +7,7 @@
  * - Z (Patch): Corecții rapide, bug-fixuri mici / rușinoase, alinieri sau mici ajustări
  */
 
-export const APP_VERSION = '8.5.3';
+export const APP_VERSION = '8.5.4';
 
 export interface VersionLog {
   version: string;
@@ -17,6 +17,12 @@ export interface VersionLog {
 }
 
 export const VERSION_HISTORY: VersionLog[] = [
+  {
+    version: '8.5.4',
+    type: 'patch',
+    description: 'Afișare inteligentă update log & what\'s new condiționată strict la primul login per versiune (vX.Y.Z) pentru evitarea deranjării utilizatorilor la conectări de rutină, integrare istoric dinamic versiuni în modal și acces direct la update log prin badge-ul de versiune din sidebar',
+    timestamp: '2026-09-09'
+  },
   {
     version: '8.5.3',
     type: 'patch',
