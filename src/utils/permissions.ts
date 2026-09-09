@@ -4,15 +4,17 @@
 
 export function isSuperAdmin(user: any): boolean {
   if (!user) return false;
-  const role = (user.role || '').toLowerCase().trim();
   const boardPos = (user.boardPosition || '').toLowerCase().trim();
   const username = (user.username || '').toLowerCase().trim();
   const name = (user.name || '').toLowerCase().trim();
-  return (
-    role === 'admin' ||
+  const isPresedinte = !boardPos.includes('vice') && (
     boardPos.includes('presedinte') ||
     boardPos.includes('președinte') ||
-    boardPos.includes('president') ||
+    boardPos.includes('president')
+  );
+
+  return (
+    isPresedinte ||
     username === 'admin' ||
     username === 'stan.stefan' ||
     name.includes('stefan stan') ||

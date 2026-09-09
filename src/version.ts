@@ -7,7 +7,7 @@
  * - Z (Patch): Corecții rapide, bug-fixuri mici / rușinoase, alinieri sau mici ajustări
  */
 
-export const APP_VERSION = '8.5.4';
+export const APP_VERSION = '8.5.5';
 
 export interface VersionLog {
   version: string;
@@ -17,6 +17,12 @@ export interface VersionLog {
 }
 
 export const VERSION_HISTORY: VersionLog[] = [
+  {
+    version: '8.5.5',
+    type: 'patch',
+    description: 'Consolidare ierarhie SuperAdmin & delimitare strictă permisiuni: SuperAdmin atribuit exclusiv președinției (Stan Ștefan / admin), eliminare potrivire fals-pozitivă pentru Vicepreședinte și validare 100% (72/72 teste trecute) în simularea sandbox pe 9 dispozitive (Android, iOS, PC)',
+    timestamp: '2026-09-09'
+  },
   {
     version: '8.5.4',
     type: 'patch',
