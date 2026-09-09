@@ -7,7 +7,7 @@
  * - Z (Patch): Corecții rapide, bug-fixuri mici / rușinoase, alinieri sau mici ajustări
  */
 
-export const APP_VERSION = '8.4.0';
+export const APP_VERSION = '8.5.2';
 
 export interface VersionLog {
   version: string;
@@ -17,6 +17,48 @@ export interface VersionLog {
 }
 
 export const VERSION_HISTORY: VersionLog[] = [
+  {
+    version: '8.5.2',
+    type: 'patch',
+    description: 'Normalizare universală diacritice în căutare (Membri, Repartizare, Prezențe, Plăți, Buget, Audit), securizare matematică împotriva împărțirii la zero (milestones, rate prezență & retenție) și optimizare completă viteză/memoizare fără coliziuni de layout',
+    timestamp: '2026-09-09'
+  },
+  {
+    version: '8.5.1',
+    type: 'patch',
+    description: 'Optimizare globală algoritmi: selecție inteligentă în 2 etape pentru Spotlight Voluntar (fără umbrire all-time în ciclurile active), unificare calcule clasament bimensual și evoluție O(N), plafonare defensivă durată ședințe la finalizare, pre-calculare memorie datorii și aliniere strictă la fusul orar al României',
+    timestamp: '2026-09-09'
+  },
+  {
+    version: '8.5.0',
+    type: 'minor',
+    description: 'Corecție critică motor de punctaje & clasament: prevenire duplicate la refinalizare prezențe (AttendanceView & EventsView), departajare secundară automată All-Time în clasamentul bimensual la debut de ciclu și curățare completă istoric puncte duplicate din baza de date',
+    timestamp: '2026-09-09'
+  },
+  {
+    version: '8.4.4',
+    type: 'patch',
+    description: 'Eliminare completă secțiune Forum: curățare tab-uri comunitate (membru și admin), integrare propuneri proiecte în caseta de sugestii, deconectare listener Realtime forum_posts și optimizare trasee de navigare',
+    timestamp: '2026-09-07'
+  },
+  {
+    version: '8.4.3',
+    type: 'patch',
+    description: 'Filtrare inteligentă notificări & afișare unică update log: condiționare comunicat la update-uri majore (SemVer), adăugare butoane de ștergere individuală și golire totală notificări cu persistență locală și marcare rapidă ca citit direct din listă',
+    timestamp: '2026-09-07'
+  },
+  {
+    version: '8.4.2',
+    type: 'patch',
+    description: 'Consolidare securitate & audit complet: eliminare cheie VAPID privată din bundle-ul client, autorizare strictă API push backend, alertă automată conducere la cereri de învoire din Prezență, dinamizare roluri superuser și sincronizare cache PWA',
+    timestamp: '2026-09-07'
+  },
+  {
+    version: '8.4.1',
+    type: 'patch',
+    description: 'Curățare UI panou Dashboard: eliminare butoane RSVP (Particip / Învoire) și referințe acțiuni redundante',
+    timestamp: '2026-09-07'
+  },
   {
     version: '8.4.0',
     type: 'minor',

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Bell, CheckCheck, Heart, Megaphone, CheckCircle2, XCircle, PieChart, Sparkles, ChevronRight, Trophy, Calendar } from 'lucide-react';
+import { Bell, CheckCheck, Heart, Megaphone, CheckCircle2, XCircle, PieChart, ChevronRight, Trophy, Calendar, Trash2 } from 'lucide-react';
 import { supabase } from '../../supabase';
 import { PushNotificationToggle } from './PushNotificationToggle';
 import { sendSystemNotification, broadcastPushNotification } from '../../utils/pushNotifications';
@@ -9,7 +9,7 @@ import { toast } from '../ui/Toast';
 
 export interface NotificationItem {
   id: string;
-  type: 'score' | 'excuse_approved' | 'excuse_rejected' | 'news' | 'poll' | 'forum' | 'event' | 'kudos';
+  type: 'score' | 'excuse_approved' | 'excuse_rejected' | 'news' | 'poll' | 'event' | 'kudos';
   title: string;
   description: string;
   timestamp: string;
@@ -35,10 +35,24 @@ export const NotificationsDropdown: React.FC<NotificationsDropdownProps> = ({
     return currentUserId ? `camena_read_notifications_${currentUserId}` : 'camena_read_notifications_global';
   }, [currentUserId]);
 
+  const deletedStorageKey = useMemo(() => {
+    return currentUserId ? `camena_deleted_notifications_${currentUserId}` : 'camena_deleted_notifications_global';
+  }, [currentUserId]);
+
   const [readIds, setReadIds] = useState<string[]>(() => {
     try {
       const key = currentUserId ? `camena_read_notifications_${currentUserId}` : 'camena_read_notifications_global';
       const saved = localStorage.getItem(key) || localStorage.getItem('read_notifications_v2') || localStorage.getItem('camena_read_notifications');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  const [deletedIds, setDeletedIds] = useState<string[]>(() => {
+    try {
+      const key = currentUserId ? `camena_deleted_notifications_${currentUserId}` : 'camena_deleted_notifications_global';
+      const saved = localStorage.getItem(key) || localStorage.getItem('camena_deleted_notifications');
       return saved ? JSON.parse(saved) : [];
     } catch {
       return [];
@@ -52,6 +66,16 @@ export const NotificationsDropdown: React.FC<NotificationsDropdownProps> = ({
       const saved = localStorage.getItem(key) || localStorage.getItem('read_notifications_v2') || localStorage.getItem('camena_read_notifications');
       if (saved) {
         setReadIds(JSON.parse(saved));
+      }
+    } catch {
+      // ignore
+    }
+
+    try {
+      const delKey = currentUserId ? `camena_deleted_notifications_${currentUserId}` : 'camena_deleted_notifications_global';
+      const savedDel = localStorage.getItem(delKey) || localStorage.getItem('camena_deleted_notifications');
+      if (savedDel) {
+        setDeletedIds(JSON.parse(savedDel));
       }
     } catch {
       // ignore
@@ -77,6 +101,17 @@ export const NotificationsDropdown: React.FC<NotificationsDropdownProps> = ({
       localStorage.setItem('read_notifications_v2', jsonStr);
     } catch (e) {
       console.warn('Eroare la salvarea notificărilor citite în localStorage:', e);
+    }
+  };
+
+  const saveDeletedNotifications = (ids: string[]) => {
+    setDeletedIds(ids);
+    try {
+      const jsonStr = JSON.stringify(ids);
+      localStorage.setItem(deletedStorageKey, jsonStr);
+      localStorage.setItem('camena_deleted_notifications', jsonStr);
+    } catch (e) {
+      console.warn('Eroare la salvarea notificărilor șterse în localStorage:', e);
     }
   };
 
@@ -239,18 +274,8 @@ export const NotificationsDropdown: React.FC<NotificationsDropdownProps> = ({
         fetchData();
         if (payload?.new) {
           sendSystemNotification({
-            title: `💬 Forum: Propunere nouă!`,
+            title: `💡 Propunere Nouă de Proiect!`,
             body: `"${payload.new.title}" de la ${payload.new.submitterName || 'un coleg'}.`,
-            url: '/#comunitate',
-          });
-        }
-      })
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'forum_posts' }, (payload: any) => {
-        fetchData();
-        if (payload?.new) {
-          sendSystemNotification({
-            title: `💬 Discuție nouă pe Forum: ${payload.new.title}`,
-            body: `${payload.new.author || 'Un coleg'}: ${payload.new.content ? payload.new.content.slice(0, 75) + '...' : ''}`,
             url: '/#comunitate',
           });
         }
@@ -367,15 +392,15 @@ export const NotificationsDropdown: React.FC<NotificationsDropdownProps> = ({
       });
     });
 
-    // 4. Forum Project Pitches
+    // 4. Project Pitches
     rawPitches.forEach(p => {
       list.push({
         id: `pitch_${p.id}`,
-        type: 'forum',
-        title: `Propunere Forum: ${p.title}`,
+        type: 'poll',
+        title: `Propunere Proiect: ${p.title}`,
         description: `Propusă de ${p.submitterName || 'un coleg'}. Intră să votezi și să comentezi.`,
         timestamp: p.createdAt,
-        targetSection: 'comunitate',
+        targetSection: 'sugestii',
       });
     });
 
@@ -425,12 +450,46 @@ export const NotificationsDropdown: React.FC<NotificationsDropdownProps> = ({
     return list.sort((a, b) => new Date(b.timestamp || 0).getTime() - new Date(a.timestamp || 0).getTime());
   }, [rawKudos, rawAbsences, rawNews, rawPolls, rawPitches, rawEvents, currentMemberData, currentUserId, currentUsername]);
 
-  const unreadCount = notifications.filter(n => !readIds.includes(n.id)).length;
+  // Filter out deleted notifications
+  const visibleNotifications = useMemo(() => {
+    return notifications.filter(n => !deletedIds.includes(n.id));
+  }, [notifications, deletedIds]);
+
+  const unreadCount = visibleNotifications.filter(n => !readIds.includes(n.id)).length;
 
   const markAllAsRead = () => {
-    const allIds = Array.from(new Set([...readIds, ...notifications.map(n => n.id)]));
+    const allIds = Array.from(new Set([...readIds, ...visibleNotifications.map(n => n.id)]));
     saveReadNotifications(allIds);
     toast.success('Toate notificările au fost marcate ca citite.');
+  };
+
+  const handleMarkSingleAsRead = (e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
+    e.preventDefault();
+    if (!readIds.includes(id)) {
+      const updated = Array.from(new Set([...readIds, id]));
+      saveReadNotifications(updated);
+      toast.success('Notificare marcată ca citită.');
+    }
+  };
+
+  const handleDeleteNotification = (e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
+    e.preventDefault();
+    const updated = Array.from(new Set([...deletedIds, id]));
+    saveDeletedNotifications(updated);
+    if (!readIds.includes(id)) {
+      saveReadNotifications(Array.from(new Set([...readIds, id])));
+    }
+    toast.info('Notificare ștearsă.');
+  };
+
+  const handleDeleteAll = () => {
+    if (visibleNotifications.length === 0) return;
+    const allIds = Array.from(new Set([...deletedIds, ...visibleNotifications.map(n => n.id)]));
+    saveDeletedNotifications(allIds);
+    saveReadNotifications(Array.from(new Set([...readIds, ...visibleNotifications.map(n => n.id)])));
+    toast.success('Toate notificările au fost șterse.');
   };
 
   const handleNotificationClick = (item: NotificationItem) => {
@@ -456,8 +515,6 @@ export const NotificationsDropdown: React.FC<NotificationsDropdownProps> = ({
         return <Megaphone size={16} className="text-blue-500" />;
       case 'poll':
         return <PieChart size={16} className="text-purple-500" />;
-      case 'forum':
-        return <Sparkles size={16} className="text-indigo-500" />;
       case 'event':
         return <Calendar size={16} className="text-teal-500" />;
     }
@@ -508,26 +565,39 @@ export const NotificationsDropdown: React.FC<NotificationsDropdownProps> = ({
               className="fixed sm:absolute inset-x-3 sm:inset-x-auto sm:right-0 top-16 sm:top-[calc(100%+0.5rem)] max-w-sm sm:w-96 rounded-[2px] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden z-[150] flex flex-col font-anthropic text-slate-800 dark:text-white"
             >
             {/* Header */}
-            <div className="p-3.5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-100/90 dark:bg-slate-900">
+            <div className="p-3 sm:p-3.5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-100/90 dark:bg-slate-900">
               <div className="flex items-center gap-2">
                 <div className="w-2 h-2 rounded-[2px] bg-blue-500 shadow-xs" />
                 <h3 className="text-xs sm:text-sm font-black tracking-tight text-slate-900 dark:text-white font-title">Centru Notificări</h3>
                 {unreadCount > 0 && (
-                  <span className="text-[10px] sm:text-xs font-black px-2 py-0.5 rounded-[2px] bg-blue-600 text-white shadow-xs font-data">
+                  <span className="text-[10px] sm:text-xs font-black px-1.5 sm:px-2 py-0.5 rounded-[2px] bg-blue-600 text-white shadow-xs font-data">
                     {unreadCount} noi
                   </span>
                 )}
               </div>
 
-              {unreadCount > 0 && (
-                <button
-                  onClick={markAllAsRead}
-                  className="text-xs font-bold text-slate-500 hover:text-slate-900 dark:hover:text-white flex items-center gap-1 transition-colors font-title cursor-pointer uppercase tracking-wider"
-                >
-                  <CheckCheck size={14} />
-                  Marchează citite
-                </button>
-              )}
+              <div className="flex items-center gap-2">
+                {unreadCount > 0 && (
+                  <button
+                    onClick={markAllAsRead}
+                    className="text-[11px] font-bold text-slate-500 hover:text-blue-600 dark:hover:text-blue-400 flex items-center gap-1 transition-colors font-title cursor-pointer uppercase tracking-wider"
+                    title="Marchează toate ca citite"
+                  >
+                    <CheckCheck size={13} />
+                    <span>Citite</span>
+                  </button>
+                )}
+                {visibleNotifications.length > 0 && (
+                  <button
+                    onClick={handleDeleteAll}
+                    className="text-[11px] font-bold text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 flex items-center gap-1 transition-colors font-title cursor-pointer uppercase tracking-wider"
+                    title="Golește toate notificările"
+                  >
+                    <Trash2 size={13} />
+                    <span>Golește</span>
+                  </button>
+                )}
+              </div>
             </div>
 
             {/* Push Notifications Opt-in Toggle Banner */}
@@ -549,18 +619,19 @@ export const NotificationsDropdown: React.FC<NotificationsDropdownProps> = ({
 
             {/* Notification Items List */}
             <div className="max-h-80 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800/60 font-anthropic">
-              {notifications.length === 0 ? (
-                <div className="p-8 text-center text-slate-400 text-xs sm:text-sm font-semibold">
-                  Nu ai notificări noi momentan.
+              {visibleNotifications.length === 0 ? (
+                <div className="p-8 text-center text-slate-400 text-xs sm:text-sm font-semibold flex flex-col items-center justify-center gap-2">
+                  <Bell size={24} className="opacity-30" />
+                  <span>Nu ai notificări momentan.</span>
                 </div>
               ) : (
-                notifications.map(item => {
+                visibleNotifications.map(item => {
                   const isUnread = !readIds.includes(item.id);
                   return (
                     <div
                       key={item.id}
                       onClick={() => handleNotificationClick(item)}
-                      className={`p-3.5 transition-colors cursor-pointer flex items-start gap-3 hover:bg-slate-50 dark:hover:bg-white/5 ${
+                      className={`group relative p-3 sm:p-3.5 transition-colors cursor-pointer flex items-start gap-3 hover:bg-slate-50 dark:hover:bg-white/5 ${
                         isUnread ? 'bg-blue-50/40 dark:bg-blue-950/20' : ''
                       }`}
                     >
@@ -573,9 +644,29 @@ export const NotificationsDropdown: React.FC<NotificationsDropdownProps> = ({
                           <h4 className={`text-xs sm:text-sm font-bold truncate font-title ${isUnread ? 'text-blue-900 dark:text-blue-200' : 'text-slate-900 dark:text-white'}`}>
                             {item.title}
                           </h4>
-                          {isUnread && (
-                            <span className="w-2 h-2 rounded-[2px] bg-blue-600 shrink-0" />
-                          )}
+                          <div className="flex items-center gap-1 shrink-0">
+                            {isUnread && (
+                              <button
+                                onClick={(e) => handleMarkSingleAsRead(e, item.id)}
+                                className="p-1 rounded-[2px] text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors cursor-pointer"
+                                title="Marchează ca citită"
+                                aria-label="Marchează ca citită"
+                              >
+                                <CheckCheck size={13} />
+                              </button>
+                            )}
+                            <button
+                              onClick={(e) => handleDeleteNotification(e, item.id)}
+                              className="p-1 rounded-[2px] text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors cursor-pointer"
+                              title="Șterge notificarea"
+                              aria-label="Șterge notificarea"
+                            >
+                              <Trash2 size={13} />
+                            </button>
+                            {isUnread && (
+                              <span className="w-2 h-2 rounded-[2px] bg-blue-600 shrink-0 ml-0.5" />
+                            )}
+                          </div>
                         </div>
 
                         <p className="text-xs text-slate-600 dark:text-slate-400 font-anthropic line-clamp-2 mt-0.5">

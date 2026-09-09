@@ -4,6 +4,7 @@ import { ShieldAlert, Search, RefreshCw, X, ArrowUpRight, ArrowDownRight, Rotate
 import { fetchScoreAuditLogs, ScoreAuditLog } from '../../../utils/supabaseService';
 import { formatRomaniaDateTime } from '../../../utils/romaniaTime';
 import { useBodyScrollLock } from '../../../utils/useBodyScrollLock';
+import { normalizeDiacritics } from '../../../utils/text';
 
 interface ScoreAuditLogModalProps {
   isOpen: boolean;
@@ -30,7 +31,7 @@ export function ScoreAuditLogModal({ isOpen, onClose }: ScoreAuditLogModalProps)
   if (!isOpen) return null;
 
   const filteredLogs = logs.filter(log => {
-    const q = search.toLowerCase().trim();
+    const q = normalizeDiacritics(search);
     const act = (log.action || '').toUpperCase();
 
     if (selectedCategory === 'SCORE' && !['ADDED', 'SUBTRACTED', 'REVERTED'].includes(act)) return false;
@@ -43,11 +44,11 @@ export function ScoreAuditLogModal({ isOpen, onClose }: ScoreAuditLogModalProps)
 
     if (!q) return true;
     return (
-      (log.adminName && log.adminName.toLowerCase().includes(q)) ||
-      (log.adminUsername && log.adminUsername.toLowerCase().includes(q)) ||
-      (log.targetMemberName && log.targetMemberName.toLowerCase().includes(q)) ||
-      (log.reason && log.reason.toLowerCase().includes(q)) ||
-      (log.action && log.action.toLowerCase().includes(q))
+      (log.adminName && normalizeDiacritics(log.adminName).includes(q)) ||
+      (log.adminUsername && normalizeDiacritics(log.adminUsername).includes(q)) ||
+      (log.targetMemberName && normalizeDiacritics(log.targetMemberName).includes(q)) ||
+      (log.reason && normalizeDiacritics(log.reason).includes(q)) ||
+      (log.action && normalizeDiacritics(log.action).includes(q))
     );
   });
 

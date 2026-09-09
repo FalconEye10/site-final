@@ -14,6 +14,7 @@ import { deleteMemberFromDB, logScoreAudit, isSystemAccount } from '../../../uti
 import { formatRomaniaDate, getRomaniaTodayString } from '../../../utils/romaniaTime';
 import { toast } from '../../ui/Toast';
 import { useBodyScrollLock } from '../../../utils/useBodyScrollLock';
+import { normalizeDiacritics } from '../../../utils/text';
 
 interface MembersViewProps {
   members: any[];
@@ -118,12 +119,15 @@ export function MembersView({
 
   // Filters & Sorting logic (Excludes technical system accounts)
   const processedMembers = useMemo(() => {
-    const q = searchTerm.trim().toLowerCase();
-    const filtered = members.filter(m => {
-      if (isSystemAccount(m)) {
-        return false;
-      }
+    const q = normalizeDiacritics(searchTerm);
+    const mapped = members
+      .filter(m => !isSystemAccount(m))
+      .map(m => ({
+        ...m,
+        debt: calculateDebt(m.joinDate, m.totalPaid || 0)
+      }));
 
+    const filtered = mapped.filter(m => {
       const mName = m.name || '';
       const mEmail = m.email || '';
       const rawRole = (m.role || '').toLowerCase();
@@ -133,11 +137,11 @@ export function MembersView({
       const mRole = isBoardMember ? 'Board' : 'Voluntar';
 
       const matchesSearch = !q || 
-                            mName.toLowerCase().includes(q) || 
-                            mEmail.toLowerCase().includes(q) ||
-                            (m.nickname || '').toLowerCase().includes(q) ||
-                            (m.username || '').toLowerCase().includes(q) ||
-                            (m.phone || '').toLowerCase().includes(q);
+                            normalizeDiacritics(mName).includes(q) || 
+                            normalizeDiacritics(mEmail).includes(q) ||
+                            normalizeDiacritics(m.nickname || '').includes(q) ||
+                            normalizeDiacritics(m.username || '').includes(q) ||
+                            normalizeDiacritics(m.phone || '').includes(q);
 
       const matchesRole = selectedRole === 'Toți' || mRole === selectedRole;
       
@@ -154,9 +158,8 @@ export function MembersView({
       
       // Balanță Cotizații: 'Restanțieri' = datorie > 0, 'La Zi' = datorie === 0
       let matchesDebt = true;
-      const debt = calculateDebt(m.joinDate, m.totalPaid || 0);
-      if (selectedDebtFilter === 'Restanțieri') matchesDebt = debt > 0;
-      if (selectedDebtFilter === 'La Zi') matchesDebt = debt === 0;
+      if (selectedDebtFilter === 'Restanțieri') matchesDebt = m.debt > 0;
+      if (selectedDebtFilter === 'La Zi') matchesDebt = m.debt === 0;
 
       return matchesSearch && matchesRole && matchesStatus && matchesDebt;
     });
@@ -164,7 +167,10 @@ export function MembersView({
     if (sortOrder === 'Implicit') {
       filtered.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
     } else if (sortOrder === 'Datorie') {
-      filtered.sort((a, b) => calculateDebt(b.joinDate, b.totalPaid || 0) - calculateDebt(a.joinDate, a.totalPaid || 0));
+      filtered.sort((a, b) => {
+        if (b.debt !== a.debt) return b.debt - a.debt;
+        return (a.name || '').localeCompare(b.name || '');
+      });
     }
 
     return filtered;
@@ -216,8 +222,8 @@ export function MembersView({
       ];
     });
 
-    const totalDatorii = members.reduce((acc, m) => acc + calculateDebt(m.joinDate, m.totalPaid || 0), 0);
-    const totalIncasat = members.reduce((acc, m) => acc + Number(m.totalPaid || 0), 0);
+    const totalDatorii = validMembers.reduce((acc, m) => acc + (m.debt ?? calculateDebt(m.joinDate, m.totalPaid || 0)), 0);
+    const totalIncasat = validMembers.reduce((acc, m) => acc + Number(m.totalPaid || 0), 0);
 
     const sheets = [
       {
@@ -515,7 +521,7 @@ export function MembersView({
         /* --- CARD VIEW --- */
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 font-anthropic">
           {processedMembers.map((m) => {
-            const debt = calculateDebt(m.joinDate, m.totalPaid || 0);
+            const debt = m.debt ?? calculateDebt(m.joinDate, m.totalPaid || 0);
             const isClear = debt === 0;
             const presences = m.presences || 0;
             const excused = m.excusedAbsences || 0;
@@ -667,7 +673,7 @@ export function MembersView({
               </TableHeader>
               <TableBody>
                 {processedMembers.map((m) => {
-                  const debt = calculateDebt(m.joinDate, m.totalPaid || 0);
+                  const debt = m.debt ?? calculateDebt(m.joinDate, m.totalPaid || 0);
                   const isClear = debt === 0;
 
                   return (

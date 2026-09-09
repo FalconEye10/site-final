@@ -2,10 +2,18 @@
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: POST, GET, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With');
+header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With, X-Camena-Push-Auth');
 
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(204);
+    exit;
+}
+
+// Verificare token de securitate intern pentru prevenirea apelurilor neautorizate
+$authHeader = $_SERVER['HTTP_X_CAMENA_PUSH_AUTH'] ?? '';
+if ($authHeader !== 'camena_internal_secure_dispatch_2026') {
+    http_response_code(401);
+    echo json_encode(['error' => 'Unauthorized: Invalid or missing push dispatch authorization']);
     exit;
 }
 

@@ -20,24 +20,21 @@ export function isSystemAccount(m: any): boolean {
 }
 
 const officialClubMembersRoster = [
-  "Abiculesei Alessia (Role: member)", "Alungulesei Darius (Role: member)", "Alungulesei Ianis (Role: member)",
-  "Amatioaiei Ioana (Role: member)", "Andraș Andreea (Role: member)", "Apetrei Sofia (Role: member)",
-  "Ariton Bogdan (Role: member)", "Beșu Ioana (Role: member)", "Buftea Leonardo (Role: member)",
-  "Cacciola Anastasia (Role: admin)", "Căruntu Ruxandra (Role: admin)", "Ciurea Alex (Role: member)",
-  "Corbu Patrick (Role: member)", "Corfă Tudor (Role: member)", "Covasan Marian (Role: member)",
-  "Crușitu Mihnea (Role: member)", "Dorneanu Mădălina (Role: member)", "Enache Diana (Role: member)",
-  "Filimon Teodora (Role: member)", "Glodeanu Tudor (Role: member)", "Huhulea Miruna (Role: member)",
-  "Ifrim Luca (Role: member)", "Ifrim Tudor (Role: member)", "Ioniță Daria (Role: member)",
+  "Abiculesei Alessia (Role: member)", "Alungulesei Darius (Role: member)", "Amatioaiei Ioana (Role: member)",
+  "Andraș Andreea (Role: member)", "Apetrei Sofia (Role: member)", "Ariton Bogdan (Role: member)",
+  "Beșu Ioana (Role: member)", "Cacciola Anastasia (Role: admin)", "Căruntu Ruxandra (Role: admin)",
+  "Ciurea Alex (Role: member)", "Corfă Tudor (Role: member)", "Crușitu Mihnea (Role: member)",
+  "Dorneanu Mădălina (Role: member)", "Enache Diana (Role: member)", "Filimon Teodora (Role: member)",
+  "Huhulea Miruna (Role: member)", "Ifrim Luca (Role: member)", "Ioniță Daria (Role: member)",
   "Lăpușneanu David (Role: member)", "Lupu Miruna (Role: member)", "Mancas Ilinca (Role: member)",
   "Manole Iustin (Role: member)", "Marunțelu Alex (Role: member)", "Măzare Sofia (Role: admin)",
   "Micu Ingrid (Role: member)", "Mihalache Mara (Role: member)", "Mihuț Alexandra (Role: member)",
   "Miron Maya (Role: member)", "Negru Maia (Role: member)", "Onțanu Vanessa (Role: member)",
-  "Orcheanu Maria (Role: member)", "Paisa Anastasia (Role: member)", "Panainte Silviu (Role: member)",
-  "Pascaru Rareș (Role: admin)", "Poenaru Cristiana (Role: member)", "Popa Ioana (Role: admin)",
-  "Popa Matei (Role: admin)", "Radu Sabin (Role: member)", "Radu Teodora (Role: member)",
-  "Răducanu Maya (Role: member)", "Stan Ștefan (Role: admin)", "Stîngaciu Mario (Role: member)",
-  "Șerban Cătălin (Role: member)", "Tănasa Teodora (Role: member)", "Timofte Teodora (Role: admin)",
-  "Timofte Tudor (Role: member)", "Timoscov Roxana (Role: member)", "Ursache Ștefania (Role: member)",
+  "Orcheanu Maria (Role: member)", "Paisa Anastasia (Role: member)", "Pascaru Rareș (Role: admin)",
+  "Poenaru Cristiana (Role: member)", "Popa Ioana (Role: admin)", "Popa Matei (Role: admin)",
+  "Radu Sabin (Role: member)", "Radu Teodora (Role: member)", "Răducanu Maya (Role: member)",
+  "Stan Stefan (Role: admin)", "Stîngaciu Mario (Role: member)", "Timofte Teodora (Role: admin)",
+  "Timofte Tudor (Role: member)", "Timoscov Roxana (Role: member)", "Ursache Stefania (Role: member)",
   "Zugravu Rareș (Role: member)"
 ];
 
@@ -225,6 +222,7 @@ export interface ScoreAdjustment {
   adminId?: string;
   targetMemberId?: string;
   targetMemberName?: string;
+  eventId?: string;
 }
 
 export interface ScoreAuditLog {
@@ -634,7 +632,8 @@ export async function applyMemberScoreAdjustment(
   memberId: string,
   pointsDelta: number,
   adjustments: ScoreAdjustment | ScoreAdjustment[],
-  extra?: { hoursDelta?: number; projectsDelta?: number }
+  extra?: { hoursDelta?: number; projectsDelta?: number },
+  replaceEventId?: string
 ): Promise<void> {
   // Limita de securitate conform ghidului de punctare (Max: 35, Min: -35)
   if (pointsDelta > MAX_SCORE_ADJUSTMENT || pointsDelta < MIN_SCORE_ADJUSTMENT) {
@@ -651,27 +650,55 @@ export async function applyMemberScoreAdjustment(
     if (fetchErr) throw fetchErr;
 
     const list = Array.isArray(adjustments) ? adjustments : [adjustments];
-    const currentAdjustments = Array.isArray(member?.scoreAdjustments) ? member.scoreAdjustments : [];
+    const currentAdjustments: ScoreAdjustment[] = Array.isArray(member?.scoreAdjustments) ? member.scoreAdjustments : [];
     const currentStats = member?.stats || {};
 
-    // Anti-duplicate protection: ignore adjustments that are already present
-    const existingIds = new Set(currentAdjustments.map((a: any) => a.id));
+    // Deduplicare per Event: dacă se furnizează replaceEventId sau ajustările conțin eventId,
+    // înlocuim ajustările anterioare pentru acel eveniment în loc de a le dubla la refinalizare.
+    const targetEventIds = new Set<string>();
+    if (replaceEventId) targetEventIds.add(replaceEventId);
+    list.forEach(a => {
+      if (a.eventId) targetEventIds.add(a.eventId);
+    });
+
+    let filteredAdjustments = [...currentAdjustments];
+    let previousHoursForEvent = 0;
+    let hadPreviousAdjustmentForEvent = false;
+
+    if (targetEventIds.size > 0) {
+      filteredAdjustments = currentAdjustments.filter(a => {
+        const matchesEventId = a.eventId && targetEventIds.has(a.eventId);
+        if (matchesEventId) {
+          hadPreviousAdjustmentForEvent = true;
+          const hoursMatch = (a.reason || '').match(/\((\d+(?:\.\d+)?)h\)/);
+          if (hoursMatch) previousHoursForEvent += parseFloat(hoursMatch[1]);
+          return false;
+        }
+        return true;
+      });
+    }
+
+    // Anti-duplicate protection: ignore adjustments that are already present by ID
+    const existingIds = new Set(filteredAdjustments.map((a: any) => a.id));
     const newItems = list.filter((a: any) => !existingIds.has(a.id));
-    if (newItems.length === 0 && list.length > 0) {
+    if (newItems.length === 0 && list.length > 0 && !hadPreviousAdjustmentForEvent) {
       console.warn("Ajustare de punctaj duplicată ignorată:", list);
       return;
     }
 
-    const updatedAdjustments = [...currentAdjustments, ...newItems];
+    const updatedAdjustments = [...filteredAdjustments, ...newItems];
     // Exact mathematical sum of all positive and negative adjustments in record
     const newTotalScore = updatedAdjustments.reduce((sum: number, a: any) => sum + (Number(a.points) || 0), 0);
 
     const updatedStats = { ...currentStats };
-    if (extra?.hoursDelta) {
-      updatedStats.hours = (Number(updatedStats.hours) || 0) + extra.hoursDelta;
+    if (extra?.hoursDelta !== undefined) {
+      const netHoursDelta = hadPreviousAdjustmentForEvent ? (extra.hoursDelta - previousHoursForEvent) : extra.hoursDelta;
+      updatedStats.hours = Math.max(0, (Number(updatedStats.hours) || 0) + netHoursDelta);
     }
-    if (extra?.projectsDelta) {
-      updatedStats.projects = (Number(updatedStats.projects) || 0) + extra.projectsDelta;
+    if (extra?.projectsDelta !== undefined) {
+      if (!hadPreviousAdjustmentForEvent) {
+        updatedStats.projects = (Number(updatedStats.projects) || 0) + extra.projectsDelta;
+      }
     }
 
     const { error: updateErr } = await supabase
@@ -717,7 +744,7 @@ export async function revertMemberScoreAdjustment(
   try {
     const { data: member, error: fetchErr } = await supabase
       .from('members')
-      .select('name, score, scoreAdjustments')
+      .select('name, score, scoreAdjustments, stats')
       .eq('id', memberId.toString())
       .single();
 
@@ -734,11 +761,23 @@ export async function revertMemberScoreAdjustment(
     const pointsToRemove = targetAdj.points || 0;
     const newScore = updatedAdjustments.reduce((sum: number, a: any) => sum + (Number(a.points) || 0), 0);
 
+    const currentStats = member.stats || {};
+    const updatedStats = { ...currentStats };
+    const hoursMatch = (targetAdj.reason || '').match(/\((\d+(?:\.\d+)?)h\)/);
+    if (hoursMatch) {
+      const hoursToDeduct = parseFloat(hoursMatch[1]);
+      updatedStats.hours = Math.max(0, (Number(updatedStats.hours) || 0) - hoursToDeduct);
+      if (targetAdj.reason && (targetAdj.reason.includes('Prezență') || targetAdj.reason.includes('Comisie') || targetAdj.reason.includes('Departament'))) {
+        updatedStats.projects = Math.max(0, (Number(updatedStats.projects) || 0) - 1);
+      }
+    }
+
     const { error: updateErr } = await supabase
       .from('members')
       .update({
         score: newScore,
-        scoreAdjustments: updatedAdjustments
+        scoreAdjustments: updatedAdjustments,
+        stats: updatedStats
       })
       .eq('id', memberId.toString());
 

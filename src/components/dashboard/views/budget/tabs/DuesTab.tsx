@@ -9,6 +9,7 @@ import {
   formatRON,
 } from '../types';
 import { duesRows } from '../selectors';
+import { normalizeDiacritics } from '../../../../../utils/text';
 
 interface Props {
   dues: DuesRecord[];
@@ -32,13 +33,13 @@ export const DuesTab: React.FC<Props> = ({ dues, onSaveMonth }) => {
   }, [dues, editing]);
 
   const rows = useMemo(() => {
-    const term = search.trim().toLowerCase();
+    const term = normalizeDiacritics(search);
     return duesRows(dues)
       .filter(row => {
         if (statusFilter === 'complet' && !row.isComplete) return false;
         if (statusFilter === 'restant' && row.isComplete) return false;
         if (!term) return true;
-        return `${row.memberName} ${row.boardRole}`.toLowerCase().includes(term);
+        return normalizeDiacritics(`${row.memberName} ${row.boardRole}`).includes(term);
       })
       .sort((a, b) => a.memberName.localeCompare(b.memberName, 'ro'));
   }, [dues, search, statusFilter]);

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Sparkles, Search, Check, ChevronDown, ChevronUp, Trophy } from 'lucide-react';
+import { normalizeDiacritics } from '../../../utils/text';
 
 export interface ScoringPreset {
   category: 
@@ -190,9 +191,11 @@ export function ScoringReferenceGuide({ onSelectPreset, selectedAction }: Scorin
   ];
 
   const filteredPresets = SCORING_PRESETS.filter(p => {
-    const matchesSearch = p.action.toLowerCase().includes(search.toLowerCase()) || 
-                          p.description.toLowerCase().includes(search.toLowerCase()) ||
-                          (p.badge && p.badge.toLowerCase().includes(search.toLowerCase()));
+    const q = normalizeDiacritics(search);
+    const matchesSearch = !q ||
+                          normalizeDiacritics(p.action).includes(q) || 
+                          normalizeDiacritics(p.description).includes(q) ||
+                          (p.badge && normalizeDiacritics(p.badge).includes(q));
     const matchesCat = selectedCategory === 'Toate' || p.category === selectedCategory;
     return matchesSearch && matchesCat;
   });

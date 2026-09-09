@@ -3,6 +3,7 @@ import { History, Lock, Search } from 'lucide-react';
 import { Badge, EmptyState, Panel, Select, TableWrap, Td, TextInput, Th } from '../ui';
 import { AuditAction, AuditEntry } from '../types';
 import { TreasuryPayment } from '../../../../../utils/supabaseService';
+import { normalizeDiacritics } from '../../../../../utils/text';
 
 const ACTION_COLORS: Record<AuditAction, string> = {
   Creare: 'var(--adm-acc-blue)',
@@ -105,7 +106,7 @@ export const AuditTab: React.FC<{ entries: AuditEntry[]; duesPayments: TreasuryP
   const [actionFilter, setActionFilter] = useState<'all' | AuditAction | 'cotizatie'>('all');
 
   const rows = useMemo(() => {
-    const term = search.trim().toLowerCase();
+    const term = normalizeDiacritics(search);
     return toRows(entries, duesPayments)
       .filter(row => {
         if (actionFilter === 'cotizatie' && row.kind !== 'payment') return false;
@@ -117,7 +118,7 @@ export const AuditTab: React.FC<{ entries: AuditEntry[]; duesPayments: TreasuryP
           row.kind === 'action'
             ? [row.user, row.txCode, row.details, row.oldValue, row.newValue]
             : [row.user, row.memberName, row.month, `${row.amount}`];
-        return haystack.filter(Boolean).some(field => String(field).toLowerCase().includes(term));
+        return haystack.filter(Boolean).some(field => normalizeDiacritics(String(field)).includes(term));
       })
       .sort((a, b) => (b.timestamp ?? 0) - (a.timestamp ?? 0));
   }, [entries, duesPayments, search, actionFilter]);

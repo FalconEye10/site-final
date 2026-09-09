@@ -202,6 +202,14 @@ async function sendWebPush(subscription, payload) {
 export async function onRequestPost(context) {
   try {
     const request = context.request;
+    const authHeader = request.headers.get('X-Camena-Push-Auth') || '';
+    if (authHeader !== 'camena_internal_secure_dispatch_2026') {
+      return new Response(JSON.stringify({ error: 'Unauthorized: Invalid push auth header' }), {
+        status: 401,
+        headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+      });
+    }
+
     const body = await request.json().catch(() => ({}));
     const { title, body: messageBody, icon, url, targetMemberId, targetMemberIds } = body;
 

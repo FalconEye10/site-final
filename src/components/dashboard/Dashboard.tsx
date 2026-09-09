@@ -14,12 +14,14 @@ import {
 import { AuroraBackground } from '../ui/AuroraBackground';
 import { CommandPalette, type CommandNavItem } from './CommandPalette';
 import { calculateDebt, calculateQualification, generateMemberLedger } from '../../utils/finance';
-import { fetchMembers, updateMemberFields, revertLatestTreasuryPayment, fetchAllTreasuryPayments } from '../../utils/supabaseService';
-import { formatRomaniaDate, formatRomaniaDateTime, getRomaniaDateTimeMs, ROMANIA_TIMEZONE } from '../../utils/romaniaTime';
+import { fetchMembers, updateMemberFields, revertLatestTreasuryPayment, fetchAllTreasuryPayments, isSystemAccount } from '../../utils/supabaseService';
+import { formatRomaniaDate, formatRomaniaDateTime, getRomaniaDateTimeMs, getRomaniaTodayString, ROMANIA_TIMEZONE } from '../../utils/romaniaTime';
 import { canEditMemberPassword, isBoardMember } from '../../utils/permissions';
 import { supabase } from '../../supabase';
 import { toast } from '../ui/Toast';
 import { useBodyScrollLock } from '../../utils/useBodyScrollLock';
+import { APP_VERSION } from '../../version';
+import { normalizeDiacritics } from '../../utils/text';
 import { NotificationsDropdown } from './NotificationsDropdown';
 import { MemberActivityHub } from './hubs/MemberActivityHub';
 import { MemberCommunityHub } from './hubs/MemberCommunityHub';
@@ -38,7 +40,6 @@ const IdeasView = lazy(() => import('./views/IdeasView').then(m => ({ default: m
 const CommunityIdeasView = lazy(() => import('./views/CommunityIdeasView').then(m => ({ default: m.CommunityIdeasView })));
 const RepartizareView = lazy(() => import('./views/RepartizareView').then(m => ({ default: m.RepartizareView })));
 const ProjectProposalsView = lazy(() => import('./views/ProjectProposalsView').then(m => ({ default: m.ProjectProposalsView })));
-const ForumView = lazy(() => import('./views/ForumView').then(m => ({ default: m.ForumView })));
 const NewsView = lazy(() => import('./views/NewsView').then(m => ({ default: m.NewsView })));
 const LeaderboardView = lazy(() => import('./views/LeaderboardView').then(m => ({ default: m.LeaderboardView })));
 const BudgetView = lazy(() => import('./views/BudgetView').then(m => ({ default: m.BudgetView })));
@@ -225,7 +226,8 @@ const ViewDashboard = ({ members, currentUserObj, isAdmin, onNavigateToSection, 
       if (!error && data) {
         const now = Date.now();
         const futureEvents = data
-          .map((ev: any) => ({ ...ev, timeStamp: new Date(`${ev.date}T${ev.time || '00:00'}`).getTime() }))
+          .filter((ev: any) => !ev.attendanceClosed)
+          .map((ev: any) => ({ ...ev, timeStamp: getRomaniaDateTimeMs(ev.date, ev.time) }))
           .filter((ev: any) => ev.timeStamp >= now)
           .sort((a: any, b: any) => a.timeStamp - b.timeStamp);
         setNextEvent(futureEvents.length > 0 ? futureEvents[0] : null);
@@ -312,89 +314,100 @@ const ViewDashboard = ({ members, currentUserObj, isAdmin, onNavigateToSection, 
     }
   };
 
-  const handleRSVP = async (rsvpStatus: 'confirmed' | 'declined') => {
-    if (!nextEvent || !currentUserObj) {
-      toast.error("Trebuie să fii conectat ca membru pentru RSVP.");
-      return;
-    }
-    if (currentUserObj.role === 'admin') {
-      toast.error("Membrii Board nu înregistrează RSVP.");
-      return;
-    }
-    const userId = currentUserObj.id || currentUserObj.username;
-    try {
-      const currentRSVPs = { ...(nextEvent.rsvps || {}) };
-      currentRSVPs[userId] = rsvpStatus;
-
-      const { error } = await supabase
-        .from('events')
-        .update({ rsvps: currentRSVPs })
-        .eq('id', nextEvent.id);
-      if (error) throw error;
-      toast.success(rsvpStatus === 'confirmed' ? "Te-ai înscris la eveniment!" : "Ai refuzat participarea.");
-    } catch (err) {
-      console.error("RSVP error", err);
-      toast.error("Eroare la trimiterea RSVP-ului.");
-    }
-  };
-
   const membersCount = members.length;
-  const totalCollected = members.reduce((sum, m) => sum + (m.totalPaid || 0), 0);
-  const totalGlobalDebt = members.reduce((sum, m) => sum + calculateDebt(m.joinDate, m.totalPaid || 0), 0);
-  const complianceRate = totalCollected + totalGlobalDebt > 0 
-    ? Math.round((totalCollected / (totalCollected + totalGlobalDebt)) * 100) 
-    : 0;
 
-  const personalDebt = currentUserObj ? calculateDebt(currentUserObj.joinDate, currentUserObj.totalPaid || 0) : 0;
+  const { totalCollected, totalGlobalDebt, complianceRate } = useMemo(() => {
+    let collected = 0;
+    let debt = 0;
+    for (const m of members) {
+      if (isSystemAccount(m)) continue;
+      collected += (m.totalPaid || 0);
+      debt += calculateDebt(m.joinDate, m.totalPaid || 0);
+    }
+    const rate = (collected + debt > 0) ? Math.round((collected / (collected + debt)) * 100) : 0;
+    return { totalCollected: collected, totalGlobalDebt: debt, complianceRate: rate };
+  }, [members]);
+
+  const personalDebt = useMemo(() => {
+    return currentUserObj ? calculateDebt(currentUserObj.joinDate, currentUserObj.totalPaid || 0) : 0;
+  }, [currentUserObj]);
+
   const personalHours = isBoardMember(currentUserObj) ? 0 : (currentUserObj?.stats?.hours || 0);
   const personalProjects = currentUserObj?.stats?.projects || 0;
 
-  const topVolunteers = [...members]
-    .filter(m => !isBoardMember(m))
-    .sort((a, b) => (b.stats?.hours || 0) - (a.stats?.hours || 0))
-    .slice(0, 3);
+  const topVolunteers = useMemo(() => {
+    return members
+      .filter(m => !isBoardMember(m) && !isSystemAccount(m))
+      .sort((a, b) => {
+        const diff = (b.stats?.hours || 0) - (a.stats?.hours || 0);
+        if (diff !== 0) return diff;
+        const scoreDiff = (b.score || 0) - (a.score || 0);
+        if (scoreDiff !== 0) return scoreDiff;
+        return (a.name || '').localeCompare(b.name || '');
+      })
+      .slice(0, 3);
+  }, [members]);
 
-  // Poziția în clasamentul general (scor all-time), excluzând membrii Board-ului — arată "Top X%".
-  const rankableMembers = [...members]
-    .filter(m => !isBoardMember(m))
-    .sort((a, b) => (b.score || 0) - (a.score || 0));
-  const myRankIndex = (currentUserObj && !isBoardMember(currentUserObj)) ? rankableMembers.findIndex(m => m.id === currentUserObj.id) : -1;
-  const myRank = myRankIndex >= 0 ? myRankIndex + 1 : null;
-  const myTopPercent = myRank && rankableMembers.length > 0
-    ? Math.max(1, Math.round((myRank / rankableMembers.length) * 100))
-    : null;
+  // Poziția în clasamentul general (scor all-time), excluzând membrii Board-ului și conturile sistem
+  const { rankableMembers, myRank, myTopPercent } = useMemo(() => {
+    const sorted = members
+      .filter(m => !isBoardMember(m) && !isSystemAccount(m))
+      .sort((a, b) => {
+        if ((b.score || 0) !== (a.score || 0)) {
+          return (b.score || 0) - (a.score || 0);
+        }
+        if ((b.stats?.hours || 0) !== (a.stats?.hours || 0)) {
+          return (b.stats?.hours || 0) - (a.stats?.hours || 0);
+        }
+        return (a.name || '').localeCompare(b.name || '');
+      });
+
+    const rankIdx = (currentUserObj && !isBoardMember(currentUserObj)) 
+      ? sorted.findIndex(m => m.id === currentUserObj.id) 
+      : -1;
+    const rank = rankIdx >= 0 ? rankIdx + 1 : null;
+    const topPct = (rank && sorted.length > 0)
+      ? Math.max(1, Math.round((rank / sorted.length) * 100))
+      : null;
+
+    return { rankableMembers: sorted, myRank: rank, myTopPercent: topPct };
+  }, [members, currentUserObj]);
 
   const totalVotes = activePoll ? Object.keys(activePoll.votes || {}).length : 0;
   const userVote = currentUserObj && activePoll ? (activePoll.votes || {})[currentUserObj.id || currentUserObj.username] : undefined;
 
   // combined volunteer stats (excluding Board / Admin members from total volunteer hours)
-  const totalCombinedHours = members
-    .filter(m => !isBoardMember(m))
-    .reduce((sum, m) => sum + (m.stats?.hours || 0), 0);
+  const totalCombinedHours = useMemo(() => {
+    return members
+      .filter(m => !isBoardMember(m) && !isSystemAccount(m))
+      .reduce((sum, m) => sum + (m.stats?.hours || 0), 0);
+  }, [members]);
+
   const totalCombinedProjects = events.filter(e => e.type === 'social').length;
   const targetMonthlyHours = 500;
   const targetPercentage = Math.min(100, Math.round((totalCombinedHours / targetMonthlyHours) * 100));
 
-  // Next Event calculations
-  let countdownDays = 0;
-  let userRsvpStatus = 'none';
-  const enrolledCommittees: string[] = [];
-  if (nextEvent) {
-    const eventMidnight = new Date(`${nextEvent.date}T00:00:00`).getTime();
-    countdownDays = Math.max(0, Math.ceil((eventMidnight - Date.now()) / 86400000));
-    if (currentUserObj && nextEvent.rsvps) {
-      userRsvpStatus = nextEvent.rsvps[currentUserObj.id || currentUserObj.username] || 'none';
+  // Next Event calculations conform Orei României
+  const { countdownDays, enrolledCommittees } = useMemo(() => {
+    let days = 0;
+    const enrolled: string[] = [];
+    if (nextEvent) {
+      const eventMidnightMs = getRomaniaDateTimeMs(nextEvent.date, '00:00');
+      const todayMidnightMs = getRomaniaDateTimeMs(getRomaniaTodayString(), '00:00');
+      days = Math.max(0, Math.round((eventMidnightMs - todayMidnightMs) / 86400000));
+
+      if (nextEvent.type === 'project' && nextEvent.committees && currentUserObj) {
+        Object.values(nextEvent.committees).forEach((comm: any) => {
+          const isMember = comm.members?.includes(currentUserObj.id);
+          const isCoordinator = comm.coordinatorId === currentUserObj.id;
+          if (isMember || isCoordinator) {
+            enrolled.push(comm.name);
+          }
+        });
+      }
     }
-    if (nextEvent.type === 'project' && nextEvent.committees && currentUserObj) {
-      Object.values(nextEvent.committees).forEach((comm: any) => {
-        const isMember = comm.members?.includes(currentUserObj.id);
-        const isCoordinator = comm.coordinatorId === currentUserObj.id;
-        if (isMember || isCoordinator) {
-          enrolledCommittees.push(comm.name);
-        }
-      });
-    }
-  }
+    return { countdownDays: days, enrolledCommittees: enrolled };
+  }, [nextEvent, currentUserObj]);
 
   // Calculate dynamic stats for logged-in member
   const statsObj = currentUserObj?.stats || { presences: 0, excusedAbsences: 0, unexcusedAbsences: 0 };
@@ -868,35 +881,17 @@ const ViewDashboard = ({ members, currentUserObj, isAdmin, onNavigateToSection, 
                       <span className="text-xs font-title font-bold uppercase px-2 py-0.5 rounded-[2px] bg-slate-200 dark:bg-slate-700">BOARD</span>
                     </div>
                   </div>
-                ) : (
-                  <div className="pt-3 border-t border-slate-100 dark:border-slate-800 space-y-2">
-                    <div className="text-xs font-title font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                      Confirmare Prezență (RSVP)
-                    </div>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => handleRSVP('confirmed')}
-                        className={`flex-1 py-1.5 px-3 text-xs font-title font-bold uppercase tracking-wider rounded-[2px] transition-colors border ${
-                          userRsvpStatus === 'confirmed'
-                            ? 'bg-emerald-700 border-emerald-700 text-white'
-                            : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/20'
-                        }`}
-                      >
-                        Particip
-                      </button>
-                      <button
-                        onClick={() => onRedirectToExcuse(nextEvent.id)}
-                        className={`flex-1 py-1.5 px-3 text-xs font-title font-bold uppercase tracking-wider rounded-[2px] transition-colors border ${
-                          userRsvpStatus === 'declined'
-                            ? 'bg-rose-700 border-rose-700 text-white'
-                            : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-rose-700 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/20'
-                        }`}
-                      >
-                        Învoire
-                      </button>
-                    </div>
+                ) : nextEvent?.id ? (
+                  <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex justify-between items-center text-xs">
+                    <span className="text-slate-500 dark:text-slate-400">Nu poți ajunge la întâlnire?</span>
+                    <button
+                      onClick={() => onRedirectToExcuse(nextEvent.id)}
+                      className="font-title font-bold text-amber-600 dark:text-amber-400 hover:underline cursor-pointer"
+                    >
+                      Trimite Învoire &rarr;
+                    </button>
                   </div>
-                )}
+                ) : null}
               </div>
             ) : (
               <div className="py-8 text-center text-xs sm:text-sm text-slate-400 dark:text-slate-500 italic">
@@ -1236,10 +1231,12 @@ const ViewPayments = ({ members, onUpdateMember, isAdmin }: { members: any[], on
     }
   };
 
-  const filteredPayments = payments.filter(p => 
-    p.memberName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    p.id.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredPayments = payments.filter(p => {
+    const q = normalizeDiacritics(searchQuery);
+    return !q || 
+      normalizeDiacritics(p.memberName).includes(q) ||
+      normalizeDiacritics(p.id).includes(q);
+  });
 
   // Helper to check if a payment is the latest for a specific user
   const isLatestPaymentForUser = (paymentId: string, memberId: string) => {
@@ -2341,13 +2338,17 @@ export function Dashboard({ username, currentMember, currentMemberId, onLogout }
     }
   }, [members, username]);
 
-  // Scoring System Announcement / Update Log on Next Login for all members
+  // Major Update Log Announcement - Triggers ONLY once after a new MAJOR release, NEVER on routine logins
   useEffect(() => {
     if (!username) return;
-    const updateSeenKey = `camena_update_scoring_v1_${username.toLowerCase()}`;
-    const alreadySeenUpdate = localStorage.getItem(updateSeenKey);
-    // Trigger if not seen and not currently displaying the onboarding tutorial
-    if (!alreadySeenUpdate && !isTutorialOpen) {
+    const currentMajor = (APP_VERSION || '8.4.2').split('.')[0];
+    const majorUpdateKey = `camena_update_seen_major_${currentMajor}_${username.toLowerCase()}`;
+    const legacyKey = `camena_update_scoring_v1_${username.toLowerCase()}`;
+
+    const alreadySeen = localStorage.getItem(majorUpdateKey) === 'true' || localStorage.getItem(legacyKey) === 'true';
+
+    // Trigger ONLY if this major release has never been seen by the user, and tutorial is not active
+    if (!alreadySeen && !isTutorialOpen) {
       setIsScoringUpdateModalOpen(true);
     }
   }, [username, isTutorialOpen]);
@@ -2355,8 +2356,10 @@ export function Dashboard({ username, currentMember, currentMemberId, onLogout }
   const handleCloseScoringUpdate = () => {
     setIsScoringUpdateModalOpen(false);
     if (username) {
-      const updateSeenKey = `camena_update_scoring_v1_${username.toLowerCase()}`;
-      localStorage.setItem(updateSeenKey, 'true');
+      const currentMajor = (APP_VERSION || '8.4.2').split('.')[0];
+      const majorUpdateKey = `camena_update_seen_major_${currentMajor}_${username.toLowerCase()}`;
+      localStorage.setItem(majorUpdateKey, 'true');
+      localStorage.setItem(`camena_update_scoring_v1_${username.toLowerCase()}`, 'true');
     }
   };
 
@@ -2385,9 +2388,12 @@ export function Dashboard({ username, currentMember, currentMemberId, onLogout }
     const localKey = `tutorial_seen_v3_${username.toLowerCase()}`;
     localStorage.setItem(localKey, 'true');
 
-    // Trigger update log if unseen
-    const updateSeenKey = `camena_update_scoring_v1_${username.toLowerCase()}`;
-    if (!localStorage.getItem(updateSeenKey)) {
+    // Trigger update log ONLY if this major release has never been seen
+    const currentMajor = (APP_VERSION || '8.4.2').split('.')[0];
+    const majorUpdateKey = `camena_update_seen_major_${currentMajor}_${username.toLowerCase()}`;
+    const legacyKey = `camena_update_scoring_v1_${username.toLowerCase()}`;
+    const alreadySeen = localStorage.getItem(majorUpdateKey) === 'true' || localStorage.getItem(legacyKey) === 'true';
+    if (!alreadySeen) {
       setIsScoringUpdateModalOpen(true);
     }
 
@@ -2623,12 +2629,10 @@ export function Dashboard({ username, currentMember, currentMemberId, onLogout }
   }, [isAdmin]);
 
   const isTrezorierMaster = Boolean(
+    isAdmin ||
+    currentUserObj?.boardPosition?.toLowerCase().includes('trezorier') ||
+    currentUserObj?.boardPosition?.toLowerCase().includes('presedinte') ||
     currentUserObj?.username?.toLowerCase() === 'stan.stefan' ||
-    username?.toLowerCase() === 'stan.stefan' ||
-    currentUserObj?.name?.toLowerCase().includes('stefan stan') ||
-    currentUserObj?.name?.toLowerCase().includes('stan stefan') ||
-    currentUserObj?.id === 'M053' ||
-    currentUserObj?.id === 'M061' ||
     username?.toLowerCase() === 'admin'
   );
 
@@ -2727,7 +2731,6 @@ export function Dashboard({ username, currentMember, currentMemberId, onLogout }
           { id: 'proiecte', label: 'Idei Proiecte', icon: FileText },
           ...(isAdmin ? [{ id: 'comunitate', label: 'Idei Comunitate', icon: Globe }] : []),
           { id: 'sugestii', label: 'Casetă Sugestii', icon: MessageSquarePlus },
-          { id: 'forum', label: 'Forum', icon: MessageSquare },
           { id: 'stiri', label: 'Știri', icon: Megaphone },
         ]
       },
@@ -2847,7 +2850,7 @@ export function Dashboard({ username, currentMember, currentMemberId, onLogout }
           );
         }
         if (activeSection === 'stiri' || activeSection === 'news' || activeSection === 'idei' || activeSection === 'forum' || activeSection === 'comunitate' || activeSection === 'kudos' || activeSection === 'sugestii' || activeSection === 'proiecte') {
-          const mapped = (activeSection === 'news' ? 'stiri' : activeSection === 'proiecte' ? 'forum' : activeSection);
+          const mapped = (activeSection === 'news' ? 'stiri' : (activeSection === 'proiecte' || activeSection === 'forum') ? 'sugestii' : activeSection);
           return (
             <AdminCommunityHub
               initialSubtab={mapped}
@@ -2875,7 +2878,7 @@ export function Dashboard({ username, currentMember, currentMemberId, onLogout }
           );
         }
         if (activeSection === 'stiri' || activeSection === 'news' || activeSection === 'idei' || activeSection === 'forum' || activeSection === 'kudos' || activeSection === 'sugestii' || activeSection === 'proiecte') {
-          const mapped = (activeSection === 'news' ? 'stiri' : activeSection === 'proiecte' ? 'sugestii' : activeSection);
+          const mapped = (activeSection === 'news' ? 'stiri' : (activeSection === 'proiecte' || activeSection === 'forum') ? 'sugestii' : activeSection);
           return (
             <MemberCommunityHub
               initialSubtab={mapped}
@@ -2965,8 +2968,9 @@ export function Dashboard({ username, currentMember, currentMemberId, onLogout }
         );
       case 'idei': return <IdeasView isAdmin={isAdmin} currentUserId={currentUserObj?.id || ''} currentUsername={currentUserObj?.username || username || ''} />;
       case 'comunitate': return <CommunityIdeasView isAdmin={isAdmin} currentUserId={currentUserObj?.id || ''} />;
-      case 'proiecte': return <ProjectProposalsView isAdmin={isAdmin} currentUserId={currentUserObj?.id || ''} currentUsername={currentUserObj?.username || username || ''} />;
-      case 'forum': return <ForumView isAdmin={isAdmin} currentUserId={currentUserObj?.id || ''} currentUsername={currentUserObj?.name || currentUserObj?.username || username || ''} />;
+      case 'proiecte':
+      case 'forum':
+        return <ProjectProposalsView isAdmin={isAdmin} currentUserId={currentUserObj?.id || ''} currentUsername={currentUserObj?.username || username || ''} />;
       case 'stiri':
       case 'news':
         return <NewsView isAdmin={isAdmin} currentUserId={currentUserObj?.id || ''} currentUsername={currentUserObj?.name || currentUserObj?.username || username || ''} />;
@@ -3035,7 +3039,6 @@ export function Dashboard({ username, currentMember, currentMemberId, onLogout }
     calendar: { colors: ['#89cff0', '#475569'] },
     idei: { colors: ['#ffeacd', '#89cff0'] },
     proiecte: { colors: ['#0F172A', '#89cff0'] },
-    forum: { colors: ['#475569', '#ffeacd'] },
     stiri: { colors: ['#475569', '#89cff0'] },
     comunitate: { colors: ['#475569', '#89cff0'] },
     istoric: { colors: ['#0F172A', '#ffeacd'] },

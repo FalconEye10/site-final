@@ -957,12 +957,14 @@ export function MemberDrawer({ member, onClose, onUpdateMember, isAdmin, current
                     <div className="p-4 sm:p-5 rounded-[2px] border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 space-y-2.5">
                       <div className="flex justify-between items-center text-xs sm:text-sm font-bold text-slate-700 dark:text-slate-300 font-title">
                         <span>Progres Total Pașaport Voluntar</span>
-                        <span className="font-data">{unlockedCount} din {milestones.length} deblocate ({Math.round((unlockedCount / milestones.length) * 100)}%)</span>
+                        <span className="font-data">
+                          {unlockedCount} din {milestones.length} deblocate ({milestones.length > 0 ? Math.round((unlockedCount / milestones.length) * 100) : 0}%)
+                        </span>
                       </div>
                       <div className="w-full h-3 bg-slate-200 dark:bg-slate-700 rounded-[1px] overflow-hidden">
                         <div 
                           className="h-full bg-slate-900 dark:bg-slate-100 transition-all duration-500 rounded-[1px]" 
-                          style={{ width: `${(unlockedCount / milestones.length) * 100}%` }}
+                          style={{ width: `${milestones.length > 0 ? (unlockedCount / milestones.length) * 100 : 0}%` }}
                         />
                       </div>
                     </div>

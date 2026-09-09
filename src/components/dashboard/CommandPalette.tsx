@@ -4,6 +4,8 @@ import { Search, CornerDownLeft, ArrowUp, ArrowDown, User as UserIcon } from 'lu
 import type { LucideIcon } from 'lucide-react';
 import { APP_VERSION } from '../../version';
 
+import { normalizeDiacritics } from '../../utils/text';
+
 export interface CommandNavItem {
   id: string;
   label: string;
@@ -39,15 +41,15 @@ export function CommandPalette({ isOpen, onClose, navItems, members, onNavigate,
   }, [isOpen]);
 
   const filteredNav = useMemo(() => {
-    const q = query.trim().toLowerCase();
+    const q = normalizeDiacritics(query);
     if (!q) return navItems;
-    return navItems.filter(item => item.label.toLowerCase().includes(q) || item.category.toLowerCase().includes(q));
+    return navItems.filter(item => normalizeDiacritics(item.label).includes(q) || normalizeDiacritics(item.category).includes(q));
   }, [query, navItems]);
 
   const filteredMembers = useMemo(() => {
-    const q = query.trim().toLowerCase();
+    const q = normalizeDiacritics(query);
     if (q.length < 2) return [];
-    return members.filter(m => m.name?.toLowerCase().includes(q) || m.username?.toLowerCase().includes(q)).slice(0, 5);
+    return members.filter(m => normalizeDiacritics(m.name).includes(q) || normalizeDiacritics(m.username).includes(q)).slice(0, 5);
   }, [query, members]);
 
   const flatResults = useMemo(() => [

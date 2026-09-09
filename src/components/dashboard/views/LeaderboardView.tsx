@@ -8,7 +8,8 @@ import { applyMemberScoreAdjustment, revertMemberScoreAdjustment, MAX_SCORE_ADJU
 import { isBoardMember } from '../../../utils/permissions';
 import { ScoreAuditLogModal } from './ScoreAuditLogModal';
 import { toast } from '../../ui/Toast';
-import { formatRomaniaDateTime } from '../../../utils/romaniaTime';
+import { formatRomaniaDateTime, getRomaniaDateParts } from '../../../utils/romaniaTime';
+import { normalizeDiacritics } from '../../../utils/text';
 import { useBodyScrollLock } from '../../../utils/useBodyScrollLock';
 
 interface LeaderboardViewProps {
@@ -36,27 +37,28 @@ export function LeaderboardView({ members, isAdmin = false, onUpdateMember, curr
 
   useBodyScrollLock(!!scoreModalMember || !!historyModalMember);
 
-  // Check Master Authorization: EXCLUSIVELY Stefan Stan
+  // Check Master Authorization: Role Admin / Presedinte / Board
   const isStefanMaster = useMemo(() => {
     if (!currentUserObj) return false;
+    const role = (currentUserObj.role || '').toLowerCase().trim();
+    const boardPos = (currentUserObj.boardPosition || '').toLowerCase().trim();
     const username = (currentUserObj.username || '').toLowerCase().trim();
     const name = (currentUserObj.name || '').toLowerCase().trim();
-    const id = (currentUserObj.id || '').toUpperCase().trim();
     return (
+      role === 'admin' ||
+      boardPos.includes('presedinte') ||
+      boardPos.includes('președinte') ||
       username === 'stan.stefan' ||
       name.includes('stefan stan') ||
       name.includes('stan stefan') ||
-      id === 'M053' ||
-      id === 'M061' ||
       username === 'admin'
     );
   }, [currentUserObj]);
 
-  // 1. Bi-monthly period calculation (2 months: Jan-Feb, Mar-Apr, May-Jun, Jul-Aug, Sep-Oct, Nov-Dec)
+  // 1. Bi-monthly period calculation conform Orei României (2 luni: Jan-Feb, Mar-Apr, May-Jun, Jul-Aug, Sep-Oct, Nov-Dec)
   const biMonthlyInfo = useMemo(() => {
-    const now = new Date();
-    const curYear = now.getFullYear();
-    const curMonth = now.getMonth(); // 0-11
+    const { year: curYear, month } = getRomaniaDateParts(new Date());
+    const curMonth = month - 1; // 0-11
     const biMonthIndex = Math.floor(curMonth / 2); // 0..5
 
     const periods = [
@@ -93,153 +95,124 @@ export function LeaderboardView({ members, isAdmin = false, onUpdateMember, curr
 
   const [scoreMode, setScoreMode] = useState<'bimonthly' | 'total'>('bimonthly');
 
-  // 2. Sort all members by selected score mode (bimonthly or total all-time) descending (EXCLUDING BOARD MEMBERS)
-  // - biMonthlyScore: starts at 0 at each new cycle; sums strictly adjustments dated within the current 2 months.
-  // - totalScore: permanent all-time lifetime score; sums every positive and negative adjustment ever recorded.
-  const sortedMembers = useMemo(() => {
-    return [...members]
+  // 2. Calcul Unificat O(N) pentru Scorul Bimensual Curent, Scorul Anterior, Scorul Total și Evoluție
+  const evaluatedMembers = useMemo(() => {
+    return members
       .filter(m => !isSystemAccount(m) && !isBoardMember(m))
       .map(m => {
         const adjustments = Array.isArray(m.scoreAdjustments) ? m.scoreAdjustments : [];
 
-        // Calculate current cycle bi-monthly score strictly from dated adjustments
-        const biMonthlyScore = adjustments.reduce((sum: number, adj: any) => {
-          if (!adj.date) return sum;
-          const d = new Date(adj.date);
-          if (
-            d.getFullYear() === biMonthlyInfo.currentYear &&
-            d.getMonth() >= biMonthlyInfo.startMonth &&
-            d.getMonth() <= biMonthlyInfo.endMonth
-          ) {
-            return sum + (Number(adj.points) || 0);
-          }
-          return sum;
-        }, 0);
+        let biMonthlyScore = 0;
+        let prevBiMonthlyScore = 0;
+        let totalAdjustmentsSum = 0;
 
-        // Calculate permanent total score as exact sum of all adjustments
-        const totalAdjustmentsSum = adjustments.reduce((sum: number, adj: any) => sum + (Number(adj.points) || 0), 0);
+        for (const adj of adjustments) {
+          const pts = Number(adj.points) || 0;
+          totalAdjustmentsSum += pts;
+
+          if (adj.date) {
+            const { year: aYear, month: aMonth } = getRomaniaDateParts(adj.date);
+            const aZeroMonth = aMonth - 1;
+
+            // Ciclul curent
+            if (
+              aYear === biMonthlyInfo.currentYear &&
+              aZeroMonth >= biMonthlyInfo.startMonth &&
+              aZeroMonth <= biMonthlyInfo.endMonth
+            ) {
+              biMonthlyScore += pts;
+            }
+
+            // Ciclul anterior
+            if (
+              aYear === biMonthlyInfo.prevYear &&
+              aZeroMonth >= biMonthlyInfo.prevStartMonth &&
+              aZeroMonth <= biMonthlyInfo.prevEndMonth
+            ) {
+              prevBiMonthlyScore += pts;
+            }
+          }
+        }
+
         const totalScore = adjustments.length > 0 
           ? totalAdjustmentsSum 
           : (typeof m.score === 'number' ? m.score : 0);
 
-        const displayScore = scoreMode === 'total' ? totalScore : biMonthlyScore;
+        const evolution = biMonthlyScore - prevBiMonthlyScore;
 
-        return { ...m, biMonthlyScore, totalScore, displayScore };
-      })
-      .sort((a, b) => b.displayScore - a.displayScore);
-  }, [members, biMonthlyInfo, scoreMode]);
+        return {
+          ...m,
+          biMonthlyScore,
+          prevBiMonthlyScore,
+          totalScore,
+          evolution
+        };
+      });
+  }, [members, biMonthlyInfo]);
+
+  // 3. Sortare Membri după modul selectat (bimensual sau total all-time)
+  const sortedMembers = useMemo(() => {
+    return [...evaluatedMembers]
+      .map(m => ({
+        ...m,
+        displayScore: scoreMode === 'total' ? m.totalScore : m.biMonthlyScore
+      }))
+      .sort((a, b) => {
+        if (b.displayScore !== a.displayScore) {
+          return b.displayScore - a.displayScore;
+        }
+        if (b.totalScore !== a.totalScore) {
+          return b.totalScore - a.totalScore;
+        }
+        return (a.name || '').localeCompare(b.name || '');
+      });
+  }, [evaluatedMembers, scoreMode]);
 
   const locul1 = sortedMembers[0];
   const locul2 = sortedMembers[1];
   const locul3 = sortedMembers[2];
   const locul4 = sortedMembers[3];
 
-  // 3. Cea Mai Mare Evoluție (Diferența pozitivă între perioada bimensuală curentă și cea anterioară)
+  // 4. Cea Mai Mare Evoluție (O(N) derivat direct din evaluatedMembers)
   const ceaMaiMareEvolutie = useMemo(() => {
     let maxDiff = 0;
     let winner: any = null;
 
-    members.forEach(m => {
-      if (isBoardMember(m) || isSystemAccount(m)) return;
-      const adjustments = Array.isArray(m.scoreAdjustments) ? m.scoreAdjustments : [];
-
-      // Current Bi-Monthly Score
-      const currentScore = adjustments.reduce((sum: number, adj: any) => {
-        if (!adj.date) return sum;
-        const d = new Date(adj.date);
-        if (
-          d.getFullYear() === biMonthlyInfo.currentYear &&
-          d.getMonth() >= biMonthlyInfo.startMonth &&
-          d.getMonth() <= biMonthlyInfo.endMonth
-        ) {
-          return sum + (Number(adj.points) || 0);
-        }
-        return sum;
-      }, 0);
-
-      // Previous Bi-Monthly Score
-      const prevScore = adjustments.reduce((sum: number, adj: any) => {
-        if (!adj.date) return sum;
-        const d = new Date(adj.date);
-        if (
-          d.getFullYear() === biMonthlyInfo.prevYear &&
-          d.getMonth() >= biMonthlyInfo.prevStartMonth &&
-          d.getMonth() <= biMonthlyInfo.prevEndMonth
-        ) {
-          return sum + (Number(adj.points) || 0);
-        }
-        return sum;
-      }, 0);
-
-      const evolution = currentScore - prevScore;
-
-      if (evolution > maxDiff) {
-        maxDiff = evolution;
-        winner = { ...m, evolution, currentScore, prevScore };
+    for (const m of evaluatedMembers) {
+      if (m.evolution > maxDiff) {
+        maxDiff = m.evolution;
+        winner = { ...m, currentScore: m.biMonthlyScore, prevScore: m.prevBiMonthlyScore };
       }
-    });
+    }
 
     return winner;
-  }, [members, biMonthlyInfo]);
+  }, [evaluatedMembers]);
 
-  // 4. Cea Mai Mare Involuție (Diferența negativă între perioada bimensuală curentă și cea anterioară)
+  // 5. Cea Mai Mare Involuție (O(N) derivat direct din evaluatedMembers)
   const ceaMaiMareInvolutie = useMemo(() => {
     let minDiff = 0;
     let candidate: any = null;
 
-    members.forEach(m => {
-      if (isBoardMember(m) || isSystemAccount(m)) return;
-      const adjustments = Array.isArray(m.scoreAdjustments) ? m.scoreAdjustments : [];
-
-      // Current Bi-Monthly Score
-      const currentScore = adjustments.reduce((sum: number, adj: any) => {
-        if (!adj.date) return sum;
-        const d = new Date(adj.date);
-        if (
-          d.getFullYear() === biMonthlyInfo.currentYear &&
-          d.getMonth() >= biMonthlyInfo.startMonth &&
-          d.getMonth() <= biMonthlyInfo.endMonth
-        ) {
-          return sum + (Number(adj.points) || 0);
-        }
-        return sum;
-      }, 0);
-
-      // Previous Bi-Monthly Score
-      const prevScore = adjustments.reduce((sum: number, adj: any) => {
-        if (!adj.date) return sum;
-        const d = new Date(adj.date);
-        if (
-          d.getFullYear() === biMonthlyInfo.prevYear &&
-          d.getMonth() >= biMonthlyInfo.prevStartMonth &&
-          d.getMonth() <= biMonthlyInfo.prevEndMonth
-        ) {
-          return sum + (Number(adj.points) || 0);
-        }
-        return sum;
-      }, 0);
-
-      const evolution = currentScore - prevScore;
-
-      if (evolution < minDiff) {
-        minDiff = evolution;
-        candidate = { ...m, involution: evolution, currentScore, prevScore };
+    for (const m of evaluatedMembers) {
+      if (m.evolution < minDiff) {
+        minDiff = m.evolution;
+        candidate = { ...m, involution: m.evolution, currentScore: m.biMonthlyScore, prevScore: m.prevBiMonthlyScore };
       }
-    });
+    }
 
     return candidate;
-  }, [members, biMonthlyInfo]);
+  }, [evaluatedMembers]);
 
   // 5. Pagination & Search: When searching, search through ALL members.
   // If not searching, show from Rank #5 (Locul 5+) since 1-4 are already featured on the podium.
   const filteredList = useMemo(() => {
-    const query = searchQuery.trim().toLowerCase();
+    const query = normalizeDiacritics(searchQuery);
     const baseList = query ? sortedMembers : sortedMembers.slice(4);
     if (!query) return baseList;
     return baseList.filter(m => {
-      const nameMatch = (m.name || '').toLowerCase().includes(query);
-      const nicknameMatch = (m.nickname || '').toLowerCase().includes(query);
-      const roleMatch = (m.role || '').toLowerCase().includes(query);
+      const nameMatch = normalizeDiacritics(m.name).includes(query);
+      const nicknameMatch = normalizeDiacritics(m.nickname).includes(query);
+      const roleMatch = normalizeDiacritics(m.role).includes(query);
       return nameMatch || nicknameMatch || roleMatch;
     });
   }, [sortedMembers, searchQuery]);
@@ -314,7 +287,7 @@ export function LeaderboardView({ members, isAdmin = false, onUpdateMember, curr
   const sortedHistory = useMemo(() => {
     if (!liveHistoryMember) return [];
     const adjustments = Array.isArray(liveHistoryMember.scoreAdjustments) ? liveHistoryMember.scoreAdjustments : [];
-    return [...adjustments].sort((a: any, b: any) => new Date(b.date || 0).getTime() - new Date(a.date || 0).getTime());
+    return [...adjustments].sort((a: any, b: any) => (new Date(b.date || 0).getTime() || 0) - (new Date(a.date || 0).getTime() || 0));
   }, [liveHistoryMember]);
 
   const containerVariants = {
@@ -341,6 +314,16 @@ export function LeaderboardView({ members, isAdmin = false, onUpdateMember, curr
           animate="show"
           className="relative rounded-[2px] bg-gradient-to-br from-amber-500/15 via-amber-400/5 to-amber-600/15 border border-amber-400/40 p-5 sm:p-7 shadow-md font-anthropic"
         >
+          {/* Cycle Fresh Start Notice */}
+          {scoreMode === 'bimonthly' && locul1.biMonthlyScore === 0 && (
+            <div className="mb-4 p-3 rounded-[2px] bg-amber-500/10 border border-amber-500/30 text-amber-900 dark:text-amber-200 text-xs font-semibold flex items-center gap-2 relative z-10">
+              <Sparkles size={16} className="shrink-0 text-amber-500" />
+              <span>
+                Ediția bimensuală <strong>{biMonthlyInfo.periodLabel}</strong> a debutat recent • Punctajele active pornesc de la 0, iar ierarhia inițială reflectă clasamentul general all-time până la finalizarea primelor activități din această perioadă.
+              </span>
+            </div>
+          )}
+
           {/* Tier 1: Member Profile + Admin Action Buttons (No Collisions) */}
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-5 relative z-10 w-full">
             <div className="flex items-center gap-4 sm:gap-5 flex-1 min-w-0">

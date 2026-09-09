@@ -1,9 +1,8 @@
 import React, { useState, useEffect, lazy, Suspense } from 'react';
-import { Megaphone, PieChart, MessageSquare, Heart, Lightbulb, Sparkles } from 'lucide-react';
+import { Megaphone, PieChart, Heart, Lightbulb, Sparkles } from 'lucide-react';
 
 const NewsView = lazy(() => import('../views/NewsView').then(m => ({ default: m.NewsView })));
 const IdeasView = lazy(() => import('../views/IdeasView').then(m => ({ default: m.IdeasView })));
-const ForumView = lazy(() => import('../views/ForumView').then(m => ({ default: m.ForumView })));
 const KudosView = lazy(() => import('../views/KudosView').then(m => ({ default: m.KudosView })));
 const SuggestionsView = lazy(() => import('../views/SuggestionsView').then(m => ({ default: m.SuggestionsView })));
 const ProjectProposalsView = lazy(() => import('../views/ProjectProposalsView').then(m => ({ default: m.ProjectProposalsView })));
@@ -27,14 +26,13 @@ export const MemberCommunityHub: React.FC<MemberCommunityHubProps> = ({
 
   useEffect(() => {
     if (initialSubtab) {
-      setSubtab(initialSubtab);
+      setSubtab(initialSubtab === 'forum' ? 'sugestii' : initialSubtab);
     }
   }, [initialSubtab]);
 
   const tabs = [
     { id: 'stiri', label: 'Știri & Anunțuri', icon: Megaphone },
     { id: 'idei', label: 'Sondaje & Vot', icon: PieChart },
-    { id: 'forum', label: 'Forum & Discuții', icon: MessageSquare },
     { id: 'kudos', label: 'Kudos & Aprecieri', icon: Heart },
     { id: 'sugestii', label: 'Idei & Sugestii', icon: Lightbulb },
   ];
@@ -81,13 +79,6 @@ export const MemberCommunityHub: React.FC<MemberCommunityHubProps> = ({
         )}
         {subtab === 'idei' && (
           <IdeasView
-            isAdmin={isAdmin}
-            currentUserId={currentUserId}
-            currentUsername={currentUsername}
-          />
-        )}
-        {subtab === 'forum' && (
-          <ForumView
             isAdmin={isAdmin}
             currentUserId={currentUserId}
             currentUsername={currentUsername}

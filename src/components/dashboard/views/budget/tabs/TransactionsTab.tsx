@@ -48,6 +48,7 @@ import {
   categoriesFor,
   formatRON,
 } from '../types';
+import { normalizeDiacritics } from '../../../../../utils/text';
 import { computeKpis, computeRunningBalances, nextTransactionCode, projectName } from '../selectors';
 import { toast } from '../../../../ui/Toast';
 
@@ -215,7 +216,7 @@ export const TransactionsTab: React.FC<Props> = ({
 
   // Filtered transactions list
   const filtered = useMemo(() => {
-    const term = search.trim().toLowerCase();
+    const term = normalizeDiacritics(search);
 
     return transactions
       .filter(tx => {
@@ -242,7 +243,7 @@ export const TransactionsTab: React.FC<Props> = ({
           String(tx.amount),
         ]
           .filter(Boolean)
-          .some(field => String(field).toLowerCase().includes(term));
+          .some(field => normalizeDiacritics(String(field)).includes(term));
       })
       .sort((a, b) => {
         if (a.date !== b.date) return b.date.localeCompare(a.date);

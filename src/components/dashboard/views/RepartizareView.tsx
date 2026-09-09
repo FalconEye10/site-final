@@ -7,6 +7,7 @@ import { supabase } from '../../../supabase';
 import { toast } from '../../ui/Toast';
 import { isSystemAccount } from '../../../utils/supabaseService';
 import { formatRomaniaDate } from '../../../utils/romaniaTime';
+import { normalizeDiacritics } from '../../../utils/text';
 
 interface Committee {
   id: string;
@@ -109,11 +110,13 @@ export function RepartizareView({ isAdmin, members }: RepartizareViewProps) {
 
   // Filtered members list
   const filteredMembers = useMemo(() => {
+    const q = normalizeDiacritics(memberSearchQuery);
     return members
       .filter(m => !isSystemAccount(m))
       .filter(m => {
-        const nameMatch = (m.name || '').toLowerCase().includes(memberSearchQuery.toLowerCase()) ||
-                          (m.nickname || '').toLowerCase().includes(memberSearchQuery.toLowerCase());
+        const nameMatch = !q ||
+                          normalizeDiacritics(m.name).includes(q) ||
+                          normalizeDiacritics(m.nickname).includes(q);
         
         const skillMatch = selectedSkillFilter === 'Toate' || 
                            (Array.isArray(m.skills) && m.skills.includes(selectedSkillFilter));

@@ -15,13 +15,13 @@
 7. [Algoritmi Nucleu & Logici de Business (Finanțe, Gamificare, Prezențe)](#7-algoritmi-nucleu--logici-de-business-finanțe-gamificare-prezențe)
 8. [Arborescența Fișierelor, Componentelor & Serviciilor](#8-arborescența-fișierelor-componentelor--serviciilor)
 9. [Ghid Operațional: Mentenanță, Rulare Locală & Deploy Vercel](#9-ghid-operațional-mentenanță-rulare-locală--deploy-vercel)
-10. [Registrul Oficial de Credențiale (Cele 57 de Conturi Configurate)](#10-registrul-oficial-de-credențiale-cele-57-de-conturi-configurate)
+10. [Registrul Oficial de Credențiale (Cele 47 de Conturi Configurate)](#10-registrul-oficial-de-credențiale-cele-47-de-conturi-configurate)
 
 ---
 
 ## 1. VIZIUNEA & SCOPUL PLATFORMEI
 
-Platforma **Interact Club Camena Piatra Neamț** este un sistem organizațional integrat (ERP & Gamified Community Portal) conceput pentru a digitaliza și securiza întreaga activitate a clubului compus din **57 de membri activi** (10 membri în Board-ul de Conducere și 47 de voluntari).
+Platforma **Interact Club Camena Piatra Neamț** este un sistem organizațional integrat (ERP & Gamified Community Portal) conceput pentru a digitaliza și securiza întreaga activitate a clubului compus din **46 de membri** (8 membri în Board-ul de Conducere și 38 de voluntari, plus contul tehnic de administrare IT).
 
 ### Obiective Majore:
 * **Trezorerie & Chitanțier Digital Oficial:** Calcul automatizat al cotizațiilor (15 RON/lună), emiterea de chitanțe PDF securizate cu dublă semnătură olografă digitală (Trezorier + Membru), evidența soldului și a tranzacțiilor de venituri/cheltuieli.
@@ -548,7 +548,7 @@ github-source/
 
 ---
 
-## 10. REGISTRUL OFICIAL DE CREDENȚIALE (CELE 57 DE CONTURI CONFIGURATE)
+## 10. REGISTRUL OFICIAL DE CREDENȚIALE (CELE 47 DE CONTURI CONFIGURATE)
 
 ### 👑 A. Membrii Board-ului de Conducere (Administratori)
 
@@ -567,7 +567,7 @@ github-source/
 
 ---
 
-### 🤝 B. Voluntarii Clubului (Membri Activi)
+### 🤝 B. Voluntarii Clubului (Membri Activi & Pasivi)
 
 | ID | Nume & Prenume | Utilizator (Login) | Parolă Temporară Distinctă |
 | :--- | :--- | :--- | :--- |
@@ -575,14 +575,10 @@ github-source/
 | **M003** | Abiculesei Alessia | `abiculesei.alessia` | `Camena-Vol-9909!` |
 | **M004** | Paisa Anastasia | `paisa.anastasia` | `Camena-Vol-7774!` |
 | **M005** | Dorneanu Mădălina | `dorneanu.madalina` | `Camena-Vol-9770!` |
-| **M007** | Alungulesei Ianis | `alungulesei.ianis` | `Camena-Vol-2631!` |
-| **M008** | Amătioaiei Ioana | `amatioaiei.ioana` | `Camena-Vol-8458!` |
+| **M008** | Amatioaiei Ioana | `amatioaiei.ioana` | `Camena-Vol-8458!` |
 | **M009** | Apetrei Sofia | `apetrei.sofia` | `Camena-Vol-8081!` |
 | **M010** | Beșu Ioana | `besu.ioana` | `Camena-Vol-3131!` |
-| **M011** | Buftea Leonardo | `buftea.leonardo` | `Camena-Vol-8960!` |
-| **M014** | Ciobanu Ilinca | `ciobanu.ilinca` | `Camena-Vol-8657!` |
 | **M015** | Ciurea Alex | `ciurea.alex` | `Camena-Vol-6445!` |
-| **M016** | Covasan Marian | `covasan.marian` | `Camena-Vol-5592!` |
 | **M017** | Crușitu Mihnea | `crusitu.mihnea` | `Camena-Vol-1028!` |
 | **M018** | Enache Diana | `enache.diana` | `Camena-Vol-3141!` |
 | **M019** | Filimon Teodora | `filimon.teodora` | `Camena-Vol-9330!` |
@@ -592,17 +588,12 @@ github-source/
 | **M024** | Miron Maya | `miron.maya` | `Camena-Vol-4655!` |
 | **M025** | Onțanu Vanessa | `ontanu.vanessa` | `Camena-Vol-2355!` |
 | **M026** | Orcheanu Maria | `orcheanu.maria` | `Camena-Vol-7245!` |
-| **M027** | Panainte Silviu | `panainte.silviu` | `Camena-Vol-8195!` |
-| **M029** | Popa Medeea | `popa.medeea` | `Camena-Vol-7349!` |
 | **M030** | Radu Sabin | `radu.sabin` | `Camena-Vol-3044!` |
 | **M031** | Radu Teodora | `radu.teodora` | `Camena-Vol-5741!` |
 | **M032** | Răducanu Maya | `raducanu.maya` | `Camena-Vol-6541!` |
-| **M033** | Șerban Cătălin | `serban.catalin` | `Camena-Vol-9144!` |
-| **M034** | Tănasă Teodora | `tanasa.teodora` | `Camena-Vol-6466!` |
 | **M035** | Zugravu Rareș | `zugravu.rares` | `Camena-Vol-6369!` |
 | **M036** | Alungulesei Darius | `alungulesei.darius` | `Camena-Vol-2780!` |
 | **M037** | Ariton Bogdan | `ariton.bogdan` | `Camena-Vol-4972!` |
-| **M038** | Corbu Patrick | `corbu.patrick` | `Camena-Vol-5085!` |
 | **M039** | Huhulea Miruna | `huhulea.miruna` | `Camena-Vol-9266!` |
 | **M040** | Lăpușneanu David | `lapusneanu.david` | `Camena-Vol-1981!` |
 | **M041** | Lupu Miruna | `lupu.miruna` | `Camena-Vol-2406!` |
@@ -613,10 +604,8 @@ github-source/
 | **M046** | Poenaru Cristiana | `poenaru.cristiana` | `Camena-Vol-3541!` |
 | **M047** | Stîngaciu Mario | `stingaciu.mario` | `Camena-Vol-6132!` |
 | **M048** | Timofte Tudor | `timofte.tudor` | `Camena-Vol-3010!` |
-| **M049** | Ifrim Tudor | `ifrim.tudor` | `Camena-Vol-4483!` |
 | **M053** | Timoscov Roxana | `timoscov.roxana` | `Camena-Vol-4990!` |
 | **M054** | Ursache Stefania | `ursache.stefania` | `Camena-Vol-5751!` |
 | **M055** | Mihalache Mara | `mihalache.mara` | `Camena-Vol-6911!` |
 | **M056** | Corfă Tudor | `corfa.tudor` | `Camena-Vol-4836!` |
-| **M059** | Glodeanu Tudor | `glodeanu.tudor` | `Camena-Vol-3642!` |
-| **M060** | Mancaș Ilinca | `mancas.ilinca` | `Camena-Vol-5129!` |
+| **M060** | Mancas Ilinca | `mancas.ilinca` | `Camena-Vol-5129!` |

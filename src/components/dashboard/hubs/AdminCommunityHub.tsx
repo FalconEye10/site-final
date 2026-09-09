@@ -1,9 +1,8 @@
 import React, { useState, useEffect, lazy, Suspense } from 'react';
-import { Megaphone, PieChart, MessageSquare, Globe, Heart, Lightbulb, Sparkles } from 'lucide-react';
+import { Megaphone, PieChart, Globe, Heart, Lightbulb, Sparkles } from 'lucide-react';
 
 const NewsView = lazy(() => import('../views/NewsView').then(m => ({ default: m.NewsView })));
 const IdeasView = lazy(() => import('../views/IdeasView').then(m => ({ default: m.IdeasView })));
-const ForumView = lazy(() => import('../views/ForumView').then(m => ({ default: m.ForumView })));
 const CommunityIdeasView = lazy(() => import('../views/CommunityIdeasView').then(m => ({ default: m.CommunityIdeasView })));
 const KudosView = lazy(() => import('../views/KudosView').then(m => ({ default: m.KudosView })));
 const SuggestionsView = lazy(() => import('../views/SuggestionsView').then(m => ({ default: m.SuggestionsView })));
@@ -28,17 +27,16 @@ export const AdminCommunityHub: React.FC<AdminCommunityHubProps> = ({
 
   useEffect(() => {
     if (initialSubtab) {
-      setSubtab(initialSubtab);
+      setSubtab(initialSubtab === 'forum' ? 'sugestii' : initialSubtab);
     }
   }, [initialSubtab]);
 
   const tabs = [
     { id: 'stiri', label: 'Știri & Publicare', icon: Megaphone },
     { id: 'idei', label: 'Sondaje', icon: PieChart },
-    { id: 'forum', label: 'Forum & Proiecte', icon: MessageSquare },
     { id: 'comunitate', label: 'Idei Comunitate', icon: Globe },
     { id: 'kudos', label: 'Kudos', icon: Heart },
-    { id: 'sugestii', label: 'Casetă Sugestii', icon: Lightbulb },
+    { id: 'sugestii', label: 'Casetă Sugestii & Proiecte', icon: Lightbulb },
   ];
 
   return (
@@ -88,20 +86,6 @@ export const AdminCommunityHub: React.FC<AdminCommunityHubProps> = ({
             currentUsername={currentUsername}
           />
         )}
-        {subtab === 'forum' && (
-          <div className="space-y-8">
-            <ProjectProposalsView
-              isAdmin={isAdmin}
-              currentUserId={currentUserId}
-              currentUsername={currentUsername}
-            />
-            <ForumView
-              isAdmin={isAdmin}
-              currentUserId={currentUserId}
-              currentUsername={currentUsername}
-            />
-          </div>
-        )}
         {subtab === 'comunitate' && (
           <CommunityIdeasView
             isAdmin={isAdmin}
@@ -116,12 +100,19 @@ export const AdminCommunityHub: React.FC<AdminCommunityHubProps> = ({
           />
         )}
         {subtab === 'sugestii' && (
-          <SuggestionsView
-            currentUserId={currentUserId}
-            currentUsername={currentUsername}
-            isAdmin={isAdmin}
-            members={members}
-          />
+          <div className="space-y-8">
+            <ProjectProposalsView
+              isAdmin={isAdmin}
+              currentUserId={currentUserId}
+              currentUsername={currentUsername}
+            />
+            <SuggestionsView
+              currentUserId={currentUserId}
+              currentUsername={currentUsername}
+              isAdmin={isAdmin}
+              members={members}
+            />
+          </div>
         )}
       </Suspense>
     </div>

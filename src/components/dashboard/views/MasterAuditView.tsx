@@ -9,6 +9,7 @@ import { fetchScoreAuditLogs, ScoreAuditLog } from '../../../utils/supabaseServi
 import { downloadXlsx } from '../../../utils/xlsx';
 import { toast } from '../../ui/Toast';
 import { useBodyScrollLock } from '../../../utils/useBodyScrollLock';
+import { normalizeDiacritics } from '../../../utils/text';
 
 interface MasterAuditViewProps {
   currentUserObj?: any;
@@ -28,18 +29,20 @@ export function MasterAuditView({ currentUserObj }: MasterAuditViewProps) {
 
   useBodyScrollLock(!!inspectedLog);
 
-  // Check Master Authorization: EXCLUSIVELY Stefan Stan
+  // Check Master Authorization: Role Admin / Presedinte / Board
   const isMasterAuthorized = useMemo(() => {
     if (!currentUserObj) return false;
+    const role = (currentUserObj.role || '').toLowerCase().trim();
+    const boardPos = (currentUserObj.boardPosition || '').toLowerCase().trim();
     const username = (currentUserObj.username || '').toLowerCase().trim();
     const name = (currentUserObj.name || '').toLowerCase().trim();
-    const id = (currentUserObj.id || '').toUpperCase().trim();
     return (
+      role === 'admin' ||
+      boardPos.includes('presedinte') ||
+      boardPos.includes('președinte') ||
       username === 'stan.stefan' ||
       name.includes('stefan stan') ||
       name.includes('stan stefan') ||
-      id === 'M053' ||
-      id === 'M061' ||
       username === 'admin'
     );
   }, [currentUserObj]);
@@ -76,7 +79,7 @@ export function MasterAuditView({ currentUserObj }: MasterAuditViewProps) {
     const oneDay = 24 * 60 * 60 * 1000;
 
     return logs.filter(log => {
-      const q = search.toLowerCase().trim();
+      const q = normalizeDiacritics(search);
       const act = (log.action || '').toUpperCase();
 
       // Category filter
@@ -93,7 +96,8 @@ export function MasterAuditView({ currentUserObj }: MasterAuditViewProps) {
 
       // Time Range filter
       if (selectedTimeRange !== 'ALL') {
-        const logTime = new Date(log.createdAt).getTime();
+        const logTime = log.createdAt ? new Date(log.createdAt).getTime() : 0;
+        if (!logTime || isNaN(logTime)) return false;
         if (selectedTimeRange === 'TODAY' && now - logTime > oneDay) return false;
         if (selectedTimeRange === 'WEEK' && now - logTime > oneDay * 7) return false;
         if (selectedTimeRange === 'MONTH' && now - logTime > oneDay * 30) return false;
@@ -102,12 +106,12 @@ export function MasterAuditView({ currentUserObj }: MasterAuditViewProps) {
       // Search Query
       if (!q) return true;
       return (
-        (log.adminName && log.adminName.toLowerCase().includes(q)) ||
-        (log.adminUsername && log.adminUsername.toLowerCase().includes(q)) ||
-        (log.targetMemberName && log.targetMemberName.toLowerCase().includes(q)) ||
-        (log.reason && log.reason.toLowerCase().includes(q)) ||
-        (log.action && log.action.toLowerCase().includes(q)) ||
-        (log.id && log.id.toLowerCase().includes(q))
+        (log.adminName && normalizeDiacritics(log.adminName).includes(q)) ||
+        (log.adminUsername && normalizeDiacritics(log.adminUsername).includes(q)) ||
+        (log.targetMemberName && normalizeDiacritics(log.targetMemberName).includes(q)) ||
+        (log.reason && normalizeDiacritics(log.reason).includes(q)) ||
+        (log.action && normalizeDiacritics(log.action).includes(q)) ||
+        (log.id && normalizeDiacritics(log.id).includes(q))
       );
     });
   }, [logs, search, selectedCategory, selectedAdmin, selectedTimeRange]);

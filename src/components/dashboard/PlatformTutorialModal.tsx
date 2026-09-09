@@ -5,7 +5,7 @@ import {
   BellRing, Smartphone, Laptop, Moon, Sun,
   CheckCircle2, Target, CreditCard,
   Receipt, Trophy, Lightbulb,
-  Heart, Megaphone, MessageSquare,
+  Heart, Megaphone, PieChart,
   ChevronRight, ChevronLeft, X, Sparkles, Compass, ShieldCheck,
   Check, AlertTriangle, Download
 } from 'lucide-react';
@@ -124,7 +124,7 @@ const MockExperienceSwitch = () => (
       <div className="p-3 rounded-[2px] bg-purple-50/50 dark:bg-purple-950/20 border border-purple-200 dark:border-purple-800/40 text-center">
         <div className="text-lg mb-1">🤝</div>
         <div className="text-xs font-bold text-slate-800 dark:text-slate-200 font-title">Comunitate</div>
-        <div className="text-[10px] text-slate-500 mt-0.5">Știri, Forum, Kudos</div>
+        <div className="text-[10px] text-slate-500 mt-0.5">Știri, Sondaje, Kudos</div>
       </div>
       <div className="p-3 rounded-[2px] bg-emerald-50/50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800/40 text-center">
         <div className="text-lg mb-1">💰</div>
@@ -400,7 +400,7 @@ const MockInitiativesPolls = () => (
   </div>
 );
 
-// 11. Community, News, Forum & Kudos Mockup
+// 11. Community, News, Polls & Kudos Mockup
 const MockCommunityKudos = () => (
   <div className="space-y-3 font-anthropic">
     <div className="p-3 rounded-[2px] bg-gradient-to-r from-rose-50 to-pink-50 dark:from-rose-950/30 dark:to-pink-950/20 border border-rose-200 dark:border-rose-800/40 flex items-center gap-3">
@@ -421,8 +421,8 @@ const MockCommunityKudos = () => (
         <span>Știri cu Comentarii</span>
       </div>
       <div className="p-2.5 rounded-[2px] bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex items-center gap-2">
-        <MessageSquare size={14} className="text-purple-500" />
-        <span>Forum de Discuții</span>
+        <PieChart size={14} className="text-purple-500" />
+        <span>Sondaje & Vot</span>
       </div>
     </div>
   </div>
@@ -486,7 +486,7 @@ const MASTER_TUTORIAL_STEPS: TutorialStepItem[] = [
       '📸 Încarcă o fotografie clară din secțiunea Profil',
       '🏆 Apare automat lângă numele tău pe podiumul de clasament',
       '📋 Coordonatorii te identifică rapid la pontaj la evenimente',
-      '💬 Apare la comentarii pe Forum, Știri și în feed-ul de Kudos',
+      '💬 Apare la comentarii pe Știri și în feed-ul de Kudos',
     ],
     tip: 'Poți actualiza oricând poza și biografia personală direct din Profil.',
     mockup: MockAvatarUploader,
@@ -659,7 +659,7 @@ const MASTER_TUTORIAL_STEPS: TutorialStepItem[] = [
   {
     id: 'community_and_kudos',
     section: 'Comunitate & Relații',
-    title: 'Știri, Forum & Aprecieri (Kudos)',
+    title: 'Știri, Sondaje & Aprecieri (Kudos)',
     subtitle: 'Comunicare deschisă și recunoașterea meritelor colegilor',
     icon: Heart,
     gradient: 'from-rose-500 via-pink-500 to-fuchsia-600',
@@ -669,12 +669,12 @@ const MASTER_TUTORIAL_STEPS: TutorialStepItem[] = [
     description: 'Interact Camena este o familie unită. Rămâi conectat cu toți colegii prin spațiile dedicate de discuție și recunoaștere.',
     bullets: [
       '📢 Știri Oficiale: Anunțurile Board-ului cu secțiune de reacții și comentarii',
-      '💬 Forum Deschis: Creează subiecte de discuție, împărtășește idei și colaborează liber',
+      '📊 Sondaje & Inițiative: Exprimă-ți votul democratic și propune proiecte pentru club',
       '❤️ Kudos & Aprecieri: Trimite insigne de mulțumire colegilor (Spirit de Echipă, Energie Pozitivă, Leadership)',
     ],
     tip: 'Un simplu Kudos poate schimba ziua unui coleg și întărește spiritul clubului!',
     mockup: MockCommunityKudos,
-    sidebarHighlight: 'Comunitate (Știri, Forum, Kudos)',
+    sidebarHighlight: 'Comunitate (Știri, Sondaje, Kudos)',
   },
 ];
 

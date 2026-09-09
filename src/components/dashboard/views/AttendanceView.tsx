@@ -11,10 +11,12 @@ import {
   applyMemberScoreAdjustment, isSystemAccount, logScoreAudit 
 } from '../../../utils/supabaseService';
 import { toast } from '../../ui/Toast';
-import { triggerAbsencePushNotification } from '../../../utils/pushNotifications';
+import { triggerAbsencePushNotification, triggerAdminAbsenceRequestNotification } from '../../../utils/pushNotifications';
 import { Badge } from '../../ui/Badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../ui/table';
 import { useBodyScrollLock } from '../../../utils/useBodyScrollLock';
+import { getRomaniaDateTimeMs } from '../../../utils/romaniaTime';
+import { normalizeDiacritics } from '../../../utils/text';
 
 interface AttendanceViewProps {
   members: any[];
@@ -83,6 +85,7 @@ const MemberAttendanceView = ({ member, events, currentUserId, preselectedEventI
         timestamp: new Date().toISOString()
       };
       await saveAbsenceRequest(newReq);
+      triggerAdminAbsenceRequestNotification(member?.name || 'Membru', reason.trim());
       setRequests(prev => [newReq, ...prev]);
       setSelectedEventId('');
       setReason('');
@@ -255,7 +258,7 @@ export function AttendanceView({ members, onUpdateMember, isAdmin, currentUserId
     async function load() {
       try {
         const evs = await fetchEvents();
-        evs.sort((a, b) => new Date(`${b.date}T${b.time}`).getTime() - new Date(`${a.date}T${a.time}`).getTime());
+        evs.sort((a, b) => getRomaniaDateTimeMs(b.date, b.time) - getRomaniaDateTimeMs(a.date, a.time));
         setEvents(evs);
       } catch (err) {
         toast.error('Eroare la încărcarea evenimentelor.');
@@ -461,28 +464,46 @@ export function AttendanceView({ members, onUpdateMember, isAdmin, currentUserId
         const adminActorId = currentUserObj?.id;
         const adminActorUsername = currentUserObj?.username;
 
+        const eventDateStr = selectedEvent.date 
+          ? `${selectedEvent.date}T${selectedEvent.time || '12:00'}:00.000Z` 
+          : new Date().toISOString();
+
         const newAdjustment = {
           id: `adj_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
           points: pointsToAdd,
           reason: `Prezență (${fallbackHours}h): ${selectedEvent.title}`,
-          date: new Date().toISOString(),
+          date: eventDateStr,
           adminId: adminActorId,
           adminName: adminActorName,
-          adminUsername: adminActorUsername
+          adminUsername: adminActorUsername,
+          eventId: selectedEvent.id
         };
+
+        const currentAdjustments = Array.isArray(member.scoreAdjustments) ? member.scoreAdjustments : [];
+        const existingAdj = currentAdjustments.find((a: any) => 
+          a.eventId === selectedEvent.id || (a.reason && a.reason.includes(`: ${selectedEvent.title}`))
+        );
+        const oldHoursMatch = existingAdj ? (existingAdj.reason || '').match(/\((\d+(?:\.\d+)?)h\)/) : null;
+        const oldHours = oldHoursMatch ? parseFloat(oldHoursMatch[1]) : 0;
+
+        const filteredAdjustments = currentAdjustments.filter((a: any) => 
+          a.eventId !== selectedEvent.id && !(a.reason && a.reason.includes(`: ${selectedEvent.title}`))
+        );
+        const updatedAdjustments = [...filteredAdjustments, newAdjustment];
+        const newScore = updatedAdjustments.reduce((sum: number, a: any) => sum + (Number(a.points) || 0), 0);
 
         const updatedMember = {
           ...member,
           stats: {
             ...member.stats,
-            hours: (member.stats?.hours || 0) + fallbackHours,
-            projects: (member.stats?.projects || 0) + 1
+            hours: Math.max(0, (member.stats?.hours || 0) - oldHours + fallbackHours),
+            projects: (member.stats?.projects || 0) + (existingAdj ? 0 : 1)
           },
-          score: (member.score || 0) + pointsToAdd,
-          scoreAdjustments: [...(member.scoreAdjustments || []), newAdjustment]
+          score: newScore,
+          scoreAdjustments: updatedAdjustments
         };
 
-        await applyMemberScoreAdjustment(member.id, pointsToAdd, newAdjustment, { hoursDelta: fallbackHours, projectsDelta: 1 });
+        await applyMemberScoreAdjustment(member.id, pointsToAdd, newAdjustment, { hoursDelta: fallbackHours, projectsDelta: 1 }, selectedEvent.id);
         if (onUpdateMember) {
           onUpdateMember(updatedMember);
         }
@@ -823,12 +844,12 @@ export function AttendanceView({ members, onUpdateMember, isAdmin, currentUserId
       if (archiveFilter === 'excused' && !isExcused) return false;
       if (archiveFilter === 'absent' && !isAbsent) return false;
 
-      if (archiveSearch.trim()) {
-        const q = archiveSearch.toLowerCase();
-        const matchName = m.name?.toLowerCase().includes(q);
-        const matchNick = m.nickname?.toLowerCase().includes(q);
-        const matchRole = m.role?.toLowerCase().includes(q);
-        const matchComm = m.committee?.toLowerCase().includes(q);
+      const q = normalizeDiacritics(archiveSearch);
+      if (q) {
+        const matchName = normalizeDiacritics(m.name).includes(q);
+        const matchNick = normalizeDiacritics(m.nickname).includes(q);
+        const matchRole = normalizeDiacritics(m.role).includes(q);
+        const matchComm = normalizeDiacritics(m.committee).includes(q);
         return matchName || matchNick || matchRole || matchComm;
       }
       return true;
@@ -1700,7 +1721,10 @@ export function AttendanceView({ members, onUpdateMember, isAdmin, currentUserId
               >
                 {members
                   .filter(m => !isSystemAccount(m) && m.role !== 'admin')
-                  .filter(m => (m.name || '').toLowerCase().includes(whatsappSearchTerm.toLowerCase()))
+                  .filter(m => {
+                    const qWa = normalizeDiacritics(whatsappSearchTerm);
+                    return !qWa || normalizeDiacritics(m.name).includes(qWa);
+                  })
                   .sort((a, b) => (a.name || '').localeCompare(b.name || '', 'ro', { sensitivity: 'base' }))
                   .map(m => {
                     const currentStatus = selectedEvent.rsvps?.[m.id];

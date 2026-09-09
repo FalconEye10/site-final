@@ -4,6 +4,8 @@ import { Trophy, Sparkles, Award, Crown, ChevronRight, History, Star, Rocket, Cl
 import { supabase } from '../../supabase';
 import { computeMemberMilestones } from '../../utils/milestones';
 import { isBoardMember } from '../../utils/permissions';
+import { isSystemAccount } from '../../utils/supabaseService';
+import { getRomaniaDateParts } from '../../utils/romaniaTime';
 
 interface VolunteerSpotlightCardProps {
   members: any[];
@@ -42,12 +44,11 @@ export const VolunteerSpotlightCard: React.FC<VolunteerSpotlightCardProps> = ({
     loadKudos();
   }, []);
 
-  // Bi-Monthly Period Calculation (Every 2 Months)
+  // Bi-Monthly Period Calculation (Every 2 Months) conform Orei României
   const biMonthlyPeriod = useMemo(() => {
-    const d = new Date();
-    const month = d.getMonth(); // 0 - 11
-    const year = d.getFullYear();
-    const biMonthIndex = Math.floor(month / 2); // 0 - 5
+    const { year, month } = getRomaniaDateParts(new Date());
+    const zeroIndexedMonth = month - 1; // 0 - 11
+    const biMonthIndex = Math.floor(zeroIndexedMonth / 2); // 0 - 5
 
     const periodNames = [
       'Ianuarie – Februarie',
@@ -66,59 +67,78 @@ export const VolunteerSpotlightCard: React.FC<VolunteerSpotlightCardProps> = ({
     };
   }, []);
 
-  // 1. Calculate Bi-Monthly Winner & Rich Stats
+  // 1. Calculate Bi-Monthly Winner & Rich Stats (Algoritm Optimizat în 2 Etape)
   const spotlightWinner = useMemo(() => {
-    let topMember: any = null;
-    let maxScore = -1;
+    // Excludem conturile de administrare, membrii Board-ului și conturile de sistem
+    const candidates = members.filter(m => !isSystemAccount(m) && !isBoardMember(m) && m.role?.toLowerCase() !== 'admin');
+    if (candidates.length === 0) return null;
 
-    members.forEach(m => {
-      if (m.role?.toLowerCase() === 'admin' || isBoardMember(m)) return;
-
+    const mapped = candidates.map(m => {
       const adjustments = Array.isArray(m.scoreAdjustments) ? m.scoreAdjustments : [];
       const pointsInPeriod = adjustments.reduce((sum: number, adj: any) => {
         if (!adj.date) return sum;
-        const d = new Date(adj.date);
-        if (biMonthlyPeriod.months.includes(d.getMonth()) && d.getFullYear() === biMonthlyPeriod.year) {
+        const { year: aYear, month: aMonth } = getRomaniaDateParts(adj.date);
+        const aZeroMonth = aMonth - 1;
+        if (biMonthlyPeriod.months.includes(aZeroMonth) && aYear === biMonthlyPeriod.year) {
           return sum + (Number(adj.points) || 0);
         }
         return sum;
       }, 0);
 
-      const totalPresences = Number(m.presences || 0);
-      const effectiveScore = pointsInPeriod > 0 ? pointsInPeriod : (totalPresences > 0 ? totalPresences : 0);
+      const totalScore = adjustments.length > 0
+        ? adjustments.reduce((sum: number, adj: any) => sum + (Number(adj.points) || 0), 0)
+        : Number(m.score || 0);
 
-      if (effectiveScore > maxScore && effectiveScore > 0) {
-        maxScore = effectiveScore;
-        
-        // Calculated Real Statistics
-        const hoursCalculated = Number(m.stats?.hours ?? m.hours ?? (m.presences ? m.presences * 2 : 0));
+      const presences = Math.max(0, Number(m.presences || 0));
+      return { member: m, pointsInPeriod, totalScore, presences };
+    });
 
-        const memberKudosByToId = m.id ? (kudosCounts[m.id] || 0) : 0;
-        const memberKudosByName = m.name ? (kudosCounts[m.name.toLowerCase()] || 0) : 0;
-        const kudosCount = Math.max(memberKudosByToId, memberKudosByName, Array.isArray(m.kudos) ? m.kudos.length : 0);
+    // Detectăm dacă cel puțin un voluntar a marcat puncte în perioada curentă
+    const maxPeriodPoints = Math.max(0, ...mapped.map(x => x.pointsInPeriod));
 
-        const projectsCount = Number(m.stats?.projects ?? m.projects ?? (m.presences ? Math.floor(m.presences / 2) : 0));
-
-        const presences = Math.max(0, Number(m.presences || 0));
-        const unexcused = Math.max(0, Number(m.unexcusedAbsences || 0));
-        const totalEvents = presences + unexcused;
-        const attendanceRate = totalEvents > 0
-          ? Math.round((presences / totalEvents) * 100)
-          : (presences > 0 ? 100 : 0);
-
-        topMember = {
-          ...m,
-          biMonthlyScore: pointsInPeriod,
-          isPresencesFallback: pointsInPeriod <= 0,
-          hoursCalculated,
-          kudosCount,
-          projectsCount,
-          attendanceRate,
-        };
+    // Sortare deterministă:
+    // Dacă suntem într-un ciclu activ (maxPeriodPoints > 0): prioritizăm strict punctele bimensuale,
+    // apoi scorul total all-time, apoi prezențele, apoi alfabetic.
+    // Dacă ciclul abia a debutat (maxPeriodPoints === 0): clasamentul inițial reflectă scorul total all-time.
+    mapped.sort((a, b) => {
+      if (maxPeriodPoints > 0) {
+        if (b.pointsInPeriod !== a.pointsInPeriod) return b.pointsInPeriod - a.pointsInPeriod;
+        if (b.totalScore !== a.totalScore) return b.totalScore - a.totalScore;
+        if (b.presences !== a.presences) return b.presences - a.presences;
+        return (a.member.name || '').localeCompare(b.member.name || '');
+      } else {
+        if (b.totalScore !== a.totalScore) return b.totalScore - a.totalScore;
+        if (b.presences !== a.presences) return b.presences - a.presences;
+        return (a.member.name || '').localeCompare(b.member.name || '');
       }
     });
 
-    return topMember;
+    const top = mapped[0];
+    if (!top || (maxPeriodPoints === 0 && top.totalScore <= 0 && top.presences <= 0)) return null;
+
+    const m = top.member;
+    const hoursCalculated = Number(m.stats?.hours ?? m.hours ?? (m.presences ? m.presences * 2 : 0));
+    const memberKudosByToId = m.id ? (kudosCounts[m.id] || 0) : 0;
+    const memberKudosByName = m.name ? (kudosCounts[m.name.toLowerCase()] || 0) : 0;
+    const kudosCount = Math.max(memberKudosByToId, memberKudosByName, Array.isArray(m.kudos) ? m.kudos.length : 0);
+    const projectsCount = Number(m.stats?.projects ?? m.projects ?? (m.presences ? Math.floor(m.presences / 2) : 0));
+    const presences = Math.max(0, Number(m.presences || 0));
+    const unexcused = Math.max(0, Number(m.unexcusedAbsences || 0));
+    const totalEvents = presences + unexcused;
+    const attendanceRate = totalEvents > 0
+      ? Math.round((presences / totalEvents) * 100)
+      : (presences > 0 ? 100 : 0);
+
+    return {
+      ...m,
+      biMonthlyScore: top.pointsInPeriod,
+      totalScore: top.totalScore,
+      isPresencesFallback: maxPeriodPoints === 0,
+      hoursCalculated,
+      kudosCount,
+      projectsCount,
+      attendanceRate,
+    };
   }, [members, biMonthlyPeriod, kudosCounts]);
 
   // 2. Dynamic Real & Automatic Milestones
@@ -331,11 +351,11 @@ export const VolunteerSpotlightCard: React.FC<VolunteerSpotlightCardProps> = ({
         {/* Metric 1: Points / Rank */}
         <div className="flex flex-col items-center justify-center p-3.5 sm:p-4 rounded-[2px] bg-white/80 dark:bg-slate-900/80 border border-amber-400/30 text-center shadow-xs">
           <div className="text-2xl sm:text-3xl font-black text-amber-600 dark:text-amber-400 leading-none font-data">
-            {isAdmin ? (spotlightWinner.biMonthlyScore > 0 ? `+${spotlightWinner.biMonthlyScore}` : spotlightWinner.biMonthlyScore) : '👑 #1'}
+            {isAdmin ? (spotlightWinner.biMonthlyScore > 0 ? `+${spotlightWinner.biMonthlyScore}` : `${spotlightWinner.totalScore || 0}`) : '👑 #1'}
           </div>
           <div className="text-[11px] sm:text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider mt-2 flex items-center justify-center gap-1.5 font-title whitespace-nowrap">
             <Trophy size={13} className="shrink-0 text-amber-500" />
-            <span>{isAdmin ? 'Puncte 2 Luni' : 'Lider Ediție'}</span>
+            <span>{isAdmin ? (spotlightWinner.biMonthlyScore > 0 ? 'Puncte 2 Luni' : 'Puncte All-Time') : 'Lider Ediție'}</span>
           </div>
         </div>
 

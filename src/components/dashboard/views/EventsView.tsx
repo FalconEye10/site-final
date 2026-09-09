@@ -15,6 +15,7 @@ import {
 import { toast } from '../../ui/Toast';
 import { triggerEventPushNotification, triggerEventUpdatePushNotification, triggerAdminAbsenceRequestNotification } from '../../../utils/pushNotifications';
 import { useBodyScrollLock } from '../../../utils/useBodyScrollLock';
+import { normalizeDiacritics } from '../../../utils/text';
 
 const easeOut: [number, number, number, number] = [0.23, 1, 0.32, 1];
 
@@ -308,9 +309,12 @@ export function EventsView({ isAdmin, members = [], currentUserId, currentUserOb
 
   const handleFinalize = async (event: EventData) => {
     if (event.type === 'meeting') {
-      // Meetings: duration is time elapsed since the scheduled start, uniform for everyone present.
+      // Meetings: duration is time elapsed since the scheduled start (capped safely if finalized days later)
       const eventStart = new Date(`${event.date}T${event.time}`).getTime();
-      const durationHours = Math.max(1.0, Math.round(((Date.now() - eventStart) / (1000 * 60 * 60)) * 10) / 10);
+      const rawElapsedHours = (Date.now() - eventStart) / (1000 * 60 * 60);
+      const durationHours = (rawElapsedHours > 0 && rawElapsedHours <= 4)
+        ? Math.max(1.0, Math.min(4.0, Math.round(rawElapsedHours * 10) / 10))
+        : (event.durationHours && event.durationHours > 0 ? event.durationHours : 1.5);
 
       if (!window.confirm(`Ești sigur că vrei să finalizezi prezența pentru "${event.title}"? Durata calculată: ${durationHours} ore. Această acțiune va adăuga orele și punctele membrilor și este permanentă.`)) {
         return;
@@ -321,28 +325,45 @@ export function EventsView({ isAdmin, members = [], currentUserId, currentUserOb
         // 2 puncte per oră de voluntariat, uniform pe tot site-ul.
         const pointsToAdd = Math.round(durationHours * 2);
 
+        const eventDateStr = event.date 
+          ? `${event.date}T${event.time || '12:00'}:00.000Z` 
+          : new Date().toISOString();
+
         for (const member of affectedMembers) {
           const newAdjustment = {
             id: `adj_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
             points: pointsToAdd,
             reason: `Prezență Ședință (${durationHours}h): ${event.title}`,
-            date: new Date().toISOString(),
-            adminName: 'Admin'
+            date: eventDateStr,
+            adminName: 'Admin',
+            eventId: event.id
           };
+
+          const currentAdjustments = Array.isArray(member.scoreAdjustments) ? member.scoreAdjustments : [];
+          const existingAdj = currentAdjustments.find((a: any) => 
+            a.eventId === event.id || (a.reason && a.reason.includes(`: ${event.title}`))
+          );
+          const oldHoursMatch = existingAdj ? (existingAdj.reason || '').match(/\((\d+(?:\.\d+)?)h\)/) : null;
+          const oldHours = oldHoursMatch ? parseFloat(oldHoursMatch[1]) : 0;
+
+          const filteredAdjustments = currentAdjustments.filter((a: any) => 
+            a.eventId !== event.id && !(a.reason && a.reason.includes(`: ${event.title}`))
+          );
+          const updatedAdjustments = [...filteredAdjustments, newAdjustment];
+          const newScore = updatedAdjustments.reduce((sum: number, a: any) => sum + (Number(a.points) || 0), 0);
 
           const updatedMember = {
             ...member,
             stats: {
               ...member.stats,
-              hours: (member.stats?.hours || 0) + durationHours,
+              hours: Math.max(0, (member.stats?.hours || 0) - oldHours + durationHours),
             },
-            score: (member.score || 0) + pointsToAdd,
-            scoreAdjustments: [...(member.scoreAdjustments || []), newAdjustment]
+            score: newScore,
+            scoreAdjustments: updatedAdjustments
           };
 
-          // Scriere atomică (increment + arrayUnion) — dacă doi admini finalizează
-          // sau se suprapune cu o altă ajustare, punctele/orele se adună, nu se pierd.
-          await applyMemberScoreAdjustment(member.id, pointsToAdd, newAdjustment, { hoursDelta: durationHours });
+          // Scriere atomică cu dedublare per eventId
+          await applyMemberScoreAdjustment(member.id, pointsToAdd, newAdjustment, { hoursDelta: durationHours }, event.id);
           if (onUpdateMember) onUpdateMember(updatedMember);
         }
 
@@ -396,6 +417,10 @@ export function EventsView({ isAdmin, members = [], currentUserId, currentUserOb
         const adminActorId = currentUserObj?.id;
         const adminActorUsername = currentUserObj?.username;
 
+        const eventDateStr = event.date 
+          ? `${event.date}T${event.time || '12:00'}:00.000Z` 
+          : new Date().toISOString();
+
         for (const member of affectedMembers) {
           const credits = creditsByMember.get(member.id) || [];
           const totalHours = credits.reduce((sum, c) => sum + c.hours, 0);
@@ -405,26 +430,42 @@ export function EventsView({ isAdmin, members = [], currentUserId, currentUserOb
             // 2 puncte per oră de voluntariat, uniform pe tot site-ul.
             points: Math.round(credit.hours * 2),
             reason: `${credit.committeeName} (${credit.hours}h): ${event.title}`,
-            date: new Date().toISOString(),
+            date: eventDateStr,
             adminId: adminActorId,
             adminName: adminActorName,
-            adminUsername: adminActorUsername
+            adminUsername: adminActorUsername,
+            eventId: event.id
           }));
           const totalPoints = newAdjustments.reduce((sum, a) => sum + a.points, 0);
+
+          const currentAdjustments = Array.isArray(member.scoreAdjustments) ? member.scoreAdjustments : [];
+          const existingAdjs = currentAdjustments.filter((a: any) => 
+            a.eventId === event.id || (a.reason && a.reason.includes(`: ${event.title}`))
+          );
+          const oldHours = existingAdjs.reduce((sum: number, a: any) => {
+            const m = (a.reason || '').match(/\((\d+(?:\.\d+)?)h\)/);
+            return sum + (m ? parseFloat(m[1]) : 0);
+          }, 0);
+
+          const filteredAdjustments = currentAdjustments.filter((a: any) => 
+            a.eventId !== event.id && !(a.reason && a.reason.includes(`: ${event.title}`))
+          );
+          const updatedAdjustments = [...filteredAdjustments, ...newAdjustments];
+          const newScore = updatedAdjustments.reduce((sum: number, a: any) => sum + (Number(a.points) || 0), 0);
 
           const updatedMember = {
             ...member,
             stats: {
               ...member.stats,
-              hours: (member.stats?.hours || 0) + totalHours,
-              projects: (member.stats?.projects || 0) + 1
+              hours: Math.max(0, (member.stats?.hours || 0) - oldHours + totalHours),
+              projects: (member.stats?.projects || 0) + (existingAdjs.length > 0 ? 0 : 1)
             },
-            score: (member.score || 0) + totalPoints,
-            scoreAdjustments: [...(member.scoreAdjustments || []), ...newAdjustments]
+            score: newScore,
+            scoreAdjustments: updatedAdjustments
           };
 
-          // Scriere atomică (increment + arrayUnion) pentru scor, ore și proiecte.
-          await applyMemberScoreAdjustment(member.id, totalPoints, newAdjustments, { hoursDelta: totalHours, projectsDelta: 1 });
+          // Scriere atomică cu dedublare per eventId
+          await applyMemberScoreAdjustment(member.id, totalPoints, newAdjustments, { hoursDelta: totalHours, projectsDelta: 1 }, event.id);
           if (onUpdateMember) {
             onUpdateMember(updatedMember);
           }
@@ -1425,8 +1466,8 @@ export function EventsView({ isAdmin, members = [], currentUserId, currentUserOb
                                     {members
                                       ?.filter(m => m.role !== 'admin')
                                       .filter(m => {
-                                        const q = (shiftSearchQueries[shift.id] || '').toLowerCase();
-                                        return m.name?.toLowerCase().includes(q) || m.username?.toLowerCase().includes(q);
+                                        const q = normalizeDiacritics(shiftSearchQueries[shift.id]);
+                                        return !q || normalizeDiacritics(m.name).includes(q) || normalizeDiacritics(m.username).includes(q);
                                       })
                                       .map(m => {
                                         const isSelected = shift.assignedMembers.includes(m.id);
@@ -1587,8 +1628,8 @@ export function EventsView({ isAdmin, members = [], currentUserId, currentUserOb
                                   <div className="max-h-36 overflow-y-auto border-t border-slate-200 dark:border-slate-700 pt-2 space-y-1 scrollbar-thin">
                                     {members
                                       ?.filter(m => {
-                                        const q = (memberSearchQueries[c.id] || '').toLowerCase();
-                                        return m.name?.toLowerCase().includes(q) || m.username?.toLowerCase().includes(q);
+                                        const q = normalizeDiacritics(memberSearchQueries[c.id]);
+                                        return !q || normalizeDiacritics(m.name).includes(q) || normalizeDiacritics(m.username).includes(q);
                                       })
                                       .map(m => {
                                         const isSelected = c.members.includes(m.id);

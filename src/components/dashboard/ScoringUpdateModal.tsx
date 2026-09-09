@@ -2,6 +2,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { Sparkles, Trophy, Clock, CheckCircle2, Award, HeartHandshake, EyeOff, X } from 'lucide-react';
 import { useBodyScrollLock } from '../../utils/useBodyScrollLock';
+import { APP_VERSION } from '../../version';
 
 interface ScoringUpdateModalProps {
   isOpen: boolean;
@@ -149,7 +150,7 @@ export const ScoringUpdateModal: React.FC<ScoringUpdateModalProps> = ({
         {/* Footer Confirmation CTA */}
         <div className="p-4 sm:p-5 bg-slate-50 dark:bg-[#070A0F] border-t border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3 shrink-0">
           <span className="text-xs text-slate-500 dark:text-slate-400 font-anthropic">
-            Versiune platformă: <strong>v8.2.8</strong>
+            Versiune platformă: <strong>v{APP_VERSION}</strong>
           </span>
 
           <button
