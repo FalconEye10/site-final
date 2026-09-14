@@ -27,6 +27,7 @@ export function AddMemberModal({ isOpen, onClose, members, onAddMember, currentU
   const [boardPosition, setBoardPosition] = useState('');
   const [joinDate, setJoinDate] = useState(() => new Date().toISOString().split('T')[0]);
   const [tempPassword, setTempPassword] = useState('');
+  const [adminAuthPassword, setAdminAuthPassword] = useState('');
   const [createdCredentials, setCreatedCredentials] = useState<{ name: string; username: string; pass: string } | null>(null);
   const [copied, setCopied] = useState(false);
 
@@ -44,6 +45,7 @@ export function AddMemberModal({ isOpen, onClose, members, onAddMember, currentU
   useEffect(() => {
     if (isOpen) {
       setTempPassword(generateAutoPassword(role));
+      setAdminAuthPassword('');
       setCreatedCredentials(null);
       setCopied(false);
     }
@@ -118,18 +120,27 @@ export function AddMemberModal({ isOpen, onClose, members, onAddMember, currentU
     };
 
     try {
+      if (!adminAuthPassword || adminAuthPassword.trim().length === 0) {
+        toast.error('Te rugăm să introduci parola ta de administrator pentru a autoriza crearea contului.');
+        setIsSubmitting(false);
+        return;
+      }
+
       // 1. Inserare profil membru
       await updateMemberInDB(newMember);
 
       // 2. Setare parolă securizată în tabela de credențiale
-      const { error: passErr } = await supabase.rpc('admin_set_member_password', {
-        p_admin_member_id: currentUserObj?.id || newMember.id,
+      const { data: passRes, error: passErr } = await supabase.rpc('admin_set_member_password', {
+        p_admin_member_id: currentUserObj?.id || currentUserObj?.username || '',
+        p_admin_password: adminAuthPassword.trim(),
         p_target_member_id: newMember.id,
         p_new_password: finalPassword,
       });
 
-      if (passErr) {
-        console.warn('Eroare la setarea parolei inițiale:', passErr.message);
+      if (passErr || (passRes && !passRes.success)) {
+        toast.error(passRes?.error || passErr?.message || 'Eroare la autorizarea parolei cu contul de admin.');
+        setIsSubmitting(false);
+        return;
       }
 
       // 3. Audit Log
@@ -305,6 +316,20 @@ export function AddMemberModal({ isOpen, onClose, members, onAddMember, currentU
                       <Key size={15} className="absolute right-3.5 top-3 text-amber-600 dark:text-amber-400 pointer-events-none" />
                     </div>
                   </div>
+                </div>
+
+                <div className="p-3 bg-amber-50/60 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800/60 rounded-[2px]">
+                  <label className="block text-xs font-bold uppercase tracking-wider text-amber-800 dark:text-amber-300 mb-1.5 font-title">
+                    🔒 Confirmare: Parola Ta de Administrator (pentru autorizare)
+                  </label>
+                  <input
+                    type="password"
+                    value={adminAuthPassword}
+                    onChange={(e) => setAdminAuthPassword(e.target.value)}
+                    required
+                    placeholder="Introdu parola ta de administrator"
+                    className="w-full px-4 py-2 bg-white dark:bg-slate-900 border border-amber-300 dark:border-amber-700 rounded-[2px] text-xs sm:text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:border-amber-500 font-anthropic"
+                  />
                 </div>
 
                 <div>

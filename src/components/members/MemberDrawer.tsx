@@ -129,6 +129,7 @@ export function MemberDrawer({ member, onClose, onUpdateMember, isAdmin, current
   const [status, setStatus] = useState(member.status || 'active');
   const [boardPosition, setBoardPosition] = useState(member.boardPosition || '');
   const [adminNewPassword, setAdminNewPassword] = useState('');
+  const [adminAuthPassword, setAdminAuthPassword] = useState('');
 
   // Add Custom Milestone form states
   const [showAddMilestone, setShowAddMilestone] = useState(false);
@@ -217,17 +218,25 @@ export function MemberDrawer({ member, onClose, onUpdateMember, isAdmin, current
 
       // Dacă s-a introdus o parolă nouă pentru membru de către admin
       if (adminNewPassword && adminNewPassword.trim().length > 0) {
+        if (!adminAuthPassword || adminAuthPassword.trim().length === 0) {
+          toast.error('Te rugăm să introduci parola ta de administrator pentru a autoriza resetarea parolei.');
+          return;
+        }
+
         const { data: passRes, error: passErr } = await supabase.rpc('admin_set_member_password', {
           p_admin_member_id: currentUserObj?.id || currentUserObj?.username || '',
+          p_admin_password: adminAuthPassword.trim(),
           p_target_member_id: member.id,
           p_new_password: adminNewPassword.trim()
         });
 
         if (passErr || (passRes && !passRes.success)) {
-          toast.error(passRes?.error || passErr?.message || 'Eroare la setarea noii parole.');
+          toast.error(passRes?.error || passErr?.message || 'Eroare la setarea noii parole (verifică parola ta de admin).');
+          return;
         } else {
           toast.success(`Parola pentru ${member.name} a fost actualizată!`);
           setAdminNewPassword('');
+          setAdminAuthPassword('');
         }
       }
       
@@ -555,6 +564,20 @@ export function MemberDrawer({ member, onClose, onUpdateMember, isAdmin, current
                     placeholder="Introdu o parolă nouă sau lasă gol"
                     className="w-full px-3.5 py-2 border border-slate-300 dark:border-slate-700 rounded-[2px] text-sm text-slate-900 dark:text-slate-100 focus:border-slate-900 dark:focus:border-slate-100 focus:outline-none font-data bg-white dark:bg-slate-900"
                   />
+                  {adminNewPassword.trim().length > 0 && (
+                    <div className="mt-2.5 p-2.5 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/50 rounded-[2px]">
+                      <label className="block text-xs font-bold uppercase tracking-wider text-amber-800 dark:text-amber-300 mb-1 font-title">
+                        🔒 Confirmare: Parola Ta de Administrator
+                      </label>
+                      <input
+                        type="password"
+                        value={adminAuthPassword}
+                        onChange={e => setAdminAuthPassword(e.target.value)}
+                        placeholder="Introdu parola ta de admin pentru autorizare"
+                        className="w-full px-3 py-1.5 border border-amber-300 dark:border-amber-700 rounded-[2px] text-xs text-slate-900 dark:text-slate-100 focus:border-amber-600 focus:outline-none font-anthropic bg-white dark:bg-slate-900"
+                      />
+                    </div>
+                  )}
                 </div>
               </div>
 

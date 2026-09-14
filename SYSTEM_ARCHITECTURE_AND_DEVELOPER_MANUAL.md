@@ -552,60 +552,63 @@ github-source/
 
 ### 👑 A. Membrii Board-ului de Conducere (Administratori)
 
-| ID | Nume & Prenume | Utilizator (Login) | Funcție Oficială | Parolă Temporară Distinctă |
+> [!CAUTION]
+> Credențialele și parolele au fost eliminate definitiv din documentație pentru a preveni incidentele de securitate. Parolele se configurează și se resetează exclusiv prin procedurile securizate din baza de date privată (`private.member_credentials`).
+
+| ID | Nume & Prenume | Utilizator (Login) | Funcție Oficială | Parolă |
 | :--- | :--- | :--- | :--- | :--- |
-| **M061** | **Stan Ștefan** | `stan.stefan` | Trezorier / SuperAdmin | `Camena-Admin-Stefan26!` |
-| **M051** | **Timofte Teodora** | `timofte.teodora` | Președinte | `Camena-Admin-8F5Q!` |
-| **M028** | **Pascaru Rareș** | `pascaru.rares` | Vicepreședinte | `Camena-Admin-6H3Y!` |
-| **M002** | **Popa Ioana** | `popa.ioana` | Past-President | `Camena-Admin-7K9P!` |
-| **M012** | **Cacciola Anastasia** | `cacciola.anastasia` | Secretar | `Camena-Admin-3M8W!` |
-| **M013** | **Căruntu Ruxandra** | `caruntu.ruxandra` | Agent PR | `Camena-Admin-9B2X!` |
-| **M057** | **Popa Matei** | `popa.matei` | Director PR | `Camena-Admin-2N6V!` |
-| **M023** | **Măzare Sofia** | `mazare.sofia` | Project Manager | `Camena-Admin-4R7L!` |
-| **M058** | **Admin Tehnic** | `admin` | Administrator IT | `Camena-Admin-5J8D!` |
-| **SYS** | **System Audit Logs** | `sys_audit_logs` | Audit Imutabil | `Camena-Sys-0000!` |
+| **M061** | **Stan Ștefan** | `stan.stefan` | Trezorier / SuperAdmin | `[REDACTAT - DEFINIT ÎN BAZA DE DATE]` |
+| **M051** | **Timofte Teodora** | `timofte.teodora` | Președinte | `[REDACTAT - DEFINIT ÎN BAZA DE DATE]` |
+| **M028** | **Pascaru Rareș** | `pascaru.rares` | Vicepreședinte | `[REDACTAT - DEFINIT ÎN BAZA DE DATE]` |
+| **M002** | **Popa Ioana** | `popa.ioana` | Past-President | `[REDACTAT - DEFINIT ÎN BAZA DE DATE]` |
+| **M012** | **Cacciola Anastasia** | `cacciola.anastasia` | Secretar | `[REDACTAT - DEFINIT ÎN BAZA DE DATE]` |
+| **M013** | **Căruntu Ruxandra** | `caruntu.ruxandra` | Agent PR | `[REDACTAT - DEFINIT ÎN BAZA DE DATE]` |
+| **M057** | **Popa Matei** | `popa.matei` | Director PR | `[REDACTAT - DEFINIT ÎN BAZA DE DATE]` |
+| **M023** | **Măzare Sofia** | `mazare.sofia` | Project Manager | `[REDACTAT - DEFINIT ÎN BAZA DE DATE]` |
+| **M058** | **Admin Tehnic** | `admin` | Administrator IT | `[REDACTAT - DEFINIT ÎN BAZA DE DATE]` |
+| **SYS** | **System Audit Logs** | `sys_audit_logs` | Audit Imutabil | `[REDACTAT - DEFINIT ÎN BAZA DE DATE]` |
 
 ---
 
 ### 🤝 B. Voluntarii Clubului (Membri Activi & Pasivi)
 
-| ID | Nume & Prenume | Utilizator (Login) | Parolă Temporară Distinctă |
+| ID | Nume & Prenume | Utilizator (Login) | Parolă |
 | :--- | :--- | :--- | :--- |
-| **M001** | Andraș Andreea | `andras.andreea` | `Camena-Vol-2427!` |
-| **M003** | Abiculesei Alessia | `abiculesei.alessia` | `Camena-Vol-9909!` |
-| **M004** | Paisa Anastasia | `paisa.anastasia` | `Camena-Vol-7774!` |
-| **M005** | Dorneanu Mădălina | `dorneanu.madalina` | `Camena-Vol-9770!` |
-| **M008** | Amatioaiei Ioana | `amatioaiei.ioana` | `Camena-Vol-8458!` |
-| **M009** | Apetrei Sofia | `apetrei.sofia` | `Camena-Vol-8081!` |
-| **M010** | Beșu Ioana | `besu.ioana` | `Camena-Vol-3131!` |
-| **M015** | Ciurea Alex | `ciurea.alex` | `Camena-Vol-6445!` |
-| **M017** | Crușitu Mihnea | `crusitu.mihnea` | `Camena-Vol-1028!` |
-| **M018** | Enache Diana | `enache.diana` | `Camena-Vol-3141!` |
-| **M019** | Filimon Teodora | `filimon.teodora` | `Camena-Vol-9330!` |
-| **M020** | Ifrim Luca | `ifrim.luca` | `Camena-Vol-4349!` |
-| **M021** | Ioniță Daria | `ionita.daria` | `Camena-Vol-9031!` |
-| **M022** | Marunțelu Alex | `maruntelu.alex` | `Camena-Vol-2285!` |
-| **M024** | Miron Maya | `miron.maya` | `Camena-Vol-4655!` |
-| **M025** | Onțanu Vanessa | `ontanu.vanessa` | `Camena-Vol-2355!` |
-| **M026** | Orcheanu Maria | `orcheanu.maria` | `Camena-Vol-7245!` |
-| **M030** | Radu Sabin | `radu.sabin` | `Camena-Vol-3044!` |
-| **M031** | Radu Teodora | `radu.teodora` | `Camena-Vol-5741!` |
-| **M032** | Răducanu Maya | `raducanu.maya` | `Camena-Vol-6541!` |
-| **M035** | Zugravu Rareș | `zugravu.rares` | `Camena-Vol-6369!` |
-| **M036** | Alungulesei Darius | `alungulesei.darius` | `Camena-Vol-2780!` |
-| **M037** | Ariton Bogdan | `ariton.bogdan` | `Camena-Vol-4972!` |
-| **M039** | Huhulea Miruna | `huhulea.miruna` | `Camena-Vol-9266!` |
-| **M040** | Lăpușneanu David | `lapusneanu.david` | `Camena-Vol-1981!` |
-| **M041** | Lupu Miruna | `lupu.miruna` | `Camena-Vol-2406!` |
-| **M042** | Manole Iustin | `manole.iustin` | `Camena-Vol-9132!` |
-| **M043** | Micu Ingrid | `micu.ingrid` | `Camena-Vol-6022!` |
-| **M044** | Mihuț Alexandra | `mihut.alexandra` | `Camena-Vol-7939!` |
-| **M045** | Negru Maia | `negru.maia` | `Camena-Vol-6876!` |
-| **M046** | Poenaru Cristiana | `poenaru.cristiana` | `Camena-Vol-3541!` |
-| **M047** | Stîngaciu Mario | `stingaciu.mario` | `Camena-Vol-6132!` |
-| **M048** | Timofte Tudor | `timofte.tudor` | `Camena-Vol-3010!` |
-| **M053** | Timoscov Roxana | `timoscov.roxana` | `Camena-Vol-4990!` |
-| **M054** | Ursache Stefania | `ursache.stefania` | `Camena-Vol-5751!` |
-| **M055** | Mihalache Mara | `mihalache.mara` | `Camena-Vol-6911!` |
-| **M056** | Corfă Tudor | `corfa.tudor` | `Camena-Vol-4836!` |
-| **M060** | Mancas Ilinca | `mancas.ilinca` | `Camena-Vol-5129!` |
+| **M001** | Andraș Andreea | `andras.andreea` | `[REDACTAT]` |
+| **M003** | Abiculesei Alessia | `abiculesei.alessia` | `[REDACTAT]` |
+| **M004** | Paisa Anastasia | `paisa.anastasia` | `[REDACTAT]` |
+| **M005** | Dorneanu Mădălina | `dorneanu.madalina` | `[REDACTAT]` |
+| **M008** | Amatioaiei Ioana | `amatioaiei.ioana` | `[REDACTAT]` |
+| **M009** | Apetrei Sofia | `apetrei.sofia` | `[REDACTAT]` |
+| **M010** | Beșu Ioana | `besu.ioana` | `[REDACTAT]` |
+| **M015** | Ciurea Alex | `ciurea.alex` | `[REDACTAT]` |
+| **M017** | Crușitu Mihnea | `crusitu.mihnea` | `[REDACTAT]` |
+| **M018** | Enache Diana | `enache.diana` | `[REDACTAT]` |
+| **M019** | Filimon Teodora | `filimon.teodora` | `[REDACTAT]` |
+| **M020** | Ifrim Luca | `ifrim.luca` | `[REDACTAT]` |
+| **M021** | Ioniță Daria | `ionita.daria` | `[REDACTAT]` |
+| **M022** | Marunțelu Alex | `maruntelu.alex` | `[REDACTAT]` |
+| **M024** | Miron Maya | `miron.maya` | `[REDACTAT]` |
+| **M025** | Onțanu Vanessa | `ontanu.vanessa` | `[REDACTAT]` |
+| **M026** | Orcheanu Maria | `orcheanu.maria` | `[REDACTAT]` |
+| **M030** | Radu Sabin | `radu.sabin` | `[REDACTAT]` |
+| **M031** | Radu Teodora | `radu.teodora` | `[REDACTAT]` |
+| **M032** | Răducanu Maya | `raducanu.maya` | `[REDACTAT]` |
+| **M035** | Zugravu Rareș | `zugravu.rares` | `[REDACTAT]` |
+| **M036** | Alungulesei Darius | `alungulesei.darius` | `[REDACTAT]` |
+| **M037** | Ariton Bogdan | `ariton.bogdan` | `[REDACTAT]` |
+| **M039** | Huhulea Miruna | `huhulea.miruna` | `[REDACTAT]` |
+| **M040** | Lăpușneanu David | `lapusneanu.david` | `[REDACTAT]` |
+| **M041** | Lupu Miruna | `lupu.miruna` | `[REDACTAT]` |
+| **M042** | Manole Iustin | `manole.iustin` | `[REDACTAT]` |
+| **M043** | Micu Ingrid | `micu.ingrid` | `[REDACTAT]` |
+| **M044** | Mihuț Alexandra | `mihut.alexandra` | `[REDACTAT]` |
+| **M045** | Negru Maia | `negru.maia` | `[REDACTAT]` |
+| **M046** | Poenaru Cristiana | `poenaru.cristiana` | `[REDACTAT]` |
+| **M047** | Stîngaciu Mario | `stingaciu.mario` | `[REDACTAT]` |
+| **M048** | Timofte Tudor | `timofte.tudor` | `[REDACTAT]` |
+| **M053** | Timoscov Roxana | `timoscov.roxana` | `[REDACTAT]` |
+| **M054** | Ursache Stefania | `ursache.stefania` | `[REDACTAT]` |
+| **M055** | Mihalache Mara | `mihalache.mara` | `[REDACTAT]` |
+| **M056** | Corfă Tudor | `corfa.tudor` | `[REDACTAT]` |
+| **M060** | Mancas Ilinca | `mancas.ilinca` | `[REDACTAT]` |
