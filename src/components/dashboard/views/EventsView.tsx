@@ -316,7 +316,7 @@ export function EventsView({ isAdmin, members = [], currentUserId, onUpdateMembe
         ? Math.max(1.0, Math.min(4.0, Math.round(rawElapsedHours * 10) / 10))
         : (event.durationHours && event.durationHours > 0 ? event.durationHours : 1.5);
 
-      if (!window.confirm(`Ești sigur că vrei să finalizezi prezența pentru "${event.title}"? Durata calculată: ${durationHours} ore. Această acțiune va adăuga orele și punctele membrilor și este permanentă.`)) {
+      if (!window.confirm(`Ești sigur că vrei să finalizezi prezența pentru "${event.title}"? Durata calculată: ${durationHours} ore. Această acțiune va adăuga orele de voluntariat membrilor și este permanentă.`)) {
         return;
       }
 
@@ -378,7 +378,7 @@ export function EventsView({ isAdmin, members = [], currentUserId, onUpdateMembe
       }
 
       const summary = committees.map(com => `${com.name}: ${com.hours ?? fallbackHours}h`).join(' · ');
-      if (!window.confirm(`Ești sigur că vrei să finalizezi activitatea pentru "${event.title}"?\nOre pe departament — ${summary}\nAceastă acțiune va adăuga orele și punctele membrilor și este permanentă.`)) {
+      if (!window.confirm(`Ești sigur că vrei să finalizezi activitatea pentru "${event.title}"?\nOre pe departament — ${summary}\nAceastă acțiune va adăuga orele de voluntariat membrilor și este permanentă.`)) {
         return;
       }
 

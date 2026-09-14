@@ -7,7 +7,7 @@
  * - Z (Patch): Corecții rapide, bug-fixuri mici / rușinoase, alinieri sau mici ajustări
  */
 
-export const APP_VERSION = typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '9.1.0';
+export const APP_VERSION = typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '9.1.1';
 
 export interface VersionLog {
   version: string;
@@ -17,6 +17,12 @@ export interface VersionLog {
 }
 
 export const VERSION_HISTORY: VersionLog[] = [
+  {
+    version: '9.1.1',
+    type: 'patch',
+    description: 'Eliminare notificare de sistem eronată la încheierea/salvarea unei sesiuni de eveniment în NotificationsDropdown (sincronizare silențioasă a actualizărilor de evenimente în timp real) și aliniere texte de confirmare a prezenței exclusiv pe ore de voluntariat',
+    timestamp: '2026-09-14'
+  },
   {
     version: '9.1.0',
     type: 'minor',

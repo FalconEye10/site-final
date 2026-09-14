@@ -486,7 +486,7 @@ export function AttendanceView({ members, onUpdateMember, isAdmin, currentUserId
       setEvents(prev => prev.map(e => e.id === updatedEvent.id ? updatedEvent : e));
       setShowFinalizeModal(false);
       setViewMode('archive');
-      toast.success(`✅ Prezență finalizată și salvată în Arhivă! S-au acordat orele și punctele pentru cei ${presentMembers.length} membri prezenți.`);
+      toast.success(`✅ Prezență finalizată și salvată în Arhivă! S-au înregistrat orele de voluntariat pentru cei ${presentMembers.length} membri prezenți.`);
     } catch (err) {
       console.error(err);
       toast.error('Eroare la finalizarea prezenței și adăugarea orelor.');
@@ -1586,7 +1586,7 @@ export function AttendanceView({ members, onUpdateMember, isAdmin, currentUserId
                   {members.filter(m => m.role !== 'admin' && selectedEvent.rsvps?.[m.id] === 'present').length} membri
                 </div>
                 <div className="text-xs text-slate-500 dark:text-slate-400 mt-1.5 font-anthropic">
-                  * Orele și punctele se vor adăuga automat în contul fiecărui voluntar prezent, iar sesiunea va fi mutată în Arhivă.
+                  * Orele de voluntariat se vor adăuga automat în contul fiecărui voluntar prezent, iar sesiunea va fi mutată în Arhivă.
                 </div>
               </div>
 
