@@ -7,7 +7,7 @@
  * - Z (Patch): Corecții rapide, bug-fixuri mici / rușinoase, alinieri sau mici ajustări
  */
 
-export const APP_VERSION = typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '8.6.1';
+export const APP_VERSION = typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '9.1.0';
 
 export interface VersionLog {
   version: string;
@@ -17,6 +17,18 @@ export interface VersionLog {
 }
 
 export const VERSION_HISTORY: VersionLog[] = [
+  {
+    version: '9.1.0',
+    type: 'minor',
+    description: 'Securizare avansată și rezoluție avertizări Supabase Linter (search_path imutabil pe toate procedurile, revocare acces RPC extern la trigger-ul protect_critical_member_data, întărire criptografică admin_set_member_password), sincronizare automată și rezilientă în cloud pentru tranzacțiile de buget și jurnalul de audit între toate dispozitivele (Android, iOS, PC), eliminare cod vechi și optimizare completă validată 100% (63/63 teste) în sandbox izolat fără leak-uri de notificări',
+    timestamp: '2026-09-14'
+  },
+  {
+    version: '9.0.0',
+    type: 'major',
+    description: 'Eliminare completă a sistemului de punctaje și clasament (Leaderboard): tranziție către un model bazat exclusiv pe meritocrație civică, ore reale de voluntariat, prezențe și proiecte comunitare. Curățare totală la nivel de bază de date (eliminare tabelă score_audit_logs, drop coloane score și scoreAdjustments), refactorizare UI (panou principal cu 3 coloane perfect echilibrate, profil simplificat pe ore și proiecte), ghid introductiv actualizat și script de migrare SQL automată',
+    timestamp: '2026-09-14'
+  },
   {
     version: '8.6.1',
     type: 'patch',

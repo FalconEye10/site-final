@@ -115,9 +115,7 @@ export const seedDatabase = async () => {
         status: 'active',
         totalPaid: 0,
         totalDebt: 0,
-        payments: [],
-        score: 0,
-        scoreAdjustments: []
+        payments: []
       };
 
       await supabase.from('members').upsert(memberDoc);

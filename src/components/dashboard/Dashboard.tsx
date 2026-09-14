@@ -28,7 +28,6 @@ import { MemberCommunityHub } from './hubs/MemberCommunityHub';
 import { AdminTeamHub } from './hubs/AdminTeamHub';
 import { AdminFinanceHub } from './hubs/AdminFinanceHub';
 import { AdminCommunityHub } from './hubs/AdminCommunityHub';
-import { VolunteerSpotlightCard } from './VolunteerSpotlightCard';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
 import { ShieldAlert, Zap, Sparkles } from 'lucide-react';
 
@@ -41,14 +40,12 @@ const CommunityIdeasView = lazy(() => import('./views/CommunityIdeasView').then(
 const RepartizareView = lazy(() => import('./views/RepartizareView').then(m => ({ default: m.RepartizareView })));
 const ProjectProposalsView = lazy(() => import('./views/ProjectProposalsView').then(m => ({ default: m.ProjectProposalsView })));
 const NewsView = lazy(() => import('./views/NewsView').then(m => ({ default: m.NewsView })));
-const LeaderboardView = lazy(() => import('./views/LeaderboardView').then(m => ({ default: m.LeaderboardView })));
 const BudgetView = lazy(() => import('./views/BudgetView').then(m => ({ default: m.BudgetView })));
 const KudosView = lazy(() => import('./views/KudosView').then(m => ({ default: m.KudosView })));
 const SuggestionsView = lazy(() => import('./views/SuggestionsView').then(m => ({ default: m.SuggestionsView })));
 const MasterAuditView = lazy(() => import('./views/MasterAuditView').then(m => ({ default: m.MasterAuditView })));
 const AddMemberModal = lazy(() => import('../members/AddMemberModal').then(m => ({ default: m.AddMemberModal })));
 const PlatformTutorialModal = lazy(() => import('./PlatformTutorialModal').then(m => ({ default: m.PlatformTutorialModal })));
-const ScoringUpdateModal = lazy(() => import('./ScoringUpdateModal').then(m => ({ default: m.ScoringUpdateModal })));
 
 function ViewLoadingSkeleton() {
   return (
@@ -341,37 +338,13 @@ const ViewDashboard = ({ members, currentUserObj, isAdmin, onNavigateToSection, 
       .sort((a, b) => {
         const diff = (b.stats?.hours || 0) - (a.stats?.hours || 0);
         if (diff !== 0) return diff;
-        const scoreDiff = (b.score || 0) - (a.score || 0);
-        if (scoreDiff !== 0) return scoreDiff;
+        const projDiff = (b.stats?.projects || 0) - (a.stats?.projects || 0);
+        if (projDiff !== 0) return projDiff;
         return (a.name || '').localeCompare(b.name || '');
       })
       .slice(0, 3);
   }, [members]);
 
-  // Poziția în clasamentul general (scor all-time), excluzând membrii Board-ului și conturile sistem
-  const { rankableMembers, myRank, myTopPercent } = useMemo(() => {
-    const sorted = members
-      .filter(m => !isBoardMember(m) && !isSystemAccount(m))
-      .sort((a, b) => {
-        if ((b.score || 0) !== (a.score || 0)) {
-          return (b.score || 0) - (a.score || 0);
-        }
-        if ((b.stats?.hours || 0) !== (a.stats?.hours || 0)) {
-          return (b.stats?.hours || 0) - (a.stats?.hours || 0);
-        }
-        return (a.name || '').localeCompare(b.name || '');
-      });
-
-    const rankIdx = (currentUserObj && !isBoardMember(currentUserObj)) 
-      ? sorted.findIndex(m => m.id === currentUserObj.id) 
-      : -1;
-    const rank = rankIdx >= 0 ? rankIdx + 1 : null;
-    const topPct = (rank && sorted.length > 0)
-      ? Math.max(1, Math.round((rank / sorted.length) * 100))
-      : null;
-
-    return { rankableMembers: sorted, myRank: rank, myTopPercent: topPct };
-  }, [members, currentUserObj]);
 
   const totalVotes = activePoll ? Object.keys(activePoll.votes || {}).length : 0;
   const userVote = currentUserObj && activePoll ? (activePoll.votes || {})[currentUserObj.id || currentUserObj.username] : undefined;
@@ -440,7 +413,7 @@ const ViewDashboard = ({ members, currentUserObj, isAdmin, onNavigateToSection, 
       </div>
 
       {/* 1. Primary Metrics Grid (High Legibility & Strict Contrast) */}
-      <div className={`grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 ${!isAdmin ? 'xl:grid-cols-4' : ''} gap-4`}>
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
         {isAdmin ? (
           <>
             <Card
@@ -555,7 +528,7 @@ const ViewDashboard = ({ members, currentUserObj, isAdmin, onNavigateToSection, 
 
             <Card
               className="cursor-pointer hover:border-amber-500 dark:hover:border-amber-500 group"
-              onClick={() => onNavigateToSection('clasament')}
+              onClick={() => onNavigateToSection('prezenta')}
             >
               <div className="flex items-start justify-between">
                 <div>
@@ -572,30 +545,7 @@ const ViewDashboard = ({ members, currentUserObj, isAdmin, onNavigateToSection, 
               </div>
               <div className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-3 flex items-center justify-between border-t border-slate-100 dark:border-slate-800/80 pt-2">
                 <span>Timp investit în acțiuni</span>
-                <span className="text-amber-700 dark:text-amber-400 font-title font-bold group-hover:translate-x-0.5 transition-transform">Clasament →</span>
-              </div>
-            </Card>
-
-            <Card
-              className="cursor-pointer hover:border-emerald-500 dark:hover:border-emerald-500 group"
-              onClick={() => onNavigateToSection('clasament')}
-            >
-              <div className="flex items-start justify-between">
-                <div>
-                  <span className="text-xs font-title font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 block mb-1.5">
-                    Poziție Clasament
-                  </span>
-                  <div className="text-2xl sm:text-3xl lg:text-4xl font-bold font-data text-slate-900 dark:text-slate-100">
-                    {myTopPercent !== null ? <>Top {myTopPercent}%</> : '—'}
-                  </div>
-                </div>
-                <div className="w-10 h-10 rounded-[2px] bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 flex items-center justify-center shrink-0 border border-emerald-200/60 dark:border-emerald-800/60">
-                  <Trophy size={20} />
-                </div>
-              </div>
-              <div className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-3 flex items-center justify-between border-t border-slate-100 dark:border-slate-800/80 pt-2">
-                <span>{myRank !== null ? `Locul #${myRank} din ${rankableMembers.length} membri` : 'Fără punctaj'}</span>
-                <span className="text-emerald-700 dark:text-emerald-400 font-title font-bold group-hover:translate-x-0.5 transition-transform">Top →</span>
+                <span className="text-amber-700 dark:text-amber-400 font-title font-bold group-hover:translate-x-0.5 transition-transform">Prezențe →</span>
               </div>
             </Card>
 
@@ -625,13 +575,6 @@ const ViewDashboard = ({ members, currentUserObj, isAdmin, onNavigateToSection, 
         )}
       </div>
 
-      {/* Spotlight: Voluntarul Lunii */}
-      <VolunteerSpotlightCard
-        members={members}
-        currentUserId={currentUserObj?.id}
-        isAdmin={currentUserObj?.role === 'admin'}
-        onNavigateToLeaderboard={() => onNavigateToSection('clasament')}
-      />
 
       {/* 2. Official News Dispatch (Clean Civic Panel) */}
       {latestNews && (
@@ -1056,10 +999,10 @@ const ViewDashboard = ({ members, currentUserObj, isAdmin, onNavigateToSection, 
                 Lideri de Activitate
               </h3>
               <button
-                onClick={() => onNavigateToSection('clasament')}
+                onClick={() => onNavigateToSection('prezenta')}
                 className="text-xs sm:text-sm font-title font-bold text-blue-600 dark:text-blue-400 hover:underline"
               >
-                Clasament Complet &rarr;
+                Vezi Toți Voluntarii &rarr;
               </button>
             </div>
 
@@ -1612,10 +1555,10 @@ const ViewReports = ({ members }: ViewReportsProps) => {
 interface ViewProfileProps {
   currentUserObj: any;
   onUpdateMember: (m: any) => void;
-  members: any[];
+  members?: any[];
 }
 
-const ViewProfile = ({ currentUserObj, onUpdateMember, members }: ViewProfileProps) => {
+const ViewProfile = ({ currentUserObj, onUpdateMember }: ViewProfileProps) => {
   const effectiveUser = useMemo(() => {
     return currentUserObj || {
       id: 'M058',
@@ -1624,7 +1567,6 @@ const ViewProfile = ({ currentUserObj, onUpdateMember, members }: ViewProfilePro
       role: 'admin',
       boardPosition: 'Administrator Master',
       status: 'active',
-      score: 0,
       presences: 0,
       excusedAbsences: 0,
       unexcusedAbsences: 0,
@@ -1660,13 +1602,6 @@ const ViewProfile = ({ currentUserObj, onUpdateMember, members }: ViewProfilePro
       setNewPassword('');
     }
   }, [effectiveUser]);
-
-  // Calculate Leaderboard Rank (excluding Board members)
-  const sortedMembers = [...members]
-    .filter(m => !isBoardMember(m))
-    .sort((a, b) => (b.score || 0) - (a.score || 0));
-  const rankFound = sortedMembers.findIndex(m => m.id === effectiveUser.id);
-  const rank = isBoardMember(effectiveUser) ? 'Board' : (rankFound >= 0 ? rankFound + 1 : '—');
 
   // Calculate Attendance Qualification
   const presences = effectiveUser.presences || 0;
@@ -2040,34 +1975,27 @@ const ViewProfile = ({ currentUserObj, onUpdateMember, members }: ViewProfilePro
           {/* Stats Bento Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             
-            {/* Leaderboard Standing */}
+            {/* Volunteer Activity Card */}
             <Card className="!rounded-[2px]">
               <h4 className="text-xs font-bold uppercase tracking-wider mb-4 flex items-center gap-2 font-title text-slate-600 dark:text-slate-400">
-                <Trophy size={16} className="text-amber-500" /> Clasament General
+                <Clock size={16} className="text-amber-500" /> Activitate Voluntariat
               </h4>
-              <div className="flex items-baseline gap-2 mb-2">
-                <span className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-slate-100 font-data">#{rank}</span>
-                <span className="text-xs sm:text-sm text-slate-500 font-anthropic">din {members.length} membri</span>
+              <div className="grid grid-cols-2 gap-4 mb-4">
+                <div className="p-3 bg-slate-50 dark:bg-slate-900 rounded-[2px] border border-slate-200 dark:border-slate-800">
+                  <span className="text-xs font-title font-bold uppercase text-slate-500 block mb-1">Ore Acumulate</span>
+                  <div className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-slate-100 font-data">
+                    {effectiveUser.stats?.hours || 0} <span className="text-xs font-normal font-anthropic text-slate-500">ore</span>
+                  </div>
+                </div>
+                <div className="p-3 bg-slate-50 dark:bg-slate-900 rounded-[2px] border border-slate-200 dark:border-slate-800">
+                  <span className="text-xs font-title font-bold uppercase text-slate-500 block mb-1">Proiecte & Comitete</span>
+                  <div className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-slate-100 font-data">
+                    {effectiveUser.stats?.projects || 0}
+                  </div>
+                </div>
               </div>
-              <div className="text-sm font-bold mb-4 font-anthropic">Scor total: <span className="text-amber-600 dark:text-amber-400 font-black font-data">{effectiveUser.score || 0} puncte</span></div>
-              
-              <div className="space-y-2 max-h-36 overflow-y-auto pr-1">
-                <div className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 font-title">Istoric Puncte</div>
-                {effectiveUser.scoreAdjustments && effectiveUser.scoreAdjustments.length > 0 ? (
-                  effectiveUser.scoreAdjustments.map((adj: any, i: number) => (
-                    <div key={i} className="flex justify-between items-center text-xs sm:text-sm p-2.5 bg-slate-50 dark:bg-slate-900 rounded-[2px] border border-slate-200 dark:border-slate-800 font-anthropic">
-                      <div className="truncate pr-2">
-                        <div className="font-bold truncate text-slate-800 dark:text-slate-200">{adj.reason}</div>
-                        <div className="text-slate-400 text-xs font-data">{adj.date} • {adj.adminName}</div>
-                      </div>
-                      <span className={`font-black shrink-0 font-data text-sm ${adj.points >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
-                        {adj.points >= 0 ? `+${adj.points}` : adj.points}
-                      </span>
-                    </div>
-                  ))
-                ) : (
-                  <div className="text-xs text-slate-400 italic">Fără ajustări de scor înregistrate.</div>
-                )}
+              <div className="text-xs text-slate-500 dark:text-slate-400 font-anthropic leading-relaxed">
+                Orele de voluntariat și proiectele comunitare sunt validate la fiecare eveniment și ședință a clubului.
               </div>
             </Card>
 
@@ -2318,7 +2246,6 @@ export function Dashboard({ username, currentMember, currentMemberId, onLogout }
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [isTutorialOpen, setIsTutorialOpen] = useState(false);
-  const [isScoringUpdateModalOpen, setIsScoringUpdateModalOpen] = useState(false);
   const [membersViewSeed, setMembersViewSeed] = useState<{ search?: string; memberId?: string }>({});
   const [themeMode, setThemeMode] = useState<'dark' | 'light'>(() => {
     if (typeof window === 'undefined') return 'dark';
@@ -2338,33 +2265,6 @@ export function Dashboard({ username, currentMember, currentMemberId, onLogout }
       }
     }
   }, [members, username]);
-
-  // Update Log / What's New Announcement:
-  // Condiționat strict la primul login pe versiunea respectivă (vX.Y.Z), fără reapariție la login-uri de rutină.
-  useEffect(() => {
-    if (!username) return;
-
-    const versionSeenKey = `camena_update_seen_v_${APP_VERSION}_${username.toLowerCase()}`;
-    const alreadySeenThisVersion = localStorage.getItem(versionSeenKey) === 'true';
-
-    // Dacă versiunea curentă a fost deja vizualizată sau dacă tutorialul de onboarding este deschis, nu afișăm
-    if (alreadySeenThisVersion || isTutorialOpen) {
-      return;
-    }
-
-    // Este primul login pe această versiune: afișăm modalul de Update Log
-    setIsScoringUpdateModalOpen(true);
-    // Marcăm imediat în localStorage pentru a nu se repeta la reîncărcare de pagină
-    localStorage.setItem(versionSeenKey, 'true');
-  }, [username, isTutorialOpen]);
-
-  const handleCloseScoringUpdate = () => {
-    setIsScoringUpdateModalOpen(false);
-    if (username) {
-      const versionSeenKey = `camena_update_seen_v_${APP_VERSION}_${username.toLowerCase()}`;
-      localStorage.setItem(versionSeenKey, 'true');
-    }
-  };
 
   // Auto-close mobile sidebar on resize to desktop (lg) or Escape key
   useEffect(() => {
@@ -2390,14 +2290,6 @@ export function Dashboard({ username, currentMember, currentMemberId, onLogout }
     setIsTutorialOpen(false);
     const localKey = `tutorial_seen_v3_${username.toLowerCase()}`;
     localStorage.setItem(localKey, 'true');
-
-    // Declanșare Update Log NUMAI dacă este primul login pe versiunea curentă
-    const versionSeenKey = `camena_update_seen_v_${APP_VERSION}_${username.toLowerCase()}`;
-    const alreadySeenThisVersion = localStorage.getItem(versionSeenKey) === 'true';
-    if (!alreadySeenThisVersion) {
-      setIsScoringUpdateModalOpen(true);
-      localStorage.setItem(versionSeenKey, 'true');
-    }
 
     // Update in Supabase so login count is saved and has_seen_tutorial is marked true
     try {
@@ -2515,7 +2407,6 @@ export function Dashboard({ username, currentMember, currentMemberId, onLogout }
       username: username || 'user',
       role: (isStefan || isAdminUser) ? 'admin' : 'member',
       status: 'active',
-      score: 100,
       hours: 24,
       presences: 12,
       attendanceRate: '100%',
@@ -2670,7 +2561,6 @@ export function Dashboard({ username, currentMember, currentMemberId, onLogout }
               { id: 'hub_admin_echipa', label: 'Membri & Echipă', icon: Users },
               { id: 'hub_admin_finante', label: 'Finanțe & Trezorerie', icon: PieChart },
               { id: 'hub_admin_comunitate', label: 'Decizii & Comunitate', icon: Megaphone },
-              { id: 'clasament', label: 'Clasament & Scoruri', icon: Trophy },
             ]
           },
           {
@@ -2695,7 +2585,6 @@ export function Dashboard({ username, currentMember, currentMemberId, onLogout }
           items: [
             { id: 'hub_activitate', label: 'Activitate & Prezență', icon: CheckCircle },
             { id: 'hub_comunitate', label: 'Social & Comunitate', icon: MessageSquare },
-            { id: 'clasament', label: 'Clasament & Scor', icon: Trophy },
           ]
         },
         {
@@ -2722,7 +2611,6 @@ export function Dashboard({ username, currentMember, currentMemberId, onLogout }
         title: "Oameni & Social",
         items: [
           ...(isAdmin ? [{ id: 'membri', label: 'Membri', icon: Users }] : []),
-          { id: 'clasament', label: 'Clasament', icon: Trophy },
           { id: 'kudos', label: 'Kudos & Aprecieri', icon: Heart },
         ]
       },
@@ -2937,9 +2825,6 @@ export function Dashboard({ username, currentMember, currentMemberId, onLogout }
           preselectedEventId={preselectedEventIdForExcuse}
         />
       );
-      case 'clasament': return (
-        <LeaderboardView members={members} events={events} isAdmin={isAdmin} onUpdateMember={handleUpdateMember} currentUserObj={currentUserObj} />
-      );
       case 'kudos': return (
         <KudosView 
           currentUserId={currentUserObj?.id || ''} 
@@ -3037,7 +2922,6 @@ export function Dashboard({ username, currentMember, currentMemberId, onLogout }
     repartizare: { colors: ['#89cff0', '#ffeacd'] },
     membri: { colors: ['#89cff0', '#0F172A'] },
     prezenta: { colors: ['#ffeacd', '#89cff0'] },
-    clasament: { colors: ['#475569', '#ffeacd'] },
     calendar: { colors: ['#89cff0', '#475569'] },
     idei: { colors: ['#ffeacd', '#89cff0'] },
     proiecte: { colors: ['#0F172A', '#89cff0'] },
@@ -3475,17 +3359,6 @@ export function Dashboard({ username, currentMember, currentMemberId, onLogout }
             isOpen={isTutorialOpen}
             onClose={handleCloseTutorial}
             isMandatoryFirstTime={Boolean(currentUserObj && (currentUserObj.login_count === 0 || !currentUserObj.has_seen_tutorial))}
-            currentUser={currentUserObj}
-          />
-        </Suspense>
-      )}
-
-      {/* Scoring System Update Log Modal - Triggers on next login for all members */}
-      {isScoringUpdateModalOpen && (
-        <Suspense fallback={null}>
-          <ScoringUpdateModal
-            isOpen={isScoringUpdateModalOpen}
-            onClose={handleCloseScoringUpdate}
             currentUser={currentUserObj}
           />
         </Suspense>

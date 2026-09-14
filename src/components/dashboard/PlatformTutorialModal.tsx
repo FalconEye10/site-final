@@ -4,7 +4,7 @@ import {
   KeyRound, ShieldAlert, User, Camera, Sliders,
   BellRing, Smartphone, Laptop, Moon, Sun,
   CheckCircle2, Target, CreditCard,
-  Receipt, Trophy, Lightbulb,
+  Receipt, Award, Lightbulb,
   Heart, Megaphone, PieChart,
   ChevronRight, ChevronLeft, X, Sparkles, Compass, ShieldCheck,
   Check, AlertTriangle, Download
@@ -80,15 +80,15 @@ const MockAvatarUploader = () => (
           </span>
         </div>
         <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 font-anthropic">
-          Poza te face recunoscut în clasament, la prezențe și pe proiecte.
+          Poza te face recunoscut la prezențe, acțiuni și pe proiecte.
         </p>
       </div>
     </div>
 
     <div className="grid grid-cols-2 gap-2 text-xs font-title font-bold text-slate-600 dark:text-slate-300">
       <div className="p-2.5 rounded-[2px] bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 flex items-center gap-2">
-        <span className="text-base">🏆</span>
-        <span>Apare în Clasament</span>
+        <span className="text-base">🤝</span>
+        <span>Apare în Profil</span>
       </div>
       <div className="p-2.5 rounded-[2px] bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 flex items-center gap-2">
         <span className="text-base">📋</span>
@@ -338,27 +338,9 @@ const MockDigitalReceipt = () => (
   </div>
 );
 
-// 9. Leaderboard & Passport Mockup
-const MockLeaderboardPassport = () => (
+// 9. Volunteer Passport Mockup
+const MockVolunteerPassport = () => (
   <div className="space-y-3 font-anthropic">
-    <div className="grid grid-cols-3 gap-2">
-      <div className="p-2.5 rounded-[2px] bg-amber-50 dark:bg-amber-950/30 border border-amber-300 dark:border-amber-800 text-center">
-        <div className="text-base">👑</div>
-        <div className="text-[10px] font-bold uppercase font-title text-amber-800 dark:text-amber-300">Locul 1</div>
-        <div className="text-xs font-black font-data mt-0.5">+48 pct</div>
-      </div>
-      <div className="p-2.5 rounded-[2px] bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-center">
-        <div className="text-base">🥈</div>
-        <div className="text-[10px] font-bold uppercase font-title text-slate-700 dark:text-slate-300">Locul 2</div>
-        <div className="text-xs font-black font-data mt-0.5">+36 pct</div>
-      </div>
-      <div className="p-2.5 rounded-[2px] bg-amber-100/50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 text-center">
-        <div className="text-base">🥉</div>
-        <div className="text-[10px] font-bold uppercase font-title text-amber-700 dark:text-amber-400">Locul 3</div>
-        <div className="text-xs font-black font-data mt-0.5">+29 pct</div>
-      </div>
-    </div>
-
     <div className="p-3 rounded-[2px] bg-white/80 dark:bg-white/5 border border-slate-200 dark:border-slate-800 flex items-center justify-between text-xs">
       <div>
         <div className="font-bold text-slate-900 dark:text-white font-title">Pașaport Voluntar: Senior</div>
@@ -481,12 +463,12 @@ const MASTER_TUTORIAL_STEPS: TutorialStepItem[] = [
     accentLight: 'bg-blue-50',
     accentDark: 'dark:bg-blue-950/30',
     iconColor: 'text-blue-600 dark:text-blue-400',
-    description: 'O poză reală de profil face experiența în comunitate mult mai prietenoasă și eficientă. Vei fi identificat rapid la pontaj, pe podiumul de clasament și la coordonarea pe proiecte.',
+    description: 'O poză reală de profil face experiența în comunitate mult mai prietenoasă și eficientă. Vei fi identificat rapid la pontaj și la coordonarea pe proiecte.',
     bullets: [
       '📸 Încarcă o fotografie clară din secțiunea Profil',
-      '🏆 Apare automat lângă numele tău pe podiumul de clasament',
       '📋 Coordonatorii te identifică rapid la pontaj la evenimente',
       '💬 Apare la comentarii pe Știri și în feed-ul de Kudos',
+      '🤝 Te face ușor de recunoscut în echipă',
     ],
     tip: 'Poți actualiza oricând poza și biografia personală direct din Profil.',
     mockup: MockAvatarUploader,
@@ -562,11 +544,11 @@ const MASTER_TUTORIAL_STEPS: TutorialStepItem[] = [
     accentLight: 'bg-teal-50',
     accentDark: 'dark:bg-teal-950/30',
     iconColor: 'text-teal-600 dark:text-teal-400',
-    description: 'Prezența la ședințe și proiecte este motorul implicării tale în club. Fiecare activitate contează direct în scorul tău de clasament.',
+    description: 'Prezența la ședințe și proiecte este motorul implicării tale în club. Fiecare activitate contează direct în orele tale de voluntariat.',
     bullets: [
-      '✅ Prezență Confirmată: +1 punct în clasament',
-      '❌ Absență Nemotivată: -2 puncte penalizare',
-      '📝 Absență Motivată: 0 puncte (nu scade din scor)',
+      '✅ Prezență Confirmată: ore validate în catalog',
+      '📋 Evidență exactă a implicării tale pe teren',
+      '📝 Absență Motivată: învoire înregistrată oficial',
       '📩 Cum te învoiești: Mergi în Prezență, selectezi ședința, scrii motivul și trimiți cererea către Board înainte de începere',
     ],
     tip: 'Trimite cererea de motivare cât mai din timp pentru ca Board-ul să o poată analiza și aproba.',
@@ -616,25 +598,25 @@ const MASTER_TUTORIAL_STEPS: TutorialStepItem[] = [
     sidebarHighlight: 'Profilul Meu → Finanțe & Chitanțe',
   },
   {
-    id: 'leaderboard_and_passport',
-    section: 'Gamification & Merite',
-    title: 'Clasament Live & Pașaport Voluntar',
-    subtitle: 'Urcă pe podium și deblochează milestone-uri',
-    icon: Trophy,
+    id: 'passport_and_milestones',
+    section: 'Merite & Progres',
+    title: 'Pașaport Voluntar & Insigne',
+    subtitle: 'Avansează în rang și deblochează milestone-uri',
+    icon: Award,
     gradient: 'from-amber-500 via-orange-500 to-yellow-500',
     accentLight: 'bg-amber-50',
     accentDark: 'dark:bg-amber-950/30',
     iconColor: 'text-amber-600 dark:text-amber-400',
-    description: 'Clasamentul măsoară implicarea ta în club. Competiția este prietenoasă și recunoaște efortul celor mai activi voluntari.',
+    description: 'Pașaportul măsoară parcursul și dedicarea ta în club, recunoscând efortul constant pe teren.',
     bullets: [
-      '👑 Clasamentul Bilunar: Recunoaște campionii fiecărei ediții de 2 luni',
-      '📈 Totalul Istoric: Reflectă toată cariera ta în cadrul Interact Camena',
+      '📈 Ore Cumulate: Reflectă activitatea ta pe teren în cadrul Interact Camena',
       '🏅 Pașaportul de Voluntar: Avansează în rang (Recrut → Activ → Senior → Ambasador)',
       '🌟 Milestone-uri Speciale: Insigne pentru prezență 100%, ore de impact și cotizație la zi',
+      '🤝 Recunoaștere: Statutul tău este vizibil în profilul personal',
     ],
-    tip: 'Verifică istoricul detaliat al punctajului tău din pagina de Clasament!',
-    mockup: MockLeaderboardPassport,
-    sidebarHighlight: 'Clasament & Profil',
+    tip: 'Verifică insignele și rangul tău din pagina de Profil!',
+    mockup: MockVolunteerPassport,
+    sidebarHighlight: 'Profilul Meu',
   },
   {
     id: 'initiatives_and_polls',

@@ -21,10 +21,8 @@ CREATE TABLE IF NOT EXISTS public.members (
   status TEXT DEFAULT 'active',
   "joinDate" TEXT,
   "totalPaid" NUMERIC DEFAULT 0,
-  score NUMERIC DEFAULT 0,
   avatar TEXT,
   stats JSONB DEFAULT '{}'::jsonb,
-  "scoreAdjustments" JSONB DEFAULT '[]'::jsonb,
   "customFields" JSONB DEFAULT '{}'::jsonb,
   user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL,
   username TEXT,
@@ -231,19 +229,6 @@ CREATE TABLE IF NOT EXISTS public.budget_archives (
   "createdAt" TIMESTAMPTZ DEFAULT NOW()
 );
 
--- 11. Score Audit Logs
-CREATE TABLE IF NOT EXISTS public.score_audit_logs (
-  id TEXT PRIMARY KEY,
-  "adminId" TEXT,
-  "adminName" TEXT,
-  "adminUsername" TEXT,
-  "targetMemberId" TEXT,
-  "targetMemberName" TEXT,
-  action TEXT,
-  points NUMERIC,
-  reason TEXT,
-  "createdAt" TIMESTAMPTZ DEFAULT NOW()
-);
 
 -- 12. Kudos Table
 CREATE TABLE IF NOT EXISTS public.kudos (
@@ -296,8 +281,6 @@ CREATE INDEX IF NOT EXISTS idx_members_email ON public.members(email);
 CREATE INDEX IF NOT EXISTS idx_payments_member_id ON public.payments("memberId");
 CREATE INDEX IF NOT EXISTS idx_absence_requests_member_id ON public.absence_requests("memberId");
 CREATE INDEX IF NOT EXISTS idx_absence_requests_event_id ON public.absence_requests("eventId");
-CREATE INDEX IF NOT EXISTS idx_score_audit_logs_target ON public.score_audit_logs("targetMemberId");
-CREATE INDEX IF NOT EXISTS idx_score_audit_logs_admin ON public.score_audit_logs("adminId");
 CREATE INDEX IF NOT EXISTS idx_budget_transactions_project ON public.budget_transactions("projectId");
 CREATE INDEX IF NOT EXISTS idx_budget_transactions_line ON public.budget_transactions("lineId");
 CREATE INDEX IF NOT EXISTS idx_kudos_to_id ON public.kudos("toId");
@@ -336,7 +319,6 @@ ALTER TABLE public.budget_lines ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.budget_dues ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.budget_audit ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.budget_archives ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.score_audit_logs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.kudos ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.suggestions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.push_subscriptions ENABLE ROW LEVEL SECURITY;
@@ -357,7 +339,6 @@ REVOKE ALL ON public.budget_lines FROM anon;
 REVOKE ALL ON public.budget_dues FROM anon;
 REVOKE ALL ON public.budget_audit FROM anon;
 REVOKE ALL ON public.budget_archives FROM anon;
-REVOKE ALL ON public.score_audit_logs FROM anon;
 REVOKE ALL ON public.kudos FROM anon;
 REVOKE ALL ON public.suggestions FROM anon;
 REVOKE ALL ON public.push_subscriptions FROM anon;
@@ -443,8 +424,6 @@ CREATE POLICY "barch_insert" ON public.budget_archives FOR INSERT TO authenticat
 CREATE POLICY "barch_update" ON public.budget_archives FOR UPDATE TO authenticated USING (private.is_admin()) WITH CHECK (private.is_admin());
 CREATE POLICY "barch_delete" ON public.budget_archives FOR DELETE TO authenticated USING (private.is_admin());
 
-CREATE POLICY "score_logs_select" ON public.score_audit_logs FOR SELECT TO authenticated USING (true);
-CREATE POLICY "score_logs_insert" ON public.score_audit_logs FOR INSERT TO authenticated WITH CHECK (private.is_admin() OR "adminId" IS NOT NULL);
 
 CREATE POLICY "kudos_select_policy" ON public.kudos FOR SELECT TO authenticated USING (true);
 CREATE POLICY "kudos_insert_policy" ON public.kudos FOR INSERT TO authenticated WITH CHECK ("fromId" IS NOT NULL OR "fromName" IS NOT NULL);
@@ -477,9 +456,6 @@ BEGIN
   EXCEPTION WHEN others THEN NULL; END;
   BEGIN
     ALTER PUBLICATION supabase_realtime ADD TABLE public.absence_requests;
-  EXCEPTION WHEN others THEN NULL; END;
-  BEGIN
-    ALTER PUBLICATION supabase_realtime ADD TABLE public.score_audit_logs;
   EXCEPTION WHEN others THEN NULL; END;
   BEGIN
     ALTER PUBLICATION supabase_realtime ADD TABLE public.kudos;

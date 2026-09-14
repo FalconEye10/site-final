@@ -4,7 +4,7 @@ export interface Milestone {
   desc: string;
   icon: string;
   badge: string;
-  category: 'hours' | 'attendance' | 'score' | 'kudos' | 'finance' | 'custom';
+  category: 'hours' | 'attendance' | 'kudos' | 'finance' | 'custom';
   current: number;
   target: number;
   unit?: string;
@@ -23,7 +23,6 @@ export function computeMemberMilestones(member: any, kudosCount: number = 0): {
   const u = Number(member.unexcusedAbsences || 0);
   const tp = Number(member.totalPaid || 0);
   const hours = Number(member.stats?.hours ?? member.hours ?? (p > 0 ? p * 2 : 0));
-  const score = Number(member.score || 0);
   
   const totalEvents = p + u;
   const attendanceRate = totalEvents > 0 ? Math.round((p / totalEvents) * 100) : (p > 0 ? 100 : 0);
@@ -156,19 +155,7 @@ export function computeMemberMilestones(member: any, kudosCount: number = 0): {
       unlocked: kudosCount >= 1,
       color: 'from-purple-500/20 to-indigo-500/20 text-purple-400 border-purple-500/40'
     },
-    {
-      id: 'auto_score_25',
-      title: 'Motorul Clubului',
-      desc: 'Peste 25 de puncte acumulate în clasament',
-      icon: '⚡',
-      badge: '25+ PUNCTE',
-      category: 'score',
-      current: Math.min(score, 25),
-      target: 25,
-      unit: 'pct',
-      unlocked: score >= 25,
-      color: 'from-amber-500/20 to-yellow-500/20 text-amber-400 border-amber-500/40'
-    },
+
     {
       id: 'auto_finance_clear',
       title: 'Disciplină Financiară',

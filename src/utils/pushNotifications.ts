@@ -420,24 +420,6 @@ export async function broadcastPushNotification({
   }
 }
 
-/**
- * 🏆 Notificare NOMINALĂ: Punctaj adăugat sau scăzut (+/- puncte)
- */
-export function triggerScorePushNotification(points: number, reason: string, memberId?: string, memberName?: string) {
-  const isPositive = points > 0;
-  const namePrefix = memberName ? `${memberName}, ` : '';
-  const title = isPositive ? `🏆 Felicitări! Ai primit +${points} puncte de activitate!` : `⚠️ Actualizare Punctaj: ${points} puncte`;
-  const body = isPositive
-    ? `${namePrefix}Board-ul a apreciat implicarea ta! 🌟 Motiv: "${reason}". Punctele au fost adăugate în clasamentul oficial Interact Camena.`
-    : `${namePrefix}A fost înregistrată o ajustare de ${points} puncte. Motiv: "${reason}". Consultă situația ta actualizată în clasament.`;
-
-  broadcastPushNotification({
-    title,
-    body,
-    url: '/#clasament',
-    targetMemberId: memberId,
-  });
-}
 
 /**
  * 📅 Notificare NOMINALĂ: Aprobare sau Respingere cerere de învoire

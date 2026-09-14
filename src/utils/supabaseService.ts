@@ -67,7 +67,6 @@ function getOfficialClubRoster(): any[] {
       status: 'active',
       totalPaid: 0,
       totalDebt: 0,
-      score: 0,
       stats: { totalHours: 0 },
       login_count: 0,
       has_seen_tutorial: false,
@@ -136,7 +135,7 @@ export async function fetchMembers(): Promise<any[]> {
 
 const VALID_MEMBER_COLUMNS = new Set([
   'id', 'name', 'email', 'phone', 'role', 'committee', 'status', 'joinDate',
-  'totalPaid', 'score', 'avatar', 'stats', 'scoreAdjustments', 'customFields',
+  'totalPaid', 'avatar', 'stats', 'customFields',
   'createdAt', 'boardPosition', 'address', 'payments', 'attendanceRate',
   'qualification', 'totalDebt', 'nickname', 'presences', 'excusedAbsences',
   'unexcusedAbsences', 'username', 'login_count', 'has_seen_tutorial',
@@ -209,41 +208,27 @@ export async function deleteMemberFromDB(memberId: string): Promise<void> {
 }
 
 
-export const MAX_SCORE_ADJUSTMENT = 35;
-export const MIN_SCORE_ADJUSTMENT = -35;
-
-export interface ScoreAdjustment {
-  id: string;
-  points: number;
-  reason: string;
-  date: string;
-  adminName: string;
-  adminUsername?: string;
-  adminId?: string;
-  targetMemberId?: string;
-  targetMemberName?: string;
-  eventId?: string;
-}
-
-export interface ScoreAuditLog {
+export interface AuditLog {
   id: string;
   adminId?: string;
   adminName: string;
   adminUsername?: string;
   targetMemberId?: string;
   targetMemberName?: string;
-  action: 'ADDED' | 'SUBTRACTED' | 'REVERTED' | 'MEMBER_CREATE' | 'MEMBER_DELETE' | 'PASSWORD_CHANGE' | 'PAYMENT_ADD' | 'PAYMENT_REVERT' | string;
+  action: 'MEMBER_CREATE' | 'MEMBER_DELETE' | 'PASSWORD_CHANGE' | 'PAYMENT_ADD' | 'PAYMENT_REVERT' | string;
   points?: number;
   reason: string;
   createdAt: string;
 }
 
+export type ScoreAuditLog = AuditLog;
+
 /**
  * Salvează un log de audit în tabela 'members' (sub documentul SYS_AUDIT_LOGS)
  */
-export async function logScoreAudit(log: Partial<ScoreAuditLog> & { action: string; reason: string }): Promise<void> {
+export async function logSystemAudit(log: Partial<AuditLog> & { action: string; reason: string }): Promise<void> {
   try {
-    const auditEntry: ScoreAuditLog = {
+    const auditEntry: AuditLog = {
       id: log.id || `audit_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
       adminId: log.adminId || undefined,
       adminName: log.adminName || 'Admin',
@@ -262,14 +247,13 @@ export async function logScoreAudit(log: Partial<ScoreAuditLog> & { action: stri
       .eq('id', 'SYS_AUDIT_LOGS')
       .single();
 
-    const currentLogs: ScoreAuditLog[] = Array.isArray(sysSnap?.stats?.logs) ? sysSnap.stats.logs : [];
+    const currentLogs: AuditLog[] = Array.isArray(sysSnap?.stats?.logs) ? sysSnap.stats.logs : [];
     
     // Prevent inserting exact duplicates into SYS_AUDIT_LOGS
     const isDuplicate = currentLogs.some(l => 
       l.id === auditEntry.id || 
       (l.targetMemberId === auditEntry.targetMemberId && 
        l.action === auditEntry.action && 
-       l.points === auditEntry.points && 
        l.reason === auditEntry.reason &&
        Math.abs(new Date(l.createdAt).getTime() - new Date(auditEntry.createdAt).getTime()) < 3000)
     );
@@ -288,14 +272,16 @@ export async function logScoreAudit(log: Partial<ScoreAuditLog> & { action: stri
       stats: { logs: updatedLogs }
     });
   } catch (err) {
-    console.warn("Error logging score audit:", err);
+    console.warn("Error logging system audit:", err);
   }
 }
 
+export const logScoreAudit = logSystemAudit;
+
 /**
- * Preia toate jurnalele de audit din întreg sistemul (Punctaje, Plăți, Membri, Învoiri, Proiecte, Sugestii, Kudos)
+ * Preia toate jurnalele de audit din întreg sistemul (Plăți, Membri, Învoiri, Proiecte, Sugestii, Kudos)
  */
-export async function fetchScoreAuditLogs(): Promise<ScoreAuditLog[]> {
+export async function fetchSystemAuditLogs(): Promise<AuditLog[]> {
   try {
     const { data: sysSnap } = await supabase
       .from('members')
@@ -303,11 +289,11 @@ export async function fetchScoreAuditLogs(): Promise<ScoreAuditLog[]> {
       .eq('id', 'SYS_AUDIT_LOGS')
       .single();
 
-    const sysLogs: ScoreAuditLog[] = Array.isArray(sysSnap?.stats?.logs) ? sysSnap.stats.logs : [];
+    const sysLogs: AuditLog[] = Array.isArray(sysSnap?.stats?.logs) ? sysSnap.stats.logs : [];
 
     const { data: membersData } = await supabase
       .from('members')
-      .select('id, name, nickname, username, role, boardPosition, scoreAdjustments')
+      .select('id, name, nickname, username, role, boardPosition')
       .neq('id', 'SYS_AUDIT_LOGS');
 
     // Build comprehensive lookup for real admin names and nicknames
@@ -406,33 +392,6 @@ export async function fetchScoreAuditLogs(): Promise<ScoreAuditLog[]> {
       return false;
     };
 
-    // 2. Add score adjustments from members (only if not already logged in sysLogs)
-    if (membersData) {
-      membersData.forEach((m: any) => {
-        const adjustments = m.scoreAdjustments || [];
-        adjustments.forEach((adj: any) => {
-          if (adj.id && !compiledMap.has(adj.id)) {
-            const time = adj.date || new Date().toISOString();
-            const act = adj.action || (adj.points >= 0 ? 'ADDED' : 'SUBTRACTED');
-            if (!isAlreadyPresent(m.id, act, adj.points || 0, adj.reason || '', time)) {
-              const resolved = resolveAdmin(adj.adminName, adj.adminId, adj.adminUsername);
-              compiledMap.set(adj.id, {
-                id: adj.id,
-                adminId: adj.adminId,
-                adminName: resolved.name,
-                adminUsername: resolved.username || adj.adminUsername,
-                targetMemberId: m.id,
-                targetMemberName: m.nickname || m.name || 'Membru',
-                action: act,
-                points: adj.points || 0,
-                reason: adj.reason || 'Ajustare punctaj',
-                createdAt: time
-              });
-            }
-          }
-        });
-      });
-    }
 
     // 3. Add payments (Dues / Cotizații)
     if (paymentsData) {
@@ -574,237 +533,7 @@ export async function fetchScoreAuditLogs(): Promise<ScoreAuditLog[]> {
   }
 }
 
-/**
- * Aplică o ajustare de scor (și, opțional, ore/proiecte) pe un membru.
- * Limitează punctajul la maxim +35 și minim -35 per acțiune (conform ghidului de punctare).
- */
-/**
- * Calculează scorul istoric total și scorul bilunar pentru un membru.
- * - Scor Istoric Total (Permanent): însumează TOATE punctele (pozitive și negative) acumulate vreodată. Nu se resetează niciodată.
- * - Scor Bilunar (Ciclu Curent): însumează STRICT punctele din perioada curentă de 2 luni. La fiecare ciclu nou, pornește de la 0 pentru toți.
- */
-export function calculateMemberScores(
-  member: any,
-  targetDate: Date = new Date()
-): {
-  totalScore: number;
-  biMonthlyScore: number;
-  biMonthlyAdjustments: ScoreAdjustment[];
-  allAdjustments: ScoreAdjustment[];
-} {
-  const adjustments: ScoreAdjustment[] = Array.isArray(member?.scoreAdjustments) ? member.scoreAdjustments : [];
-  
-  // 1. Permanent All-Time Total Score (never resets, aggregates every positive and negative adjustment)
-  const totalAdjustmentsSum = adjustments.reduce((sum: number, adj: any) => sum + (Number(adj.points) || 0), 0);
-  const totalScore = adjustments.length > 0 
-    ? totalAdjustmentsSum 
-    : (typeof member?.score === 'number' ? member.score : 0);
-
-  // 2. Bi-Monthly Current Cycle Score (strictly the sum of adjustments dated within the current 2-month window)
-  const curYear = targetDate.getFullYear();
-  const curMonth = targetDate.getMonth(); // 0..11
-  const biMonthIndex = Math.floor(curMonth / 2); // 0..5
-  const startMonth = biMonthIndex * 2;
-  const endMonth = biMonthIndex * 2 + 1;
-
-  const biMonthlyAdjustments = adjustments.filter((adj: any) => {
-    if (!adj.date) return false;
-    const d = new Date(adj.date);
-    if (isNaN(d.getTime())) return false;
-    return (
-      d.getFullYear() === curYear &&
-      d.getMonth() >= startMonth &&
-      d.getMonth() <= endMonth
-    );
-  });
-
-  const biMonthlyScore = biMonthlyAdjustments.reduce((sum: number, adj: any) => sum + (Number(adj.points) || 0), 0);
-
-  return {
-    totalScore,
-    biMonthlyScore,
-    biMonthlyAdjustments,
-    allAdjustments: adjustments
-  };
-}
-
-export async function applyMemberScoreAdjustment(
-  memberId: string,
-  pointsDelta: number,
-  adjustments: ScoreAdjustment | ScoreAdjustment[],
-  extra?: { hoursDelta?: number; projectsDelta?: number },
-  replaceEventId?: string
-): Promise<void> {
-  // Limita de securitate conform ghidului de punctare (Max: 35, Min: -35)
-  if (pointsDelta > MAX_SCORE_ADJUSTMENT || pointsDelta < MIN_SCORE_ADJUSTMENT) {
-    throw new Error(`Punctajul acordat sau scăzut la o singură ajustare trebuie să fie între ${MIN_SCORE_ADJUSTMENT} și +${MAX_SCORE_ADJUSTMENT} puncte.`);
-  }
-
-  try {
-    const { data: member, error: fetchErr } = await supabase
-      .from('members')
-      .select('name, score, scoreAdjustments, stats')
-      .eq('id', memberId.toString())
-      .single();
-
-    if (fetchErr) throw fetchErr;
-
-    const list = Array.isArray(adjustments) ? adjustments : [adjustments];
-    const currentAdjustments: ScoreAdjustment[] = Array.isArray(member?.scoreAdjustments) ? member.scoreAdjustments : [];
-    const currentStats = member?.stats || {};
-
-    // Deduplicare per Event: dacă se furnizează replaceEventId sau ajustările conțin eventId,
-    // înlocuim ajustările anterioare pentru acel eveniment în loc de a le dubla la refinalizare.
-    const targetEventIds = new Set<string>();
-    if (replaceEventId) targetEventIds.add(replaceEventId);
-    list.forEach(a => {
-      if (a.eventId) targetEventIds.add(a.eventId);
-    });
-
-    let filteredAdjustments = [...currentAdjustments];
-    let previousHoursForEvent = 0;
-    let hadPreviousAdjustmentForEvent = false;
-
-    if (targetEventIds.size > 0) {
-      filteredAdjustments = currentAdjustments.filter(a => {
-        const matchesEventId = a.eventId && targetEventIds.has(a.eventId);
-        if (matchesEventId) {
-          hadPreviousAdjustmentForEvent = true;
-          const hoursMatch = (a.reason || '').match(/\((\d+(?:\.\d+)?)h\)/);
-          if (hoursMatch) previousHoursForEvent += parseFloat(hoursMatch[1]);
-          return false;
-        }
-        return true;
-      });
-    }
-
-    // Anti-duplicate protection: ignore adjustments that are already present by ID
-    const existingIds = new Set(filteredAdjustments.map((a: any) => a.id));
-    const newItems = list.filter((a: any) => !existingIds.has(a.id));
-    if (newItems.length === 0 && list.length > 0 && !hadPreviousAdjustmentForEvent) {
-      console.warn("Ajustare de punctaj duplicată ignorată:", list);
-      return;
-    }
-
-    const updatedAdjustments = [...filteredAdjustments, ...newItems];
-    // Exact mathematical sum of all positive and negative adjustments in record
-    const newTotalScore = updatedAdjustments.reduce((sum: number, a: any) => sum + (Number(a.points) || 0), 0);
-
-    const updatedStats = { ...currentStats };
-    if (extra?.hoursDelta !== undefined) {
-      const netHoursDelta = hadPreviousAdjustmentForEvent ? (extra.hoursDelta - previousHoursForEvent) : extra.hoursDelta;
-      updatedStats.hours = Math.max(0, (Number(updatedStats.hours) || 0) + netHoursDelta);
-    }
-    if (extra?.projectsDelta !== undefined) {
-      if (!hadPreviousAdjustmentForEvent) {
-        updatedStats.projects = (Number(updatedStats.projects) || 0) + extra.projectsDelta;
-      }
-    }
-
-    const { error: updateErr } = await supabase
-      .from('members')
-      .update({
-        score: newTotalScore,
-        scoreAdjustments: updatedAdjustments,
-        stats: updatedStats
-      })
-      .eq('id', memberId.toString());
-
-    if (updateErr) throw updateErr;
-
-    // Logăm în Audit Log pentru fiecare ajustare cu ACELAȘI ID pentru a preveni duplicatele
-    for (const adj of newItems) {
-      await logScoreAudit({
-        id: adj.id,
-        adminId: adj.adminId,
-        adminName: adj.adminName || 'Admin',
-        adminUsername: adj.adminUsername,
-        targetMemberId: memberId,
-        targetMemberName: member.name || 'Membru',
-        action: (adj.points || 0) >= 0 ? 'ADDED' : 'SUBTRACTED',
-        points: adj.points || 0,
-        reason: adj.reason,
-        createdAt: adj.date || new Date().toISOString()
-      });
-    }
-  } catch (error) {
-    console.error("Error applying score adjustment in Supabase:", error);
-    throw error;
-  }
-}
-
-/**
- * Anulează (revert) o ajustare de scor specifică a unui membru.
- */
-export async function revertMemberScoreAdjustment(
-  memberId: string,
-  adjustmentId: string,
-  adminInfo: { name: string; username?: string; id?: string }
-): Promise<{ newScore: number; updatedAdjustments: ScoreAdjustment[] }> {
-  try {
-    const { data: member, error: fetchErr } = await supabase
-      .from('members')
-      .select('name, score, scoreAdjustments, stats')
-      .eq('id', memberId.toString())
-      .single();
-
-    if (fetchErr || !member) throw new Error("Membrul nu a fost găsit.");
-
-    const currentAdjustments: ScoreAdjustment[] = Array.isArray(member.scoreAdjustments) ? member.scoreAdjustments : [];
-    const targetAdj = currentAdjustments.find(a => a.id === adjustmentId);
-
-    if (!targetAdj) {
-      throw new Error("Ajustarea de punctaj specificată nu a fost găsită.");
-    }
-
-    const updatedAdjustments = currentAdjustments.filter(a => a.id !== adjustmentId);
-    const pointsToRemove = targetAdj.points || 0;
-    const newScore = updatedAdjustments.reduce((sum: number, a: any) => sum + (Number(a.points) || 0), 0);
-
-    const currentStats = member.stats || {};
-    const updatedStats = { ...currentStats };
-    const hoursMatch = (targetAdj.reason || '').match(/\((\d+(?:\.\d+)?)h\)/);
-    if (hoursMatch) {
-      const hoursToDeduct = parseFloat(hoursMatch[1]);
-      updatedStats.hours = Math.max(0, (Number(updatedStats.hours) || 0) - hoursToDeduct);
-      if (targetAdj.reason && (targetAdj.reason.includes('Prezență') || targetAdj.reason.includes('Comisie') || targetAdj.reason.includes('Departament'))) {
-        updatedStats.projects = Math.max(0, (Number(updatedStats.projects) || 0) - 1);
-      }
-    }
-
-    const { error: updateErr } = await supabase
-      .from('members')
-      .update({
-        score: newScore,
-        scoreAdjustments: updatedAdjustments,
-        stats: updatedStats
-      })
-      .eq('id', memberId.toString());
-
-    if (updateErr) throw updateErr;
-
-    // Înregistrăm acțiunea de REVERT în jurnalul de audit cu un ID determinist
-    const revertAuditId = `revert_${adjustmentId}_${Date.now()}`;
-    await logScoreAudit({
-      id: revertAuditId,
-      adminId: adminInfo.id,
-      adminName: adminInfo.name || 'Admin',
-      adminUsername: adminInfo.username,
-      targetMemberId: memberId,
-      targetMemberName: member.name || 'Membru',
-      action: 'REVERTED',
-      points: -pointsToRemove,
-      reason: `ANULAT: ${targetAdj.reason} (${pointsToRemove > 0 ? '+' : ''}${pointsToRemove} pct)`,
-      createdAt: new Date().toISOString()
-    });
-
-    return { newScore, updatedAdjustments };
-  } catch (error) {
-    console.error("Error reverting score adjustment:", error);
-    throw error;
-  }
-}
-
+export const fetchScoreAuditLogs = fetchSystemAuditLogs;
 
 // ==========================================
 // TREASURY & PAYMENTS (STRICT RULES)

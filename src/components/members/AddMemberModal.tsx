@@ -115,8 +115,6 @@ export function AddMemberModal({ isOpen, onClose, members, onAddMember, currentU
       attendanceRate: '100%',
       qualification: status === 'passive' ? 'Pasiv' : 'Excelent',
       payments: [],
-      score: 0,
-      scoreAdjustments: [],
     };
 
     try {

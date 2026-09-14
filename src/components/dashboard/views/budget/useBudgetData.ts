@@ -167,8 +167,15 @@ export function useBudgetData(currentUserName: string): BudgetData & Mutations {
       ]);
 
       if (txRes.status === 'fulfilled' && txRes.value.data) {
-        setTransactions(txRes.value.data);
-        setCached('transactions', txRes.value.data);
+        const mappedTx = txRes.value.data.map((raw: any) => ({
+          ...raw,
+          notes: raw.notes || raw.description || '',
+          code: raw.code || `TX-${(raw.id || '').slice(0, 8)}`,
+          status: raw.status || 'confirmed',
+          source: raw.source || 'Manual',
+        }));
+        setTransactions(mappedTx);
+        setCached('transactions', mappedTx);
       }
       if (prjRes.status === 'fulfilled' && prjRes.value.data) {
         setProjects(prjRes.value.data);
@@ -183,8 +190,15 @@ export function useBudgetData(currentUserName: string): BudgetData & Mutations {
         setCached('dues', duesRes.value.data);
       }
       if (auditRes.status === 'fulfilled' && auditRes.value.data) {
-        setAudit(auditRes.value.data);
-        setCached('audit', auditRes.value.data);
+        const mappedAudit = auditRes.value.data.map((raw: any) => ({
+          ...raw,
+          user: raw.user || raw.actor || 'Trezorerie / Board',
+          txCode: raw.txCode || '—',
+          oldValue: raw.oldValue || '—',
+          newValue: raw.newValue || '—',
+        }));
+        setAudit(mappedAudit);
+        setCached('audit', mappedAudit);
       }
       if (payRes.status === 'fulfilled' && payRes.value.data) {
         const validPayments = payRes.value.data.filter((p: any) => p.status !== 'Anulat');
@@ -262,7 +276,7 @@ export function useBudgetData(currentUserName: string): BudgetData & Mutations {
       });
 
       try {
-        await supabase.from(COLLECTIONS.audit).insert({
+        const { error: err } = await supabase.from(COLLECTIONS.audit).insert({
           id: newEntry.id,
           timestamp: newEntry.timestamp,
           user: newEntry.user,
@@ -272,6 +286,17 @@ export function useBudgetData(currentUserName: string): BudgetData & Mutations {
           newValue: newEntry.newValue,
           details: newEntry.details,
         });
+
+        if (err) {
+          // Fallback if the table schema uses 'actor' instead of 'user'
+          await supabase.from(COLLECTIONS.audit).insert({
+            id: newEntry.id,
+            timestamp: newEntry.timestamp,
+            actor: newEntry.user,
+            action: newEntry.action,
+            details: newEntry.details,
+          });
+        }
       } catch (err) {
         console.warn('[budget] failed to write audit log to Supabase', err);
       }
@@ -312,9 +337,9 @@ export function useBudgetData(currentUserName: string): BudgetData & Mutations {
           : `Tranzacție nouă înregistrată (${normalized.category} — ${normalized.amount} RON)`,
       });
 
-      // 3. Supabase Upsert
+      // 3. Supabase Upsert with resilient schema fallback
       try {
-        const { error: err } = await supabase.from(COLLECTIONS.transactions).upsert({
+        const fullPayload = {
           id: normalized.id,
           code: normalized.code,
           date: normalized.date,
@@ -330,9 +355,27 @@ export function useBudgetData(currentUserName: string): BudgetData & Mutations {
           paymentMethod: normalized.paymentMethod || null,
           approvedBy: normalized.approvedBy,
           notes: normalized.notes,
+          description: normalized.notes || (normalized as any).description || '',
           createdAt: normalized.createdAt,
-        });
-        if (err) throw err;
+        };
+
+        const { error: err } = await supabase.from(COLLECTIONS.transactions).upsert(fullPayload);
+        if (err) {
+          // Fallback to core columns if database schema hasn't had extended columns added yet
+          const fallbackPayload = {
+            id: normalized.id,
+            type: normalized.type,
+            category: normalized.category,
+            amount: normalized.amount,
+            description: normalized.notes || (normalized as any).description || `${normalized.type.toUpperCase()}: ${normalized.category}`,
+            date: normalized.date,
+            mandate: (normalized as any).mandate || currentMandateLabel,
+            projectId: normalized.projectId || null,
+            lineId: (normalized as any).lineId || null,
+          };
+          const { error: fallbackErr } = await supabase.from(COLLECTIONS.transactions).upsert(fallbackPayload);
+          if (fallbackErr) throw fallbackErr;
+        }
       } catch (err: any) {
         console.warn('[budget] Supabase upsert error (kept locally):', err?.message || err);
       }

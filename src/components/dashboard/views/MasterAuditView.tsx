@@ -1,8 +1,8 @@
 import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  ShieldAlert, Search, RefreshCw, UserX, UserPlus, Key, ArrowUpRight, 
-  ArrowDownRight, RotateCcw, Lock, Eye, FileSpreadsheet, Activity, X,
+  ShieldAlert, Search, RefreshCw, UserX, UserPlus, Key, 
+  RotateCcw, Lock, Eye, FileSpreadsheet, Activity, X,
   ShieldCheck, Lightbulb, MessageSquare, Heart, Calendar, UserCheck
 } from 'lucide-react';
 import { fetchScoreAuditLogs, ScoreAuditLog } from '../../../utils/supabaseService';
@@ -21,7 +21,7 @@ export function MasterAuditView({ currentUserObj }: MasterAuditViewProps) {
   const [logs, setLogs] = useState<ScoreAuditLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<'ALL' | 'SCORE' | 'PAYMENT' | 'MEMBER' | 'ABSENCE' | 'PROJECT' | 'SUGGESTION' | 'KUDOS'>('ALL');
+  const [selectedCategory, setSelectedCategory] = useState<'ALL' | 'PAYMENT' | 'MEMBER' | 'ABSENCE' | 'PROJECT' | 'SUGGESTION' | 'KUDOS'>('ALL');
   const [selectedAdmin, setSelectedAdmin] = useState<string>('ALL');
   const [selectedTimeRange, setSelectedTimeRange] = useState<'ALL' | 'TODAY' | 'WEEK' | 'MONTH'>('ALL');
   const [viewMode, setViewMode] = useState<'table' | 'timeline'>('table');
@@ -83,7 +83,6 @@ export function MasterAuditView({ currentUserObj }: MasterAuditViewProps) {
       const act = (log.action || '').toUpperCase();
 
       // Category filter
-      if (selectedCategory === 'SCORE' && !['ADDED', 'SUBTRACTED', 'REVERTED'].includes(act)) return false;
       if (selectedCategory === 'PAYMENT' && !act.includes('PAYMENT')) return false;
       if (selectedCategory === 'MEMBER' && !(act.startsWith('MEMBER_') || act === 'PASSWORD_CHANGE' || act.includes('ROLE') || act.includes('PROFILE'))) return false;
       if (selectedCategory === 'ABSENCE' && !(act.startsWith('ABSENCE') || act.includes('ATTENDANCE') || act.includes('MOTIV'))) return false;
@@ -118,7 +117,6 @@ export function MasterAuditView({ currentUserObj }: MasterAuditViewProps) {
 
   // Statistics calculation
   const stats = useMemo(() => {
-    let scoreCount = 0;
     let paymentCount = 0;
     let memberCount = 0;
     let absenceCount = 0;
@@ -128,8 +126,7 @@ export function MasterAuditView({ currentUserObj }: MasterAuditViewProps) {
 
     logs.forEach(l => {
       const act = (l.action || '').toUpperCase();
-      if (['ADDED', 'SUBTRACTED', 'REVERTED'].includes(act)) scoreCount++;
-      else if (act.includes('PAYMENT')) paymentCount++;
+      if (act.includes('PAYMENT')) paymentCount++;
       else if (act.startsWith('MEMBER_') || act === 'PASSWORD_CHANGE' || act.includes('ROLE') || act.includes('PROFILE')) memberCount++;
       else if (act.startsWith('ABSENCE') || act.includes('ATTENDANCE') || act.includes('MOTIV')) absenceCount++;
       else if (act.startsWith('PROJECT') || act.includes('PROPOSAL')) projectCount++;
@@ -139,7 +136,6 @@ export function MasterAuditView({ currentUserObj }: MasterAuditViewProps) {
 
     return {
       total: logs.length,
-      scoreCount,
       paymentCount,
       memberCount,
       absenceCount,
@@ -181,7 +177,7 @@ export function MasterAuditView({ currentUserObj }: MasterAuditViewProps) {
           'Membru Vizat',
           'ID Membru',
           'Tip Acțiune',
-          'Puncte / Valoare',
+          'Detalii / Valoare',
           'Motiv / Justificare'
         ],
         rows,
@@ -225,7 +221,7 @@ export function MasterAuditView({ currentUserObj }: MasterAuditViewProps) {
               </span>
             </div>
             <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mt-1">
-              Monitorizare 360° a tuturor evenimentelor din platformă (Punctaje, Cotizații, Membri, Învoiri, Proiecte, Sugestii, Kudos).
+              Monitorizare 360° a tuturor evenimentelor din platformă (Cotizații, Membri, Învoiri, Proiecte, Sugestii, Kudos).
             </p>
           </div>
         </div>
@@ -261,12 +257,6 @@ export function MasterAuditView({ currentUserObj }: MasterAuditViewProps) {
         </div>
 
         <div className="bg-white dark:bg-[#161B22] border border-slate-300 dark:border-slate-800 rounded-[2px] p-4 shadow-xs">
-          <div className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 font-title">Punctaje & Penalizări</div>
-          <div className="text-2xl font-black font-data text-amber-700 dark:text-amber-400 mt-1">{stats.scoreCount}</div>
-          <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Ajustări și revert-uri</div>
-        </div>
-
-        <div className="bg-white dark:bg-[#161B22] border border-slate-300 dark:border-slate-800 rounded-[2px] p-4 shadow-xs">
           <div className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 font-title">Cotizații Încasate</div>
           <div className="text-2xl font-black font-data text-emerald-700 dark:text-emerald-400 mt-1">{stats.paymentCount}</div>
           <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Chitanțe electronice</div>
@@ -276,6 +266,12 @@ export function MasterAuditView({ currentUserObj }: MasterAuditViewProps) {
           <div className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 font-title">Gestiune Membri</div>
           <div className="text-2xl font-black font-data text-indigo-700 dark:text-indigo-400 mt-1">{stats.memberCount}</div>
           <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Adăugări / Ștergeri / Parole</div>
+        </div>
+
+        <div className="bg-white dark:bg-[#161B22] border border-slate-300 dark:border-slate-800 rounded-[2px] p-4 shadow-xs">
+          <div className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 font-title">Învoiri & Prezențe</div>
+          <div className="text-2xl font-black font-data text-blue-700 dark:text-blue-400 mt-1">{stats.absenceCount}</div>
+          <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Cereri procesate</div>
         </div>
       </div>
 
@@ -351,7 +347,6 @@ export function MasterAuditView({ currentUserObj }: MasterAuditViewProps) {
         <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pt-1.5 border-t border-slate-200 dark:border-slate-800 font-title">
           {[
             { id: 'ALL', label: 'Toate Acțiunile', count: stats.total },
-            { id: 'SCORE', label: 'Punctaje & Penalizări', count: stats.scoreCount },
             { id: 'PAYMENT', label: 'Cotizații & Plăți', count: stats.paymentCount },
             { id: 'MEMBER', label: 'Gestiune Membri', count: stats.memberCount },
             { id: 'ABSENCE', label: 'Învoiri & Prezențe', count: stats.absenceCount },
@@ -406,7 +401,6 @@ export function MasterAuditView({ currentUserObj }: MasterAuditViewProps) {
               <tbody className="divide-y divide-slate-200 dark:divide-slate-800 bg-white dark:bg-[#161B22] font-anthropic">
                 {filteredLogs.map(log => {
                   const act = (log.action || '').toUpperCase();
-                  const isPositive = log.points ? log.points > 0 : false;
                   return (
                     <tr key={log.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors">
                       <td className="py-3 px-3.5 font-data text-xs text-slate-600 dark:text-slate-400">{new Date(log.createdAt).toLocaleString('ro-RO')}</td>
@@ -439,7 +433,7 @@ export function MasterAuditView({ currentUserObj }: MasterAuditViewProps) {
                           </span>
                         ) : act === 'REVERTED' ? (
                           <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-[2px] font-bold text-xs uppercase tracking-wider bg-amber-100 dark:bg-amber-950/50 text-amber-900 dark:text-amber-300 border border-amber-300 dark:border-amber-800 shadow-xs font-data">
-                            <RotateCcw size={13} /> REVERT ({log.points} pct)
+                            <RotateCcw size={13} /> REVERT
                           </span>
                         ) : act.includes('PAYMENT') ? (
                           <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-[2px] font-bold text-xs uppercase tracking-wider bg-emerald-100 dark:bg-emerald-950/50 text-emerald-900 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 shadow-xs font-data">
@@ -461,13 +455,9 @@ export function MasterAuditView({ currentUserObj }: MasterAuditViewProps) {
                           <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-[2px] font-bold text-xs uppercase tracking-wider bg-pink-100 dark:bg-pink-950/50 text-pink-900 dark:text-pink-300 border border-pink-300 dark:border-pink-800 shadow-xs">
                             <Heart size={13} /> KUDOS
                           </span>
-                        ) : isPositive ? (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-[2px] font-bold text-xs uppercase tracking-wider bg-emerald-100 dark:bg-emerald-950/50 text-emerald-900 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 shadow-xs font-data">
-                            <ArrowUpRight size={13} /> +{log.points} pct
-                          </span>
                         ) : (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-[2px] font-bold text-xs uppercase tracking-wider bg-rose-100 dark:bg-rose-950/50 text-rose-900 dark:text-rose-300 border border-rose-300 dark:border-rose-800 shadow-xs font-data">
-                            <ArrowDownRight size={13} /> {log.points} pct
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-[2px] font-bold text-xs uppercase tracking-wider bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700 shadow-xs font-data">
+                            <Activity size={13} /> {act}
                           </span>
                         )}
                       </td>

@@ -8,7 +8,7 @@ import {
 import { 
   EventData, AbsenceRequest, fetchAbsenceRequests, saveAbsenceRequest, 
   deleteAbsenceRequest, recordAttendance, fetchEvents, saveEvent, 
-  applyMemberScoreAdjustment, isSystemAccount, logScoreAudit 
+  updateMemberFields, isSystemAccount, logScoreAudit 
 } from '../../../utils/supabaseService';
 import { toast } from '../../ui/Toast';
 import { triggerAbsencePushNotification, triggerAdminAbsenceRequestNotification } from '../../../utils/pushNotifications';
@@ -391,7 +391,6 @@ export function AttendanceView({ members, onUpdateMember, isAdmin, currentUserId
         targetMemberId: member.id,
         targetMemberName: member.name,
         action: 'ABSENCE_APPROVED',
-        points: 0,
         reason: `Motivare WhatsApp acordată de ${adminActorName} pentru "${selectedEvent.title}"`
       });
 
@@ -459,51 +458,19 @@ export function AttendanceView({ members, onUpdateMember, isAdmin, currentUserId
       const presentMembers = activeMembers.filter(m => selectedEvent.rsvps?.[m.id] === 'present');
 
       for (const member of presentMembers) {
-        const pointsToAdd = Math.round(fallbackHours * 2);
-        const adminActorName = currentUserObj?.name || currentUserObj?.nickname || (currentUserObj?.username ? `@${currentUserObj.username}` : (isAdmin ? 'Admin' : 'Sistem'));
-        const adminActorId = currentUserObj?.id;
-        const adminActorUsername = currentUserObj?.username;
-
-        const eventDateStr = selectedEvent.date 
-          ? `${selectedEvent.date}T${selectedEvent.time || '12:00'}:00.000Z` 
-          : new Date().toISOString();
-
-        const newAdjustment = {
-          id: `adj_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
-          points: pointsToAdd,
-          reason: `Prezență (${fallbackHours}h): ${selectedEvent.title}`,
-          date: eventDateStr,
-          adminId: adminActorId,
-          adminName: adminActorName,
-          adminUsername: adminActorUsername,
-          eventId: selectedEvent.id
+        const currentStats = member.stats || {};
+        const updatedStats = {
+          ...currentStats,
+          hours: Math.max(0, (Number(currentStats.hours) || 0) + fallbackHours),
+          projects: (Number(currentStats.projects) || 0) + 1
         };
-
-        const currentAdjustments = Array.isArray(member.scoreAdjustments) ? member.scoreAdjustments : [];
-        const existingAdj = currentAdjustments.find((a: any) => 
-          a.eventId === selectedEvent.id || (a.reason && a.reason.includes(`: ${selectedEvent.title}`))
-        );
-        const oldHoursMatch = existingAdj ? (existingAdj.reason || '').match(/\((\d+(?:\.\d+)?)h\)/) : null;
-        const oldHours = oldHoursMatch ? parseFloat(oldHoursMatch[1]) : 0;
-
-        const filteredAdjustments = currentAdjustments.filter((a: any) => 
-          a.eventId !== selectedEvent.id && !(a.reason && a.reason.includes(`: ${selectedEvent.title}`))
-        );
-        const updatedAdjustments = [...filteredAdjustments, newAdjustment];
-        const newScore = updatedAdjustments.reduce((sum: number, a: any) => sum + (Number(a.points) || 0), 0);
 
         const updatedMember = {
           ...member,
-          stats: {
-            ...member.stats,
-            hours: Math.max(0, (member.stats?.hours || 0) - oldHours + fallbackHours),
-            projects: (member.stats?.projects || 0) + (existingAdj ? 0 : 1)
-          },
-          score: newScore,
-          scoreAdjustments: updatedAdjustments
+          stats: updatedStats
         };
 
-        await applyMemberScoreAdjustment(member.id, pointsToAdd, newAdjustment, { hoursDelta: fallbackHours, projectsDelta: 1 }, selectedEvent.id);
+        await updateMemberFields(member.id, { stats: updatedStats });
         if (onUpdateMember) {
           onUpdateMember(updatedMember);
         }
@@ -590,7 +557,6 @@ export function AttendanceView({ members, onUpdateMember, isAdmin, currentUserId
         targetMemberId: req.memberId,
         targetMemberName: member?.name || req.memberName || 'Membru',
         action: 'ABSENCE_APPROVED',
-        points: 0,
         reason: `Învoire aprobată de ${adminActorName} pentru "${selectedEvent?.title || 'Eveniment'}" (Motiv membru: "${req.reason}")`
       });
 
@@ -666,7 +632,6 @@ export function AttendanceView({ members, onUpdateMember, isAdmin, currentUserId
         targetMemberId: rejectingReq.memberId,
         targetMemberName: member?.name || rejectingReq.memberName || 'Membru',
         action: 'ABSENCE_REJECTED',
-        points: 0,
         reason: `Învoire respinsă de ${adminActorName} pentru "${selectedEvent?.title || 'Eveniment'}" (Motiv respingere: "${rejectReason.trim()}")`
       });
 

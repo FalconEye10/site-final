@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Clock, MapPin, Plus, Edit2, Trash2, X, Lock, Calendar
 } from 'lucide-react';
-import { EventData, fetchEvents, saveEvent, deleteEvent, saveAbsenceRequest, applyMemberScoreAdjustment } from '../../../utils/supabaseService';
+import { EventData, fetchEvents, saveEvent, deleteEvent, saveAbsenceRequest, updateMemberFields } from '../../../utils/supabaseService';
 import { 
   getRomaniaTodayString, 
   getRomaniaTimeNow, 
@@ -27,7 +27,7 @@ interface EventsViewProps {
   onUpdateMember?: (updatedMember: any) => void;
 }
 
-export function EventsView({ isAdmin, members = [], currentUserId, currentUserObj, onUpdateMember }: EventsViewProps) {
+export function EventsView({ isAdmin, members = [], currentUserId, onUpdateMember }: EventsViewProps) {
   const [events, setEvents] = useState<EventData[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeViewTab, setActiveViewTab] = useState<'upcoming' | 'history'>('upcoming');
@@ -322,48 +322,20 @@ export function EventsView({ isAdmin, members = [], currentUserId, currentUserOb
 
       try {
         const affectedMembers = members.filter(member => member.role !== 'admin' && (event.rsvps?.[member.id] || 'none') === 'present');
-        // 2 puncte per oră de voluntariat, uniform pe tot site-ul.
-        const pointsToAdd = Math.round(durationHours * 2);
-
-        const eventDateStr = event.date 
-          ? `${event.date}T${event.time || '12:00'}:00.000Z` 
-          : new Date().toISOString();
 
         for (const member of affectedMembers) {
-          const newAdjustment = {
-            id: `adj_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
-            points: pointsToAdd,
-            reason: `Prezență Ședință (${durationHours}h): ${event.title}`,
-            date: eventDateStr,
-            adminName: 'Admin',
-            eventId: event.id
+          const currentStats = member.stats || {};
+          const updatedStats = {
+            ...currentStats,
+            hours: Math.max(0, (Number(currentStats.hours) || 0) + durationHours),
           };
-
-          const currentAdjustments = Array.isArray(member.scoreAdjustments) ? member.scoreAdjustments : [];
-          const existingAdj = currentAdjustments.find((a: any) => 
-            a.eventId === event.id || (a.reason && a.reason.includes(`: ${event.title}`))
-          );
-          const oldHoursMatch = existingAdj ? (existingAdj.reason || '').match(/\((\d+(?:\.\d+)?)h\)/) : null;
-          const oldHours = oldHoursMatch ? parseFloat(oldHoursMatch[1]) : 0;
-
-          const filteredAdjustments = currentAdjustments.filter((a: any) => 
-            a.eventId !== event.id && !(a.reason && a.reason.includes(`: ${event.title}`))
-          );
-          const updatedAdjustments = [...filteredAdjustments, newAdjustment];
-          const newScore = updatedAdjustments.reduce((sum: number, a: any) => sum + (Number(a.points) || 0), 0);
 
           const updatedMember = {
             ...member,
-            stats: {
-              ...member.stats,
-              hours: Math.max(0, (member.stats?.hours || 0) - oldHours + durationHours),
-            },
-            score: newScore,
-            scoreAdjustments: updatedAdjustments
+            stats: updatedStats
           };
 
-          // Scriere atomică cu dedublare per eventId
-          await applyMemberScoreAdjustment(member.id, pointsToAdd, newAdjustment, { hoursDelta: durationHours }, event.id);
+          await updateMemberFields(member.id, { stats: updatedStats });
           if (onUpdateMember) onUpdateMember(updatedMember);
         }
 
@@ -413,59 +385,23 @@ export function EventsView({ isAdmin, members = [], currentUserId, currentUserOb
       try {
         const affectedMembers = members.filter(member => member.role !== 'admin' && creditsByMember.has(member.id));
 
-        const adminActorName = currentUserObj?.name || currentUserObj?.nickname || (currentUserObj?.username ? `@${currentUserObj.username}` : (isAdmin ? 'Admin' : 'Sistem'));
-        const adminActorId = currentUserObj?.id;
-        const adminActorUsername = currentUserObj?.username;
-
-        const eventDateStr = event.date 
-          ? `${event.date}T${event.time || '12:00'}:00.000Z` 
-          : new Date().toISOString();
-
         for (const member of affectedMembers) {
           const credits = creditsByMember.get(member.id) || [];
           const totalHours = credits.reduce((sum, c) => sum + c.hours, 0);
 
-          const newAdjustments = credits.map(credit => ({
-            id: `adj_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
-            // 2 puncte per oră de voluntariat, uniform pe tot site-ul.
-            points: Math.round(credit.hours * 2),
-            reason: `${credit.committeeName} (${credit.hours}h): ${event.title}`,
-            date: eventDateStr,
-            adminId: adminActorId,
-            adminName: adminActorName,
-            adminUsername: adminActorUsername,
-            eventId: event.id
-          }));
-          const totalPoints = newAdjustments.reduce((sum, a) => sum + a.points, 0);
-
-          const currentAdjustments = Array.isArray(member.scoreAdjustments) ? member.scoreAdjustments : [];
-          const existingAdjs = currentAdjustments.filter((a: any) => 
-            a.eventId === event.id || (a.reason && a.reason.includes(`: ${event.title}`))
-          );
-          const oldHours = existingAdjs.reduce((sum: number, a: any) => {
-            const m = (a.reason || '').match(/\((\d+(?:\.\d+)?)h\)/);
-            return sum + (m ? parseFloat(m[1]) : 0);
-          }, 0);
-
-          const filteredAdjustments = currentAdjustments.filter((a: any) => 
-            a.eventId !== event.id && !(a.reason && a.reason.includes(`: ${event.title}`))
-          );
-          const updatedAdjustments = [...filteredAdjustments, ...newAdjustments];
-          const newScore = updatedAdjustments.reduce((sum: number, a: any) => sum + (Number(a.points) || 0), 0);
+          const currentStats = member.stats || {};
+          const updatedStats = {
+            ...currentStats,
+            hours: Math.max(0, (Number(currentStats.hours) || 0) + totalHours),
+            projects: (Number(currentStats.projects) || 0) + 1
+          };
 
           const updatedMember = {
             ...member,
-            stats: {
-              ...member.stats,
-              hours: Math.max(0, (member.stats?.hours || 0) - oldHours + totalHours),
-              projects: (member.stats?.projects || 0) + (existingAdjs.length > 0 ? 0 : 1)
-            },
-            score: newScore,
-            scoreAdjustments: updatedAdjustments
+            stats: updatedStats
           };
 
-          // Scriere atomică cu dedublare per eventId
-          await applyMemberScoreAdjustment(member.id, totalPoints, newAdjustments, { hoursDelta: totalHours, projectsDelta: 1 }, event.id);
+          await updateMemberFields(member.id, { stats: updatedStats });
           if (onUpdateMember) {
             onUpdateMember(updatedMember);
           }

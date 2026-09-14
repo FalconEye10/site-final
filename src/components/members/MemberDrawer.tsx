@@ -9,12 +9,10 @@ import {
 import { toast } from '../ui/Toast';
 import { calculateDebt, calculateQualification, generateMemberLedger, COTIZATIE_LUNARA } from '../../utils/finance';
 import { computeMemberMilestones } from '../../utils/milestones';
-import { updateMemberFields, applyMemberScoreAdjustment, revertLatestTreasuryPayment, deleteMemberFromDB, TreasuryPayment, MAX_SCORE_ADJUSTMENT, MIN_SCORE_ADJUSTMENT, logScoreAudit } from '../../utils/supabaseService';
+import { updateMemberFields, revertLatestTreasuryPayment, deleteMemberFromDB, TreasuryPayment, logScoreAudit } from '../../utils/supabaseService';
 import { formatRomaniaDate } from '../../utils/romaniaTime';
 import { PaymentModal } from '../finance/PaymentModal';
-import { ScoringReferenceGuide, ScoringPreset } from '../dashboard/views/ScoringReferenceGuide';
 import { supabase } from '../../supabase';
-import { triggerScorePushNotification } from '../../utils/pushNotifications';
 import { useBodyScrollLock } from '../../utils/useBodyScrollLock';
 
 interface MemberDrawerProps {
@@ -33,11 +31,6 @@ export function MemberDrawer({ member, onClose, onUpdateMember, isAdmin, current
 
   useBodyScrollLock(true);
 
-  // Score Adjustment Modal states
-  const [isScoreModalOpen, setIsScoreModalOpen] = useState(false);
-  const [scoreAdjustValue, setScoreAdjustValue] = useState('');
-  const [scoreAdjustReason, setScoreAdjustReason] = useState('');
-  const [isSubmittingScore, setIsSubmittingScore] = useState(false);
 
   // AlertDialog state for Revert Payment
   const [receiptToRevert, setReceiptToRevert] = useState<TreasuryPayment | null>(null);
@@ -49,13 +42,13 @@ export function MemberDrawer({ member, onClose, onUpdateMember, isAdmin, current
   // Listen to escape key for closing modal
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && !isPaymentModalOpen && !selectedReceipt && !isScoreModalOpen && !receiptToRevert) {
+      if (e.key === 'Escape' && !isPaymentModalOpen && !selectedReceipt && !receiptToRevert) {
         onClose();
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [onClose, isPaymentModalOpen, selectedReceipt, isScoreModalOpen, receiptToRevert]);
+  }, [onClose, isPaymentModalOpen, selectedReceipt, receiptToRevert]);
 
   // Load kudos count for achievements tab
   useEffect(() => {
@@ -259,60 +252,6 @@ export function MemberDrawer({ member, onClose, onUpdateMember, isAdmin, current
     }
   };
 
-  const handleAdjustScore = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (isSubmittingScore) return; // Prevent double submission
-    const val = parseInt(scoreAdjustValue, 10);
-    if (isNaN(val) || val === 0) return toast.error('Introdu o valoare numerică diferită de zero.');
-    if (val > MAX_SCORE_ADJUSTMENT || val < MIN_SCORE_ADJUSTMENT) {
-      return toast.error(`Punctajul la o singură ajustare trebuie să fie între ${MIN_SCORE_ADJUSTMENT} și +${MAX_SCORE_ADJUSTMENT} puncte.`);
-    }
-    const cleanReason = scoreAdjustReason.trim();
-    if (!cleanReason) return toast.error('Motivul este obligatoriu.');
-
-    const adminName = currentUserObj?.name || currentUserObj?.username || 'Admin';
-    const adminUsername = currentUserObj?.username;
-    const adminId = currentUserObj?.id;
-
-    const newAdjustment = {
-      id: `adj_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
-      points: val,
-      reason: cleanReason,
-      date: new Date().toISOString(),
-      adminName,
-      adminUsername,
-      adminId,
-      targetMemberId: member.id,
-      targetMemberName: member.name || 'Membru'
-    };
-
-    const newScore = (member.score || 0) + val;
-
-    const updatedMember = {
-      ...member,
-      score: newScore,
-      scoreAdjustments: [...(member.scoreAdjustments || []), newAdjustment]
-    };
-
-    setIsSubmittingScore(true);
-    try {
-      await applyMemberScoreAdjustment(member.id, val, newAdjustment);
-      triggerScorePushNotification(val, cleanReason, member.id, member.name);
-      onUpdateMember(updatedMember);
-      setIsScoreModalOpen(false);
-      setScoreAdjustValue('');
-      setScoreAdjustReason('');
-      if (val > 0) {
-        toast.success(`✅ Ai acordat +${val} puncte pentru ${member.name} (Acțiune: "${cleanReason}").`);
-      } else {
-        toast.success(`⚠️ Ai scăzut ${Math.abs(val)} puncte pentru ${member.name} (Motiv: "${cleanReason}").`);
-      }
-    } catch (err: any) {
-      toast.error(err.message || 'Eroare la ajustarea scorului.');
-    } finally {
-      setIsSubmittingScore(false);
-    }
-  };
 
   const handleConfirmRevert = async () => {
     if (!receiptToRevert) return;
@@ -831,26 +770,6 @@ export function MemberDrawer({ member, onClose, onUpdateMember, isAdmin, current
               {/* TAB 2: ACTIVITATE & PREZENȚE */}
               {activeTab === 'activity' && (
                 <div className="space-y-6 font-anthropic">
-                  {/* Score Card (Admin Only) */}
-                  {isAdmin && (
-                    <div className="p-4 sm:p-5 rounded-[2px] border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 flex items-center justify-between">
-                      <div>
-                        <span className="text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 block mb-1 font-title">
-                          Scor Total Voluntar (Evidență Admin)
-                        </span>
-                        <span className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-slate-100 font-data">
-                          {member.score || 0} Puncte
-                        </span>
-                      </div>
-
-                      <button
-                        onClick={() => setIsScoreModalOpen(true)}
-                        className="px-4 py-2 rounded-[2px] btn-civic-primary text-xs sm:text-sm uppercase tracking-wider font-bold transition-colors font-title cursor-pointer"
-                      >
-                        Ajustează Scor
-                      </button>
-                    </div>
-                  )}
 
                   {/* Prezențe */}
                   <div className="p-4 sm:p-5 rounded-[2px] border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 space-y-4">
@@ -1302,84 +1221,7 @@ export function MemberDrawer({ member, onClose, onUpdateMember, isAdmin, current
         )}
       </AnimatePresence>
 
-      {/* Score Adjustment Modal */}
-      <AnimatePresence>
-        {isScoreModalOpen && (
-          <div className="fixed inset-0 z-[200] flex items-center justify-center p-2.5 sm:p-4 bg-slate-900/70 backdrop-blur-sm font-anthropic">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.97 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.97 }}
-              className="relative w-full max-w-xl h-[88vh] max-h-[720px] flex flex-col bg-white dark:bg-[#161B22] border border-slate-300 dark:border-slate-800 rounded-[2px] shadow-2xl p-4 sm:p-6 z-[201] text-slate-900 dark:text-slate-100 font-anthropic overflow-hidden"
-            >
-              <div className="flex justify-between items-start pb-3 mb-3 border-b border-slate-200 dark:border-slate-800 shrink-0">
-                <div>
-                  <h3 className="font-bold text-lg sm:text-xl text-slate-900 dark:text-slate-100 font-anthropicSerif">Ajustare Scor Voluntar</h3>
-                  <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5 font-anthropic">Acordare sau scădere puncte de activitate</p>
-                </div>
-                <button
-                  onClick={() => setIsScoreModalOpen(false)}
-                  className="p-1.5 rounded-[2px] hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 hover:text-slate-900 dark:hover:text-slate-100 cursor-pointer"
-                >
-                  <X size={18} />
-                </button>
-              </div>
 
-              <form onSubmit={handleAdjustScore} className="space-y-4 overflow-y-auto overscroll-contain flex-1 min-h-0 pr-1 -mr-1 scrollbar-thin touch-pan-y font-anthropic" style={{ WebkitOverflowScrolling: 'touch' }}>
-                <div>
-                  <label className="block text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1 font-title">Puncte (ex: 5 sau -2)</label>
-                  <input
-                    type="number"
-                    value={scoreAdjustValue}
-                    onChange={e => setScoreAdjustValue(e.target.value)}
-                    required
-                    placeholder="0"
-                    className="w-full px-3.5 py-2 border border-slate-300 dark:border-slate-700 rounded-[2px] text-sm text-slate-900 dark:text-slate-100 focus:border-slate-900 dark:focus:border-slate-100 focus:outline-none font-data bg-white dark:bg-slate-900"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1 font-title">Motiv / Justificare</label>
-                  <input
-                    type="text"
-                    value={scoreAdjustReason}
-                    onChange={e => setScoreAdjustReason(e.target.value)}
-                    required
-                    placeholder="Ex: Implicare proiect / Lider activitate"
-                    className="w-full px-3.5 py-2 border border-slate-300 dark:border-slate-700 rounded-[2px] text-sm text-slate-900 dark:text-slate-100 focus:border-slate-900 dark:focus:border-slate-100 focus:outline-none font-anthropic bg-white dark:bg-slate-900"
-                  />
-                </div>
-
-                {/* Interactive Scoring Reference Guide */}
-                <ScoringReferenceGuide
-                  selectedAction={scoreAdjustReason}
-                  onSelectPreset={(preset: ScoringPreset) => {
-                    setScoreAdjustValue(String(preset.points));
-                    setScoreAdjustReason(preset.action);
-                  }}
-                />
-
-                <div className="pt-3 pb-1 sticky bottom-0 bg-white dark:bg-[#161B22] border-t border-slate-100 dark:border-slate-800 z-10 flex gap-3 font-title shrink-0">
-                  <button
-                    type="button"
-                    onClick={() => setIsScoreModalOpen(false)}
-                    disabled={isSubmittingScore}
-                    className="flex-1 py-2.5 btn-civic-secondary text-xs sm:text-sm font-title uppercase tracking-wider cursor-pointer"
-                  >
-                    Anulează
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={isSubmittingScore}
-                    className="flex-1 py-2.5 btn-civic-primary text-xs sm:text-sm font-title uppercase tracking-wider cursor-pointer"
-                  >
-                    {isSubmittingScore ? 'Se salvează...' : 'Salvează'}
-                  </button>
-                </div>
-              </form>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
 
       {/* Revert Payment Modal */}
       <AnimatePresence>

@@ -1,5 +1,5 @@
 # 🏛️ INTERACT CAMENA — MASTER SYSTEM ARCHITECTURE & DEVELOPER MANUAL
-> **Versiune Sistem:** `v8.6.1` | **Data:** Septembrie 2026  
+> **Versiune Sistem:** `v9.1.0` | **Data:** Septembrie 2026  
 > **Destinație:** Documentație Tehnică de Nivel Enterprise pentru Dezvoltatori & Agenți AI (SSOT - Single Source of Truth)  
 > **Mediu Tehnologic:** React 19, TypeScript, Vite 6, Supabase (PostgreSQL 15), TailwindCSS, Framer Motion, jsPDF
 
@@ -26,7 +26,7 @@ Platforma **Interact Club Camena Piatra Neamț** este un sistem organizațional 
 ### Obiective Majore:
 * **Trezorerie & Chitanțier Digital Oficial:** Calcul automatizat al cotizațiilor (15 RON/lună), emiterea de chitanțe PDF securizate cu dublă semnătură olografă digitală (Trezorier + Membru), evidența soldului și a tranzacțiilor de venituri/cheltuieli.
 * **Catalog de Prezențe & Activitate:** Monitorizarea participării la ședințe și proiecte, calculul ratei de prezență și al orelor cumulate de voluntariat.
-* **Gamificare & Meritocrație:** Clasament live (Leaderboard), categorii de experiență (*Recrut Nou*, *Voluntar Activ*, *Senior Voluntar*, *Ambasador Camena*), deblocare automată de insigne (Milestones) și registru de audit imutabil pentru orice ajustare de punctaj.
+* **Recunoaștere & Pașaport de Voluntariat:** Categorii de experiență (*Recrut Nou*, *Voluntar Activ*, *Senior Voluntar*, *Ambasador Camena*), deblocare automată de insigne (Milestones) bazate pe ore de voluntariat, prezențe și proiecte comunitare.
 * **Comunitate & Inițiativă:** Forum intern, depunere formală a propunerilor de proiecte, trimitere de aprecieri între colegi (*Kudos*) și cutie digitală de sugestii.
 * **Securitate de Nivel Enterprise:** Izolarea credențialelor într-o schemă privată (`private.member_credentials`), criptare asimetrică prin **bcrypt** (`pgcrypto`), zero dependență de servicii SMTP externe vulnerabile la rate-limiting.
 
@@ -89,7 +89,6 @@ GRANT ALL ON private.member_credentials TO postgres, service_role;
 * `joinDate` (`TIMESTAMPTZ`): Data înscrierii în club
 * `totalPaid` (`NUMERIC`): Total cotizații achitate în RON
 * `totalDebt` (`NUMERIC`): Datorie calculată
-* `score` (`INTEGER`): Punctaj acumulat în gamificare
 * `presences` (`INTEGER`): Număr de prezențe validate
 * `excusedAbsences` (`INTEGER`): Învoiri motivate
 * `unexcusedAbsences` (`INTEGER`): Absențe nemotivate
@@ -99,7 +98,6 @@ GRANT ALL ON private.member_credentials TO postgres, service_role;
 * `avatar` (`TEXT`): URL avatar
 * `nickname` (`TEXT`): Poreclă / Prenume scurt
 * `stats` (`JSONB`): Obiect pentru metadate extinse, insigne și loguri de audit sistem
-* `scoreAdjustments` (`JSONB`): Array cu istoricul ajustărilor de punctaj
 * `customFields` (`JSONB`): Câmpuri adiționale
 * `has_seen_tutorial` (`BOOLEAN`): Stare parcurgere tutorial introductiv
 * `login_count` (`INTEGER`): Contor autentificări
@@ -138,16 +136,16 @@ GRANT ALL ON private.member_credentials TO postgres, service_role;
 * `date` (`TIMESTAMPTZ`): Data tranzacției
 * `receiptId` (`TEXT` | NULL): Referință chitanță dacă este asociată unei plăți
 
-#### 5. `public.score_audit_logs` (Jurnal Imutabil de Audit Punctaj)
+#### 5. `SYS_AUDIT_LOGS` (Jurnal de Audit & Guvernanță Sistem)
+* Înregistrat centralizat în documentul `SYS_AUDIT_LOGS` din tabela `members` și compilat în timp real în `MasterAuditView`.
 * `id` (`TEXT`, PK): Format `audit_timestamp_random`
-* `adminId` (`TEXT`): ID-ul administratorului care a efectuat modificarea
+* `adminId` (`TEXT`): ID-ul administratorului / autorului acțiunii
 * `adminName` (`TEXT`): Numele administratorului
 * `adminUsername` (`TEXT`): Username admin
-* `targetMemberId` (`TEXT`): Membrul modificat
+* `targetMemberId` (`TEXT`): Membrul vizat
 * `targetMemberName` (`TEXT`): Numele membrului
-* `action` (`TEXT`): `'ADDED'`, `'SUBTRACTED'`, `'REVERTED'`, `'MEMBER_CREATE'`, `'MEMBER_DELETE'`, `'PASSWORD_CHANGE'`
-* `points` (`INTEGER`): Numărul de puncte acordate/retrase
-* `reason` (`TEXT`): Justificare obligatorie
+* `action` (`TEXT`): `'PAYMENT_ADD'`, `'PAYMENT_REVERT'`, `'MEMBER_CREATE'`, `'MEMBER_DELETE'`, `'PASSWORD_CHANGE'`, `'ABSENCE_APPROVED'`, etc.
+* `reason` (`TEXT`): Justificare / detalii operațiune
 * `createdAt` (`TIMESTAMPTZ`): Timestamp ireversibil
 
 #### 6. `public.news` (Comunicate Oficiale & Știri)
@@ -303,9 +301,10 @@ BEGIN
 END;
 $$;
 
--- 3. RESETARE PAROLĂ DE CĂTRE ADMIN (Doar utilizatori autentificați cu rol de admin)
+-- 3. RESETARE PAROLĂ DE CĂTRE ADMIN (Cu verificare obligatorie a parolei de admin)
 CREATE OR REPLACE FUNCTION public.admin_set_member_password(
   p_admin_member_id TEXT,
+  p_admin_password TEXT,
   p_target_member_id TEXT,
   p_new_password TEXT
 )
@@ -316,10 +315,25 @@ SET search_path = public, private, extensions, pg_temp
 AS $$
 DECLARE
   v_admin public.members%ROWTYPE;
+  v_admin_cred private.member_credentials%ROWTYPE;
 BEGIN
-  SELECT * INTO v_admin FROM public.members WHERE id = p_admin_member_id;
-  IF v_admin.id IS NULL OR lower(v_admin.role) != 'admin' THEN
+  IF p_admin_member_id IS NULL OR length(trim(p_admin_member_id)) = 0 OR
+     p_admin_password IS NULL OR length(trim(p_admin_password)) = 0 OR
+     p_target_member_id IS NULL OR length(trim(p_target_member_id)) = 0 OR
+     p_new_password IS NULL OR length(trim(p_new_password)) = 0 THEN
+    RETURN jsonb_build_object('success', false, 'error', 'Parametrii furnizați sunt invalizi.');
+  END IF;
+
+  SELECT * INTO v_admin FROM public.members 
+  WHERE id = p_admin_member_id OR lower(username) = lower(trim(p_admin_member_id));
+
+  IF v_admin.id IS NULL OR lower(coalesce(v_admin.role, '')) != 'admin' THEN
     RETURN jsonb_build_object('success', false, 'error', 'Neautorizat: Doar administratorii pot reseta parole.');
+  END IF;
+
+  SELECT * INTO v_admin_cred FROM private.member_credentials WHERE member_id = v_admin.id;
+  IF v_admin_cred.member_id IS NULL OR v_admin_cred.password_hash != crypt(p_admin_password, v_admin_cred.password_hash) THEN
+    RETURN jsonb_build_object('success', false, 'error', 'Parola de administrator este incorectă.');
   END IF;
 
   IF length(trim(p_new_password)) < 6 THEN
@@ -422,7 +436,7 @@ Pentru a preveni erorile de tip `PGRST204: Could not find the column of 'members
 ```typescript
 const VALID_MEMBER_COLUMNS = new Set([
   'id', 'name', 'email', 'phone', 'role', 'committee', 'status', 'joinDate',
-  'totalPaid', 'score', 'avatar', 'stats', 'scoreAdjustments', 'customFields',
+  'totalPaid', 'avatar', 'stats', 'customFields',
   'createdAt', 'boardPosition', 'address', 'payments', 'attendanceRate',
   'qualification', 'totalDebt', 'nickname', 'presences', 'excusedAbsences',
   'unexcusedAbsences', 'username', 'login_count', 'has_seen_tutorial',
@@ -435,14 +449,16 @@ const VALID_MEMBER_COLUMNS = new Set([
 ## 8. ARBORESCENȚA FIȘIERELOR, COMPONENTELOR & SERVICIILOR
 
 ```
-github-source/
+project-source/
 │
-├── package.json                         # Configurare versiune (8.6.1) si dependinte
+├── package.json                         # Configurare versiune (9.1.0) si dependinte
 ├── vite.config.ts                       # Configurare bundler Vite
 ├── tailwind.config.js                   # Tema vizuala si culorile oficiale
 ├── tsconfig.json                        # Reguli TypeScript
 ├── vercel.json                          # Routing SPA Vercel
 ├── index.html                           # Entry-point HTML cu fonturi Google
+├── remove_clasament_and_score.sql       # Script DDL SQL pentru eliminare clasament și punctaj
+├── fix_supabase_linter_warnings.sql     # Script SQL securizare proceduri, RLS și tabele buget
 ├── FIX_SUPABASE_SECURITY_AND_PASSWORDS.sql # Script SQL complet de securitate si RLS
 ├── MIGRATE_ALL_MEMBERS_TO_AUTH.sql      # Script populare credentiale
 │
@@ -451,6 +467,7 @@ github-source/
 │   ├── generate_security_fix_sql.js     # Generator script SQL securizat
 │   ├── simulate_full_platform_test.js   # Suita de teste si simulari automate
 │   ├── test_supabase_health.js          # Diagnoza live tabele si functii RPC
+│   ├── verify_algorithms.js             # Verificare algoritmi integritate și ore
 │   └── output/
 │       └── credentials.json             # Fisiere JSON cu toate datele conturilor
 │
@@ -471,7 +488,7 @@ github-source/
     │   ├── finance.ts                   # Calcul datorie, registru calendaristic lunar
     │   ├── permissions.ts               # Evaluare drepturi Board si permisiuni
     │   ├── supabaseService.ts           # Serviciu CRUD pentru toate tabelele
-    │   ├── milestones.ts                # Calcul insigne si niveluri de gamificare
+    │   ├── milestones.ts                # Calcul insigne și niveluri de experiență
     │   ├── pdfGenerator.ts              # Generare chitanțe PDF cu 2 semnături
     │   ├── pushNotifications.ts         # Notificări Web Push
     │   └── xlsx.ts                      # Export rapoarte Excel
@@ -489,14 +506,12 @@ github-source/
         │   ├── CommandPalette.tsx       # Căutare rapidă Spotlight (Cmd+K)
         │   ├── NotificationsDropdown.tsx# Panou alerte live
         │   ├── PlatformTutorialModal.tsx# Ghid introductiv pentru membri noi
-        │   ├── VolunteerSpotlightCard.tsx # Evidențierea voluntarului lunii
         │   ├── finance/
         │   │   └── SignaturePad.tsx     # Canvas tactil preluare semnătură
         │   └── views/
         │       ├── MembersView.tsx      # Roster membri (Carduri / Tabel)
         │       ├── AttendanceView.tsx   # Catalog prezențe
         │       ├── EventsView.tsx       # Calendar evenimente și RSVP
-        │       ├── LeaderboardView.tsx  # Clasament gamificare
         │       ├── BudgetView.tsx       # Trezorerie și balanță financiară
         │       ├── MasterAuditView.tsx  # Jurnal complet de audit
         │       ├── NewsView.tsx         # Flux știri
@@ -507,9 +522,7 @@ github-source/
         │       ├── ProjectProposalForm.tsx # Formular depunere proiect
         │       ├── KudosView.tsx        # Panou aprecieri
         │       ├── RepartizareView.tsx  # Distribuire sarcini proiecte
-        │       ├── SuggestionsView.tsx  # Cutie sugestii
-        │       ├── ScoreAuditLogModal.tsx # Istoric ajustări puncte per membru
-        │       └── ScoringReferenceGuide.tsx # Ghid oficial de acordare puncte
+        │       └── SuggestionsView.tsx  # Cutie sugestii
         ├── finance/
         │   └── PaymentModal.tsx         # Dialog încasare cotizație cu 2 semnături
         ├── members/

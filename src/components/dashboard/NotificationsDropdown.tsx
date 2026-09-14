@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Bell, CheckCheck, Heart, Megaphone, CheckCircle2, XCircle, PieChart, ChevronRight, Trophy, Calendar, Trash2 } from 'lucide-react';
+import { Bell, CheckCheck, Heart, Megaphone, CheckCircle2, XCircle, PieChart, ChevronRight, Calendar, Trash2 } from 'lucide-react';
 import { supabase } from '../../supabase';
 import { PushNotificationToggle } from './PushNotificationToggle';
 import { sendSystemNotification, broadcastPushNotification } from '../../utils/pushNotifications';
@@ -9,7 +9,7 @@ import { toast } from '../ui/Toast';
 
 export interface NotificationItem {
   id: string;
-  type: 'score' | 'excuse_approved' | 'excuse_rejected' | 'news' | 'poll' | 'event' | 'kudos';
+  type: 'excuse_approved' | 'excuse_rejected' | 'news' | 'poll' | 'event' | 'kudos';
   title: string;
   description: string;
   timestamp: string;
@@ -238,18 +238,6 @@ export const NotificationsDropdown: React.FC<NotificationsDropdownProps> = ({
           }
         }
       })
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'score_audit_logs' }, (payload: any) => {
-        fetchData();
-        if (payload?.new && (payload.new.targetMemberId === currentUserId || payload.new.targetMemberName?.toLowerCase() === currentUsername?.toLowerCase())) {
-          const pts = Number(payload.new.points) || 0;
-          const isPos = pts > 0;
-          sendSystemNotification({
-            title: isPos ? `🏆 Ai primit +${pts} puncte!` : `⚠️ Ajustare punctaj: ${pts} puncte`,
-            body: `Motiv: "${payload.new.reason || 'Ajustare scor'}" (acordat de ${payload.new.adminName || 'Board'})`,
-            url: '/#clasament',
-          });
-        }
-      })
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'news' }, (payload: any) => {
         fetchData();
         if (payload?.new) {
@@ -340,20 +328,6 @@ export const NotificationsDropdown: React.FC<NotificationsDropdownProps> = ({
   const notifications: NotificationItem[] = useMemo(() => {
     const list: NotificationItem[] = [];
 
-    // 1. Score adjustments for the current user
-    if (currentMemberData?.scoreAdjustments && Array.isArray(currentMemberData.scoreAdjustments)) {
-      currentMemberData.scoreAdjustments.forEach((adj: any) => {
-        const isPos = (adj.points || 0) > 0;
-        list.push({
-          id: `score_${adj.id || adj.date}`,
-          type: 'score',
-          title: isPos ? `🏆 Ai primit +${adj.points} puncte!` : `⚠️ Ajustare punctaj: ${adj.points} puncte`,
-          description: `Acțiune: "${adj.reason || 'Ajustare scor'}" (acordat de ${adj.adminName || 'Board'})`,
-          timestamp: adj.date,
-          targetSection: 'clasament',
-        });
-      });
-    }
 
     // 2. Absence Requests of user
     rawAbsences.forEach(req => {
@@ -503,8 +477,6 @@ export const NotificationsDropdown: React.FC<NotificationsDropdownProps> = ({
 
   const getIcon = (type: NotificationItem['type']) => {
     switch (type) {
-      case 'score':
-        return <Trophy size={16} className="text-amber-500" />;
       case 'kudos':
         return <Heart size={16} className="text-rose-500 fill-rose-500/20" />;
       case 'excuse_approved':

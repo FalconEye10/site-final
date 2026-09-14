@@ -222,8 +222,7 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({ curren
               <div className="text-xs sm:text-sm font-anthropic">
                 <span className="font-bold text-slate-900 dark:text-slate-100 block">Semnează propunerea cu numele meu</span>
                 <span className="text-slate-500 dark:text-slate-400 text-xs block mt-1 leading-relaxed">
-                  Dacă bifezi, adminii vor vedea autorul propunerii (<strong>{currentUsername || 'tu'}</strong>).
-                  Propunerile semnate și aplicabile pot primi <strong>puncte bonus</strong> la clasament.
+                  Dacă bifezi, conducerea va vedea autorul propunerii (<strong>{currentUsername || 'tu'}</strong>) pentru coordonare și implementare.
                 </span>
               </div>
             </label>

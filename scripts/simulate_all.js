@@ -253,56 +253,32 @@ async function runFullSimulation() {
     assert(!absApproveErr, 'Aprobare cerere de învoire de către administrator');
 
     // ----------------------------------------------------
-    // TEST 3: MEMBRI & AJUSTARE SCOR (ADĂUGARE / SCĂDERE)
+    // TEST 3: MEMBRI & GESTIUNE ORE VOLUNTARIAT / PREZENȚE
     // ----------------------------------------------------
-    console.log('\n--- 3. TESTARE MEMBRI & SISTEM SCORURI (ADĂUGARE / SCĂDERE) ---');
+    console.log('\n--- 3. TESTARE MEMBRI & GESTIUNE VOLUNTARIAT ---');
     const { data: members, error: memErr } = await supabase.from('members').select('*').limit(5);
     const nonSysMembers = (members || []).filter(m => m.id !== 'SYS_AUDIT_LOGS');
     assert(!memErr && nonSysMembers.length > 0, `Citire listă membri din baza de date (${nonSysMembers.length} membri încărcați)`);
 
-    const targetMember = nonSysMembers[0] || { id: 'M001', name: 'Test User', score: 0 };
-    const initialScore = Number(targetMember.score || 0);
+    const targetMember = nonSysMembers[0] || { id: 'M001', name: 'Test User' };
+    const initialHours = Number(targetMember.hours || 0);
 
-    // A. Adaugare puncte (+10)
-    const plusPoints = 10;
-    const newAdjPlus = {
-      id: `adj_${Date.now()}_1`,
-      points: plusPoints,
-      reason: 'Test Adăugare Punctaj: Participare Eveniment',
-      date: new Date().toISOString(),
-      adminName: 'Admin Simulare'
-    };
-    const scoreAfterPlus = initialScore + plusPoints;
-    const { error: addScoreErr } = await supabase.from('members').update({
-      score: scoreAfterPlus,
-      scoreAdjustments: [...(targetMember.scoreAdjustments || []), newAdjPlus]
+    // A. Adaugare ore voluntariat (+4h)
+    const plusHours = 4;
+    const hoursAfterPlus = initialHours + plusHours;
+    const { error: addHoursErr } = await supabase.from('members').update({
+      hours: hoursAfterPlus
     }).eq('id', targetMember.id);
-    assert(!addScoreErr, `Adăugare +${plusPoints} puncte pentru ${targetMember.name} (Scor nou: ${scoreAfterPlus})`);
+    assert(!addHoursErr, `Înregistrare +${plusHours} ore voluntariat pentru ${targetMember.name} (Ore totale: ${hoursAfterPlus})`);
 
-    // B. Scadere puncte (-5)
-    const minusPoints = -5;
-    const newAdjMinus = {
-      id: `adj_${Date.now()}_2`,
-      points: minusPoints,
-      reason: 'Test Scădere Punctaj: Penalizare întârziere',
-      date: new Date().toISOString(),
-      adminName: 'Admin Simulare'
-    };
-    const scoreAfterMinus = scoreAfterPlus + minusPoints;
-    const { error: subScoreErr } = await supabase.from('members').update({
-      score: scoreAfterMinus,
-      scoreAdjustments: [...(targetMember.scoreAdjustments || []), newAdjPlus, newAdjMinus]
-    }).eq('id', targetMember.id);
-    assert(!subScoreErr, `Scădere ${Math.abs(minusPoints)} puncte pentru ${targetMember.name} (Scor final: ${scoreAfterMinus})`);
-
-    // C. Editare profil membru
+    // B. Editare profil membru (telefon, status)
     const { error: editMemErr } = await supabase.from('members').update({
       phone: '0712345678',
       status: 'active'
     }).eq('id', targetMember.id);
     assert(!editMemErr, `Modificare date profil membru (${targetMember.name})`);
 
-    // D. Audit log prin logScoreAudit
+    // C. Audit log prin logScoreAudit (sistem audit)
     let auditOk = false;
     try {
       await logScoreAudit({
@@ -310,8 +286,8 @@ async function runFullSimulation() {
         adminName: 'Admin Simulare',
         targetMemberId: targetMember.id,
         targetMemberName: targetMember.name,
-        action: 'SCORE_ADJUSTMENT',
-        reason: `Test Simulare Scor: +10 / -5 puncte`
+        action: 'HOURS_UPDATE',
+        reason: `Adăugare +4 ore voluntariat activitate comunitară`
       });
       auditOk = true;
     } catch (e) {
@@ -381,10 +357,9 @@ async function runFullSimulation() {
     await supabase.from('suggestions').delete().eq('id', testSuggId);
     await supabase.from('kudos').delete().eq('id', testKudosId);
 
-    // Restabilire scor membru la cel inițial
+    // Restabilire ore membru la cele inițiale
     await supabase.from('members').update({
-      score: initialScore,
-      scoreAdjustments: targetMember.scoreAdjustments || []
+      hours: initialHours
     }).eq('id', targetMember.id);
 
     console.log('  ✅ Entitățile temporare de test au fost curățate cu succes.');
