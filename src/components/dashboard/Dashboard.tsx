@@ -3205,7 +3205,7 @@ export function Dashboard({ username, currentMember, currentMemberId, onLogout }
                  </span>
                  <span className="adm-meta-label !text-emerald-800 dark:!text-emerald-300 font-bold font-title">Sistem Operațional</span>
                </div>
-               <span className="adm-meta-label !text-emerald-700 dark:!text-emerald-400 font-bold font-data">v{__APP_VERSION__}</span>
+               <span className="adm-meta-label !text-emerald-700 dark:!text-emerald-400 font-bold font-data">v{APP_VERSION}</span>
              </div>
            )}
            <button

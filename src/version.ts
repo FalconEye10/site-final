@@ -7,7 +7,7 @@
  * - Z (Patch): Corecții rapide, bug-fixuri mici / rușinoase, alinieri sau mici ajustări
  */
 
-export const APP_VERSION = '8.5.5';
+export const APP_VERSION = typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '8.6.1';
 
 export interface VersionLog {
   version: string;
@@ -17,6 +17,18 @@ export interface VersionLog {
 }
 
 export const VERSION_HISTORY: VersionLog[] = [
+  {
+    version: '8.6.1',
+    type: 'patch',
+    description: 'Sincronizare universală a versiunii platformei: actualizare automată a versiunii în meniul de căutare rapidă (CommandPalette) și dialogul de noutăți, aliniere completă a documentației de arhitectură cu registrul SemVer și recompilare build oficial de producție',
+    timestamp: '2026-09-14'
+  },
+  {
+    version: '8.6.0',
+    type: 'minor',
+    description: 'Securizare avansată a operațiunilor administrative: autorizare obligatorie prin verificarea parolei de administrator la crearea conturilor de membri și resetarea parolelor prin RPC dedicat (admin_set_member_password), protecție împotriva acțiunilor neautorizate, eliminare completă a credențialelor din documentație și validare completă (77/77 teste trecute) în simularea pe 9 dispozitive',
+    timestamp: '2026-09-14'
+  },
   {
     version: '8.5.5',
     type: 'patch',

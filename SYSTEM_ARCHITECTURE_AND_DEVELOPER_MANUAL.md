@@ -1,5 +1,5 @@
 # 🏛️ INTERACT CAMENA — MASTER SYSTEM ARCHITECTURE & DEVELOPER MANUAL
-> **Versiune Sistem:** `v7.7.0` | **Data:** August 2026  
+> **Versiune Sistem:** `v8.6.1` | **Data:** Septembrie 2026  
 > **Destinație:** Documentație Tehnică de Nivel Enterprise pentru Dezvoltatori & Agenți AI (SSOT - Single Source of Truth)  
 > **Mediu Tehnologic:** React 19, TypeScript, Vite 6, Supabase (PostgreSQL 15), TailwindCSS, Framer Motion, jsPDF
 
@@ -437,7 +437,7 @@ const VALID_MEMBER_COLUMNS = new Set([
 ```
 github-source/
 │
-├── package.json                         # Configurare versiune (7.7.0) si dependinte
+├── package.json                         # Configurare versiune (8.6.1) si dependinte
 ├── vite.config.ts                       # Configurare bundler Vite
 ├── tailwind.config.js                   # Tema vizuala si culorile oficiale
 ├── tsconfig.json                        # Reguli TypeScript
