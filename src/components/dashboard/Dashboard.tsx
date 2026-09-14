@@ -29,7 +29,7 @@ import { AdminTeamHub } from './hubs/AdminTeamHub';
 import { AdminFinanceHub } from './hubs/AdminFinanceHub';
 import { AdminCommunityHub } from './hubs/AdminCommunityHub';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
-import { ShieldAlert, Zap, Sparkles } from 'lucide-react';
+import { ShieldAlert, Zap, Sparkles, History } from 'lucide-react';
 
 // Lazy-loaded Views & Modals for optimum performance and minimal bundle footprint
 const MembersView = lazy(() => import('./views/MembersView').then(m => ({ default: m.MembersView })));
@@ -46,6 +46,7 @@ const SuggestionsView = lazy(() => import('./views/SuggestionsView').then(m => (
 const MasterAuditView = lazy(() => import('./views/MasterAuditView').then(m => ({ default: m.MasterAuditView })));
 const AddMemberModal = lazy(() => import('../members/AddMemberModal').then(m => ({ default: m.AddMemberModal })));
 const PlatformTutorialModal = lazy(() => import('./PlatformTutorialModal').then(m => ({ default: m.PlatformTutorialModal })));
+const UpdateLogModal = lazy(() => import('./UpdateLogModal').then(m => ({ default: m.UpdateLogModal })));
 
 function ViewLoadingSkeleton() {
   return (
@@ -2246,6 +2247,8 @@ export function Dashboard({ username, currentMember, currentMemberId, onLogout }
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [isTutorialOpen, setIsTutorialOpen] = useState(false);
+  const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
+  const [updateModalInitialTab, setUpdateModalInitialTab] = useState<'current' | 'all'>('current');
   const [membersViewSeed, setMembersViewSeed] = useState<{ search?: string; memberId?: string }>({});
   const [themeMode, setThemeMode] = useState<'dark' | 'light'>(() => {
     if (typeof window === 'undefined') return 'dark';
@@ -2265,6 +2268,36 @@ export function Dashboard({ username, currentMember, currentMemberId, onLogout }
       }
     }
   }, [members, username]);
+
+  // First Login per Version Check: Automatically trigger "What's New" modal on first login after update
+  useEffect(() => {
+    if (!username) return;
+    const versionSeenKey = `camena_update_seen_v_${APP_VERSION}_${username.toLowerCase()}`;
+    const alreadySeenThisVersion = localStorage.getItem(versionSeenKey) === 'true';
+
+    // Wait until tutorial completes if tutorial is currently showing
+    if (alreadySeenThisVersion || isTutorialOpen) {
+      return;
+    }
+
+    // First login on this version: display What's New modal!
+    setUpdateModalInitialTab('current');
+    setIsUpdateModalOpen(true);
+    localStorage.setItem(versionSeenKey, 'true');
+  }, [username, isTutorialOpen]);
+
+  const handleCloseUpdateModal = () => {
+    setIsUpdateModalOpen(false);
+    if (username) {
+      const versionSeenKey = `camena_update_seen_v_${APP_VERSION}_${username.toLowerCase()}`;
+      localStorage.setItem(versionSeenKey, 'true');
+    }
+  };
+
+  const handleOpenUpdateLog = (tab: 'current' | 'all' = 'all') => {
+    setUpdateModalInitialTab(tab);
+    setIsUpdateModalOpen(true);
+  };
 
   // Auto-close mobile sidebar on resize to desktop (lg) or Escape key
   useEffect(() => {
@@ -2290,6 +2323,15 @@ export function Dashboard({ username, currentMember, currentMemberId, onLogout }
     setIsTutorialOpen(false);
     const localKey = `tutorial_seen_v3_${username.toLowerCase()}`;
     localStorage.setItem(localKey, 'true');
+
+    // After tutorial completion, if user hasn't seen current version update notes, show them
+    const versionSeenKey = `camena_update_seen_v_${APP_VERSION}_${username.toLowerCase()}`;
+    const alreadySeenThisVersion = localStorage.getItem(versionSeenKey) === 'true';
+    if (!alreadySeenThisVersion) {
+      setUpdateModalInitialTab('current');
+      setIsUpdateModalOpen(true);
+      localStorage.setItem(versionSeenKey, 'true');
+    }
 
     // Update in Supabase so login count is saved and has_seen_tutorial is marked true
     try {
@@ -2965,9 +3007,17 @@ export function Dashboard({ username, currentMember, currentMemberId, onLogout }
     return currentTheme.colors[1] || themeColor;
   })();
 
-  const commandPaletteNavItems: CommandNavItem[] = MENU_CATEGORIES.flatMap(cat =>
-    cat.items.map(item => ({ ...item, category: cat.title }))
-  );
+  const commandPaletteNavItems: CommandNavItem[] = [
+    ...MENU_CATEGORIES.flatMap(cat =>
+      cat.items.map(item => ({ ...item, category: cat.title }))
+    ),
+    {
+      id: '__update_log',
+      label: `Jurnal Actualizări & Noutăți (v${APP_VERSION})`,
+      icon: History,
+      category: 'Sistem & Platformă'
+    }
+  ];
 
   return (
     <div
@@ -3081,17 +3131,38 @@ export function Dashboard({ username, currentMember, currentMemberId, onLogout }
 
         <div className="p-3 pb-[max(0.75rem,env(safe-area-inset-bottom,0.75rem))] border-t border-slate-200 dark:border-slate-800 shrink-0">
            {!isSidebarCollapsed && (
-             <div className="flex items-center justify-between px-3 py-2 mb-2 border border-emerald-300 dark:border-emerald-500/30 bg-emerald-50 dark:bg-emerald-950/40 rounded-[2px]">
+             <button
+               onClick={() => handleOpenUpdateLog('all')}
+               title="Apasă pentru a deschide Jurnalul de Actualizări (Update Log)"
+               className="w-full flex items-center justify-between px-3 py-2 mb-2 border border-emerald-300 dark:border-emerald-500/30 bg-emerald-50 hover:bg-emerald-100/70 dark:bg-emerald-950/40 dark:hover:bg-emerald-900/50 rounded-[2px] transition-all cursor-pointer group text-left shadow-xs"
+             >
                <div className="flex items-center gap-2">
                  <span className="relative flex h-1.5 w-1.5">
                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-60" />
                    <span className="relative inline-flex h-1.5 w-1.5 bg-emerald-400" />
                  </span>
-                 <span className="adm-meta-label !text-emerald-800 dark:!text-emerald-300 font-bold font-title">Sistem Operațional</span>
+                 <span className="adm-meta-label !text-emerald-800 dark:!text-emerald-300 font-bold font-title group-hover:underline">Sistem Operațional</span>
                </div>
-               <span className="adm-meta-label !text-emerald-700 dark:!text-emerald-400 font-bold font-data">v{APP_VERSION}</span>
-             </div>
+               <span className="adm-meta-label !text-emerald-700 dark:!text-emerald-400 font-bold font-data flex items-center gap-1">
+                 v{APP_VERSION}
+                 <Sparkles size={11} className="text-emerald-600 dark:text-emerald-400 opacity-70 group-hover:opacity-100 transition-opacity" />
+               </span>
+             </button>
            )}
+
+           <button
+             onClick={() => handleOpenUpdateLog('all')}
+             title={isSidebarCollapsed ? `Jurnal Actualizări (v${APP_VERSION})` : undefined}
+             className={`w-full flex items-center gap-3 py-2 rounded-[2px] text-slate-600 hover:text-slate-950 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-slate-100 dark:hover:bg-slate-800/70 font-bold transition-all group cursor-pointer mb-1.5 ${isSidebarCollapsed ? 'justify-center px-0' : 'px-3'}`}
+           >
+             <History size={16} className="shrink-0 text-emerald-600 dark:text-emerald-400 group-hover:rotate-[-20deg] transition-transform" />
+             {!isSidebarCollapsed && (
+               <div className="flex items-center justify-between w-full">
+                 <span className="text-[13px] font-title">Jurnal Actualizări</span>
+                 <span className="text-[10px] px-1.5 py-0.5 rounded-[2px] bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 font-data font-bold border border-emerald-500/20">Log</span>
+               </div>
+             )}
+           </button>
            <button
             onClick={onLogout}
             title={isSidebarCollapsed ? 'Deconectare' : undefined}
@@ -3291,6 +3362,17 @@ export function Dashboard({ username, currentMember, currentMemberId, onLogout }
                               <Compass size={15} className="text-slate-500 dark:text-slate-400" /> Redeschide Turul
                             </button>
                             <button
+                              onClick={() => { handleOpenUpdateLog('all'); setIsUserMenuOpen(false); }}
+                              className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-[2px] text-sm font-bold text-slate-700 hover:text-slate-950 hover:bg-slate-100 dark:text-slate-300 dark:hover:text-white dark:hover:bg-slate-800 text-left transition-colors cursor-pointer font-anthropic"
+                            >
+                              <div className="flex items-center gap-2.5">
+                                <History size={15} className="text-emerald-600 dark:text-emerald-400" /> Jurnal Actualizări
+                              </div>
+                              <span className="text-[10px] font-data font-bold px-1.5 py-0.5 rounded-[2px] bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700">
+                                v{APP_VERSION}
+                              </span>
+                            </button>
+                            <button
                               onClick={onLogout}
                               className="w-full flex items-center gap-2.5 px-3.5 py-2.5 rounded-[2px] text-sm font-bold text-rose-600 hover:text-rose-700 hover:bg-rose-50 dark:text-rose-400 dark:hover:text-rose-300 dark:hover:bg-rose-950/40 text-left transition-colors cursor-pointer font-anthropic"
                             >
@@ -3333,7 +3415,14 @@ export function Dashboard({ username, currentMember, currentMemberId, onLogout }
         onClose={() => setIsCommandPaletteOpen(false)}
         navItems={commandPaletteNavItems}
         members={members}
-        onNavigate={(sectionId) => { setMembersViewSeed({}); setActiveSection(sectionId); }}
+        onNavigate={(sectionId) => {
+          if (sectionId === '__update_log') {
+            handleOpenUpdateLog('all');
+            return;
+          }
+          setMembersViewSeed({});
+          setActiveSection(sectionId);
+        }}
         onSelectMember={(member) => { setMembersViewSeed({ memberId: member.id, search: member.name }); setActiveSection('membri'); }}
       />
 
@@ -3360,6 +3449,18 @@ export function Dashboard({ username, currentMember, currentMemberId, onLogout }
             onClose={handleCloseTutorial}
             isMandatoryFirstTime={Boolean(currentUserObj && (currentUserObj.login_count === 0 || !currentUserObj.has_seen_tutorial))}
             currentUser={currentUserObj}
+          />
+        </Suspense>
+      )}
+
+      {/* Platform Update Log Modal */}
+      {isUpdateModalOpen && (
+        <Suspense fallback={null}>
+          <UpdateLogModal
+            isOpen={isUpdateModalOpen}
+            onClose={handleCloseUpdateModal}
+            currentUser={currentUserObj}
+            initialTab={updateModalInitialTab}
           />
         </Suspense>
       )}

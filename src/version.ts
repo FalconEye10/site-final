@@ -7,7 +7,7 @@
  * - Z (Patch): Corecții rapide, bug-fixuri mici / rușinoase, alinieri sau mici ajustări
  */
 
-export const APP_VERSION = typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '9.1.1';
+export const APP_VERSION = typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '9.2.0';
 
 export interface VersionLog {
   version: string;
@@ -17,6 +17,12 @@ export interface VersionLog {
 }
 
 export const VERSION_HISTORY: VersionLog[] = [
+  {
+    version: '9.2.0',
+    type: 'minor',
+    description: 'Sistem inteligent de notificare la primul login după fiecare update („Ce este nou”), modal dedicat pentru explorarea jurnalului complet de actualizări (toate versiunile de la v8.0 până la prezent), buton de acces rapid în bara laterală și meniul de utilizator, plus căutare dedicată în Command Palette (⌘K)',
+    timestamp: '2026-09-14'
+  },
   {
     version: '9.1.1',
     type: 'patch',

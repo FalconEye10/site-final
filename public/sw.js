@@ -3,7 +3,7 @@
 // ==============================================================================
 
 // Versioned cache for offline resilience and fast asset loading
-const CACHE_NAME = 'interact-camena-v9-1-1';
+const CACHE_NAME = 'interact-camena-v9-2-0';
 const PRECACHE_ASSETS = [
   '/',
   '/index.html',
