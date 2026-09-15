@@ -7,7 +7,7 @@
  * - Z (Patch): Corecții rapide, bug-fixuri mici / rușinoase, alinieri sau mici ajustări
  */
 
-export const APP_VERSION = typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '9.2.0';
+export const APP_VERSION = typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '9.3.0';
 
 export interface VersionLog {
   version: string;
@@ -17,6 +17,12 @@ export interface VersionLog {
 }
 
 export const VERSION_HISTORY: VersionLog[] = [
+  {
+    version: '9.3.0',
+    type: 'minor',
+    description: 'Optimizare cod, rezoluție completă a avertizărilor din Supabase Database Linter (fără warning-uri rls_policy_always_true sau permisiuni neintenționate), restaurare acces complet de scriere pentru Evenimente, Învoiri și Sondaje în Dashboard, eliminare junk și validare 100% în sandbox (37/37 teste trecute)',
+    timestamp: '2026-09-16'
+  },
   {
     version: '9.2.0',
     type: 'minor',
