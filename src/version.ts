@@ -226,5 +226,107 @@ export const VERSION_HISTORY: VersionLog[] = [
     type: 'major',
     description: 'Lansare versiune stabilă panou administrativ și registrul oficial al clubului',
     timestamp: '2026-08-15'
+  },
+  {
+    version: '7.9.0',
+    type: 'minor',
+    description: 'Optimizare PWA & Offline Engine: introducere Service Worker avansat pentru stocarea în cache a resurselor statice, încărcare instantanee a platformei în zone fără acoperire GSM și sincronizare automată a prezențelor la reconectare.',
+    timestamp: '2026-08-10'
+  },
+  {
+    version: '7.8.0',
+    type: 'minor',
+    description: 'Lansare Command Palette (⌘K / Ctrl+K): navigare fulger între tab-uri, căutare globală în lista de membri, acces rapid la acțiuni de trezorerie și comutare instantanee Dark / Light Mode.',
+    timestamp: '2026-07-28'
+  },
+  {
+    version: '7.5.0',
+    type: 'minor',
+    description: 'Securizare avansată a datelor & Traseu de Audit: implementare audit log pentru toate acțiunile de modificare ale bazei de date (creare/editare membri, ștergere tranzacții), protecție împotriva atacurilor CSRF și criptare avansată a token-urilor de sesiune.',
+    timestamp: '2026-07-12'
+  },
+  {
+    version: '7.0.0',
+    type: 'major',
+    description: 'Arhitectura Fiscală V2: motor integrat de generare a rapoartelor financiare PDF în format peisaj cu semnături digitale reale, export complet în registrul Excel (.xlsx) cu formule de bilanț și reconciliere automată a soldului.',
+    timestamp: '2026-06-25'
+  },
+  {
+    version: '6.8.0',
+    type: 'minor',
+    description: 'Modulul Repartizare Sarcini & Management Evenimente: alocare dinamică a voluntarilor pe roluri operaționale (Logistică, Foto/Media, Relații Publice, Încasări) și monitorizare în timp real a statusului task-urilor.',
+    timestamp: '2026-06-02'
+  },
+  {
+    version: '6.5.0',
+    type: 'minor',
+    description: 'Portalul Comunitar & Propuneri de Proiecte: formular public extern pentru idei din comunitatea din Piatra-Neamț, flux intern de votare și avizare în cadrul Board-ului de Conducere și arhivare istorică a inițiativelor civice.',
+    timestamp: '2026-05-18'
+  },
+  {
+    version: '6.0.0',
+    type: 'major',
+    description: 'Sistemul Național de Recunoaștere & Pașaport de Voluntariat: introducere ranguri de experiență (Recrut Nou, Voluntar Activ, Senior Voluntar, Ambasador Camena), insigne automate de merit pentru 25h, 50h, 100h de voluntariat și adeverințe oficiale de practică descărcabile.',
+    timestamp: '2026-04-30'
+  },
+  {
+    version: '5.5.0',
+    type: 'minor',
+    description: 'Registrul Electronic al Orelor de Voluntariat: calcul automatizat al orelor per proiect, diferențiere între activități de organizare și participare directă, prevenire suprapuneri orare și aprobare formală prin semnătura coordonatorului.',
+    timestamp: '2026-04-10'
+  },
+  {
+    version: '5.0.0',
+    type: 'major',
+    description: 'Redesign Identitar Rotary International: integrarea design system-ului oficial, culori reglementate (Royal Navy & Rotary Gold), suport nativ Dark Mode/Obsidian Civic Monolith și aliniere cu standardele Districtului 2241 România & Republica Moldova.',
+    timestamp: '2026-03-20'
+  },
+  {
+    version: '4.5.0',
+    type: 'minor',
+    description: 'Sistem de Notificări Push & Alerte Web: alerte automate pentru ședințele săptămânale, notificări de reamintire a cotizațiilor scadente și confirmări instantanee de primire a cererilor de învoire.',
+    timestamp: '2026-03-01'
+  },
+  {
+    version: '4.0.0',
+    type: 'major',
+    description: 'Chitanțierul Digital Securizat (CHIT-YYYY-MM): generare vectorială chitanțe oficiale de cotizație, pânză tactilă pentru semnătura digitală olografă a trezorierului și a plătitorului și arhivare imutabilă în cloud.',
+    timestamp: '2026-02-14'
+  },
+  {
+    version: '3.5.0',
+    type: 'minor',
+    description: 'Catalogul Inteligent de Prezențe: marcare rapidă (Prezent / Învoit / Absent), calcul automat al procentajului de implicare civică pe mandate și raportare periodică automată către Rotary Club Piatra-Neamț.',
+    timestamp: '2026-01-25'
+  },
+  {
+    version: '3.0.0',
+    type: 'major',
+    description: 'Modulul Financiar & Trezorerie Digitală: trecerea de la tabele clasice la un registru electronic cu evidență pe categorii (Cotizații, Sponsorizări, Cheltuieli Proiecte), calcul automatizat al balanței și avertizări de sold.',
+    timestamp: '2026-01-08'
+  },
+  {
+    version: '2.5.0',
+    type: 'minor',
+    description: 'Portalul Membrilor & Profil Individual: carnet digital de membru cu ID unic (M001-M047), istoric de implicare, date de contact securizate și evidența datoriilor curente.',
+    timestamp: '2025-12-18'
+  },
+  {
+    version: '2.0.0',
+    type: 'major',
+    description: 'Migrare către Supabase Cloud & PostgreSQL: tranziție de la stocarea locală la o bază de date relațională securizată cu politici Row Level Security (RLS) și proceduri stocate RPC pentru integritate completă.',
+    timestamp: '2025-11-30'
+  },
+  {
+    version: '1.5.0',
+    type: 'minor',
+    description: 'Registrul Inițial al Clubului: catalog de membri, calendar de bază pentru proiectele caritabile de toamnă-iarnă (Camena Christmas Tree, Rocking the Court) și pagini de prezentare a board-ului.',
+    timestamp: '2025-10-20'
+  },
+  {
+    version: '1.0.0',
+    type: 'major',
+    description: 'Lansarea Platformei Oficiale Interact Club Camena Piatra-Neamț: landing page editorial, prezentarea misiunii civice, integrarea valorilor Service Above Self și formularul inițial de recrutare voluntari din liceele din Piatra-Neamț.',
+    timestamp: '2025-09-15'
   }
 ];
