@@ -138,18 +138,16 @@ export function getTargetMonthForPayment(joinDateStr: string | undefined | null,
  * Generare SMART ID (Referință Tranzacție) - Ex: TX-IUN26-SS-13
  */
 export function generateSmartTransactionId(memberName: string, dateObj: Date): string {
-  const month = SHORT_MONTHS[dateObj.getMonth()].toUpperCase();
-  const year = dateObj.getFullYear().toString().slice(2);
+  const d = dateObj || new Date();
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
   
   // Eliminăm diacriticele și luăm inițialele
-  const cleanName = memberName.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-  const initials = cleanName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 3);
+  const cleanName = (memberName || 'VOL').normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  const initials = cleanName.split(' ').filter(Boolean).map(n => n[0]).join('').toUpperCase().slice(0, 3) || 'MEM';
   
-  const day = dateObj.getDate().toString().padStart(2, '0');
-  
-  // Sufix random de 4 caractere alfanumerice pentru unicitate garantată (reduce coliziuni ~1.7M combinații)
-  const randomSuffix = Math.random().toString(36).substr(2, 4).toUpperCase();
-  return `TX-${month}${year}-${initials}-${day}-${randomSuffix}`;
+  const randomSuffix = Math.random().toString(36).substring(2, 6).toUpperCase();
+  return `CHIT-${year}-${month}-${initials}-${randomSuffix}`;
 }
 
 /**

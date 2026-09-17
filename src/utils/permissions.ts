@@ -1,5 +1,5 @@
 // ==============================================================================
-// Permissions & Role Utilities (Interact Camena Piatra Neamț)
+// Permissions & Role Utilities (Interact Camena Piatra-Neamț)
 // ==============================================================================
 
 export function isSuperAdmin(user: any): boolean {

@@ -170,7 +170,8 @@ export function AddMemberModal({ isOpen, onClose, members, onAddMember, currentU
 
   const handleCopyCredentials = () => {
     if (!createdCredentials) return;
-    const textToCopy = `Salut ${createdCredentials.name}!\nDatele tale de conectare pe platforma Interact Camena sunt:\n👤 Utilizator: ${createdCredentials.username}\n🔑 Parolă temporară: ${createdCredentials.pass}\n🌐 Link: https://interact-camena.ro\n(La prima conectare îți poți schimba parola din profil).`;
+    const currentOrigin = typeof window !== 'undefined' ? window.location.origin : '';
+    const textToCopy = `Salut ${createdCredentials.name}!\nDatele tale de conectare pe platforma Interact Camena sunt:\n👤 Utilizator: ${createdCredentials.username}\n🔑 Parolă temporară: ${createdCredentials.pass}${currentOrigin ? `\n🌐 Link: ${currentOrigin}` : ''}\n(La prima conectare îți poți schimba parola din profil).`;
     navigator.clipboard.writeText(textToCopy);
     setCopied(true);
     toast.success('Datele de conectare au fost copiate în clipboard!');

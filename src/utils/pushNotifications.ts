@@ -1,5 +1,5 @@
 // ==============================================================================
-// Web Push Notifications Service for Interact Camena Piatra Neamț
+// Web Push Notifications Service for Interact Camena Piatra-Neamț
 // Cross-Platform Support: Windows, macOS, Linux, Android (Chrome/Firefox/Edge), iOS 16.4+ (PWA)
 // ==============================================================================
 import { supabase } from '../supabase';

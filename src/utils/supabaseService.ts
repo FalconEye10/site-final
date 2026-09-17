@@ -591,6 +591,9 @@ export async function processTreasuryPayment(
       date: paymentDoc.date || new Date().toISOString(),
       memberSignature: paymentDoc.memberSignature,
       treasurerSignature: paymentDoc.treasurerSignature,
+      recordedBy: paymentDoc.recordedBy || null,
+      treasurerId: paymentDoc.treasurerId || null,
+      treasurerUsername: paymentDoc.treasurerUsername || null,
       createdAt: new Date().toISOString()
     };
 

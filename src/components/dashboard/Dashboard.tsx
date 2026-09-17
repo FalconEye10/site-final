@@ -3077,7 +3077,7 @@ export function Dashboard({ username, currentMember, currentMemberId, onLogout }
           {!isSidebarCollapsed && (
             <div className="adm-meta-label flex items-center gap-2 text-center text-slate-500 dark:text-slate-400 font-bold font-title">
               <span className="w-1.5 h-1.5 shrink-0 rounded-full" style={{ backgroundColor: themeColor }} />
-              District 2241 · Piatra Neamț
+              District 2241 · Piatra-Neamț
             </div>
           )}
         </div>

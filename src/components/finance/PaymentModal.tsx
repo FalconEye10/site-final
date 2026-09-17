@@ -187,7 +187,7 @@ const SignatureCanvas = ({ title, onSign }: { title: string; onSign: (b64: strin
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
         onPointerCancel={handlePointerUp}
-        onPointerLeave={handlePointerUp}
+        
         style={{ touchAction: 'none' }}
         className="border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-[2px] bg-white w-full max-w-[400px] h-[140px] touch-none cursor-crosshair select-none hover:border-slate-400 dark:hover:border-slate-500 transition-colors shadow-inner"
       />

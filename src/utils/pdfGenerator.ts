@@ -280,7 +280,7 @@ export async function generateTreasuryPDF({ month, year, members }: PDFGeneratio
       doc.setFont(FONT, 'normal');
       doc.setFontSize(7.5);
       doc.setTextColor(90, 90, 90);
-      doc.text('Interact Piatra Neamt Camena',     MARGIN,          pageHeight - 14);
+      doc.text('Interact Piatra-Neamt Camena',     MARGIN,          pageHeight - 14);
       doc.text(`Pagina ${pageNum} din ${totalPgs}`, pageWidth / 2,  pageHeight - 14, { align: 'center' });
       doc.text('Trezorier Sef: Stan Rares Stefan',  pageWidth - MARGIN, pageHeight - 14, { align: 'right' });
       doc.setTextColor(140, 140, 150);

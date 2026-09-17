@@ -1,5 +1,5 @@
 # 🏛️ INTERACT CAMENA — MASTER SYSTEM ARCHITECTURE & DEVELOPER MANUAL
-> **Versiune Sistem:** `v9.2.0` | **Data:** Septembrie 2026  
+> **Versiune Sistem:** `v9.4.0` | **Data:** Septembrie 2026  
 > **Destinație:** Documentație Tehnică de Nivel Enterprise pentru Dezvoltatori & Agenți AI (SSOT - Single Source of Truth)  
 > **Mediu Tehnologic:** React 19, TypeScript, Vite 6, Supabase (PostgreSQL 15), TailwindCSS, Framer Motion, jsPDF
 
@@ -21,7 +21,7 @@
 
 ## 1. VIZIUNEA & SCOPUL PLATFORMEI
 
-Platforma **Interact Club Camena Piatra Neamț** este un sistem organizațional integrat (ERP & Gamified Community Portal) conceput pentru a digitaliza și securiza întreaga activitate a clubului compus din **46 de membri** (8 membri în Board-ul de Conducere și 38 de voluntari, plus contul tehnic de administrare IT).
+Platforma **Interact Club Camena Piatra-Neamț** este un sistem organizațional integrat (ERP & Gamified Community Portal) conceput pentru a digitaliza și securiza întreaga activitate a clubului compus din **46 de membri** (8 membri în Board-ul de Conducere și 38 de voluntari, plus contul tehnic de administrare IT).
 
 ### Obiective Majore:
 * **Trezorerie & Chitanțier Digital Oficial:** Calcul automatizat al cotizațiilor (15 RON/lună), emiterea de chitanțe PDF securizate cu dublă semnătură olografă digitală (Trezorier + Membru), evidența soldului și a tranzacțiilor de venituri/cheltuieli.

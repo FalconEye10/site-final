@@ -47,7 +47,7 @@ export const MaintenanceScreen: React.FC = () => {
 
         {/* Footer Contact Info */}
         <div className="pt-2 border-t border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3 text-[11px] text-slate-400 font-anthropic">
-          <span>&copy; 2026 Interact Camena Piatra Neamț</span>
+          <span>&copy; 2026 Interact Camena Piatra-Neamț</span>
           <a
             href={`mailto:${MAINTENANCE_INFO.contactEmail}`}
             className="text-sky-400 hover:text-sky-300 hover:underline font-data"

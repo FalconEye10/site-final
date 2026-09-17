@@ -7,7 +7,7 @@
  * - Z (Patch): Corecții rapide, bug-fixuri mici / rușinoase, alinieri sau mici ajustări
  */
 
-export const APP_VERSION = typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '9.3.0';
+export const APP_VERSION = typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '9.4.0';
 
 export interface VersionLog {
   version: string;
@@ -17,6 +17,12 @@ export interface VersionLog {
 }
 
 export const VERSION_HISTORY: VersionLog[] = [
+  {
+    version: '9.4.0',
+    type: 'minor',
+    description: 'Arhitectură nouă și redesign complet al paginii de autentificare: panou de storytelling mecanic continuu cu principiile etice Rotary (The 4-Way Test), integrarea emblemei 3D a Roții de Aur Rotary International cu rotație mecanică centrată la ax, ierarhie tipografică strictă pe 4 niveluri bazată pe fonturile native ale platformei (Playfair Display, Google Sans, Inter, Satoshi), optimizare responsivă avansată pentru Telefon, Tabletă (ecran divizat) și PC (anvergură mărită, fără spațiu mort), corectare ortografică universală cu cratimă („Piatra-Neamț”) și audit complet de sistem trecut cu 0 erori (47/47 conturi autentificate, rapoarte financiare PDF/Excel și validare completă Supabase CRUD).',
+    timestamp: '2026-09-17'
+  },
   {
     version: '9.3.0',
     type: 'minor',

@@ -50,12 +50,20 @@ button, a, input, select, textarea, [role="button"] {
 /* ============================================
    TYPOGRAPHY CLASSES (Google Sans & Anthropic Satoshi/Newsreader)
    ============================================ */
+.font-display {
+    font-family: 'Playfair Display', 'Newsreader', serif !important;
+}
+
 .font-title {
     font-family: 'Google Sans', 'Plus Jakarta Sans', sans-serif !important;
 }
 
+.font-headings {
+    font-family: 'Inter', system-ui, sans-serif !important;
+}
+
 .font-data {
-    font-family: 'Satoshi', 'Google Sans', 'Inter', system-ui, sans-serif !important;
+    font-family: 'Inter', 'Satoshi', monospace, sans-serif !important;
 }
 
 .font-anthropic {
