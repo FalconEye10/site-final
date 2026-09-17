@@ -20,22 +20,79 @@ export function isSystemAccount(m: any): boolean {
 }
 
 const officialClubMembersRoster = [
-  "Abiculesei Alessia (Role: member)", "Alungulesei Darius (Role: member)", "Amatioaiei Ioana (Role: member)",
-  "Andraș Andreea (Role: member)", "Apetrei Sofia (Role: member)", "Ariton Bogdan (Role: member)",
-  "Beșu Ioana (Role: member)", "Cacciola Anastasia (Role: admin)", "Căruntu Ruxandra (Role: admin)",
-  "Ciurea Alex (Role: member)", "Corfă Tudor (Role: member)", "Crușitu Mihnea (Role: member)",
-  "Dorneanu Mădălina (Role: member)", "Enache Diana (Role: member)", "Filimon Teodora (Role: member)",
-  "Huhulea Miruna (Role: member)", "Ifrim Luca (Role: member)", "Ioniță Daria (Role: member)",
-  "Lăpușneanu David (Role: member)", "Lupu Miruna (Role: member)", "Mancas Ilinca (Role: member)",
-  "Manole Iustin (Role: member)", "Marunțelu Alex (Role: member)", "Măzare Sofia (Role: admin)",
-  "Micu Ingrid (Role: member)", "Mihalache Mara (Role: member)", "Mihuț Alexandra (Role: member)",
-  "Miron Maya (Role: member)", "Negru Maia (Role: member)", "Onțanu Vanessa (Role: member)",
-  "Orcheanu Maria (Role: member)", "Paisa Anastasia (Role: member)", "Pascaru Rareș (Role: admin)",
-  "Poenaru Cristiana (Role: member)", "Popa Ioana (Role: admin)", "Popa Matei (Role: admin)",
-  "Radu Sabin (Role: member)", "Radu Teodora (Role: member)", "Răducanu Maya (Role: member)",
-  "Stan Stefan (Role: admin)", "Stîngaciu Mario (Role: member)", "Timofte Teodora (Role: admin)",
-  "Timofte Tudor (Role: member)", "Timoscov Roxana (Role: member)", "Ursache Stefania (Role: member)",
-  "Zugravu Rareș (Role: member)"
+  "Andraș Andreea (Role: member)",
+  "Popa Ioana (Role: admin)",
+  "Abiculesei Alessia (Role: member)",
+  "Paisa Anastasia (Role: member)",
+  "Dorneanu Mădălina (Role: member)",
+  "Amatioaiei Ioana (Role: member)",
+  "Apetrei Sofia (Role: member)",
+  "Beșu Ioana (Role: member)",
+  "Cacciola Anastasia (Role: admin)",
+  "Căruntu Ruxandra (Role: admin)",
+  "Ciurea Alex (Role: member)",
+  "Crușitu Mihnea (Role: member)",
+  "Enache Diana (Role: member)",
+  "Filimon Teodora (Role: member)",
+  "Ifrim Luca (Role: member)",
+  "Ioniță Daria (Role: member)",
+  "Marunțelu Alex (Role: member)",
+  "Măzare Sofia (Role: admin)",
+  "Miron Maya (Role: member)",
+  "Onțanu Vanessa (Role: member)",
+  "Orcheanu Maria (Role: member)",
+  "Pascaru Rareș (Role: admin)",
+  "Radu Sabin (Role: member)",
+  "Radu Teodora (Role: member)",
+  "Răducanu Maya (Role: member)",
+  "Zugravu Rareș (Role: member)",
+  "Alungulesei Darius (Role: member)",
+  "Ariton Bogdan (Role: member)",
+  "Huhulea Miruna (Role: member)",
+  "Lăpușneanu David (Role: member)",
+  "Lupu Miruna (Role: member)",
+  "Manole Iustin (Role: member)",
+  "Micu Ingrid (Role: member)",
+  "Mihuț Alexandra (Role: member)",
+  "Negru Maia (Role: member)",
+  "Poenaru Cristiana (Role: member)",
+  "Stîngaciu Mario (Role: member)",
+  "Timofte Tudor (Role: member)",
+  "Timofte Teodora (Role: admin)",
+  "Timoscov Roxana (Role: member)",
+  "Ursache Stefania (Role: member)",
+  "Mihalache Mara (Role: member)",
+  "Corfă Tudor (Role: member)",
+  "Mancas Ilinca (Role: member)",
+  "Stan Stefan (Role: admin)",
+  "Enache Denisa (Role: member)",
+  "Sandu Emilia (Role: member)",
+  "Solomon Luiza Ștefania (Role: member)",
+  "Rusei Catrina (Role: member)",
+  "Mocanu Matei (Role: member)",
+  "Raduc Riana (Role: member)",
+  "Tatomir Bianca (Role: member)",
+  "Alexa Dragoș (Role: member)",
+  "Diac Evelina (Role: member)",
+  "Vicol Amalia (Role: member)",
+  "Beca Rareș (Role: member)",
+  "Mihut Călin (Role: member)",
+  "Chetreanu Olivia (Role: member)",
+  "Pascali Roberto (Role: member)",
+  "Filimon Ianis (Role: member)",
+  "Ududec Răzvan (Role: member)",
+  "Mocanu Mihai (Role: member)",
+  "Luncanu Iustin (Role: member)",
+  "Ștefan Jucan (Role: member)",
+  "Crăciun Eric (Role: member)",
+  "Ciobanu Karina (Role: member)",
+  "Bour Nicole (Role: member)",
+  "Mitrea Matei (Role: member)",
+  "Cociorba Ștefan (Role: member)",
+  "Moroșanu Ana Francesca (Role: member)",
+  "Pascaru Alexandra (Role: member)",
+  "Baboi Maya (Role: member)",
+  "Mihnea Matei (Role: member)"
 ];
 
 function getOfficialClubRoster(): any[] {
@@ -242,12 +299,12 @@ export async function logSystemAudit(log: Partial<AuditLog> & { action: string; 
     };
 
     const { data: sysSnap } = await supabase
-      .from('members')
-      .select('stats')
-      .eq('id', 'SYS_AUDIT_LOGS')
-      .single();
+      .from('budget_archives')
+      .select('data')
+      .eq('id', 'SYSTEM_AUDIT_LOGS')
+      .maybeSingle();
 
-    const currentLogs: AuditLog[] = Array.isArray(sysSnap?.stats?.logs) ? sysSnap.stats.logs : [];
+    const currentLogs: AuditLog[] = Array.isArray(sysSnap?.data?.logs) ? sysSnap.data.logs : [];
     
     // Prevent inserting exact duplicates into SYS_AUDIT_LOGS
     const isDuplicate = currentLogs.some(l => 
@@ -264,12 +321,9 @@ export async function logSystemAudit(log: Partial<AuditLog> & { action: string; 
 
     const updatedLogs = [auditEntry, ...currentLogs].slice(0, 1000);
 
-    await supabase.from('members').upsert({
-      id: 'SYS_AUDIT_LOGS',
-      name: 'System Audit Records',
-      username: 'sys_audit_logs',
-      role: 'admin',
-      stats: { logs: updatedLogs }
+    await supabase.from('budget_archives').upsert({
+      id: 'SYSTEM_AUDIT_LOGS',
+      data: { logs: updatedLogs }
     });
   } catch (err) {
     console.warn("Error logging system audit:", err);
@@ -284,12 +338,12 @@ export const logScoreAudit = logSystemAudit;
 export async function fetchSystemAuditLogs(): Promise<AuditLog[]> {
   try {
     const { data: sysSnap } = await supabase
-      .from('members')
-      .select('stats')
-      .eq('id', 'SYS_AUDIT_LOGS')
-      .single();
+      .from('budget_archives')
+      .select('data')
+      .eq('id', 'SYSTEM_AUDIT_LOGS')
+      .maybeSingle();
 
-    const sysLogs: AuditLog[] = Array.isArray(sysSnap?.stats?.logs) ? sysSnap.stats.logs : [];
+    const sysLogs: AuditLog[] = Array.isArray(sysSnap?.data?.logs) ? sysSnap.data.logs : [];
 
     const { data: membersData } = await supabase
       .from('members')
@@ -879,7 +933,20 @@ export async function fetchAbsenceRequests(eventId?: string): Promise<AbsenceReq
 
 export async function saveAbsenceRequest(request: AbsenceRequest): Promise<void> {
   try {
-    const { error } = await supabase.from('absence_requests').upsert(request);
+    // Igienizare strictă: transmitem doar coloanele suportate de schema PostgreSQL
+    const cleanPayload: Record<string, any> = {
+      id: request.id,
+      eventId: request.eventId,
+      memberId: request.memberId ? request.memberId.toString() : null,
+      reason: request.reason || '',
+      status: request.status || 'pending',
+      timestamp: request.timestamp || new Date().toISOString(),
+      reviewedBy: request.reviewedBy || null,
+      reviewedAt: request.reviewedAt || null,
+      rejectReason: request.rejectReason || null
+    };
+
+    const { error } = await supabase.from('absence_requests').upsert(cleanPayload);
     if (error) throw error;
   } catch (error) {
     console.error("Error saving absence request to Supabase:", error);

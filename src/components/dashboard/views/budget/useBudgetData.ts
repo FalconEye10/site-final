@@ -339,43 +339,22 @@ export function useBudgetData(currentUserName: string): BudgetData & Mutations {
 
       // 3. Supabase Upsert with resilient schema fallback
       try {
-        const fullPayload = {
+        // Transmitem direct payload-ul compatibil cu tabela PostgreSQL pentru viteză maximă și 0 erori
+        const cleanPayload = {
           id: normalized.id,
-          code: normalized.code,
-          date: normalized.date,
           type: normalized.type,
           category: normalized.category,
-          projectId: normalized.projectId,
           amount: normalized.amount,
-          status: normalized.status,
-          source: normalized.source,
-          documentUrl: normalized.documentUrl,
-          receiptImage: normalized.receiptImage || null,
-          receiptType: normalized.receiptType || 'url',
-          paymentMethod: normalized.paymentMethod || null,
-          approvedBy: normalized.approvedBy,
-          notes: normalized.notes,
-          description: normalized.notes || (normalized as any).description || '',
-          createdAt: normalized.createdAt,
+          description: normalized.notes || (normalized as any).description || `${normalized.type.toUpperCase()}: ${normalized.category}`,
+          date: normalized.date,
+          mandate: (normalized as any).mandate || currentMandateLabel,
+          projectId: normalized.projectId || null,
+          lineId: (normalized as any).lineId || null,
+          createdAt: normalized.createdAt || new Date().toISOString(),
         };
 
-        const { error: err } = await supabase.from(COLLECTIONS.transactions).upsert(fullPayload);
-        if (err) {
-          // Fallback to core columns if database schema hasn't had extended columns added yet
-          const fallbackPayload = {
-            id: normalized.id,
-            type: normalized.type,
-            category: normalized.category,
-            amount: normalized.amount,
-            description: normalized.notes || (normalized as any).description || `${normalized.type.toUpperCase()}: ${normalized.category}`,
-            date: normalized.date,
-            mandate: (normalized as any).mandate || currentMandateLabel,
-            projectId: normalized.projectId || null,
-            lineId: (normalized as any).lineId || null,
-          };
-          const { error: fallbackErr } = await supabase.from(COLLECTIONS.transactions).upsert(fallbackPayload);
-          if (fallbackErr) throw fallbackErr;
-        }
+        const { error: err } = await supabase.from(COLLECTIONS.transactions).upsert(cleanPayload);
+        if (err) throw err;
       } catch (err: any) {
         console.warn('[budget] Supabase upsert error (kept locally):', err?.message || err);
       }

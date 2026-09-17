@@ -124,24 +124,55 @@ export function AddMemberModal({ isOpen, onClose, members, onAddMember, currentU
         return;
       }
 
-      // 1. Inserare profil membru
+      // PASUL 1: Verificare prealabilă și strictă a parolei de administrator ÎNAINTE de orice scriere
+      const adminIdent = currentUserObj?.id || currentUserObj?.username || '';
+      const { data: authCheck, error: authErr } = await supabase.rpc('authenticate_member', {
+        p_identifier: adminIdent,
+        p_password: adminAuthPassword.trim(),
+      });
+
+      if (authErr || !authCheck || !authCheck.success) {
+        toast.error(authCheck?.error || 'Parola de administrator este incorectă.');
+        setIsSubmitting(false);
+        return;
+      }
+
+      const authedMember = authCheck.member;
+      const isAdminRole =
+        (authedMember?.role || '').toLowerCase() === 'admin' ||
+        authedMember?.username === 'admin' ||
+        authedMember?.username === 'stan.stefan';
+
+      if (!isAdminRole) {
+        toast.error('Neautorizat: Doar un administrator de sistem poate crea membri noi.');
+        setIsSubmitting(false);
+        return;
+      }
+
+      // PASUL 2: Inserare profil membru în baza de date
       await updateMemberInDB(newMember);
 
-      // 2. Setare parolă securizată în tabela de credențiale
+      // PASUL 3: Setare parolă securizată în tabela privată de credențiale
       const { data: passRes, error: passErr } = await supabase.rpc('admin_set_member_password', {
-        p_admin_member_id: currentUserObj?.id || currentUserObj?.username || '',
+        p_admin_member_id: adminIdent,
         p_admin_password: adminAuthPassword.trim(),
         p_target_member_id: newMember.id,
         p_new_password: finalPassword,
       });
 
       if (passErr || (passRes && !passRes.success)) {
-        toast.error(passRes?.error || passErr?.message || 'Eroare la autorizarea parolei cu contul de admin.');
+        // Rollback imediat: ștergem membrul din baza de date pentru a preveni profile orfane sau duplicate
+        try {
+          await supabase.from('members').delete().eq('id', newMember.id);
+        } catch (rollbackErr) {
+          console.error('Eroare la rollback membru:', rollbackErr);
+        }
+        toast.error(passRes?.error || passErr?.message || 'Eroare la setarea parolei securizate.');
         setIsSubmitting(false);
         return;
       }
 
-      // 3. Audit Log
+      // PASUL 4: Jurnalizare acțiune administrativă în audit
       await logScoreAudit({
         adminId: currentUserObj?.id,
         adminName: currentUserObj?.name || currentUserObj?.username || 'Admin',
@@ -152,6 +183,7 @@ export function AddMemberModal({ isOpen, onClose, members, onAddMember, currentU
         reason: `Adăugat membru nou: ${newMember.name} (Rol: ${newMember.role === 'admin' ? 'Board - ' + (newMember.boardPosition || 'Admin') : 'Voluntar'})`,
       });
 
+      // PASUL 5: Notificare și actualizare stare locală DOAR după succes deplin 100%
       onAddMember(newMember);
       setCreatedCredentials({
         name: newMember.name,

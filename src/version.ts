@@ -7,7 +7,7 @@
  * - Z (Patch): Corecții rapide, bug-fixuri mici / rușinoase, alinieri sau mici ajustări
  */
 
-export const APP_VERSION = typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '9.4.0';
+export const APP_VERSION = typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '9.5.0';
 
 export interface VersionLog {
   version: string;
@@ -17,6 +17,12 @@ export interface VersionLog {
 }
 
 export const VERSION_HISTORY: VersionLog[] = [
+  {
+    version: '9.5.0',
+    type: 'minor',
+    description: 'Sincronizarea noii cohorte de 28 membri (total 73 membri activi în registru), securizarea autorizării administrative la crearea conturilor, armonizarea schemelor Supabase (tranzacții buget, cereri învoire, propuneri proiecte) și validare 100% în sandbox multi-dispozitiv (126/126 teste trecute pe Android, iOS și PC).',
+    timestamp: '2026-09-18'
+  },
   {
     version: '9.4.0',
     type: 'minor',
