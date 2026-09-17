@@ -224,8 +224,14 @@ export const VERSION_HISTORY: VersionLog[] = [
   {
     version: '7.9.9',
     type: 'major',
-    description: 'Lansare versiune stabilă panou administrativ și registrul oficial al clubului',
+    description: 'Lansare versiune stabilă panou administrativ și registrul oficial al clubului.',
     timestamp: '2026-08-15'
+  },
+  {
+    version: '7.9.5',
+    type: 'patch',
+    description: 'Optimizare cache Service Worker, pre-caching asset-uri grafice și eliminare flickering la tranziția între vederi.',
+    timestamp: '2026-08-13'
   },
   {
     version: '7.9.0',
@@ -234,10 +240,28 @@ export const VERSION_HISTORY: VersionLog[] = [
     timestamp: '2026-08-10'
   },
   {
+    version: '7.8.4',
+    type: 'patch',
+    description: 'Scurtături globale de tastatură (Escape pentru închidere modale, navigare secvențială prin tab-uri și autofocus pe câmpurile active).',
+    timestamp: '2026-08-04'
+  },
+  {
     version: '7.8.0',
     type: 'minor',
     description: 'Lansare Command Palette (⌘K / Ctrl+K): navigare fulger între tab-uri, căutare globală în lista de membri, acces rapid la acțiuni de trezorerie și comutare instantanee Dark / Light Mode.',
     timestamp: '2026-07-28'
+  },
+  {
+    version: '7.7.2',
+    type: 'patch',
+    description: 'Rezolvare debitare duplicată în modul offline și reconciliere automată a conflictelor de timestamp la reconectarea dispozitivelor.',
+    timestamp: '2026-07-22'
+  },
+  {
+    version: '7.6.0',
+    type: 'minor',
+    description: 'Export rapid date financiare în format CSV/JSON structurat pentru audit intern și backup local de siguranță.',
+    timestamp: '2026-07-18'
   },
   {
     version: '7.5.0',
@@ -246,9 +270,27 @@ export const VERSION_HISTORY: VersionLog[] = [
     timestamp: '2026-07-12'
   },
   {
+    version: '7.3.1',
+    type: 'patch',
+    description: 'Ajustare margini tabele pentru ecrane de laptop (1366x768) și corecție scroll orizontal pe rapoartele financiare extinse.',
+    timestamp: '2026-07-05'
+  },
+  {
+    version: '7.2.0',
+    type: 'minor',
+    description: 'Sistem de filtre multi-criteriale pentru tranzacții financiare (după dată, comitet, tip cheltuială și membru asociat).',
+    timestamp: '2026-07-01'
+  },
+  {
+    version: '7.1.0',
+    type: 'minor',
+    description: 'Suport ștampilă și semnătură digitală pe borderoul fiscal oficial de final de mandat.',
+    timestamp: '2026-06-28'
+  },
+  {
     version: '7.0.0',
     type: 'major',
-    description: 'Arhitectura Fiscală V2: motor integrat de generare a rapoartelor financiare PDF în format peisaj cu semnături digitale reale, export complet în registrul Excel (.xlsx) cu formule de bilanț și reconciliere automată a soldului.',
+    description: 'Arhitectura Fiscală V2: motor integrat de generare a rapoartelor financiare PDF în format peisaj cu dublă semnătură digitală reală (Trezorier + Președinte), export complet în registrul Excel (.xlsx) cu formule automate de bilanț și reconciliere de sold.',
     timestamp: '2026-06-25'
   },
   {
@@ -258,10 +300,40 @@ export const VERSION_HISTORY: VersionLog[] = [
     timestamp: '2026-06-02'
   },
   {
+    version: '6.7.2',
+    type: 'patch',
+    description: 'Corecție notificări la respingerea unei propuneri și adăugare câmp obligatoriu de motivare pentru deciziile Board-ului.',
+    timestamp: '2026-05-27'
+  },
+  {
+    version: '6.6.0',
+    type: 'minor',
+    description: 'Sistem de vot secret pentru Board la aprobarea inițiativelor comunitare majore, cu buletin digital criptat.',
+    timestamp: '2026-05-23'
+  },
+  {
     version: '6.5.0',
     type: 'minor',
     description: 'Portalul Comunitar & Propuneri de Proiecte: formular public extern pentru idei din comunitatea din Piatra-Neamț, flux intern de votare și avizare în cadrul Board-ului de Conducere și arhivare istorică a inițiativelor civice.',
     timestamp: '2026-05-18'
+  },
+  {
+    version: '6.3.1',
+    type: 'patch',
+    description: 'Corecție praguri de ore la trecerea de la Voluntar Activ la Senior Voluntar și recalculare automată retroactivă.',
+    timestamp: '2026-05-10'
+  },
+  {
+    version: '6.2.0',
+    type: 'minor',
+    description: 'Generare adeverințe oficiale de voluntariat în format PDF securizat, cu semnătura președintelui și sigiliul clubului.',
+    timestamp: '2026-05-05'
+  },
+  {
+    version: '6.1.0',
+    type: 'minor',
+    description: 'Afișare galerie de insigne deblocate în profilul personal și partajare diplomă de merit civic.',
+    timestamp: '2026-05-02'
   },
   {
     version: '6.0.0',
@@ -276,10 +348,46 @@ export const VERSION_HISTORY: VersionLog[] = [
     timestamp: '2026-04-10'
   },
   {
+    version: '5.4.1',
+    type: 'patch',
+    description: 'Corecție contrast pe graficele de evoluție a prezenței și optimizare încărcare pictograme vectoriale.',
+    timestamp: '2026-04-03'
+  },
+  {
+    version: '5.3.0',
+    type: 'minor',
+    description: 'Modul de știri interne și comunicate oficiale ale Board-ului către membrii clubului cu atașamente documentare.',
+    timestamp: '2026-03-29'
+  },
+  {
+    version: '5.2.1',
+    type: 'patch',
+    description: 'Rafinare micro-animații Framer Motion pe barele laterale și eliminare jitter la navigarea rapidă.',
+    timestamp: '2026-03-25'
+  },
+  {
+    version: '5.1.0',
+    type: 'minor',
+    description: 'Panou de setări cont membru, preferințe temă (Auto / Dark / Light) și schimbare parolă securizată.',
+    timestamp: '2026-03-22'
+  },
+  {
     version: '5.0.0',
     type: 'major',
-    description: 'Redesign Identitar Rotary International: integrarea design system-ului oficial, culori reglementate (Royal Navy & Rotary Gold), suport nativ Dark Mode/Obsidian Civic Monolith și aliniere cu standardele Districtului 2241 România & Republica Moldova.',
+    description: 'REVOLUȚIA DE DESIGN ȘI FUNCȚIONALITATE (The Rotary Civic Overhaul): Schimbarea totală a aspectului vizual și a modului de lucru al întregii platforme. Trecere de la vechiul prototip minimalist la noul sistem vizual de înaltă clasă inspirat de Rotary International și District 2241 (paletă profundă Obsidian, borduri de precizie, reflexii metalice Rotary Gold și fonturi nobile). Rescrierea completă a arhitecturii funcționale: introducerea Centrului de Comandă Digital (Command Center) cu panou de control executiv integrat, tab-uri reactive fără reîncărcare, modularizare completă pe componente și sincronizare în timp real a datelor.',
     timestamp: '2026-03-20'
+  },
+  {
+    version: '4.8.2',
+    type: 'patch',
+    description: 'Corecție afișare insigne expirate și optimizare re-render la filtrarea rapidă a membrilor.',
+    timestamp: '2026-03-12'
+  },
+  {
+    version: '4.6.0',
+    type: 'minor',
+    description: 'Integrare sistem de alerte și convocare pentru ședințele extraordinare ale clubului.',
+    timestamp: '2026-03-06'
   },
   {
     version: '4.5.0',
@@ -288,10 +396,34 @@ export const VERSION_HISTORY: VersionLog[] = [
     timestamp: '2026-03-01'
   },
   {
+    version: '4.3.1',
+    type: 'patch',
+    description: 'Rezolvare artefacte grafice la exportul canvasului de semnătură în fișiere PDF pe dispozitive iOS.',
+    timestamp: '2026-02-24'
+  },
+  {
+    version: '4.2.0',
+    type: 'minor',
+    description: 'Re-trimitere chitanță pe email și generare link securizat de descărcare pentru plătitor.',
+    timestamp: '2026-02-19'
+  },
+  {
+    version: '4.1.0',
+    type: 'minor',
+    description: 'Numerotare automată secvențială pentru chitanțe și registru antifraudă cu cheie de control.',
+    timestamp: '2026-02-16'
+  },
+  {
     version: '4.0.0',
     type: 'major',
     description: 'Chitanțierul Digital Securizat (CHIT-YYYY-MM): generare vectorială chitanțe oficiale de cotizație, pânză tactilă pentru semnătura digitală olografă a trezorierului și a plătitorului și arhivare imutabilă în cloud.',
     timestamp: '2026-02-14'
+  },
+  {
+    version: '3.8.2',
+    type: 'patch',
+    description: 'Corecție rotunjire zecimale la calculul cotizațiilor restante și afișare avertisment restanță în profil.',
+    timestamp: '2026-02-05'
   },
   {
     version: '3.5.0',
@@ -300,10 +432,28 @@ export const VERSION_HISTORY: VersionLog[] = [
     timestamp: '2026-01-25'
   },
   {
+    version: '3.3.0',
+    type: 'minor',
+    description: 'Export borderou de prezență pentru ședințe în format PDF cu listă de semnături olografe.',
+    timestamp: '2026-01-18'
+  },
+  {
+    version: '3.1.2',
+    type: 'patch',
+    description: 'Corecție sumă în caseta de încasări rapide și prevenire introducere sume negative sau neconforme.',
+    timestamp: '2026-01-12'
+  },
+  {
     version: '3.0.0',
     type: 'major',
     description: 'Modulul Financiar & Trezorerie Digitală: trecerea de la tabele clasice la un registru electronic cu evidență pe categorii (Cotizații, Sponsorizări, Cheltuieli Proiecte), calcul automatizat al balanței și avertizări de sold.',
     timestamp: '2026-01-08'
+  },
+  {
+    version: '2.8.0',
+    type: 'minor',
+    description: 'Generare carnete de membru în format digital imprimabil pentru voluntarii nou înregistrați în club.',
+    timestamp: '2025-12-28'
   },
   {
     version: '2.5.0',
@@ -312,16 +462,64 @@ export const VERSION_HISTORY: VersionLog[] = [
     timestamp: '2025-12-18'
   },
   {
+    version: '2.3.4',
+    type: 'patch',
+    description: 'Corecție validare numere de telefon românești (+40) și domenii de email instituționale.',
+    timestamp: '2025-12-10'
+  },
+  {
+    version: '2.2.0',
+    type: 'minor',
+    description: 'Alocare roluri de conducere în baza de date (Președinte, Vicepreședinte, Secretar, Trezorier, Past-President).',
+    timestamp: '2025-12-04'
+  },
+  {
+    version: '2.1.0',
+    type: 'minor',
+    description: 'Criptare bcrypt pentru parolele membrilor și implementare sesiune securizată JWT în platformă.',
+    timestamp: '2025-12-01'
+  },
+  {
     version: '2.0.0',
     type: 'major',
     description: 'Migrare către Supabase Cloud & PostgreSQL: tranziție de la stocarea locală la o bază de date relațională securizată cu politici Row Level Security (RLS) și proceduri stocate RPC pentru integritate completă.',
     timestamp: '2025-11-30'
   },
   {
+    version: '1.8.0',
+    type: 'minor',
+    description: 'Formular avansat de feedback intern post-eveniment pentru membrii clubului și agregare sugestii.',
+    timestamp: '2025-11-15'
+  },
+  {
     version: '1.5.0',
     type: 'minor',
     description: 'Registrul Inițial al Clubului: catalog de membri, calendar de bază pentru proiectele caritabile de toamnă-iarnă (Camena Christmas Tree, Rocking the Court) și pagini de prezentare a board-ului.',
     timestamp: '2025-10-20'
+  },
+  {
+    version: '1.3.1',
+    type: 'patch',
+    description: 'Corecție afișare imagini din galeria de proiecte pe telefoane mobile Android și Safari iOS.',
+    timestamp: '2025-10-12'
+  },
+  {
+    version: '1.2.0',
+    type: 'minor',
+    description: 'Secțiune dedicată pentru parteneriatul cu Rotary Club Piatra-Neamț și comitetele districtuale.',
+    timestamp: '2025-10-02'
+  },
+  {
+    version: '1.1.3',
+    type: 'patch',
+    description: 'Corecție validare formular de înscriere voluntari, optimizare timp de încărcare imagini și adăugare animații discrete la derulare.',
+    timestamp: '2025-09-24'
+  },
+  {
+    version: '1.1.0',
+    type: 'minor',
+    description: 'Adăugare pagini legale obligatorii (Termeni și Condiții, Politica de Confidențialitate GDPR) și integrare meta tags SEO.',
+    timestamp: '2025-09-18'
   },
   {
     version: '1.0.0',
