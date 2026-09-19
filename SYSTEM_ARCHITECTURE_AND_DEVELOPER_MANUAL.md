@@ -15,13 +15,14 @@
 7. [Algoritmi Nucleu & Logici de Business (Finanțe, Gamificare, Prezențe)](#7-algoritmi-nucleu--logici-de-business-finanțe-gamificare-prezențe)
 8. [Arborescența Fișierelor, Componentelor & Serviciilor](#8-arborescența-fișierelor-componentelor--serviciilor)
 9. [Ghid Operațional: Mentenanță, Rulare Locală & Deploy Vercel](#9-ghid-operațional-mentenanță-rulare-locală--deploy-vercel)
-10. [Registrul Oficial de Credențiale (Cele 47 de Conturi Configurate)](#10-registrul-oficial-de-credențiale-cele-47-de-conturi-configurate)
+10. [Registrul Oficial de Credențiale (Cele 73 de Conturi Configurate)](#10-registrul-oficial-de-credențiale-cele-73-de-conturi-configurate)
+11. [Sistemul de Control al Versiunilor (Version Control & Jurnal de Actualizări)](#11-sistemul-de-control-al-versiunilor-version-control--jurnal-de-actualizări)
 
 ---
 
 ## 1. VIZIUNEA & SCOPUL PLATFORMEI
 
-Platforma **Interact Club Camena Piatra-Neamț** este un sistem organizațional integrat (ERP & Gamified Community Portal) conceput pentru a digitaliza și securiza întreaga activitate a clubului compus din **46 de membri** (8 membri în Board-ul de Conducere și 38 de voluntari, plus contul tehnic de administrare IT).
+Platforma **Interact Club Camena Piatra-Neamț** este un sistem organizațional integrat (ERP & Gamified Community Portal) conceput pentru a digitaliza și securiza întreaga activitate a clubului compus din **72 de membri** (8 membri în Board-ul de Conducere și 64 de voluntari, plus contul tehnic de administrare IT).
 
 ### Obiective Majore:
 * **Trezorerie & Chitanțier Digital Oficial:** Calcul automatizat al cotizațiilor (15 RON/lună), emiterea de chitanțe PDF securizate cu dublă semnătură olografă digitală (Trezorier + Membru), evidența soldului și a tranzacțiilor de venituri/cheltuieli.
@@ -561,7 +562,7 @@ project-source/
 
 ---
 
-## 10. REGISTRUL OFICIAL DE CREDENȚIALE (CELE 47 DE CONTURI CONFIGURATE)
+## 10. REGISTRUL OFICIAL DE CREDENȚIALE (CELE 73 DE CONTURI CONFIGURATE)
 
 ### 👑 A. Membrii Board-ului de Conducere (Administratori)
 
@@ -625,3 +626,72 @@ project-source/
 | **M055** | Mihalache Mara | `mihalache.mara` | `[REDACTAT]` |
 | **M056** | Corfă Tudor | `corfa.tudor` | `[REDACTAT]` |
 | **M060** | Mancas Ilinca | `mancas.ilinca` | `[REDACTAT]` |
+| **M062** | Sandu Emilia | `sandu.emilia` | `[REDACTAT]` |
+| **M064** | Solomon Luiza Ștefania | `solomon.luiza.stefania` | `[REDACTAT]` |
+| **M065** | Rusei Catrina | `rusei.catrina` | `[REDACTAT]` |
+| **M066** | Mocanu Matei | `mocanu.matei` | `[REDACTAT]` |
+| **M067** | Raduc Riana | `raduc.riana` | `[REDACTAT]` |
+| **M068** | Tatomir Bianca | `tatomir.bianca` | `[REDACTAT]` |
+| **M069** | Alexa Dragoș | `alexa.dragos` | `[REDACTAT]` |
+| **M070** | Diac Evelina | `diac.evelina` | `[REDACTAT]` |
+| **M071** | Vicol Amalia | `vicol.amalia` | `[REDACTAT]` |
+| **M072** | Beca Rareș | `beca.rares` | `[REDACTAT]` |
+| **M073** | Mihut Călin | `mihut.calin` | `[REDACTAT]` |
+| **M074** | Chetreanu Olivia | `chetreanu.olivia` | `[REDACTAT]` |
+| **M075** | Pascali Roberto | `pascali.roberto` | `[REDACTAT]` |
+| **M076** | Filimon Ianis | `filimon.ianis` | `[REDACTAT]` |
+| **M077** | Ududec Răzvan | `ududec.razvan` | `[REDACTAT]` |
+| **M078** | Mocanu Mihai | `mocanu.mihai` | `[REDACTAT]` |
+| **M079** | Luncanu Iustin | `luncanu.iustin` | `[REDACTAT]` |
+| **M080** | Ștefan Jucan | `stefan.jucan` | `[REDACTAT]` |
+| **M081** | Crăciun Eric | `craciun.eric` | `[REDACTAT]` |
+| **M082** | Ciobanu Karina | `ciobanu.karina` | `[REDACTAT]` |
+| **M083** | Bour Nicole | `bour.nicole` | `[REDACTAT]` |
+| **M084** | Mitrea Matei | `mitrea.matei` | `[REDACTAT]` |
+| **M085** | Cociorba Ștefan | `cociorba.stefan` | `[REDACTAT]` |
+| **M086** | Moroșanu Ana Francesca | `morosanu.ana.francesca` | `[REDACTAT]` |
+| **M087** | Pascaru Alexandra | `pascaru.alexandra` | `[REDACTAT]` |
+| **M088** | Baboi Maya | `baboi.maya` | `[REDACTAT]` |
+| **M089** | Mihnea Matei | `mihnea.matei` | `[REDACTAT]` |
+
+---
+
+## 11. SISTEMUL DE CONTROL AL VERSIUNILOR (VERSION CONTROL & JURNAL DE ACTUALIZĂRI)
+
+### 11.1. Convenția Semantică de Versiune (`v X.Y.Z`)
+Platforma utilizează standardul strict **SemVer (Semantic Versioning)**, administrat conform abilității specializate de versionare:
+* **`X` (Major)**: Schimbări majore de arhitectură, refactorizări structurale ale schemelor de bază de date, schimbări de design system sau migrare de platformă.
+* **`Y` (Minor / Big Bug Fix)**: Funcționalități noi, module de lucru adăugate, îmbunătățiri substanțiale de UI/UX, corecții majore sau sincronizări de cohorte de membri.
+* **`Z` (Patch / Shameful Fix)**: Mici ajustări de copy, alinieri de styling, corecții rapide, rezolvarea comportamentelor neintenționate sau remedieri chirurgicale.
+
+### 11.2. Arhitectura Single Source of Truth (SSOT) pentru Versiuni
+Versiunea curentă a aplicației este sincronizată în:
+1. `package.json` — registrul nativ npm (`version: "9.6.1"`).
+2. `src/version.ts` — sursa unică de adevăr pentru runtime-ul TypeScript (`APP_VERSION`, `VERSION_HISTORY`).
+3. `src/components/dashboard/UpdateLogModal.tsx` & `WhatIsNewModal` — interfața grafică interactivă afișată utilizatorilor la prima conectare după o lansare nouă sau prin Command Palette (`⌘K`).
+4. `SYSTEM_ARCHITECTURE_AND_DEVELOPER_MANUAL.md` — manualul tehnic oficial al sistemului.
+
+### 11.3. Jurnalul Oficial de Lansări (Changelog Istoric)
+
+#### 🚀 `v9.6.1` (19 Septembrie 2026) — Patch & Securitate Autentificare
+* **Audit Autentificare 100% (72/72 Membri Activi):** Validare individuală prin apeluri RPC `public.authenticate_member`. Sincronizarea completă a hash-urilor criptografice bcrypt (`pgcrypto` gen_salt bf-10) în `private.member_credentials`, regenerarea credențialelor temporare standardizate (`Camena-Vol-<ID>!`) cu flag-ul `must_change_password: true` și conservarea intactă a parolelor personalizate ale membrilor activi.
+* **Izolare Notificări Push de Test:** Butoanele de test din `NotificationsDropdown` și `PushNotificationToggle` au fost izolate strict pe dispozitivul local prin funcția `sendLocalTestPushNotification()` (`navigator.serviceWorker.ready -> registration.showNotification()`), eliminând broadcast-ul nedorit către toți voluntarii clubului.
+* **Restaurare Eveniment ECOACT:** Evenimentul de proiect comunitar `ECOACT` (20 Septembrie 2026, 10:00 - 14:00, Piatra-Neamț) a fost restaurat integral în baza de date cu suport pentru noile coloane de comitete (`com_logistica`, `com_pr`, `com_actiune`) și prezență universală.
+* **Curățare Bază de Date:** Eliminarea reziduurilor de test din tabelele `events`, `suggestions`, `polls`, `kudos`, `project_pitches` și `absence_requests`.
+* **Automatizare Audit:** Crearea scripturilor de audit automatizat `scripts/test_member_login_audit.mjs` și `scripts/generate_login_report.mjs`.
+
+#### ⚡ `v9.6.0` (19 Septembrie 2026) — Minor: Supabase Migration, E2E Testing & WCAG Compliance
+* **Migrare Completă Supabase:** Toate tabelele, procedurile RPC, politicile RLS și trigger-ele de securitate consolidate.
+* **Suită de Testare E2E Playwright:** 4 matrice de dispozitive (Desktop, Laptop, Tabletă, Mobil) și testare RBAC automată.
+* **Conformitate Accesibilitate WCAG 2.1 AA:** Audit automat de contrast al culorilor în modurile Light și Dark, remediere tokeni Tailwind.
+
+#### 👥 `v9.5.0` (18 Septembrie 2026) — Minor: Cohorta de 28 Membri Noi & Armonizare Scheme
+* **Sincronizare 28 Membri Noi:** Înregistrarea membrilor M062-M089 (total 72 voluntari activi în registru).
+* **Armonizare Scheme:** Tranzacții buget, cereri învoire, propuneri de proiecte și securizare creare conturi cu validare parolă admin.
+* **Validare Sandbox Multi-Dispozitiv:** 126/126 teste trecute pe Android, iOS și PC.
+
+#### 🎨 `v9.4.0` (17 Septembrie 2026) — Minor: Redesign Autentificare & Emblema 3D Rotary
+* **Panou Storytelling Rotary:** Principiile etice The 4-Way Test integrate mecanic.
+* **Emblema 3D Roata de Aur:** Rotație mecanică centrată la ax.
+* **Tipografie Nativă 4 Niveluri:** Playfair Display, Google Sans, Inter, Satoshi.
+* **Audit Complet Sistem:** 47/47 conturi autentificate inițial și validare completă Supabase CRUD.
