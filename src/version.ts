@@ -20,7 +20,7 @@ export const VERSION_HISTORY: VersionLog[] = [
   {
     version: '9.6.1',
     type: 'patch',
-    description: 'Scoping local pentru notificările push de test (apar exclusiv pe dispozitivul curent al utilizatorului fără a trimite broadcast întregului club), restaurare eveniment ECOACT în calendar și curățare date de test.',
+    description: 'Rezolvare completă și audit 100% al autentificării pentru toți cei 72 de membri (sincronizare hash-uri bcrypt, credențiale temporare standardizate și conservare parole personalizate), izolare notificare push de test strict pe dispozitivul local (fără broadcast nedorit către club), restaurare eveniment ECOACT cu comitete de lucru în calendar și curățare a datelor reziduale de test.',
     timestamp: '2026-09-19'
   },
   {

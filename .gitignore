@@ -11,3 +11,4 @@ backup_savepoint/
 .superpowers/
 .claude/
 test-results/
+scripts/*.json
