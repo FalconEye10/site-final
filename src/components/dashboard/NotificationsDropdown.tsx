@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Bell, CheckCheck, Heart, Megaphone, CheckCircle2, XCircle, PieChart, ChevronRight, Calendar, Trash2 } from 'lucide-react';
 import { supabase } from '../../supabase';
 import { PushNotificationToggle } from './PushNotificationToggle';
-import { sendSystemNotification, broadcastPushNotification } from '../../utils/pushNotifications';
+import { sendSystemNotification, sendLocalTestPushNotification } from '../../utils/pushNotifications';
 import { formatRomaniaDateTime } from '../../utils/romaniaTime';
 import { toast } from '../ui/Toast';
 
@@ -118,16 +118,19 @@ export const NotificationsDropdown: React.FC<NotificationsDropdownProps> = ({
   const handleSendTestPush = async () => {
     if (isSendingTest) return;
     setIsSendingTest(true);
-    toast.info('Se trimite notificarea push de test către TOATE dispozitivele abonate...');
     try {
-      await broadcastPushNotification({
-        title: '🔔 Test Notificare Push (Interact Camena)',
-        body: 'Dacă citești acest mesaj, notificările push pe telefonul tău funcționează 100%!',
-        url: '/#dashboard',
-      });
-      toast.success('Notificarea push de test a fost expediată către toate dispozitivele!');
+      const shown = await sendLocalTestPushNotification();
+      if (shown) {
+        toast.success('Notificarea push de test a fost afișată local pe acest dispozitiv!');
+      } else {
+        if (typeof Notification !== 'undefined' && Notification.permission !== 'granted') {
+          toast.info('Te rugăm să permiți notificările în browser/dispozitiv mai întâi.');
+        } else {
+          toast.info('Notificarea push de test a fost declanșată local.');
+        }
+      }
     } catch {
-      toast.error('Eroare la trimiterea notificării de test.');
+      toast.error('Eroare la afișarea notificării de test.');
     } finally {
       setIsSendingTest(false);
     }
@@ -544,10 +547,11 @@ export const NotificationsDropdown: React.FC<NotificationsDropdownProps> = ({
                   <button
                     onClick={handleSendTestPush}
                     disabled={isSendingTest}
+                    title="Afișează o notificare de test strict pe acest dispozitiv (nu trimite celorlalți membri)"
                     className="text-[11px] font-bold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 flex items-center gap-1.5 cursor-pointer bg-blue-50 dark:bg-blue-950/40 px-2.5 py-1 rounded-[2px] border border-blue-200 dark:border-blue-800 transition-colors"
                   >
                     <Bell size={12} />
-                    {isSendingTest ? 'Se trimite testul...' : 'Testează Push pe Toate Telefoanele'}
+                    {isSendingTest ? 'Se afișează...' : 'Testează Notificarea pe Acest Dispozitiv'}
                   </button>
                 </div>
               )}

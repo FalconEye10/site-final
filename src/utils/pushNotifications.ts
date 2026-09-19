@@ -289,7 +289,7 @@ export async function showLocalTestNotification(title?: string, body?: string): 
 }
 
 /**
- * Declanșează o notificare de sistem Web Push instantanee pe dispozitivul voluntarului
+ * Declanșează o notificare de sistem Web Push pe dispozitivul local al voluntarului
  */
 export async function sendSystemNotification({
   title,
@@ -304,20 +304,35 @@ export async function sendSystemNotification({
 }): Promise<boolean> {
   try {
     if (typeof window === 'undefined' || !('Notification' in window)) return false;
-    if (Notification.permission !== 'granted') return false;
+
+    // Solicită permisiune dacă starea este default
+    if (Notification.permission === 'default') {
+      try {
+        const perm = await Notification.requestPermission();
+        if (perm !== 'granted') return false;
+      } catch {
+        return false;
+      }
+    } else if (Notification.permission !== 'granted') {
+      return false;
+    }
 
     if ('serviceWorker' in navigator) {
-      const registration = await navigator.serviceWorker.ready;
-      if (registration && registration.showNotification) {
-        await registration.showNotification(title, {
-          body,
-          icon: '/logo.png',
-          badge: '/logo.png',
-          tag: tag || `notif_${Date.now()}`,
-          data: { url },
-          vibrate: [200, 100, 200],
-        } as any);
-        return true;
+      try {
+        const registration = await navigator.serviceWorker.ready;
+        if (registration && registration.showNotification) {
+          await registration.showNotification(title, {
+            body,
+            icon: '/logo.png',
+            badge: '/logo.png',
+            tag: tag || `notif_${Date.now()}`,
+            data: { url },
+            vibrate: [200, 100, 200],
+          } as any);
+          return true;
+        }
+      } catch (swErr) {
+        console.warn('ServiceWorker showNotification failed, trying fallback:', swErr);
       }
     }
 
@@ -336,6 +351,18 @@ export async function sendSystemNotification({
     console.warn('System push notification could not be shown:', err);
     return false;
   }
+}
+
+/**
+ * 🧪 Test Notificare PUSH STRICT LOCAL (doar pe dispozitivul / browserul curent).
+ * NU apelează backend-ul și NU trimite mesaje celorlalți membri ai clubului.
+ */
+export async function sendLocalTestPushNotification(): Promise<boolean> {
+  return await sendSystemNotification({
+    title: '🔔 Test Notificare (Interact Camena)',
+    body: 'Dacă citești acest mesaj, notificările pe dispozitivul tău funcționează 100%!',
+    url: '/#dashboard',
+  });
 }
 
 /**

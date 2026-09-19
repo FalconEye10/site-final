@@ -7,7 +7,7 @@
  * - Z (Patch): Corecții rapide, bug-fixuri mici / rușinoase, alinieri sau mici ajustări
  */
 
-export const APP_VERSION = typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '9.5.0';
+export const APP_VERSION = typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '9.6.1';
 
 export interface VersionLog {
   version: string;
@@ -17,6 +17,18 @@ export interface VersionLog {
 }
 
 export const VERSION_HISTORY: VersionLog[] = [
+  {
+    version: '9.6.1',
+    type: 'patch',
+    description: 'Scoping local pentru notificările push de test (apar exclusiv pe dispozitivul curent al utilizatorului fără a trimite broadcast întregului club), restaurare eveniment ECOACT în calendar și curățare date de test.',
+    timestamp: '2026-09-19'
+  },
+  {
+    version: '9.6.0',
+    type: 'minor',
+    description: 'Migrare completă la Supabase, suita extinsă de teste E2E Playwright pe 4 viewport-uri și conformitate accesibilitate WCAG 2.1 AA.',
+    timestamp: '2026-09-19'
+  },
   {
     version: '9.5.0',
     type: 'minor',

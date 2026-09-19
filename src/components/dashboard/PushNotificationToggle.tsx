@@ -4,7 +4,7 @@ import {
   checkPushSubscriptionStatus,
   subscribeUserToPush,
   unsubscribeUserFromPush,
-  broadcastPushNotification,
+  sendLocalTestPushNotification,
 } from '../../utils/pushNotifications';
 import { toast } from '../ui/Toast';
 
@@ -59,18 +59,23 @@ export const PushNotificationToggle: React.FC<PushNotificationToggleProps> = ({
 
   const handleTestNotification = async () => {
     setTestLoading(true);
-    setStatusMessage('Se trimite notificarea de test către toate dispozitivele...');
+    setStatusMessage('Se declanșează notificarea de test pe acest dispozitiv...');
     try {
-      // Un singur apel - acoperă atât dispozitivul curent, cât și restul telefoanelor/PC-urilor
-      await broadcastPushNotification({
-        title: '🌟 Test Notificare Push — Interact Camena',
-        body: 'Dacă vezi acest mesaj, notificările push funcționează perfect pe telefon și PC!',
-        url: '/#dashboard'
-      });
-      setStatusMessage('Notificare de test expediată cu succes către toți abonații!');
-      toast.success('Notificarea push de test a fost expediată către toți membrii!');
-    } catch (err: any) {
-      setStatusMessage('Eroare la trimiterea notificării.');
+      const shown = await sendLocalTestPushNotification();
+      if (shown) {
+        setStatusMessage('Notificare de test afișată local pe acest dispozitiv!');
+        toast.success('Notificarea push de test a fost afișată local pe acest dispozitiv!');
+      } else {
+        if (typeof Notification !== 'undefined' && Notification.permission !== 'granted') {
+          setStatusMessage('Permisiunea pentru notificări nu a fost acordată.');
+          toast.info('Te rugăm să permiți notificările în browser mai întâi.');
+        } else {
+          setStatusMessage('Notificare de test declanșată pe acest dispozitiv.');
+          toast.info('Notificare de test declanșată.');
+        }
+      }
+    } catch {
+      setStatusMessage('Eroare la afișarea notificării.');
       toast.error('Eroare la trimiterea notificării de test.');
     } finally {
       setTestLoading(false);
