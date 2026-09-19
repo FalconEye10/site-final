@@ -69,7 +69,7 @@ export const KpiCard: React.FC<{
           </span>
         </div>
         {hint && (
-          <p className="mt-2 text-xs sm:text-sm font-medium leading-snug" style={{ color: 'var(--adm-ink-faint)' }}>
+          <p className="mt-2 text-xs sm:text-sm font-medium leading-snug" style={{ color: 'var(--adm-ink-dim)' }}>
             {hint}
           </p>
         )}

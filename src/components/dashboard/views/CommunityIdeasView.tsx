@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../../supabase';
+import { subscribeToTable } from '../../../utils/supabaseService';
 import { FileText, Trash2, Globe } from 'lucide-react';
 import { EmptyState } from '../../ui/EmptyState';
 import { toast } from '../../ui/Toast';
@@ -32,40 +33,22 @@ export const CommunityIdeasView: React.FC<CommunityIdeasViewProps> = ({ isAdmin 
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchPitches = async () => {
-      try {
-        const { data, error } = await supabase
-          .from('project_pitches')
-          .select('*')
-          .order('createdAt', { ascending: false });
-        if (error) throw error;
-        setPitches(data || []);
+    setLoading(true);
+    const unsubscribe = subscribeToTable<ProjectPitch>('project_pitches', (data) => {
+      setPitches(data || []);
+      setLoading(false);
 
-        if (isAdmin && data && data.length > 0) {
-          const readPitchIds = JSON.parse(localStorage.getItem('readPitchIds') || '[]');
-          const newPitchIds = data.map((p: any) => p.id);
-          const updatedReadIds = Array.from(new Set([...readPitchIds, ...newPitchIds]));
-          localStorage.setItem('readPitchIds', JSON.stringify(updatedReadIds));
-          window.dispatchEvent(new Event('pitchesReadUpdated'));
-        }
-      } catch (err) {
-        console.error("Error fetching pitches:", err);
-      } finally {
-        setLoading(false);
+      if (isAdmin && data && data.length > 0) {
+        const readPitchIds = JSON.parse(localStorage.getItem('readPitchIds') || '[]');
+        const newPitchIds = data.map((p: any) => p.id);
+        const updatedReadIds = Array.from(new Set([...readPitchIds, ...newPitchIds]));
+        localStorage.setItem('readPitchIds', JSON.stringify(updatedReadIds));
+        window.dispatchEvent(new Event('pitchesReadUpdated'));
       }
-    };
-
-    fetchPitches();
-
-    const channel = supabase
-      .channel('project_pitches_changes')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'project_pitches' }, () => {
-        fetchPitches();
-      })
-      .subscribe();
+    }, 'createdAt');
 
     return () => {
-      supabase.removeChannel(channel);
+      unsubscribe();
     };
   }, [isAdmin]);
 

@@ -298,7 +298,11 @@ export function EventsView({ isAdmin, members = [], currentUserId, onUpdateMembe
   const handleDelete = async (id: string) => {
     if (window.confirm('Ești sigur că vrei să ștergi acest eveniment?')) {
       try {
-        await deleteEvent(id);
+        const res = await deleteEvent(id);
+        if (res && res.error) {
+          toast.error('Eroare la ștergerea evenimentului.');
+          return;
+        }
         toast.success('Evenimentul a fost șters cu succes!');
         loadEvents();
       } catch (err) {
@@ -713,7 +717,7 @@ export function EventsView({ isAdmin, members = [], currentUserId, onUpdateMembe
               
               <div className="space-y-4">
                 {monthEvents.length === 0 ? (
-                  <div className="bg-white dark:bg-slate-900 rounded-[2px] border border-dashed border-slate-200 dark:border-slate-800 p-5 text-slate-400 text-center font-medium text-sm font-anthropic">
+                  <div className="bg-white dark:bg-slate-900 rounded-[2px] border border-dashed border-slate-200 dark:border-slate-800 p-5 text-slate-600 dark:text-slate-300 text-center font-medium text-sm font-anthropic">
                     Nu sunt evenimente planificate în această lună.
                   </div>
                 ) : (
@@ -728,7 +732,7 @@ export function EventsView({ isAdmin, members = [], currentUserId, onUpdateMembe
                           <div className="flex items-start gap-3.5">
                             {/* Date Badge Box */}
                             <div className="bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 p-3 rounded-[2px] text-center min-w-[85px] shrink-0 font-title">
-                              <div className="text-xs font-bold uppercase text-slate-500 dark:text-slate-400 mb-0.5">
+                              <div className="text-xs font-bold uppercase text-slate-600 dark:text-slate-300 mb-0.5">
                                 {formatRomaniaDate(event.date, { weekday: 'short' })}
                               </div>
                               <div className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white leading-none font-data">

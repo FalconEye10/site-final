@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { supabase } from '../../../supabase';
-import { fileToDataUrl } from '../../../utils/file';
+import { uploadFile } from '../../../utils/supabaseService';
 import { FileText, Upload, Send, AlertCircle, CheckCircle2 } from 'lucide-react';
 
 interface ProjectProposalFormProps {
@@ -54,10 +54,21 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({ curren
     setError('');
 
     try {
-      const pdfUrl = pdfFile ? await fileToDataUrl(pdfFile) : '';
+      const proposalId = `proposal_${Date.now()}`;
+      let pdfUrl = '';
+
+      if (pdfFile) {
+        const safeName = pdfFile.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+        const filePath = `proposals/${proposalId}_${safeName}`;
+        const uploadRes = await uploadFile('documents', filePath, pdfFile);
+        if (uploadRes.error) {
+          console.warn('Eroare la încărcarea PDF-ului propunerii în storage:', uploadRes.error);
+        }
+        pdfUrl = uploadRes.publicUrl || '';
+      }
+
       const isAnonymous = !includeUsername;
 
-      const proposalId = `proposal_${Date.now()}`;
       const { error: insertErr } = await supabase.from('project_proposals').upsert({
         id: proposalId,
         title: title.trim(),

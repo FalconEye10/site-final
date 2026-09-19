@@ -887,13 +887,17 @@ export async function saveEvent(event: EventData): Promise<void> {
   }
 }
 
-export async function deleteEvent(eventId: string): Promise<void> {
+export async function deleteEvent(eventId: string): Promise<{ data: any; error: any }> {
   try {
     const { error } = await supabase.from('events').delete().eq('id', eventId);
-    if (error) throw error;
+    if (error) {
+      console.error("Error deleting event from Supabase:", error);
+      return { data: null, error };
+    }
+    return { data: true, error: null };
   } catch (error) {
     console.error("Error deleting event from Supabase:", error);
-    throw error;
+    return { data: null, error };
   }
 }
 
@@ -1021,3 +1025,445 @@ export async function recordAttendance(
     throw error;
   }
 }
+
+// ==========================================
+// SUPABASE STORAGE (Lichidarea Base64)
+// ==========================================
+
+/**
+ * Convertește un șir base64 într-un obiect Blob (pentru formulare vechi cu imagini/PDF data-url).
+ */
+export function base64ToBlob(base64: string): Blob {
+  let contentType = 'application/octet-stream';
+  let byteCharacters: string;
+
+  if (base64.includes(';base64,')) {
+    const parts = base64.split(';base64,');
+    contentType = parts[0].split(':')[1] || 'application/octet-stream';
+    byteCharacters = atob(parts[1]);
+  } else {
+    byteCharacters = atob(base64);
+  }
+
+  const byteNumbers = new Array(byteCharacters.length);
+  for (let i = 0; i < byteCharacters.length; i++) {
+    byteNumbers[i] = byteCharacters.charCodeAt(i);
+  }
+  const byteArray = new Uint8Array(byteNumbers);
+  return new Blob([byteArray], { type: contentType });
+}
+
+/**
+ * Urcă fizic un fișier (File sau Blob) într-un bucket Supabase Storage.
+ * Pentru PDF-uri și chitanțe, fișierele se urcă fizic în bucket, iar în baza de date se va salva doar URL-ul sau path-ul rezultat.
+ */
+export async function uploadFile(
+  bucket: 'receipts' | 'documents' | 'avatars',
+  filePath: string,
+  file: File | Blob
+): Promise<{ publicUrl: string | null; error: any }> {
+  try {
+    const cleanPath = filePath.replace(/^\/+/, '');
+    const { error: uploadErr } = await supabase.storage
+      .from(bucket)
+      .upload(cleanPath, file, { upsert: true });
+
+    if (uploadErr) {
+      console.error(`[uploadFile] Eroare la încărcarea fișierului în bucket '${bucket}':`, uploadErr);
+      return { publicUrl: null, error: uploadErr };
+    }
+
+    const { data: publicUrlData } = supabase.storage
+      .from(bucket)
+      .getPublicUrl(cleanPath);
+
+    return { publicUrl: publicUrlData?.publicUrl || null, error: null };
+  } catch (error) {
+    console.error(`[uploadFile] Excepție la încărcarea în '${bucket}':`, error);
+    return { publicUrl: null, error };
+  }
+}
+
+// ==========================================
+// REALTIME ENGINE (Înlocuitor onSnapshot)
+// ==========================================
+
+/**
+ * Funcție generică pentru abonare Realtime la un tabel Supabase (înlocuitor direct onSnapshot).
+ * - a) Face un fetch inițial al tuturor rândurilor din tabel (`select('*')`).
+ * - b) Deschide un `supabase.channel(...)` ascultând evenimentele `postgres_changes` (* pe `public` și tabelul respectiv).
+ * - c) La orice mutație, re-interoghează tabelul și trimite array-ul actualizat către `callback`.
+ * - d) Returnează funcția de cleanup (`supabase.removeChannel(channel)`) pentru a preveni memory leaks în `useEffect`.
+ */
+export function subscribeToTable<T>(
+  tableName: string,
+  callback: (data: T[]) => void,
+  orderByColumn: string = 'created_at'
+): () => void {
+  let isMounted = true;
+
+  const fetchAndNotify = async () => {
+    try {
+      let query = supabase.from(tableName).select('*');
+      if (orderByColumn) {
+        query = query.order(orderByColumn, { ascending: false });
+      }
+      const { data, error } = await query;
+      if (!error && data && isMounted) {
+        callback(data as T[]);
+      } else if (error && isMounted) {
+        // Fallback fără clauza order dacă orderByColumn nu există în schema acelui tabel
+        const { data: fallbackData, error: fbError } = await supabase.from(tableName).select('*');
+        if (!fbError && fallbackData && isMounted) {
+          callback(fallbackData as T[]);
+        } else {
+          console.warn(`[subscribeToTable] Eroare la citirea tabelei ${tableName}:`, fbError || error);
+        }
+      }
+    } catch (err) {
+      console.warn(`[subscribeToTable] Excepție la reîmprospătarea tabelei ${tableName}:`, err);
+    }
+  };
+
+  // Fetch inițial
+  fetchAndNotify();
+
+  // Canal Supabase Realtime
+  const channelName = `realtime_${tableName}_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+  const channel = supabase
+    .channel(channelName)
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: tableName },
+      () => {
+        fetchAndNotify();
+      }
+    )
+    .subscribe();
+
+  // Cleanup
+  return () => {
+    isMounted = false;
+    supabase.removeChannel(channel);
+  };
+}
+
+// ==========================================
+// PARITATE CRUD: MEMBRI
+// ==========================================
+
+export async function getMembers(): Promise<{ data: any[] | null; error: any }> {
+  try {
+    const { data, error } = await supabase.from('members').select('*');
+    if (error) {
+      return { data: null, error };
+    }
+    const filtered = (data || []).filter((m: any) => !isSystemAccount(m));
+    return { data: filtered, error: null };
+  } catch (error) {
+    return { data: null, error };
+  }
+}
+
+export async function addMember(data: any): Promise<{ data: any | null; error: any }> {
+  try {
+    const payload = sanitizeMemberPayload(data);
+    if (!payload.id) {
+      payload.id = `M${Date.now()}`;
+    }
+    const { data: res, error } = await supabase.from('members').insert(payload).select().single();
+    return { data: res, error };
+  } catch (error) {
+    return { data: null, error };
+  }
+}
+
+export async function updateMember(id: string, data: any): Promise<{ data: any | null; error: any }> {
+  try {
+    const payload = sanitizeMemberPayload(data);
+    const { data: res, error } = await supabase.from('members').update(payload).eq('id', id.toString()).select().single();
+    return { data: res, error };
+  } catch (error) {
+    return { data: null, error };
+  }
+}
+
+export async function deleteMember(id: string): Promise<{ data: any | null; error: any }> {
+  try {
+    await deleteMemberFromDB(id);
+    return { data: true, error: null };
+  } catch (error) {
+    return { data: null, error };
+  }
+}
+
+// ==========================================
+// PARITATE CRUD: EVENIMENTE
+// ==========================================
+
+export async function getEvents(): Promise<{ data: any[] | null; error: any }> {
+  try {
+    const { data, error } = await supabase.from('events').select('*');
+    if (error) return { data: null, error };
+    return { data: data || [], error: null };
+  } catch (error) {
+    return { data: null, error };
+  }
+}
+
+export async function addEvent(data: any): Promise<{ data: any | null; error: any }> {
+  try {
+    const eventPayload = {
+      id: data.id || `ev_${Date.now()}`,
+      ...data
+    };
+    const { data: res, error } = await supabase.from('events').insert(eventPayload).select().single();
+    return { data: res, error };
+  } catch (error) {
+    return { data: null, error };
+  }
+}
+
+export async function updateEvent(id: string, data: any): Promise<{ data: any | null; error: any }> {
+  try {
+    const { data: res, error } = await supabase.from('events').update(data).eq('id', id.toString()).select().single();
+    return { data: res, error };
+  } catch (error) {
+    return { data: null, error };
+  }
+}
+
+export async function toggleAttendance(eventId: string, memberId: string): Promise<{ data: any; error: any }> {
+  try {
+    const { data: event, error: fetchErr } = await supabase
+      .from('events')
+      .select('rsvps')
+      .eq('id', eventId.toString())
+      .single();
+
+    if (fetchErr) return { data: null, error: fetchErr };
+
+    const rsvps = { ...(event?.rsvps || {}) };
+    const current = rsvps[memberId];
+    if (current === 'attending' || current === 'present') {
+      delete rsvps[memberId];
+    } else {
+      rsvps[memberId] = 'attending';
+    }
+
+    const { data: res, error: updateErr } = await supabase
+      .from('events')
+      .update({ rsvps })
+      .eq('id', eventId.toString())
+      .select()
+      .single();
+
+    return { data: res, error: updateErr };
+  } catch (error) {
+    return { data: null, error };
+  }
+}
+
+// ==========================================
+// PARITATE CRUD: BUGET & TRANZACȚII
+// ==========================================
+
+export async function getTransactions(): Promise<{ data: any[] | null; error: any }> {
+  try {
+    const { data, error } = await supabase
+      .from('budget_transactions')
+      .select('*')
+      .order('date', { ascending: false });
+    return { data: data || [], error };
+  } catch (error) {
+    return { data: null, error };
+  }
+}
+
+export async function addTransaction(data: any): Promise<{ data: any | null; error: any }> {
+  try {
+    const payload = {
+      id: data.id || `tx_${Date.now()}`,
+      ...data
+    };
+    const { data: res, error } = await supabase.from('budget_transactions').insert(payload).select().single();
+    return { data: res, error };
+  } catch (error) {
+    return { data: null, error };
+  }
+}
+
+export async function deleteTransaction(id: string): Promise<{ data: any | null; error: any }> {
+  try {
+    const { error } = await supabase.from('budget_transactions').delete().eq('id', id.toString());
+    return { data: !error, error };
+  } catch (error) {
+    return { data: null, error };
+  }
+}
+
+export async function getBudgetLines(): Promise<{ data: any[] | null; error: any }> {
+  try {
+    const { data, error } = await supabase.from('budget_lines').select('*');
+    return { data: data || [], error };
+  } catch (error) {
+    return { data: null, error };
+  }
+}
+
+export async function getBudgetProjects(): Promise<{ data: any[] | null; error: any }> {
+  try {
+    const { data, error } = await supabase.from('budget_projects').select('*');
+    return { data: data || [], error };
+  } catch (error) {
+    return { data: null, error };
+  }
+}
+
+export async function getBudgetDues(): Promise<{ data: any[] | null; error: any }> {
+  try {
+    const { data, error } = await supabase.from('budget_dues').select('*');
+    return { data: data || [], error };
+  } catch (error) {
+    return { data: null, error };
+  }
+}
+
+// ==========================================
+// PARITATE CRUD: CERERI ÎNVOIRE
+// ==========================================
+
+export async function getAbsenceRequests(eventId?: string): Promise<{ data: any[] | null; error: any }> {
+  try {
+    let query = supabase.from('absence_requests').select('*');
+    if (eventId) {
+      query = query.eq('eventId', eventId);
+    }
+    const { data, error } = await query;
+    return { data: data || [], error };
+  } catch (error) {
+    return { data: null, error };
+  }
+}
+
+export async function createAbsenceRequest(data: any): Promise<{ data: any | null; error: any }> {
+  try {
+    const payload = {
+      id: data.id || `abs_${Date.now()}`,
+      eventId: data.eventId,
+      memberId: data.memberId ? data.memberId.toString() : null,
+      reason: data.reason || '',
+      status: data.status || 'pending',
+      timestamp: data.timestamp || new Date().toISOString(),
+      reviewedBy: data.reviewedBy || null,
+      reviewedAt: data.reviewedAt || null,
+      rejectReason: data.rejectReason || null
+    };
+    const { data: res, error } = await supabase.from('absence_requests').insert(payload).select().single();
+    return { data: res, error };
+  } catch (error) {
+    return { data: null, error };
+  }
+}
+
+export async function updateAbsenceStatus(
+  id: string,
+  status: 'pending' | 'approved' | 'rejected',
+  reviewedBy?: string
+): Promise<{ data: any; error: any }> {
+  try {
+    const updatePayload: Record<string, any> = {
+      status,
+      reviewedAt: new Date().toISOString()
+    };
+    if (reviewedBy) {
+      updatePayload.reviewedBy = reviewedBy;
+    }
+    const { data: res, error } = await supabase
+      .from('absence_requests')
+      .update(updatePayload)
+      .eq('id', id.toString())
+      .select()
+      .single();
+    return { data: res, error };
+  } catch (error) {
+    return { data: null, error };
+  }
+}
+
+// ==========================================
+// PARITATE CRUD: FORUM & PROPUNERI
+// ==========================================
+
+export async function getForumPosts(): Promise<{ data: any[] | null; error: any }> {
+  try {
+    const { data, error } = await supabase
+      .from('forum_posts')
+      .select('*')
+      .order('created_at', { ascending: false });
+    if (error) {
+      const { data: fallback, error: fbError } = await supabase.from('forum_posts').select('*');
+      return { data: fallback || [], error: fbError };
+    }
+    return { data: data || [], error: null };
+  } catch (error) {
+    return { data: null, error };
+  }
+}
+
+export async function createForumPost(data: any): Promise<{ data: any | null; error: any }> {
+  try {
+    const payload = {
+      id: data.id || `post_${Date.now()}`,
+      title: data.title || '',
+      content: data.content || '',
+      author_id: data.author_id || data.authorId || null,
+      author_name: data.author_name || data.authorName || data.author || 'Membru',
+      category: data.category || 'General',
+      likes: data.likes || 0,
+      created_at: data.created_at || data.createdAt || new Date().toISOString()
+    };
+    const { data: res, error } = await supabase.from('forum_posts').insert(payload).select().single();
+    return { data: res, error };
+  } catch (error) {
+    return { data: null, error };
+  }
+}
+
+export async function getPitches(): Promise<{ data: any[] | null; error: any }> {
+  try {
+    const { data, error } = await supabase
+      .from('project_pitches')
+      .select('*')
+      .order('created_at', { ascending: false });
+    if (error) {
+      const { data: fallback, error: fbError } = await supabase.from('project_pitches').select('*');
+      return { data: fallback || [], error: fbError };
+    }
+    return { data: data || [], error: null };
+  } catch (error) {
+    return { data: null, error };
+  }
+}
+
+export async function createPitch(data: any): Promise<{ data: any | null; error: any }> {
+  try {
+    const payload = {
+      id: data.id || `pitch_${Date.now()}`,
+      title: data.title || '',
+      description: data.description || '',
+      budget_estimate: data.budget_estimate || data.budgetEstimate || null,
+      submitter_name: data.submitter_name || data.submitterName || '',
+      submitter_email: data.submitter_email || data.submitterEmail || '',
+      pdf_storage_path: data.pdf_storage_path || data.pdfStoragePath || data.pdfUrl || null,
+      pdfUrl: data.pdfUrl || data.pdf_storage_path || null,
+      status: data.status || 'pending',
+      created_at: data.created_at || data.createdAt || new Date().toISOString()
+    };
+    const { data: res, error } = await supabase.from('project_pitches').insert(payload).select().single();
+    return { data: res, error };
+  } catch (error) {
+    return { data: null, error };
+  }
+}
+

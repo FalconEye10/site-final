@@ -14,7 +14,7 @@ const headerEl = document.querySelector('header');
 const rootEl = document.getElementById('root');
 
 function handleRouting() {
-  if (MAINTENANCE_MODE || window.location.hash === '#dashboard') {
+  if (MAINTENANCE_MODE || window.location.hash === '#dashboard' || window.location.hash === '#auth') {
     if (mainEl) mainEl.classList.add('hidden');
     if (headerEl) headerEl.classList.add('hidden');
     if (rootEl) rootEl.classList.remove('hidden');

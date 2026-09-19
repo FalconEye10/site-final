@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { supabase } from '../../supabase';
-import { fileToDataUrl } from '../../utils/file';
+import { uploadFile } from '../../utils/supabaseService';
 import { FileText, Upload, Send, AlertCircle, CheckCircle2, User, Mail, Tag, AlignLeft } from 'lucide-react';
 
 export const CommunityPitchForm: React.FC = () => {
@@ -74,8 +74,18 @@ export const CommunityPitchForm: React.FC = () => {
     setError('');
 
     try {
-      const pdfUrl = await fileToDataUrl(pdfFile);
       const pitchId = `pitch_${Date.now()}`;
+      let pdfUrl = '';
+
+      if (pdfFile) {
+        const safeName = pdfFile.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+        const filePath = `pitches/${pitchId}_${safeName}`;
+        const uploadRes = await uploadFile('documents', filePath, pdfFile);
+        if (uploadRes.error) {
+          console.warn('Eroare la încărcarea PDF-ului în storage:', uploadRes.error);
+        }
+        pdfUrl = uploadRes.publicUrl || '';
+      }
 
       const { error: insertErr } = await supabase.from('project_pitches').upsert({
         id: pitchId,
@@ -84,6 +94,7 @@ export const CommunityPitchForm: React.FC = () => {
         description: description.trim(),
         submitterEmail: contact.trim(),
         pdfUrl,
+        pdf_storage_path: pdfUrl,
         createdAt: new Date().toISOString()
       });
 

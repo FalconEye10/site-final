@@ -159,7 +159,7 @@ export function calculateQualification(p: number, _e: number, u: number, status?
     return {
       rate: '—',
       qualification: 'Board',
-      colorClass: 'bg-amber-50 text-amber-700 border-amber-200',
+      colorClass: 'bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-700/60',
       percentage: 0,
       barColorClass: 'bg-amber-500'
     };
@@ -170,7 +170,7 @@ export function calculateQualification(p: number, _e: number, u: number, status?
     return {
       rate: '100%',
       qualification: 'Pasiv',
-      colorClass: 'bg-indigo-50/50 text-indigo-600 border-indigo-200/50',
+      colorClass: 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700',
       percentage: 100,
       barColorClass: 'bg-indigo-500'
     };
@@ -190,25 +190,25 @@ export function calculateQualification(p: number, _e: number, u: number, status?
   const rateStr = Math.round(percentage) + '%';
   
   let qualification = 'Critic';
-  let colorClass = 'bg-rose-50 text-rose-600 border-rose-200'; // <65%
+  let colorClass = 'bg-rose-50 dark:bg-rose-950/40 text-rose-800 dark:text-rose-300 border border-rose-300 dark:border-rose-700'; // <65%
   let barColorClass = 'bg-rose-600';
   
   if (percentage === 100) {
     qualification = 'Maxim';
-    colorClass = 'bg-[#00ADFF]/10 text-[#00ADFF] border-[#00ADFF]/30'; // Perfect Blue
-    barColorClass = 'bg-[#00ADFF]';
+    colorClass = 'bg-sky-50 dark:bg-sky-950/40 text-sky-800 dark:text-sky-300 border border-sky-300 dark:border-sky-700'; // Perfect Blue
+    barColorClass = 'bg-sky-600';
   } else if (percentage >= 85) {
     qualification = 'Excelent';
-    colorClass = 'bg-emerald-50 text-emerald-600 border-emerald-200'; // Emerald Green
+    colorClass = 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700'; // Emerald Green
     barColorClass = 'bg-emerald-600';
   } else if (percentage >= 75) {
     qualification = 'Foarte Bine';
-    colorClass = 'bg-indigo-50 text-indigo-500 border-indigo-200'; // Indigo
+    colorClass = 'bg-indigo-50 dark:bg-indigo-950/40 text-indigo-800 dark:text-indigo-300 border border-indigo-300 dark:border-indigo-700'; // Indigo
     barColorClass = 'bg-indigo-500';
   } else if (percentage >= 65) {
     qualification = 'Satisfăcător';
-    colorClass = 'bg-orange-50 text-orange-500 border-orange-200'; // Orange
-    barColorClass = 'bg-orange-500';
+    colorClass = 'bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-700'; // Amber
+    barColorClass = 'bg-amber-500';
   }
   
   return { rate: rateStr, qualification, colorClass, percentage, barColorClass };

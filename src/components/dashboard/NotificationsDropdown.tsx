@@ -268,27 +268,10 @@ export const NotificationsDropdown: React.FC<NotificationsDropdownProps> = ({
           });
         }
       })
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'events' }, (payload: any) => {
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'events' }, () => {
         fetchData();
-        if (payload?.new) {
-          const ev = payload.new;
-          let pushTitle = `📅 Întâlnire Nouă: ${ev.title || 'Eveniment Interact'}`;
-          if (ev.type === 'project') pushTitle = `🚀 Proiect Nou: ${ev.title}`;
-          else if (ev.type === 'social') pushTitle = `🎉 Social & Teambuilding: ${ev.title}`;
-          else if (ev.type === 'meeting') pushTitle = `🏛️ Ședință Nouă: ${ev.title}`;
-
-          const details: string[] = ['Te așteptăm cu drag!'];
-          if (ev.date) details.push(`🗓️ Data: ${ev.date}`);
-          if (ev.time) details.push(`⏰ Ora: ${ev.time}`);
-          if (ev.location) details.push(`📍 Locație: ${ev.location}`);
-          if (ev.description) details.push(`📝 Detalii: ${ev.description.slice(0, 85)}...`);
-
-          sendSystemNotification({
-            title: pushTitle,
-            body: details.join(' · '),
-            url: '/#calendar',
-          });
-        }
+        // S-a eliminat sendSystemNotification() de aici deoarece notificarea oficială 
+        // este deja expediată prin triggerEventPushNotification() la crearea evenimentului.
       })
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'events' }, () => {
         fetchData();
@@ -484,7 +467,7 @@ export const NotificationsDropdown: React.FC<NotificationsDropdownProps> = ({
       >
         <Bell size={16} />
         {unreadCount > 0 && (
-          <span className="absolute -top-1 -right-1 min-w-[16px] h-[16px] px-1 rounded-[2px] bg-rose-500 text-white text-[9px] font-black flex items-center justify-center font-data shadow-xs">
+          <span className="absolute -top-1 -right-1 min-w-[16px] h-[16px] px-1 rounded-[2px] bg-rose-700 text-white text-[9px] font-black flex items-center justify-center font-data shadow-xs">
             {unreadCount > 9 ? '9+' : unreadCount}
           </span>
         )}

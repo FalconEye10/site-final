@@ -10,3 +10,4 @@ backup_savepoint/
 .secrets/
 .superpowers/
 .claude/
+test-results/

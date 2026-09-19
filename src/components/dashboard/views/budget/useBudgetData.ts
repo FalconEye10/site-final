@@ -10,7 +10,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { supabase } from '../../../../supabase';
-import { TreasuryPayment } from '../../../../utils/supabaseService';
+import { TreasuryPayment, subscribeToTable } from '../../../../utils/supabaseService';
 import {
   AuditAction,
   AuditEntry,
@@ -220,18 +220,15 @@ export function useBudgetData(currentUserName: string): BudgetData & Mutations {
     fetchAll();
   }, [fetchAll]);
 
-  // --- 2. Live subscriptions (Supabase Realtime + BroadcastChannel + Local Events) ---
+  // --- 2. Live subscriptions (Supabase Realtime via subscribeToTable + BroadcastChannel + Local Events) ---
   useEffect(() => {
-    // Supabase Realtime Channels
-    const channel = supabase
-      .channel('cmn_budget_realtime_all')
-      .on('postgres_changes', { event: '*', schema: 'public', table: COLLECTIONS.transactions }, () => fetchAll())
-      .on('postgres_changes', { event: '*', schema: 'public', table: COLLECTIONS.projects }, () => fetchAll())
-      .on('postgres_changes', { event: '*', schema: 'public', table: COLLECTIONS.lines }, () => fetchAll())
-      .on('postgres_changes', { event: '*', schema: 'public', table: COLLECTIONS.dues }, () => fetchAll())
-      .on('postgres_changes', { event: '*', schema: 'public', table: COLLECTIONS.audit }, () => fetchAll())
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'payments' }, () => fetchAll())
-      .subscribe();
+    // Supabase Realtime Channels via subscribeToTable
+    const unsubTx = subscribeToTable(COLLECTIONS.transactions, () => fetchAll());
+    const unsubPrj = subscribeToTable(COLLECTIONS.projects, () => fetchAll());
+    const unsubLines = subscribeToTable(COLLECTIONS.lines, () => fetchAll());
+    const unsubDues = subscribeToTable(COLLECTIONS.dues, () => fetchAll());
+    const unsubAudit = subscribeToTable(COLLECTIONS.audit, () => fetchAll());
+    const unsubPayments = subscribeToTable('payments', () => fetchAll());
 
     // Local custom event listener
     const handleLocalSync = (evt: Event) => {
@@ -252,7 +249,12 @@ export function useBudgetData(currentUserName: string): BudgetData & Mutations {
     }
 
     return () => {
-      supabase.removeChannel(channel);
+      unsubTx();
+      unsubPrj();
+      unsubLines();
+      unsubDues();
+      unsubAudit();
+      unsubPayments();
       window.removeEventListener('cmn_budget_local_sync', handleLocalSync);
       if (bc) bc.close();
     };

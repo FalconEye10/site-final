@@ -4,7 +4,6 @@ import {
   checkPushSubscriptionStatus,
   subscribeUserToPush,
   unsubscribeUserFromPush,
-  showLocalTestNotification,
   broadcastPushNotification,
 } from '../../utils/pushNotifications';
 import { toast } from '../ui/Toast';
@@ -62,12 +61,7 @@ export const PushNotificationToggle: React.FC<PushNotificationToggleProps> = ({
     setTestLoading(true);
     setStatusMessage('Se trimite notificarea de test către toate dispozitivele...');
     try {
-      // 1. Notificare locală imediată
-      await showLocalTestNotification(
-        '🌟 Test Notificare Push — Interact Camena',
-        'Aceasta este o notificare de test trimisă prin rețeaua Web Push!'
-      );
-      // 2. Broadcast către TOATE dispozitivele și telefoanele abonate
+      // Un singur apel - acoperă atât dispozitivul curent, cât și restul telefoanelor/PC-urilor
       await broadcastPushNotification({
         title: '🌟 Test Notificare Push — Interact Camena',
         body: 'Dacă vezi acest mesaj, notificările push funcționează perfect pe telefon și PC!',

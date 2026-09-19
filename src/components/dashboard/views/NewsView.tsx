@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../../supabase';
+import { subscribeToTable } from '../../../utils/supabaseService';
 import { Megaphone, Trash2, ExternalLink, Plus, Send } from 'lucide-react';
 import { NewsAdminForm } from './NewsAdminForm';
 import { EmptyState } from '../../ui/EmptyState';
@@ -46,32 +47,14 @@ export const NewsView: React.FC<NewsViewProps> = ({ isAdmin, currentUserId, curr
   const [commentText, setCommentText] = useState<Record<string, string>>({});
 
   useEffect(() => {
-    const fetchNews = async () => {
-      try {
-        const { data, error } = await supabase
-          .from('news')
-          .select('*')
-          .order('createdAt', { ascending: false });
-        if (error) throw error;
-        setNews(data || []);
-      } catch (err) {
-        console.error("Error fetching news:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchNews();
-
-    const channel = supabase
-      .channel('news_changes')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'news' }, () => {
-        fetchNews();
-      })
-      .subscribe();
+    setLoading(true);
+    const unsubscribe = subscribeToTable<NewsItem>('news', (data) => {
+      setNews(data || []);
+      setLoading(false);
+    }, 'createdAt');
 
     return () => {
-      supabase.removeChannel(channel);
+      unsubscribe();
     };
   }, []);
 

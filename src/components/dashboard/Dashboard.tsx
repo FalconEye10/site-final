@@ -14,7 +14,7 @@ import {
 import { AuroraBackground } from '../ui/AuroraBackground';
 import { CommandPalette, type CommandNavItem } from './CommandPalette';
 import { calculateDebt, calculateQualification, generateMemberLedger } from '../../utils/finance';
-import { fetchMembers, updateMemberFields, revertLatestTreasuryPayment, fetchAllTreasuryPayments, isSystemAccount } from '../../utils/supabaseService';
+import { fetchMembers, updateMemberFields, revertLatestTreasuryPayment, fetchAllTreasuryPayments, isSystemAccount, subscribeToTable } from '../../utils/supabaseService';
 import { formatRomaniaDate, formatRomaniaDateTime, getRomaniaDateTimeMs, getRomaniaTodayString, ROMANIA_TIMEZONE } from '../../utils/romaniaTime';
 import { isBoardMember } from '../../utils/permissions';
 import { supabase } from '../../supabase';
@@ -398,13 +398,13 @@ const ViewDashboard = ({ members, currentUserObj, isAdmin, onNavigateToSection, 
       {/* 0. Executive Header Banner */}
       <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 pb-2 border-b border-slate-200 dark:border-slate-800">
         <div>
-          <p className="text-xs font-title uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-1">
+          <p className="text-xs font-title uppercase tracking-widest text-slate-600 dark:text-slate-300 mb-1">
             {(() => { const h = new Date().getHours(); return h < 12 ? 'Bună dimineața' : h < 18 ? 'Bună ziua' : 'Bună seara'; })()} • Portal Guvernanță
           </p>
           <h1 className="text-2xl sm:text-3xl md:text-4xl font-anthropicSerif font-bold text-slate-900 dark:text-slate-100 leading-tight">
             {isAdmin ? 'Panou Administrativ' : (currentUserObj?.name || currentUserObj?.nickname || 'Voluntar')}
             <span className="text-blue-600 dark:text-blue-400 font-light mx-2">/</span>
-            <span className="text-slate-500 dark:text-slate-400 font-normal text-xl sm:text-2xl">Interact Camena</span>
+            <span className="text-slate-600 dark:text-slate-300 font-normal text-xl sm:text-2xl">Interact Camena</span>
           </h1>
         </div>
         <div className="flex items-center gap-2 text-xs font-title font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-3 py-1.5 rounded-[2px] border border-slate-200 dark:border-slate-700 shrink-0">
@@ -423,7 +423,7 @@ const ViewDashboard = ({ members, currentUserObj, isAdmin, onNavigateToSection, 
             >
               <div className="flex items-start justify-between">
                 <div>
-                  <span className="text-xs font-title font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 block mb-1.5">
+                  <span className="text-xs font-title font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 block mb-1.5">
                     Registru Membri
                   </span>
                   <div className="text-2xl sm:text-3xl lg:text-4xl font-bold font-data text-slate-900 dark:text-slate-100">
@@ -434,7 +434,7 @@ const ViewDashboard = ({ members, currentUserObj, isAdmin, onNavigateToSection, 
                   <Users size={20} />
                 </div>
               </div>
-              <div className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-3 flex items-center justify-between border-t border-slate-100 dark:border-slate-800/80 pt-2">
+              <div className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 mt-3 flex items-center justify-between border-t border-slate-100 dark:border-slate-800/80 pt-2">
                 <span>Voluntari activi înregistrați</span>
                 <span className="text-blue-600 dark:text-blue-400 font-title font-bold group-hover:translate-x-0.5 transition-transform">Deschide →</span>
               </div>
@@ -446,7 +446,7 @@ const ViewDashboard = ({ members, currentUserObj, isAdmin, onNavigateToSection, 
             >
               <div className="flex items-start justify-between">
                 <div>
-                  <span className="text-xs font-title font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 block mb-1.5">
+                  <span className="text-xs font-title font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 block mb-1.5">
                     Fonduri Încasate
                   </span>
                   <div className="text-2xl sm:text-3xl lg:text-4xl font-bold font-data text-emerald-700 dark:text-emerald-400">
@@ -457,7 +457,7 @@ const ViewDashboard = ({ members, currentUserObj, isAdmin, onNavigateToSection, 
                   <Wallet size={20} />
                 </div>
               </div>
-              <div className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-3 flex items-center justify-between border-t border-slate-100 dark:border-slate-800/80 pt-2">
+              <div className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 mt-3 flex items-center justify-between border-t border-slate-100 dark:border-slate-800/80 pt-2">
                 <span>Cotizații procesate trezorerie</span>
                 <span className="text-emerald-700 dark:text-emerald-400 font-title font-bold group-hover:translate-x-0.5 transition-transform">Registru →</span>
               </div>
@@ -469,7 +469,7 @@ const ViewDashboard = ({ members, currentUserObj, isAdmin, onNavigateToSection, 
             >
               <div className="flex items-start justify-between">
                 <div>
-                  <span className="text-xs font-title font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 block mb-1.5">
+                  <span className="text-xs font-title font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 block mb-1.5">
                     Restanțe de Încasat
                   </span>
                   <div className={`text-2xl sm:text-3xl lg:text-4xl font-bold font-data ${totalGlobalDebt === 0 ? 'text-emerald-700 dark:text-emerald-400' : 'text-rose-700 dark:text-rose-400'}`}>
@@ -484,7 +484,7 @@ const ViewDashboard = ({ members, currentUserObj, isAdmin, onNavigateToSection, 
                   {totalGlobalDebt === 0 ? <CheckCircle size={20} /> : <AlertCircle size={20} />}
                 </div>
               </div>
-              <div className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-3 flex items-center justify-between border-t border-slate-100 dark:border-slate-800/80 pt-2">
+              <div className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 mt-3 flex items-center justify-between border-t border-slate-100 dark:border-slate-800/80 pt-2">
                 <span>{totalGlobalDebt === 0 ? 'Toate cotizațiile sunt la zi' : 'Obligații restante club'}</span>
                 <span className={`font-title font-bold group-hover:translate-x-0.5 transition-transform ${totalGlobalDebt === 0 ? 'text-emerald-700 dark:text-emerald-400' : 'text-rose-700 dark:text-rose-400'}`}>
                   {totalGlobalDebt === 0 ? 'Verifică →' : 'Detalii →'}
@@ -500,7 +500,7 @@ const ViewDashboard = ({ members, currentUserObj, isAdmin, onNavigateToSection, 
             >
               <div className="flex items-start justify-between">
                 <div>
-                  <span className="text-xs font-title font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 block mb-1.5">
+                  <span className="text-xs font-title font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 block mb-1.5">
                     Situație Cotizație
                   </span>
                   <div className="text-xl sm:text-2xl lg:text-3xl font-bold font-data">
@@ -521,7 +521,7 @@ const ViewDashboard = ({ members, currentUserObj, isAdmin, onNavigateToSection, 
                   {personalDebt === 0 ? <CheckCircle size={20} /> : <CreditCard size={20} />}
                 </div>
               </div>
-              <div className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-3 flex items-center justify-between border-t border-slate-100 dark:border-slate-800/80 pt-2">
+              <div className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 mt-3 flex items-center justify-between border-t border-slate-100 dark:border-slate-800/80 pt-2">
                 <span>{personalDebt === 0 ? 'Fără restanțe financiare' : '15 Lei / lună calendaristică'}</span>
                 <span className={`font-title font-bold group-hover:translate-x-0.5 transition-transform ${personalDebt === 0 ? 'text-emerald-700 dark:text-emerald-400' : 'text-rose-700 dark:text-rose-400'}`}>Fișă →</span>
               </div>
@@ -533,18 +533,18 @@ const ViewDashboard = ({ members, currentUserObj, isAdmin, onNavigateToSection, 
             >
               <div className="flex items-start justify-between">
                 <div>
-                  <span className="text-xs font-title font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 block mb-1.5">
+                  <span className="text-xs font-title font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 block mb-1.5">
                     Ore Voluntariat
                   </span>
                   <div className="text-2xl sm:text-3xl lg:text-4xl font-bold font-data text-slate-900 dark:text-slate-100">
-                    {personalHours} <span className="text-base font-normal text-slate-500">ore</span>
+                    {personalHours} <span className="text-base font-normal text-slate-600 dark:text-slate-400">ore</span>
                   </div>
                 </div>
                 <div className="w-10 h-10 rounded-[2px] bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 flex items-center justify-center shrink-0 border border-amber-200/60 dark:border-amber-800/60">
                   <Clock size={20} />
                 </div>
               </div>
-              <div className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-3 flex items-center justify-between border-t border-slate-100 dark:border-slate-800/80 pt-2">
+              <div className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 mt-3 flex items-center justify-between border-t border-slate-100 dark:border-slate-800/80 pt-2">
                 <span>Timp investit în acțiuni</span>
                 <span className="text-amber-700 dark:text-amber-400 font-title font-bold group-hover:translate-x-0.5 transition-transform">Prezențe →</span>
               </div>
@@ -746,7 +746,7 @@ const ViewDashboard = ({ members, currentUserObj, isAdmin, onNavigateToSection, 
                   ))}
                 </div>
               ) : (
-                <div className="py-8 text-center text-xs sm:text-sm text-slate-400 dark:text-slate-500 italic">
+                <div className="py-8 text-center text-xs sm:text-sm text-slate-600 dark:text-slate-300 italic">
                   Nu există acțiuni comunitare în derulare în acest moment.
                 </div>
               )}
@@ -754,7 +754,7 @@ const ViewDashboard = ({ members, currentUserObj, isAdmin, onNavigateToSection, 
 
             {!isAdmin && (
               <div className="mt-4 border-t border-slate-100 dark:border-slate-800 pt-3 flex justify-between items-center text-xs sm:text-sm">
-                <span className="text-slate-500 dark:text-slate-400">Vrei să propui o inițiativă comunitară nouă?</span>
+                <span className="text-slate-600 dark:text-slate-300">Vrei să propui o inițiativă comunitară nouă?</span>
                 <button
                   onClick={() => onNavigateToSection('proiecte')}
                   className="text-blue-600 dark:text-blue-400 font-title font-bold hover:underline"
@@ -786,7 +786,7 @@ const ViewDashboard = ({ members, currentUserObj, isAdmin, onNavigateToSection, 
                     <div className="text-2xl sm:text-3xl font-bold font-data text-slate-900 dark:text-slate-100 leading-none">
                       {countdownDays}
                     </div>
-                    <div className="text-xs font-title font-bold uppercase text-slate-500 dark:text-slate-400 mt-1">
+                    <div className="text-xs font-title font-bold uppercase text-slate-600 dark:text-slate-300 mt-1">
                       Zile
                     </div>
                   </div>
@@ -1983,26 +1983,26 @@ const ViewProfile = ({ currentUserObj, onUpdateMember }: ViewProfileProps) => {
               </h4>
               <div className="grid grid-cols-2 gap-4 mb-4">
                 <div className="p-3 bg-slate-50 dark:bg-slate-900 rounded-[2px] border border-slate-200 dark:border-slate-800">
-                  <span className="text-xs font-title font-bold uppercase text-slate-500 block mb-1">Ore Acumulate</span>
+                  <span className="text-xs font-title font-bold uppercase text-slate-700 dark:text-slate-300 block mb-1">Ore Acumulate</span>
                   <div className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-slate-100 font-data">
-                    {effectiveUser.stats?.hours || 0} <span className="text-xs font-normal font-anthropic text-slate-500">ore</span>
+                    {effectiveUser.stats?.hours || 0} <span className="text-xs font-normal font-anthropic text-slate-600 dark:text-slate-400">ore</span>
                   </div>
                 </div>
                 <div className="p-3 bg-slate-50 dark:bg-slate-900 rounded-[2px] border border-slate-200 dark:border-slate-800">
-                  <span className="text-xs font-title font-bold uppercase text-slate-500 block mb-1">Proiecte & Comitete</span>
+                  <span className="text-xs font-title font-bold uppercase text-slate-700 dark:text-slate-300 block mb-1">Proiecte & Comitete</span>
                   <div className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-slate-100 font-data">
                     {effectiveUser.stats?.projects || 0}
                   </div>
                 </div>
               </div>
-              <div className="text-xs text-slate-500 dark:text-slate-400 font-anthropic leading-relaxed">
+              <div className="text-xs text-slate-600 dark:text-slate-300 font-anthropic leading-relaxed">
                 Orele de voluntariat și proiectele comunitare sunt validate la fiecare eveniment și ședință a clubului.
               </div>
             </Card>
 
             {/* Attendance detailed */}
             <Card className="!rounded-[2px]">
-              <h4 className="text-xs font-bold uppercase tracking-wider mb-4 flex items-center gap-2 font-title text-slate-600 dark:text-slate-400">
+              <h4 className="text-xs font-bold uppercase tracking-wider mb-4 flex items-center gap-2 font-title text-slate-700 dark:text-slate-300">
                 <CheckCircle size={16} className="text-indigo-500" /> Detalii Prezență
               </h4>
               <div className="flex items-center gap-4 mb-3">
@@ -2020,15 +2020,15 @@ const ViewProfile = ({ currentUserObj, onUpdateMember }: ViewProfileProps) => {
 
               <div className="grid grid-cols-3 gap-2 text-center text-xs font-data">
                 <div className="p-2.5 bg-emerald-50 dark:bg-emerald-950/40 rounded-[2px] border border-emerald-200 dark:border-emerald-800">
-                  <div className="text-slate-500 dark:text-slate-400 text-xs font-bold uppercase font-title">Prezențe</div>
+                  <div className="text-slate-700 dark:text-slate-200 text-xs font-bold uppercase font-title">Prezențe</div>
                   <div className="font-bold text-emerald-700 dark:text-emerald-400 text-base mt-0.5">{presences}</div>
                 </div>
                 <div className="p-2.5 bg-indigo-50 dark:bg-indigo-950/40 rounded-[2px] border border-indigo-200 dark:border-indigo-800">
-                  <div className="text-slate-500 dark:text-slate-400 text-xs font-bold uppercase font-title">Motivate</div>
+                  <div className="text-slate-700 dark:text-slate-200 text-xs font-bold uppercase font-title">Motivate</div>
                   <div className="font-bold text-indigo-700 dark:text-indigo-400 text-base mt-0.5">{excused}</div>
                 </div>
                 <div className="p-2.5 bg-rose-50 dark:bg-rose-950/40 rounded-[2px] border border-rose-200 dark:border-rose-800">
-                  <div className="text-slate-500 dark:text-slate-400 text-xs font-bold uppercase font-title">Absențe</div>
+                  <div className="text-slate-700 dark:text-slate-200 text-xs font-bold uppercase font-title">Absențe</div>
                   <div className="font-bold text-rose-700 dark:text-rose-400 text-base mt-0.5">{unexcused}</div>
                 </div>
               </div>
@@ -2464,23 +2464,14 @@ export function Dashboard({ username, currentMember, currentMemberId, onLogout }
   const [dismissedAlertIds, setDismissedAlertIds] = useState<string[]>([]);
 
   useEffect(() => {
-    const fetchEvents = async () => {
-      const { data, error } = await supabase.from('events').select('*');
-      if (!error && data) {
+    const unsubscribeEvents = subscribeToTable<any>('events', (data) => {
+      if (data) {
         setEvents(data);
       }
-    };
-    fetchEvents();
-
-    const channel = supabase
-      .channel('dashboard_events_main')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'events' }, () => {
-        fetchEvents();
-      })
-      .subscribe();
+    });
 
     return () => {
-      supabase.removeChannel(channel);
+      unsubscribeEvents();
     };
   }, []);
 
@@ -2497,16 +2488,13 @@ export function Dashboard({ username, currentMember, currentMemberId, onLogout }
     }
     loadData();
 
-    // 1. Supabase Realtime channel for live updates
-    const channel = supabase
-      .channel('dashboard_members_realtime_' + Date.now())
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'members' }, () => {
-        loadData();
-      })
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'payments' }, () => {
-        loadData();
-      })
-      .subscribe();
+    // 1. Supabase Realtime channel via subscribeToTable for live updates
+    const unsubscribeMembers = subscribeToTable('members', () => {
+      loadData();
+    });
+    const unsubscribePayments = subscribeToTable('payments', () => {
+      loadData();
+    });
 
     // 2. Mobile wake-up & browser tab focus listeners
     const handleWakeup = () => {
@@ -2526,7 +2514,8 @@ export function Dashboard({ username, currentMember, currentMemberId, onLogout }
     }, 25000);
 
     return () => {
-      supabase.removeChannel(channel);
+      unsubscribeMembers();
+      unsubscribePayments();
       document.removeEventListener('visibilitychange', handleWakeup);
       window.removeEventListener('focus', handleWakeup);
       clearInterval(pollInterval);
@@ -3075,7 +3064,7 @@ export function Dashboard({ username, currentMember, currentMemberId, onLogout }
             className={`w-auto object-contain mb-3 transition-all duration-300 ${isSidebarCollapsed ? 'h-9' : 'h-14'}`}
           />
           {!isSidebarCollapsed && (
-            <div className="adm-meta-label flex items-center gap-2 text-center text-slate-500 dark:text-slate-400 font-bold font-title">
+            <div className="adm-meta-label flex items-center gap-2 text-center text-slate-700 dark:text-slate-300 font-bold font-title">
               <span className="w-1.5 h-1.5 shrink-0 rounded-full" style={{ backgroundColor: themeColor }} />
               District 2241 · Piatra-Neamț
             </div>
@@ -3086,7 +3075,7 @@ export function Dashboard({ username, currentMember, currentMemberId, onLogout }
           {MENU_CATEGORIES.map((category, idx) => (
             <div key={idx}>
               {!isSidebarCollapsed && (
-                <h3 className="adm-meta-label flex items-center gap-2 px-3 mb-1.5 text-slate-600 dark:text-slate-400 font-black font-title">
+                <h3 className="adm-meta-label flex items-center gap-2 px-3 mb-1.5 text-slate-700 dark:text-slate-300 font-black font-title">
                   <span className="h-px w-3 bg-slate-300 dark:bg-slate-700" />
                   {category.title}
                 </h3>
@@ -3106,7 +3095,7 @@ export function Dashboard({ username, currentMember, currentMemberId, onLogout }
                       className={`adm-nav-item w-full flex items-center gap-3 py-2.5 font-bold transition-all rounded-[2px] ${
                         isSidebarCollapsed ? 'justify-center px-0' : 'px-4'
                       } ${isActive 
-                        ? 'active bg-slate-900 text-white dark:bg-slate-800 dark:text-sky-300 shadow-xs' 
+                        ? 'active text-slate-900 dark:text-white bg-slate-200/80 dark:bg-slate-800 shadow-xs' 
                         : 'text-slate-700 hover:text-slate-950 hover:bg-slate-100 dark:text-slate-300 dark:hover:text-white dark:hover:bg-slate-800/60'
                       }`}
                     >
@@ -3153,7 +3142,7 @@ export function Dashboard({ username, currentMember, currentMemberId, onLogout }
            <button
              onClick={() => handleOpenUpdateLog('all')}
              title={isSidebarCollapsed ? `Jurnal Actualizări (v${APP_VERSION})` : undefined}
-             className={`w-full flex items-center gap-3 py-2 rounded-[2px] text-slate-600 hover:text-slate-950 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-slate-100 dark:hover:bg-slate-800/70 font-bold transition-all group cursor-pointer mb-1.5 ${isSidebarCollapsed ? 'justify-center px-0' : 'px-3'}`}
+             className={`w-full flex items-center gap-3 py-2 rounded-[2px] text-slate-700 hover:text-slate-950 hover:bg-slate-100 dark:text-slate-300 dark:hover:text-slate-100 dark:hover:bg-slate-800/70 font-bold transition-all group cursor-pointer mb-1.5 ${isSidebarCollapsed ? 'justify-center px-0' : 'px-3'}`}
            >
              <History size={16} className="shrink-0 text-emerald-600 dark:text-emerald-400 group-hover:rotate-[-20deg] transition-transform" />
              {!isSidebarCollapsed && (
@@ -3166,7 +3155,7 @@ export function Dashboard({ username, currentMember, currentMemberId, onLogout }
            <button
             onClick={onLogout}
             title={isSidebarCollapsed ? 'Deconectare' : undefined}
-            className={`w-full flex items-center gap-3 py-2.5 rounded-[2px] text-rose-600 hover:text-rose-700 hover:bg-rose-50 dark:text-rose-400 dark:hover:text-rose-300 dark:hover:bg-rose-950/40 font-bold transition-all group cursor-pointer ${isSidebarCollapsed ? 'justify-center px-0' : 'px-4'}`}
+            className={`w-full flex items-center gap-3 py-2.5 rounded-[2px] text-rose-700 hover:text-rose-800 hover:bg-rose-50 dark:text-rose-400 dark:hover:text-rose-300 dark:hover:bg-rose-950/40 font-bold transition-all group cursor-pointer ${isSidebarCollapsed ? 'justify-center px-0' : 'px-4'}`}
           >
             <LogOut size={17} className="shrink-0" />
             {!isSidebarCollapsed && <span className="text-[13.5px] font-title">Deconectare</span>}
@@ -3214,11 +3203,11 @@ export function Dashboard({ username, currentMember, currentMemberId, onLogout }
                 className={`flex items-center gap-1.5 px-2.5 py-1 rounded-[2px] text-xs font-bold uppercase tracking-wider transition-all cursor-pointer ${
                   experienceMode === 'easy'
                     ? 'bg-white dark:bg-slate-900 text-emerald-700 dark:text-emerald-300 shadow-xs border border-slate-200 dark:border-slate-700'
-                    : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+                    : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
                 }`}
                 title="Mod Simplificat: Navigație compactă în hub-uri intuitive"
               >
-                <Sparkles size={13} className={experienceMode === 'easy' ? 'text-emerald-500' : 'text-slate-400'} />
+                <Sparkles size={13} className={experienceMode === 'easy' ? 'text-emerald-500' : 'text-slate-500 dark:text-slate-400'} />
                 <span>Simplu</span>
               </button>
               <button
@@ -3230,11 +3219,11 @@ export function Dashboard({ username, currentMember, currentMemberId, onLogout }
                 className={`flex items-center gap-1.5 px-2.5 py-1 rounded-[2px] text-xs font-bold uppercase tracking-wider transition-all cursor-pointer ${
                   experienceMode === 'advanced'
                     ? 'bg-white dark:bg-slate-900 text-blue-700 dark:text-blue-300 shadow-xs border border-slate-200 dark:border-slate-700'
-                    : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+                    : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
                 }`}
                 title="Mod Avansat: Toate modulele și paginile separate"
               >
-                <Zap size={13} className={experienceMode === 'advanced' ? 'text-blue-500' : 'text-slate-400'} />
+                <Zap size={13} className={experienceMode === 'advanced' ? 'text-blue-500' : 'text-slate-500 dark:text-slate-400'} />
                 <span>Avansat</span>
               </button>
             </div>

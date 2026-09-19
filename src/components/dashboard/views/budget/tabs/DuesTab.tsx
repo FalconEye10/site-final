@@ -22,7 +22,7 @@ export const DuesTab: React.FC<Props> = ({ dues, onSaveMonth }) => {
 
   /**
    * Cell edits are held locally while the input is focused so a keystroke is
-   * not round-tripped through Firestore mid-typing; the value is committed on
+   * not round-tripped through Supabase mid-typing; the value is committed on
    * blur. `dues` stays the source of truth for every non-focused cell.
    */
   const [editing, setEditing] = useState<{ id: string; month: number; value: string } | null>(null);
@@ -76,7 +76,7 @@ export const DuesTab: React.FC<Props> = ({ dues, onSaveMonth }) => {
           <span className="adm-meta-label">
             {totals.complete}/{totals.members} complet
           </span>
-          <span className="adm-meta-label" style={{ color: 'var(--theme-color, #89cff0)' }}>
+          <span className="adm-meta-label" style={{ color: 'var(--adm-acc-blue)' }}>
             {formatRON(totals.collected)} / {formatRON(totals.expected)} RON
           </span>
         </div>
@@ -217,7 +217,7 @@ export const DuesTab: React.FC<Props> = ({ dues, onSaveMonth }) => {
                   {value > 0 ? formatRON(value) : '—'}
                 </Td>
               ))}
-              <Td numeric align="right" style={{ color: 'var(--theme-color, #89cff0)' }}>
+              <Td numeric align="right" style={{ color: 'var(--adm-acc-blue)' }}>
                 {formatRON(totals.collected)}
               </Td>
               <Td />

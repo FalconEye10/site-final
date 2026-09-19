@@ -93,8 +93,8 @@ export function LoginStoryPanel() {
               <span className="text-[10px] sm:text-[11px] font-title tracking-wider uppercase text-amber-400 font-bold">
                 Rotary International
               </span>
-              <span className="text-slate-600 text-xs">•</span>
-              <span className="text-[10px] sm:text-[11px] font-title tracking-wide uppercase text-slate-400 font-medium hidden sm:inline">
+              <span className="text-slate-400 text-xs">•</span>
+              <span className="text-[10px] sm:text-[11px] font-title tracking-wide uppercase text-slate-300 font-medium hidden sm:inline">
                 District 2241
               </span>
             </div>
@@ -220,7 +220,7 @@ export function LoginStoryPanel() {
                   {/* Pas: font-data (01, 02, 03) & Nume: font-title */}
                   <span
                     className={'text-[9px] sm:text-[10px] md:text-[10px] lg:text-[11px] tracking-wide transition-colors truncate ' + (
-                      isCurrent ? 'text-amber-400 font-bold font-title' : 'text-slate-500 group-hover:text-slate-400 font-medium font-title'
+                      isCurrent ? 'text-amber-400 font-bold font-title' : 'text-slate-300 group-hover:text-white font-medium font-title'
                     )}
                   >
                     <span className="font-data mr-0.5">0{idx + 1}.</span> {s.category.split(' ')[0]}
@@ -232,7 +232,7 @@ export function LoginStoryPanel() {
         </div>
 
         {/* Footer Meta: font-data */}
-        <div className="flex items-center justify-between text-[10px] sm:text-[11px] text-slate-500 mt-2 sm:mt-2.5 pt-1.5 border-t border-slate-900/80 font-data">
+        <div className="flex items-center justify-between text-[10px] sm:text-[11px] text-slate-400 mt-2 sm:mt-2.5 pt-1.5 border-t border-slate-900/80 font-data">
           <span>Interact Club Camena • Piatra-Neamț</span>
           <span>© {new Date().getFullYear()}</span>
         </div>

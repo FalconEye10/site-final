@@ -16,11 +16,14 @@ import { motion } from 'framer-motion';
 import {
   Archive,
   FileSpreadsheet,
+  FolderKanban,
   History,
   LayoutDashboard,
   Loader2,
   Receipt,
   ShieldAlert,
+  Users,
+  Wallet,
 } from 'lucide-react';
 
 import { Modal, Panel, TextInput } from './budget/ui';
@@ -28,14 +31,20 @@ import { useBudgetData } from './budget/useBudgetData';
 import { DuesRecord, currentMandateLabel } from './budget/types';
 import { exportBudgetWorkbook } from './budget/exportWorkbook';
 import { DashboardTab } from './budget/tabs/DashboardTab';
+import { GeneralBudgetTab } from './budget/tabs/GeneralBudgetTab';
+import { ProjectsTab } from './budget/tabs/ProjectsTab';
 import { TransactionsTab } from './budget/tabs/TransactionsTab';
+import { DuesTab } from './budget/tabs/DuesTab';
 import { AuditTab } from './budget/tabs/AuditTab';
 
-type TabId = 'dashboard' | 'registru' | 'audit';
+type TabId = 'dashboard' | 'general' | 'proiecte' | 'registru' | 'cotizatii' | 'audit';
 
 const TABS: { id: TabId; label: string; icon: React.ElementType }[] = [
   { id: 'dashboard', label: 'Dashboard & KPI', icon: LayoutDashboard },
+  { id: 'general', label: 'Buget General', icon: Wallet },
+  { id: 'proiecte', label: 'Buget pe Proiecte', icon: FolderKanban },
   { id: 'registru', label: 'Registru Tranzacții & Deconturi', icon: Receipt },
+  { id: 'cotizatii', label: 'Urmărire Cotizații', icon: Users },
   { id: 'audit', label: 'Audit Log', icon: History },
 ];
 
@@ -262,6 +271,24 @@ export const BudgetView: React.FC<BudgetViewProps> = ({ isAdmin = false, current
             />
           )}
 
+          {activeTab === 'general' && (
+            <GeneralBudgetTab
+              lines={data.lines}
+              transactions={data.transactions}
+              onSave={data.saveLine}
+              onDelete={data.deleteLine}
+            />
+          )}
+
+          {activeTab === 'proiecte' && (
+            <ProjectsTab
+              projects={data.projects}
+              transactions={data.transactions}
+              onSave={data.saveProject}
+              onDelete={data.deleteProject}
+            />
+          )}
+
           {activeTab === 'registru' && (
             <TransactionsTab
               transactions={data.transactions}
@@ -274,6 +301,8 @@ export const BudgetView: React.FC<BudgetViewProps> = ({ isAdmin = false, current
               onRevert={data.revertTransaction}
             />
           )}
+
+          {activeTab === 'cotizatii' && <DuesTab dues={data.dues} onSaveMonth={data.saveDuesMonth} />}
 
           {activeTab === 'audit' && <AuditTab entries={data.audit} duesPayments={data.duesPayments} />}
         </motion.div>

@@ -90,8 +90,8 @@ export function WelcomeLogin({ onLoginSuccess }: WelcomeLoginProps) {
                 <span className="text-[10px] sm:text-[11px] font-title uppercase tracking-wider text-amber-400 font-bold">
                   Autentificare
                 </span>
-                <span className="text-slate-600 text-xs">•</span>
-                <span className="text-[11px] sm:text-xs text-slate-400 font-title font-medium">
+                <span className="text-slate-400 text-xs">•</span>
+                <span className="text-[11px] sm:text-xs text-slate-300 font-title font-medium">
                   Portal Membri & Conducere
                 </span>
               </div>
@@ -102,7 +102,7 @@ export function WelcomeLogin({ onLoginSuccess }: WelcomeLoginProps) {
               </h1>
 
               {/* Descriere: font-headings (Inter) */}
-              <p className="text-[11px] sm:text-xs md:text-xs lg:text-[13px] text-slate-400 font-headings mt-1 leading-relaxed">
+              <p className="text-[11px] sm:text-xs md:text-xs lg:text-[13px] text-slate-300 font-headings mt-1 leading-relaxed">
                 Introduceți credențialele oficiale pentru a accesa registrul financiar, evidența cotizațiilor și deciziile interne.
               </p>
             </div>
@@ -132,7 +132,7 @@ export function WelcomeLogin({ onLoginSuccess }: WelcomeLoginProps) {
                   }}
                   autoComplete="username"
                   autoCapitalize="none"
-                  className="w-full pl-10 pr-3.5 py-2.5 sm:py-2.5 md:py-2.5 lg:py-3 rounded-lg border text-sm font-medium transition-all bg-[#0F172A] border-slate-700 text-white placeholder:text-slate-500 focus:bg-[#131D36] focus:border-amber-400 focus:ring-1 focus:ring-amber-400/30 focus:outline-none font-headings"
+                  className="w-full pl-10 pr-3.5 py-2.5 sm:py-2.5 md:py-2.5 lg:py-3 rounded-lg border text-sm font-medium transition-all bg-[#0F172A] border-slate-700 text-white placeholder:text-slate-400 focus:bg-[#131D36] focus:border-amber-400 focus:ring-1 focus:ring-amber-400/30 focus:outline-none font-headings"
                   required
                 />
               </div>
@@ -160,7 +160,7 @@ export function WelcomeLogin({ onLoginSuccess }: WelcomeLoginProps) {
                     setError('');
                   }}
                   autoComplete="current-password"
-                  className="w-full pl-10 pr-10 py-2.5 sm:py-2.5 md:py-2.5 lg:py-3 rounded-lg border text-sm font-medium transition-all bg-[#0F172A] border-slate-700 text-white placeholder:text-slate-500 focus:bg-[#131D36] focus:border-amber-400 focus:ring-1 focus:ring-amber-400/30 focus:outline-none font-headings"
+                  className="w-full pl-10 pr-10 py-2.5 sm:py-2.5 md:py-2.5 lg:py-3 rounded-lg border text-sm font-medium transition-all bg-[#0F172A] border-slate-700 text-white placeholder:text-slate-400 focus:bg-[#131D36] focus:border-amber-400 focus:ring-1 focus:ring-amber-400/30 focus:outline-none font-headings"
                   required
                 />
                 <button
@@ -200,7 +200,7 @@ export function WelcomeLogin({ onLoginSuccess }: WelcomeLoginProps) {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full mt-2 py-2.5 sm:py-3 lg:py-3.5 px-4 rounded-lg bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold text-xs sm:text-sm uppercase tracking-wider shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed font-title"
+              className="w-full mt-2 py-2.5 sm:py-3 lg:py-3.5 px-4 rounded-lg bg-amber-500 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold text-xs sm:text-sm uppercase tracking-wider shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed font-title"
             >
               {isLoading ? (
                 <>
@@ -218,7 +218,7 @@ export function WelcomeLogin({ onLoginSuccess }: WelcomeLoginProps) {
               onClick={() => {
                 window.location.hash = '';
               }}
-              className="w-full py-2 sm:py-2.5 lg:py-3 px-4 rounded-lg border border-slate-800 hover:border-slate-700 text-slate-400 hover:text-slate-200 text-xs font-title uppercase tracking-wider transition-all flex items-center justify-center gap-2 cursor-pointer hover:bg-slate-900/60"
+              className="w-full py-2 sm:py-2.5 lg:py-3 px-4 rounded-lg border border-slate-800 hover:border-slate-700 text-slate-300 hover:text-white text-xs font-title uppercase tracking-wider transition-all flex items-center justify-center gap-2 cursor-pointer hover:bg-slate-900/60"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
               <span>Înapoi la Site</span>
@@ -226,7 +226,7 @@ export function WelcomeLogin({ onLoginSuccess }: WelcomeLoginProps) {
           </form>
 
           {/* Bară Informații Securitate: font-title & font-data */}
-          <div className="mt-4 sm:mt-5 md:mt-5 lg:mt-6 pt-3 sm:pt-4 border-t border-slate-800/60 flex items-center justify-between text-[10px] sm:text-[11px] text-slate-500">
+          <div className="mt-4 sm:mt-5 md:mt-5 lg:mt-6 pt-3 sm:pt-4 border-t border-slate-800/60 flex items-center justify-between text-[10px] sm:text-[11px] text-slate-400">
             <div className="flex items-center gap-1.5 font-title">
               <ShieldCheck className="w-3.5 h-3.5 text-amber-400/80" />
               <span>Conexiune Securizată</span>

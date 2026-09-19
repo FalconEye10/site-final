@@ -859,13 +859,13 @@ export function AttendanceView({ members, onUpdateMember, isAdmin, currentUserId
             className={`flex-1 sm:flex-initial flex items-center justify-center gap-2 px-3.5 py-2 rounded-[2px] text-xs font-bold uppercase tracking-wider transition-all cursor-pointer ${
               viewMode === 'active'
                 ? 'bg-slate-900 text-white dark:bg-sky-500 dark:text-slate-950 shadow-xs'
-                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-white/60 dark:hover:bg-slate-800/60'
+                : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-white/60 dark:hover:bg-slate-800/60'
             }`}
           >
             <Clock size={14} />
             <span>Sesiuni Active</span>
             <span className={`px-1.5 py-0.2 rounded-[2px] text-[11px] font-data font-bold ${
-              viewMode === 'active' ? 'bg-white/20 text-white dark:bg-slate-950/30 dark:text-slate-950' : 'bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300'
+              viewMode === 'active' ? 'bg-white/20 text-white dark:bg-black/50 dark:text-white' : 'bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300'
             }`}>
               {activeMeetings.length}
             </span>
@@ -877,13 +877,13 @@ export function AttendanceView({ members, onUpdateMember, isAdmin, currentUserId
             className={`flex-1 sm:flex-initial flex items-center justify-center gap-2 px-3.5 py-2 rounded-[2px] text-xs font-bold uppercase tracking-wider transition-all cursor-pointer ${
               viewMode === 'archive'
                 ? 'bg-slate-900 text-white dark:bg-sky-500 dark:text-slate-950 shadow-xs'
-                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-white/60 dark:hover:bg-slate-800/60'
+                : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-white/60 dark:hover:bg-slate-800/60'
             }`}
           >
             <Archive size={14} />
             <span>Arhivă & Istoric</span>
             <span className={`px-1.5 py-0.2 rounded-[2px] text-[11px] font-data font-bold ${
-              viewMode === 'archive' ? 'bg-white/20 text-white dark:bg-slate-950/30 dark:text-slate-950' : 'bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300'
+              viewMode === 'archive' ? 'bg-white/20 text-white dark:bg-black/50 dark:text-white' : 'bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300'
             }`}>
               {archivedMeetings.length}
             </span>
@@ -1017,7 +1017,7 @@ export function AttendanceView({ members, onUpdateMember, isAdmin, currentUserId
                   </button>
                   <button
                     onClick={() => { setWhatsappSearchTerm(''); setShowWhatsappModal(true); }}
-                    className="px-3 py-1.5 rounded-[2px] text-xs font-bold uppercase tracking-wider bg-emerald-600 hover:bg-emerald-700 text-white flex items-center gap-1.5 shadow-xs transition-all cursor-pointer"
+                    className="px-3 py-1.5 rounded-[2px] text-xs font-bold uppercase tracking-wider bg-emerald-800 hover:bg-emerald-900 text-white flex items-center gap-1.5 shadow-xs transition-all cursor-pointer"
                   >
                     <MessageSquare size={13} /> Confirmat WhatsApp
                   </button>
@@ -1063,7 +1063,7 @@ export function AttendanceView({ members, onUpdateMember, isAdmin, currentUserId
                                       <img src={m.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(m.name)}`} className="w-8 h-8 rounded-[2px] border border-slate-200 dark:border-white/10 shrink-0" alt="" />
                                       <div>
                                         <div className="font-bold text-xs sm:text-sm text-slate-900 dark:text-slate-100 font-title">{m.name}</div>
-                                        <div className="text-[11px] text-slate-500 font-data">{m.nickname || m.username || 'Voluntar'} • {m.committee || 'Comitet'}</div>
+                                        <div className="text-[11px] text-slate-600 dark:text-slate-300 font-data">{m.nickname || m.username || 'Voluntar'} • {m.committee || 'Comitet'}</div>
                                       </div>
                                     </div>
                                   </TableCell>

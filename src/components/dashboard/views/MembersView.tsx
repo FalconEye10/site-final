@@ -311,7 +311,7 @@ export function MembersView({
               placeholder="Caută membru după nume, poreclă, username, telefon sau email..." 
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-24 py-2.5 bg-slate-50 dark:bg-slate-800/80 border border-slate-300 dark:border-slate-700 rounded-[2px] text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:border-slate-900 dark:focus:border-slate-100 focus:bg-white dark:focus:bg-slate-800 transition-all font-anthropic"
+              className="w-full pl-10 pr-24 py-2.5 bg-slate-50 dark:bg-slate-800/80 border border-slate-300 dark:border-slate-700 rounded-[2px] text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-500 dark:placeholder:text-slate-400 focus:outline-none focus:border-slate-900 dark:focus:border-slate-100 focus:bg-white dark:focus:bg-slate-800 transition-all font-anthropic"
             />
             <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
               {searchTerm && (
@@ -323,7 +323,7 @@ export function MembersView({
                   <X size={15} />
                 </button>
               )}
-              <span className="text-xs font-bold text-slate-400 dark:text-slate-500 font-data hidden sm:inline">
+              <span className="text-xs font-bold text-slate-600 dark:text-slate-300 font-data hidden sm:inline">
                 {processedMembers.length} {processedMembers.length === 1 ? 'membru' : 'membri'}
               </span>
             </div>
@@ -337,7 +337,7 @@ export function MembersView({
               <button
                 onClick={() => setViewMode('table')}
                 className={`px-2.5 py-1.5 rounded-[2px] text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
-                  viewMode === 'table' ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                  viewMode === 'table' ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs' : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
                 }`}
                 title="Vizualizare Tabel"
               >
@@ -347,7 +347,7 @@ export function MembersView({
               <button
                 onClick={() => setViewMode('cards')}
                 className={`px-2.5 py-1.5 rounded-[2px] text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
-                  viewMode === 'cards' ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                  viewMode === 'cards' ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs' : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
                 }`}
                 title="Vizualizare Carduri"
               >
@@ -488,7 +488,7 @@ export function MembersView({
 
         {/* Row 3: Quick Filter Chips */}
         <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pt-2 border-t border-slate-100 dark:border-slate-800 max-w-full font-title">
-          <span className="text-xs font-bold uppercase text-slate-400 dark:text-slate-500 tracking-wider shrink-0 mr-1">
+          <span className="text-xs font-bold uppercase text-slate-600 dark:text-slate-300 tracking-wider shrink-0 mr-1">
             Filtre Rapide:
           </span>
           {[
@@ -708,7 +708,7 @@ export function MembersView({
                               <span>{m.name}</span>
                             </div>
                             {m.nickname && (
-                              <div className="text-xs text-slate-500 dark:text-slate-400 font-data">
+                              <div className="text-xs text-slate-600 dark:text-slate-300 font-data">
                                 @{m.nickname}
                               </div>
                             )}
@@ -759,7 +759,7 @@ export function MembersView({
                         )}
                       </TableCell>
                       <TableCell>
-                        <div className={`font-bold text-sm font-data flex items-center gap-2 ${isClear ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
+                        <div className={`font-bold text-sm font-data flex items-center gap-2 ${isClear ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-700 dark:text-rose-400'}`}>
                           <span>{isClear ? '0 RON' : `${debt} RON`}</span>
                           {isClear ? (
                             <span className="text-xs uppercase bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 px-1.5 py-0.5 rounded-[2px] font-bold font-title">La zi</span>
