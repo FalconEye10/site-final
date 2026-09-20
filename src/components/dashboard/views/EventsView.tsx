@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  Clock, MapPin, Plus, Edit2, Trash2, X, Lock, Calendar
+  Clock, MapPin, Plus, Edit2, Trash2, X, Lock, Calendar, UserCheck
 } from 'lucide-react';
 import { EventData, fetchEvents, saveEvent, deleteEvent, saveAbsenceRequest, updateMemberFields } from '../../../utils/supabaseService';
 import { 
@@ -25,9 +25,10 @@ interface EventsViewProps {
   currentUserId?: string;
   currentUserObj?: any;
   onUpdateMember?: (updatedMember: any) => void;
+  onNavigateToAttendance?: (eventId: string) => void;
 }
 
-export function EventsView({ isAdmin, members = [], currentUserId, onUpdateMember }: EventsViewProps) {
+export function EventsView({ isAdmin, members = [], currentUserId, onUpdateMember, onNavigateToAttendance }: EventsViewProps) {
   const [events, setEvents] = useState<EventData[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeViewTab, setActiveViewTab] = useState<'upcoming' | 'history'>('upcoming');
@@ -376,13 +377,30 @@ export function EventsView({ isAdmin, members = [], currentUserId, onUpdateMembe
         });
       });
 
+      // Fallback: If no committee allocations exist, check attendance catalog rsvps
+      if (creditsByMember.size === 0 && event.rsvps) {
+        Object.entries(event.rsvps).forEach(([memberId, status]) => {
+          if (status === 'present') {
+            creditsByMember.set(memberId, [{ committeeName: 'Activitate Generală', hours: fallbackHours }]);
+          }
+        });
+      }
+
       if (creditsByMember.size === 0) {
-        toast.error('Nu există niciun voluntar repartizat pe departamente pentru acest proiect.');
+        if (onNavigateToAttendance) {
+          toast.info('Nu există voluntari marcați ca prezenți sau alocați pe departamente. Te redirecționăm la Catalogul de Prezențe...');
+          onNavigateToAttendance(event.id);
+        } else {
+          toast.error('Nu există voluntari marcați ca prezenți. Deschide secțiunea Prezență pentru a marca voluntarii.');
+        }
         return;
       }
 
-      const summary = committees.map(com => `${com.name}: ${com.hours ?? fallbackHours}h`).join(' · ');
-      if (!window.confirm(`Ești sigur că vrei să finalizezi activitatea pentru "${event.title}"?\nOre pe departament — ${summary}\nAceastă acțiune va adăuga orele de voluntariat membrilor și este permanentă.`)) {
+      const summary = committees.length > 0
+        ? committees.map(com => `${com.name}: ${com.hours ?? fallbackHours}h`).join(' · ')
+        : `Activitate Generală — ${fallbackHours}h / voluntar prezent`;
+
+      if (!window.confirm(`Ești sigur că vrei să finalizezi activitatea pentru "${event.title}"?\n${summary}\nAceastă acțiune va adăuga orele de voluntariat membrilor și este permanentă.`)) {
         return;
       }
 
@@ -776,13 +794,22 @@ export function EventsView({ isAdmin, members = [], currentUserId, onUpdateMembe
                                     <Lock size={14} /> Sesiune Închisă
                                   </span>
                                 ) : (
-                                  <button 
-                                    onClick={() => handleFinalize(event)}
-                                    className="px-3.5 py-1.5 rounded-[2px] bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-xs transition-colors border border-rose-200 flex items-center gap-1.5 shadow-xs cursor-pointer uppercase tracking-wider"
-                                    title="Finalizează prezența"
-                                  >
-                                    <Lock size={14} /> Finalizează
-                                  </button>
+                                  <>
+                                    <button 
+                                      onClick={() => onNavigateToAttendance ? onNavigateToAttendance(event.id) : null}
+                                      className="px-3.5 py-1.5 rounded-[2px] bg-sky-50 hover:bg-sky-100 dark:bg-sky-950/40 text-sky-800 dark:text-sky-300 font-bold text-xs transition-colors border border-sky-300 dark:border-sky-700/60 flex items-center gap-1.5 shadow-xs cursor-pointer uppercase tracking-wider"
+                                      title="Catalog Prezență"
+                                    >
+                                      <UserCheck size={14} /> Prezență
+                                    </button>
+                                    <button 
+                                      onClick={() => handleFinalize(event)}
+                                      className="px-3.5 py-1.5 rounded-[2px] bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-xs transition-colors border border-rose-200 flex items-center gap-1.5 shadow-xs cursor-pointer uppercase tracking-wider"
+                                      title="Finalizează prezența"
+                                    >
+                                      <Lock size={14} /> Finalizează
+                                    </button>
+                                  </>
                                 )}
                                 <button 
                                   onClick={() => openEditModal(event)}

@@ -2882,6 +2882,10 @@ export function Dashboard({ username, currentMember, currentMemberId, onLogout }
             currentUserId={currentUserObj?.id || ''}
             currentUserObj={currentUserObj}
             onUpdateMember={handleUpdateMember}
+            onNavigateToAttendance={(eventId) => {
+              setPreselectedEventIdForExcuse(eventId);
+              setActiveSection(experienceMode === 'easy' ? (isAdmin ? 'hub_admin_echipa' : 'hub_activitate') : 'prezenta');
+            }}
           />
         );
       case 'idei': return <IdeasView isAdmin={isAdmin} currentUserId={currentUserObj?.id || ''} currentUsername={currentUserObj?.username || username || ''} />;

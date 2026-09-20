@@ -105,7 +105,7 @@ const MemberAttendanceView = ({ member, events, currentUserId, preselectedEventI
     }
   };
 
-  const eligibleEvents = events.filter(ev => ev.type === 'meeting' && !ev.attendanceClosed).filter(ev => {
+  const eligibleEvents = events.filter(ev => !ev.attendanceClosed).filter(ev => {
     const rsvp = ev.rsvps?.[currentUserId] || 'none';
     return rsvp !== 'present' && rsvp !== 'excused';
   });
@@ -242,9 +242,23 @@ export function AttendanceView({ members, onUpdateMember, isAdmin, currentUserId
   const [whatsappSearchTerm, setWhatsappSearchTerm] = useState('');
   const [isExcusingWhatsapp, setIsExcusingWhatsapp] = useState(false);
 
+  // Filters for smart, rational volunteer roster management
+  const [sessionTypeFilter, setSessionTypeFilter] = useState<'all' | 'meeting' | 'project'>('all');
+  const [selectedCommitteeFilter, setSelectedCommitteeFilter] = useState<string>('all');
+  const [memberStatusFilter, setMemberStatusFilter] = useState<'all' | 'present' | 'excused' | 'unexcused' | 'none'>('all');
+  const [volunteerSearch, setVolunteerSearch] = useState('');
+
   useBodyScrollLock(showWhatsappModal || showFinalizeModal || !!rejectingReq);
 
-  // Filter meetings into active vs archived
+  // Universal session filtering (both meetings AND projects/actions)
+  const activeSessions = useMemo(() => {
+    return events.filter(e => !e.attendanceClosed);
+  }, [events]);
+
+  const archivedSessions = useMemo(() => {
+    return events.filter(e => e.attendanceClosed);
+  }, [events]);
+
   const activeMeetings = useMemo(() => {
     return events.filter(e => e.type === 'meeting' && !e.attendanceClosed);
   }, [events]);
@@ -252,6 +266,13 @@ export function AttendanceView({ members, onUpdateMember, isAdmin, currentUserId
   const archivedMeetings = useMemo(() => {
     return events.filter(e => e.type === 'meeting' && e.attendanceClosed);
   }, [events]);
+
+  // Filtered session list by type (All / Meetings / Projects)
+  const displayedSessions = useMemo(() => {
+    const list = viewMode === 'active' ? activeSessions : archivedSessions;
+    if (sessionTypeFilter === 'all') return list;
+    return list.filter(e => e.type === sessionTypeFilter);
+  }, [viewMode, activeSessions, archivedSessions, sessionTypeFilter]);
 
   // Load events
   useEffect(() => {
@@ -285,27 +306,27 @@ export function AttendanceView({ members, onUpdateMember, isAdmin, currentUserId
     }
 
     if (!selectedEvent && events.length > 0) {
-      if (activeMeetings.length > 0) {
-        setSelectedEvent(activeMeetings[0]);
+      if (activeSessions.length > 0) {
+        setSelectedEvent(activeSessions[0]);
         setViewMode('active');
-      } else if (archivedMeetings.length > 0) {
-        setSelectedEvent(archivedMeetings[0]);
+      } else if (archivedSessions.length > 0) {
+        setSelectedEvent(archivedSessions[0]);
         setViewMode('archive');
       }
     }
-  }, [preselectedEventId, events, activeMeetings, archivedMeetings]);
+  }, [preselectedEventId, events, activeSessions, archivedSessions]);
 
   // Switch between Active and Archive modes
   const handleSwitchViewMode = (mode: 'active' | 'archive') => {
     setViewMode(mode);
     if (mode === 'active') {
       if (!selectedEvent || selectedEvent.attendanceClosed) {
-        setSelectedEvent(activeMeetings[0] || null);
+        setSelectedEvent(activeSessions[0] || null);
       }
       setActiveTab('attendance');
     } else {
       if (!selectedEvent || !selectedEvent.attendanceClosed) {
-        setSelectedEvent(archivedMeetings[0] || null);
+        setSelectedEvent(archivedSessions[0] || null);
       }
     }
   };
@@ -412,19 +433,15 @@ export function AttendanceView({ members, onUpdateMember, isAdmin, currentUserId
   const handleOpenFinalizeModal = () => {
     if (!selectedEvent) return;
 
-    if (!selectedEvent.attendanceClosed) {
-      const activeMembers = members.filter(m => !isSystemAccount(m) && m.role !== 'admin');
-      const unassignedCount = activeMembers.filter(m => (selectedEvent.rsvps?.[m.id] || 'none') === 'none').length;
-      if (unassignedCount > 0) {
-        toast.error(`Nu poți finaliza: ${unassignedCount} membri repartizați au status nespecificat.`);
-        return;
-      }
-    } else {
+    if (selectedEvent.attendanceClosed) {
       handleReopenAttendance();
       return;
     }
 
-    setEventDurationInput('2');
+    const defaultHours = selectedEvent.durationHours && selectedEvent.durationHours > 0
+      ? String(selectedEvent.durationHours)
+      : '2';
+    setEventDurationInput(defaultHours);
     setShowFinalizeModal(true);
   };
 
@@ -455,22 +472,68 @@ export function AttendanceView({ members, onUpdateMember, isAdmin, currentUserId
     setIsFinalizing(true);
     try {
       const activeMembers = members.filter(m => !isSystemAccount(m) && m.role !== 'admin');
-      const presentMembers = activeMembers.filter(m => selectedEvent.rsvps?.[m.id] === 'present');
+      
+      // Auto-fill unspecified members as unexcused so no volunteer is left unassigned
+      const updatedRsvps = { ...(selectedEvent.rsvps || {}) };
+      for (const m of activeMembers) {
+        if (!updatedRsvps[m.id] || updatedRsvps[m.id] === 'none') {
+          updatedRsvps[m.id] = 'unexcused';
+        }
+      }
 
-      for (const member of presentMembers) {
+      const presentMembers = activeMembers.filter(m => updatedRsvps[m.id] === 'present');
+      const committees = selectedEvent.committees ? Object.values(selectedEvent.committees) : [];
+
+      for (const member of activeMembers) {
+        const rsvp = updatedRsvps[member.id];
         const currentStats = member.stats || {};
+        
+        let p = member.presences || 0;
+        let exc = member.excusedAbsences || 0;
+        let unexc = member.unexcusedAbsences || 0;
+
+        // If member was unspecified before, now unexcused
+        if ((selectedEvent.rsvps?.[member.id] || 'none') === 'none') {
+          unexc += 1;
+        }
+
+        let addedHours = 0;
+        let addedProject = 0;
+
+        if (rsvp === 'present') {
+          const memberCommittees = committees.filter(c => c.members?.includes(member.id));
+          if (memberCommittees.length > 0) {
+            addedHours = memberCommittees.reduce((sum, c) => sum + (Number(c.hours) > 0 ? Number(c.hours) : fallbackHours), 0);
+          } else {
+            addedHours = fallbackHours;
+          }
+
+          if (selectedEvent.type === 'project') {
+            addedProject = 1;
+          }
+        }
+
         const updatedStats = {
           ...currentStats,
-          hours: Math.max(0, (Number(currentStats.hours) || 0) + fallbackHours),
-          projects: (Number(currentStats.projects) || 0) + 1
+          hours: Math.max(0, (Number(currentStats.hours) || 0) + addedHours),
+          ...(addedProject > 0 ? { projects: (Number(currentStats.projects) || 0) + addedProject } : {})
         };
 
         const updatedMember = {
           ...member,
+          presences: p,
+          excusedAbsences: exc,
+          unexcusedAbsences: unexc,
           stats: updatedStats
         };
 
-        await updateMemberFields(member.id, { stats: updatedStats });
+        await updateMemberFields(member.id, { 
+          presences: p, 
+          excusedAbsences: exc, 
+          unexcusedAbsences: unexc, 
+          stats: updatedStats 
+        });
+
         if (onUpdateMember) {
           onUpdateMember(updatedMember);
         }
@@ -478,6 +541,7 @@ export function AttendanceView({ members, onUpdateMember, isAdmin, currentUserId
 
       const updatedEvent = { 
         ...selectedEvent, 
+        rsvps: updatedRsvps,
         attendanceClosed: true,
         durationHours: fallbackHours 
       };
@@ -728,7 +792,7 @@ export function AttendanceView({ members, onUpdateMember, isAdmin, currentUserId
     const eventDateTime = new Date(`${selectedEvent.date}T${selectedEvent.time}`).getTime();
     const isTimeLocked = Date.now() < eventDateTime;
 
-    if (isTimeLocked) {
+    if (!isAdmin && isTimeLocked) {
       toast.error('Prezențele se pot marca doar după ora evenimentului.');
       return;
     }
@@ -737,23 +801,19 @@ export function AttendanceView({ members, onUpdateMember, isAdmin, currentUserId
     if (!member) return;
 
     const currentPresence = selectedEvent.rsvps?.[memberId] || 'none';
-    if (currentPresence === presenceType) return;
+    const finalType = currentPresence === presenceType ? 'none' : presenceType;
 
     let newPresences = member.presences || 0;
     let newExcused = member.excusedAbsences || 0;
     let newUnexcused = member.unexcusedAbsences || 0;
 
-    if (selectedEvent.type === 'meeting') {
-      if (currentPresence === 'present') newPresences = Math.max(0, newPresences - 1);
-      if (currentPresence === 'excused') newExcused = Math.max(0, newExcused - 1);
-      if (currentPresence === 'unexcused' || currentPresence === 'absent') newUnexcused = Math.max(0, newUnexcused - 1);
-      if (presenceType === 'present') newPresences += 1;
-      if (presenceType === 'excused') newExcused += 1;
-      if (presenceType === 'absent' || presenceType === 'unexcused') newUnexcused += 1;
-    } else {
-      if (currentPresence === 'present') newPresences = Math.max(0, newPresences - 1);
-      if (presenceType === 'present') newPresences += 1;
-    }
+    if (currentPresence === 'present') newPresences = Math.max(0, newPresences - 1);
+    if (currentPresence === 'excused') newExcused = Math.max(0, newExcused - 1);
+    if (currentPresence === 'unexcused' || currentPresence === 'absent') newUnexcused = Math.max(0, newUnexcused - 1);
+
+    if (finalType === 'present') newPresences += 1;
+    if (finalType === 'excused') newExcused += 1;
+    if (finalType === 'absent' || finalType === 'unexcused') newUnexcused += 1;
 
     const updatedStats = { presences: newPresences, excusedAbsences: newExcused, unexcusedAbsences: newUnexcused };
     const deltas = {
@@ -763,14 +823,150 @@ export function AttendanceView({ members, onUpdateMember, isAdmin, currentUserId
     };
 
     try {
-      await recordAttendance(selectedEvent.id, memberId, presenceType, deltas);
-      const updatedEvent = { ...selectedEvent, rsvps: { ...selectedEvent.rsvps, [memberId]: presenceType } };
+      await recordAttendance(selectedEvent.id, memberId, finalType, deltas);
+      const updatedEvent = { ...selectedEvent, rsvps: { ...selectedEvent.rsvps, [memberId]: finalType } };
       setSelectedEvent(updatedEvent);
       setEvents(prev => prev.map(e => e.id === updatedEvent.id ? updatedEvent : e));
       onUpdateMember({ ...member, ...updatedStats });
-      toast.success('Prezența marcată cu succes!');
+      toast.success(
+        finalType === 'present' ? `Prezență: ${member.name} (Prezent)` :
+        finalType === 'excused' ? `Învoire: ${member.name} (Motivat)` :
+        finalType === 'unexcused' || finalType === 'absent' ? `Absență: ${member.name} (Absent Nemotivat)` :
+        `Status resetat pentru ${member.name}`
+      );
     } catch (err) {
       toast.error('Eroare la marcarea prezenței.');
+    }
+  };
+
+  // Extract event committees if any exist
+  const eventCommittees = useMemo(() => {
+    if (!selectedEvent || !selectedEvent.committees) return [];
+    return Object.entries(selectedEvent.committees)
+      .filter(([key]) => key !== '__shiftsMeta')
+      .map(([id, c]) => ({
+        id,
+        name: c.name || 'Comitet',
+        description: c.description || '',
+        members: c.members || [],
+        hours: c.hours
+      }));
+  }, [selectedEvent]);
+
+  // Target volunteers (all non-admin club members)
+  const activeVolunteers = useMemo(() => {
+    return members
+      .filter(m => !isSystemAccount(m) && m.role !== 'admin')
+      .sort((a, b) => (a.name || '').localeCompare(b.name || '', 'ro', { sensitivity: 'base' }));
+  }, [members]);
+
+  const unassignedVolunteersCount = useMemo(() => {
+    return activeVolunteers.filter(m => !eventCommittees.some(c => c.members?.includes(m.id))).length;
+  }, [activeVolunteers, eventCommittees]);
+
+  // Live session statistics
+  const sessionStats = useMemo(() => {
+    if (!selectedEvent) return { total: 0, present: 0, excused: 0, unexcused: 0, unspecified: 0 };
+    const total = activeVolunteers.length;
+    let present = 0;
+    let excused = 0;
+    let unexcused = 0;
+    let unspecified = 0;
+
+    activeVolunteers.forEach(m => {
+      const r = selectedEvent.rsvps?.[m.id] || 'none';
+      if (r === 'present') present++;
+      else if (r === 'excused') excused++;
+      else if (r === 'unexcused' || r === 'absent') unexcused++;
+      else unspecified++;
+    });
+
+    return { total, present, excused, unexcused, unspecified };
+  }, [selectedEvent, activeVolunteers]);
+
+  // Filtered volunteers for the active table
+  const filteredActiveVolunteers = useMemo(() => {
+    return activeVolunteers.filter(m => {
+      // 1. Search term
+      if (volunteerSearch.trim()) {
+        const query = normalizeDiacritics(volunteerSearch.trim().toLowerCase());
+        const name = normalizeDiacritics((m.name || '').toLowerCase());
+        const nick = normalizeDiacritics((m.nickname || m.username || '').toLowerCase());
+        if (!name.includes(query) && !nick.includes(query)) return false;
+      }
+
+      // 2. Committee filter
+      if (selectedCommitteeFilter !== 'all') {
+        if (selectedCommitteeFilter === '__unassigned__') {
+          const inAny = eventCommittees.some(c => c.members?.includes(m.id));
+          if (inAny) return false;
+        } else {
+          const com = eventCommittees.find(c => c.id === selectedCommitteeFilter);
+          if (!com || !com.members?.includes(m.id)) return false;
+        }
+      }
+
+      // 3. Status filter
+      if (memberStatusFilter !== 'all') {
+        const rsvp = selectedEvent?.rsvps?.[m.id] || 'none';
+        if (memberStatusFilter === 'present' && rsvp !== 'present') return false;
+        if (memberStatusFilter === 'excused' && rsvp !== 'excused') return false;
+        if (memberStatusFilter === 'unexcused' && rsvp !== 'unexcused' && rsvp !== 'absent') return false;
+        if (memberStatusFilter === 'none' && rsvp !== 'none') return false;
+      }
+
+      return true;
+    });
+  }, [activeVolunteers, volunteerSearch, selectedCommitteeFilter, memberStatusFilter, eventCommittees, selectedEvent]);
+
+  // Batch action handler
+  const handleBatchMark = async (targetType: 'present' | 'unexcused' | 'none', onlyUnspecified = false) => {
+    if (!selectedEvent || selectedEvent.attendanceClosed) return;
+
+    const targets = filteredActiveVolunteers.filter(m => {
+      const cur = selectedEvent.rsvps?.[m.id] || 'none';
+      if (onlyUnspecified) return cur === 'none';
+      return cur !== targetType;
+    });
+
+    if (targets.length === 0) {
+      toast.info('Nu există voluntari de actualizat pentru această selecție.');
+      return;
+    }
+
+    const newRsvps = { ...(selectedEvent.rsvps || {}) };
+    for (const m of targets) {
+      newRsvps[m.id] = targetType;
+    }
+
+    try {
+      const updatedEvent: EventData = { ...selectedEvent, rsvps: newRsvps };
+      await saveEvent(updatedEvent);
+      setSelectedEvent(updatedEvent);
+      setEvents(prev => prev.map(e => e.id === updatedEvent.id ? updatedEvent : e));
+
+      for (const m of targets) {
+        const cur = selectedEvent.rsvps?.[m.id] || 'none';
+        let p = m.presences || 0;
+        let exc = m.excusedAbsences || 0;
+        let unexc = m.unexcusedAbsences || 0;
+
+        if (cur === 'present') p = Math.max(0, p - 1);
+        if (cur === 'excused') exc = Math.max(0, exc - 1);
+        if (cur === 'absent' || cur === 'unexcused') unexc = Math.max(0, unexc - 1);
+
+        if (targetType === 'present') p += 1;
+        if (targetType === 'unexcused') unexc += 1;
+
+        const updatedStats = { presences: p, excusedAbsences: exc, unexcusedAbsences: unexc };
+        await updateMemberFields(m.id, updatedStats);
+        if (onUpdateMember) onUpdateMember({ ...m, ...updatedStats });
+      }
+
+      toast.success(`Au fost actualizați ${targets.length} voluntari!`);
+    } catch (err) {
+      console.error(err);
+      toast.error('Eroare la salvarea în masă a prezenței.');
     }
   };
 
@@ -867,7 +1063,7 @@ export function AttendanceView({ members, onUpdateMember, isAdmin, currentUserId
             <span className={`px-1.5 py-0.2 rounded-[2px] text-[11px] font-data font-bold ${
               viewMode === 'active' ? 'bg-white/20 text-white dark:bg-black/50 dark:text-white' : 'bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300'
             }`}>
-              {activeMeetings.length}
+              {activeSessions.length}
             </span>
           </button>
 
@@ -885,29 +1081,68 @@ export function AttendanceView({ members, onUpdateMember, isAdmin, currentUserId
             <span className={`px-1.5 py-0.2 rounded-[2px] text-[11px] font-data font-bold ${
               viewMode === 'archive' ? 'bg-white/20 text-white dark:bg-black/50 dark:text-white' : 'bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300'
             }`}>
-              {archivedMeetings.length}
+              {archivedSessions.length}
             </span>
           </button>
         </div>
       </div>
 
       {/* Event Selector for Current Mode */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-6 bg-slate-50 dark:bg-slate-900/60 p-3.5 sm:p-4 rounded-[2px] border border-slate-200 dark:border-slate-800 font-anthropic">
-        <div className="flex items-center gap-2 text-xs font-bold text-slate-700 dark:text-slate-300 font-title uppercase tracking-wider">
-          {viewMode === 'active' ? (
-            <>
-              <Clock size={16} className="text-sky-600 dark:text-sky-400" />
-              <span>Selectează Ședința Activă:</span>
-            </>
-          ) : (
-            <>
-              <Archive size={16} className="text-amber-600 dark:text-amber-400" />
-              <span>Selectează Raportul din Arhivă:</span>
-            </>
-          )}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 mb-6 bg-slate-50 dark:bg-slate-900/60 p-3.5 sm:p-4 rounded-[2px] border border-slate-200 dark:border-slate-800 font-anthropic">
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="flex items-center gap-2 text-xs font-bold text-slate-700 dark:text-slate-300 font-title uppercase tracking-wider mr-2">
+            {viewMode === 'active' ? (
+              <>
+                <Clock size={16} className="text-sky-600 dark:text-sky-400" />
+                <span>Sesiune Activă:</span>
+              </>
+            ) : (
+              <>
+                <Archive size={16} className="text-amber-600 dark:text-amber-400" />
+                <span>Raport Arhivă:</span>
+              </>
+            )}
+          </div>
+
+          {/* Type Filter Pills (Toate / Ședințe / Proiecte) */}
+          <div className="flex items-center gap-1 bg-white dark:bg-slate-800 p-0.5 rounded-[2px] border border-slate-200 dark:border-slate-700 text-[11px] font-title font-bold">
+            <button
+              type="button"
+              onClick={() => setSessionTypeFilter('all')}
+              className={`px-2 py-1 rounded-[2px] transition-all cursor-pointer ${
+                sessionTypeFilter === 'all'
+                  ? 'bg-slate-900 text-white dark:bg-sky-500 dark:text-slate-950'
+                  : 'text-slate-600 dark:text-slate-300 hover:text-slate-900'
+              }`}
+            >
+              Toate ({viewMode === 'active' ? activeSessions.length : archivedSessions.length})
+            </button>
+            <button
+              type="button"
+              onClick={() => setSessionTypeFilter('meeting')}
+              className={`px-2 py-1 rounded-[2px] transition-all cursor-pointer ${
+                sessionTypeFilter === 'meeting'
+                  ? 'bg-slate-900 text-white dark:bg-sky-500 dark:text-slate-950'
+                  : 'text-slate-600 dark:text-slate-300 hover:text-slate-900'
+              }`}
+            >
+              Ședințe ({viewMode === 'active' ? activeMeetings.length : archivedMeetings.length})
+            </button>
+            <button
+              type="button"
+              onClick={() => setSessionTypeFilter('project')}
+              className={`px-2 py-1 rounded-[2px] transition-all cursor-pointer ${
+                sessionTypeFilter === 'project'
+                  ? 'bg-slate-900 text-white dark:bg-sky-500 dark:text-slate-950'
+                  : 'text-slate-600 dark:text-slate-300 hover:text-slate-900'
+              }`}
+            >
+              Proiecte ({viewMode === 'active' ? activeSessions.filter(e => e.type === 'project').length : archivedSessions.filter(e => e.type === 'project').length})
+            </button>
+          </div>
         </div>
 
-        <div className="relative w-full sm:w-80 shrink-0 font-anthropic">
+        <div className="relative w-full md:w-96 shrink-0 font-anthropic">
           {loadingEvents ? (
             <div className="w-full p-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[2px] text-xs font-semibold opacity-50">
               Se încarcă lista...
@@ -915,7 +1150,7 @@ export function AttendanceView({ members, onUpdateMember, isAdmin, currentUserId
           ) : (
             <>
               <select 
-                className="w-full px-3.5 py-2 rounded-[2px] border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs sm:text-sm font-bold text-slate-900 dark:text-slate-100 focus:outline-none focus:border-slate-900 dark:focus:border-slate-100 appearance-none font-title cursor-pointer"
+                className="w-full px-3.5 py-2 rounded-[2px] border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs sm:text-sm font-bold text-slate-900 dark:text-slate-100 focus:outline-none focus:border-slate-900 dark:focus:border-slate-100 appearance-none font-title cursor-pointer pr-9"
                 onChange={(e) => {
                   const ev = events.find(x => x.id === e.target.value);
                   setSelectedEvent(ev || null);
@@ -924,11 +1159,11 @@ export function AttendanceView({ members, onUpdateMember, isAdmin, currentUserId
                 value={selectedEvent?.id || ''}
               >
                 <option value="">
-                  {viewMode === 'active' ? '-- Alege o ședință activă --' : '-- Alege un raport încheiat --'}
+                  {viewMode === 'active' ? '-- Alege o sesiune activă --' : '-- Alege un raport încheiat --'}
                 </option>
-                {(viewMode === 'active' ? activeMeetings : archivedMeetings).map(e => (
+                {displayedSessions.map(e => (
                   <option key={e.id} value={e.id}>
-                    {e.title} ({new Date(e.date).toLocaleDateString('ro-RO')} · {e.time})
+                    [{e.type === 'project' ? 'PROIECT' : e.type === 'meeting' ? 'ȘEDINȚĂ' : 'EVENIMENT'}] {e.title} ({new Date(e.date).toLocaleDateString('ro-RO')} · {e.time})
                   </option>
                 ))}
               </select>
@@ -943,7 +1178,7 @@ export function AttendanceView({ members, onUpdateMember, isAdmin, currentUserId
       {/* ========================================================================= */}
       {viewMode === 'active' && (
         <>
-          {activeMeetings.length === 0 ? (
+          {activeSessions.length === 0 ? (
             <div className="flex-1 flex flex-col items-center justify-center border border-dashed border-slate-200 dark:border-slate-800 rounded-[2px] p-8 sm:p-12 text-center bg-slate-50/50 dark:bg-slate-900/30 font-anthropic">
               <div className="w-14 h-14 rounded-[2px] bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mb-3.5 border border-emerald-200 dark:border-emerald-800 shadow-xs">
                 <CheckCircle2 size={30} />
@@ -958,15 +1193,15 @@ export function AttendanceView({ members, onUpdateMember, isAdmin, currentUserId
                 className="px-4 py-2.5 btn-civic-secondary text-xs font-title uppercase tracking-wider flex items-center gap-2 cursor-pointer"
               >
                 <Archive size={14} />
-                <span>Consultă Arhiva & Istoricul Prezențelor ({archivedMeetings.length})</span>
+                <span>Consultă Arhiva & Istoricul Prezențelor ({archivedSessions.length})</span>
               </button>
             </div>
           ) : !selectedEvent || selectedEvent.attendanceClosed ? (
             <div className="flex-1 flex flex-col items-center justify-center border border-dashed border-slate-200 dark:border-slate-800 rounded-[2px] p-8 text-center bg-slate-50/50 dark:bg-slate-900/50">
               <p className="text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider text-xs sm:text-sm font-title mb-2">
-                Alege o ședință activă din meniul de mai sus
+                Alege o sesiune activă din meniul de mai sus
               </p>
-              <p className="text-xs text-slate-400 font-anthropic">Sunt disponibile {activeMeetings.length} sesiuni deschise pentru marcare.</p>
+              <p className="text-xs text-slate-400 font-anthropic">Sunt disponibile {activeSessions.length} sesiuni deschise pentru marcare.</p>
             </div>
           ) : (
             <motion.div 
@@ -975,13 +1210,13 @@ export function AttendanceView({ members, onUpdateMember, isAdmin, currentUserId
               animate={{ opacity: 1, y: 0 }}
               className="flex flex-col flex-1"
             >
-              {isTimeLocked && (
-                <div className="bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-200 p-4 rounded-[2px] mb-5 flex items-start gap-3 shrink-0 font-anthropic">
+              {isTimeLocked && !isAdmin && (
+                <div className="bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-200 p-4 rounded-[2px] mb-4 flex items-start gap-3 shrink-0 font-anthropic">
                   <Clock className="mt-0.5 shrink-0 text-amber-600 dark:text-amber-400" size={18} />
                   <div>
                     <p className="text-xs sm:text-sm font-bold uppercase tracking-wider font-title">Time Lock Activ</p>
                     <p className="text-xs opacity-85 mt-0.5 font-anthropic">
-                      Evenimentul este programat pentru <strong>{new Date(selectedEvent.date).toLocaleDateString('ro-RO')} ora {selectedEvent.time}</strong>. Prezențele se pot marca după începerea ședinței.
+                      Evenimentul este programat pentru <strong>{new Date(selectedEvent.date).toLocaleDateString('ro-RO')} ora {selectedEvent.time}</strong>. Prezențele se pot marca după începerea sesiunii.
                     </p>
                   </div>
                 </div>
@@ -999,7 +1234,7 @@ export function AttendanceView({ members, onUpdateMember, isAdmin, currentUserId
                         : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-50'
                     }`}
                   >
-                    Catalog Prezențe
+                    Catalog Prezențe ({sessionStats.present}/{sessionStats.total})
                   </button>
                   <button 
                     type="button"
@@ -1023,107 +1258,337 @@ export function AttendanceView({ members, onUpdateMember, isAdmin, currentUserId
                   </button>
                 </div>
 
-                {!isTimeLocked && (
+                <div className="flex items-center gap-2">
                   <button
                     onClick={handleOpenFinalizeModal}
                     className="px-3.5 py-1.5 btn-civic-danger text-xs font-title uppercase tracking-wider flex items-center justify-center gap-1.5 cursor-pointer"
                   >
                     <Lock size={13} /> Finalizează & Salvează
                   </button>
-                )}
+                </div>
               </div>
 
               {/* Attendance Table or Requests List */}
               <div className="flex-1 bg-white dark:bg-slate-900 rounded-[2px] border border-slate-200 dark:border-slate-800 shadow-xs overflow-hidden flex flex-col font-anthropic">
                 {activeTab === 'attendance' && (
-                  <div className="overflow-y-auto scrollbar-thin p-3 sm:p-4 font-anthropic flex-1">
-                    {members.length === 0 ? (
-                      <p className="text-center text-sm opacity-50 py-8 font-anthropic">Nu există membri în baza de date.</p>
-                    ) : (
-                      <Table>
-                        <TableHeader className="sticky top-0 z-10 bg-slate-50/90 dark:bg-slate-800/90 backdrop-blur-sm font-title">
-                          <TableRow>
-                            <TableHead className="py-2.5 px-3 font-bold text-xs uppercase tracking-wider">Membru</TableHead>
-                            <TableHead className="py-2.5 px-3 font-bold text-xs uppercase tracking-wider">Status Curent</TableHead>
-                            <TableHead className="py-2.5 px-3 text-right font-bold text-xs uppercase tracking-wider">Acțiuni Prezență</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {members
-                            .filter(m => !isSystemAccount(m) && m.role !== 'admin')
-                            .sort((a, b) => (a.name || '').localeCompare(b.name || '', 'ro', { sensitivity: 'base' }))
-                            .map(m => {
-                              const status = selectedEvent.rsvps?.[m.id] || 'none';
-                              const isButtonLocked = isTimeLocked;
+                  <div className="flex flex-col h-full font-anthropic flex-1 overflow-hidden">
+                    
+                    {/* Active Session Info & Controls Header */}
+                    <div className="p-3 sm:p-4 bg-slate-50/80 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800 space-y-3 shrink-0">
+                      
+                      {/* Search and Batch Actions Row */}
+                      <div className="flex flex-col lg:flex-row justify-between items-stretch lg:items-center gap-3">
+                        
+                        {/* Quick Search */}
+                        <div className="relative flex-1 max-w-md">
+                          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                          <input
+                            type="text"
+                            value={volunteerSearch}
+                            onChange={e => setVolunteerSearch(e.target.value)}
+                            placeholder="Caută voluntar după nume sau nickname..."
+                            className="w-full pl-9 pr-8 py-1.5 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-[2px] text-xs text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:border-slate-900 dark:focus:border-slate-100 font-anthropic"
+                          />
+                          {volunteerSearch && (
+                            <button
+                              type="button"
+                              onClick={() => setVolunteerSearch('')}
+                              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
+                            >
+                              <X size={13} />
+                            </button>
+                          )}
+                        </div>
+
+                        {/* Batch Action Buttons */}
+                        <div className="flex flex-wrap items-center gap-1.5 text-xs font-title font-bold">
+                          <button
+                            type="button"
+                            onClick={() => handleBatchMark('present')}
+                            className="px-2.5 py-1.5 rounded-[2px] bg-emerald-600 hover:bg-emerald-700 text-white transition-colors cursor-pointer flex items-center gap-1 shadow-xs"
+                            title="Setează toți voluntarii afișați ca Prezenți"
+                          >
+                            <Check size={12} /> Toți Prezenți
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleBatchMark('unexcused', true)}
+                            className="px-2.5 py-1.5 rounded-[2px] bg-rose-700 hover:bg-rose-800 text-white transition-colors cursor-pointer flex items-center gap-1 shadow-xs"
+                            title="Setează voluntarii nespecificați ca Absenți Nemotivați"
+                          >
+                            <UserX size={12} /> Nespecificați ➔ Absenți Nemotivați
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleBatchMark('none')}
+                            className="px-2.5 py-1.5 rounded-[2px] bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 transition-colors cursor-pointer flex items-center gap-1"
+                            title="Resetează statusul la Nespecificat pentru voluntarii afișați"
+                          >
+                            <RotateCcw size={12} /> Resetează
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Filter by Committee Pills (if project has committees) */}
+                      {eventCommittees.length > 0 ? (
+                        <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                          <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 font-title mr-1">Departamente:</span>
+                          <button
+                            type="button"
+                            onClick={() => setSelectedCommitteeFilter('all')}
+                            className={`px-2.5 py-0.5 rounded-[2px] text-xs font-title font-bold uppercase tracking-wider transition-colors cursor-pointer ${
+                              selectedCommitteeFilter === 'all'
+                                ? 'bg-slate-900 text-white dark:bg-sky-500 dark:text-slate-950'
+                                : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 hover:bg-slate-100'
+                            }`}
+                          >
+                            Toți Voluntarii ({activeVolunteers.length})
+                          </button>
+                          {eventCommittees.map(c => (
+                            <button
+                              key={c.id}
+                              type="button"
+                              onClick={() => setSelectedCommitteeFilter(c.id)}
+                              className={`px-2.5 py-0.5 rounded-[2px] text-xs font-title font-bold uppercase tracking-wider transition-colors cursor-pointer ${
+                                selectedCommitteeFilter === c.id
+                                  ? 'bg-slate-900 text-white dark:bg-sky-500 dark:text-slate-950'
+                                  : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 hover:bg-slate-100'
+                              }`}
+                            >
+                              {c.name} ({c.members?.length || 0})
+                            </button>
+                          ))}
+                          {unassignedVolunteersCount > 0 && (
+                            <button
+                              type="button"
+                              onClick={() => setSelectedCommitteeFilter('__unassigned__')}
+                              className={`px-2.5 py-0.5 rounded-[2px] text-xs font-title font-bold uppercase tracking-wider transition-colors cursor-pointer ${
+                                selectedCommitteeFilter === '__unassigned__'
+                                  ? 'bg-slate-900 text-white dark:bg-sky-500 dark:text-slate-950'
+                                  : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 hover:bg-slate-100'
+                              }`}
+                            >
+                              Fără Departament ({unassignedVolunteersCount})
+                            </button>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 font-anthropic">
+                          <Info size={13} className="text-sky-500 shrink-0" />
+                          <span>Catalog deschis pentru toți cei <strong>{activeVolunteers.length} voluntari</strong> din club. Poți marca prezența direct sau în masă.</span>
+                        </div>
+                      )}
+
+                      {/* Status Filter Badges */}
+                      <div className="flex flex-wrap items-center gap-1.5 pt-1 border-t border-slate-200/60 dark:border-slate-700/60 text-xs font-title font-bold">
+                        <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 mr-1">Status:</span>
+                        <button
+                          type="button"
+                          onClick={() => setMemberStatusFilter('all')}
+                          className={`px-2 py-0.5 rounded-[2px] uppercase transition-colors cursor-pointer ${
+                            memberStatusFilter === 'all'
+                              ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900'
+                              : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700'
+                          }`}
+                        >
+                          Toți ({sessionStats.total})
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setMemberStatusFilter('present')}
+                          className={`px-2 py-0.5 rounded-[2px] uppercase transition-colors cursor-pointer ${
+                            memberStatusFilter === 'present'
+                              ? 'bg-emerald-600 text-white'
+                              : 'bg-emerald-50 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800'
+                          }`}
+                        >
+                          Prezenți ({sessionStats.present})
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setMemberStatusFilter('excused')}
+                          className={`px-2 py-0.5 rounded-[2px] uppercase transition-colors cursor-pointer ${
+                            memberStatusFilter === 'excused'
+                              ? 'bg-amber-500 text-slate-950'
+                              : 'bg-amber-50 text-amber-800 dark:bg-amber-950/40 dark:text-amber-300 border border-amber-200 dark:border-amber-800'
+                          }`}
+                        >
+                          Motivați ({sessionStats.excused})
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setMemberStatusFilter('unexcused')}
+                          className={`px-2 py-0.5 rounded-[2px] uppercase transition-colors cursor-pointer ${
+                            memberStatusFilter === 'unexcused'
+                              ? 'bg-rose-600 text-white'
+                              : 'bg-rose-50 text-rose-800 dark:bg-rose-950/40 dark:text-rose-300 border border-rose-200 dark:border-rose-800'
+                          }`}
+                        >
+                          Absenți Nemotivați ({sessionStats.unexcused})
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setMemberStatusFilter('none')}
+                          className={`px-2 py-0.5 rounded-[2px] uppercase transition-colors cursor-pointer ${
+                            memberStatusFilter === 'none'
+                              ? 'bg-slate-600 text-white'
+                              : 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border border-slate-200 dark:border-slate-700'
+                          }`}
+                        >
+                          Nespecificați ({sessionStats.unspecified})
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Volunteer List Table */}
+                    <div className="overflow-y-auto scrollbar-thin p-3 sm:p-4 font-anthropic flex-1">
+                      {filteredActiveVolunteers.length === 0 ? (
+                        <div className="text-center py-12">
+                          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-medium">Nu a fost găsit niciun voluntar conform filtrelor selectate.</p>
+                          <button
+                            type="button"
+                            onClick={() => { setVolunteerSearch(''); setSelectedCommitteeFilter('all'); setMemberStatusFilter('all'); }}
+                            className="mt-2 text-xs font-bold text-sky-600 dark:text-sky-400 hover:underline cursor-pointer uppercase tracking-wider"
+                          >
+                            Resetează filtrele
+                          </button>
+                        </div>
+                      ) : (
+                        <Table>
+                          <TableHeader className="sticky top-0 z-10 bg-slate-50/90 dark:bg-slate-800/90 backdrop-blur-sm font-title">
+                            <TableRow>
+                              <TableHead className="py-2.5 px-3 font-bold text-xs uppercase tracking-wider">Membru Voluntar</TableHead>
+                              <TableHead className="py-2.5 px-3 font-bold text-xs uppercase tracking-wider hidden md:table-cell">Comitet / Rol</TableHead>
+                              <TableHead className="py-2.5 px-3 font-bold text-xs uppercase tracking-wider">Status Curent</TableHead>
+                              <TableHead className="py-2.5 px-3 text-right font-bold text-xs uppercase tracking-wider">Acțiuni Prezență</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {filteredActiveVolunteers.map(m => {
+                              const rawStatus = selectedEvent.rsvps?.[m.id] || 'none';
+                              const status = rawStatus === 'absent' ? 'unexcused' : rawStatus;
+                              const isButtonLocked = !isAdmin && isTimeLocked;
+
+                              // Check which event committees this member belongs to
+                              const memberProjectCommittees = eventCommittees.filter(c => c.members?.includes(m.id));
 
                               return (
                                 <TableRow key={m.id} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40">
-                                  <TableCell className="py-3 px-3">
+                                  
+                                  {/* Member Info */}
+                                  <TableCell className="py-2.5 px-3">
                                     <div className="flex items-center gap-3">
-                                      <img src={m.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(m.name)}`} className="w-8 h-8 rounded-[2px] border border-slate-200 dark:border-white/10 shrink-0" alt="" />
-                                      <div>
-                                        <div className="font-bold text-xs sm:text-sm text-slate-900 dark:text-slate-100 font-title">{m.name}</div>
-                                        <div className="text-[11px] text-slate-600 dark:text-slate-300 font-data">{m.nickname || m.username || 'Voluntar'} • {m.committee || 'Comitet'}</div>
+                                      <img 
+                                        src={m.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(m.name)}`} 
+                                        className="w-8 h-8 rounded-[2px] border border-slate-200 dark:border-white/10 shrink-0 object-cover" 
+                                        alt="" 
+                                      />
+                                      <div className="min-w-0">
+                                        <div className="font-bold text-xs sm:text-sm text-slate-900 dark:text-slate-100 font-title truncate">
+                                          {m.name}
+                                        </div>
+                                        <div className="text-[11px] text-slate-500 dark:text-slate-400 font-data truncate">
+                                          {m.nickname || m.username || 'Voluntar'}
+                                          {m.committee ? ` • ${m.committee}` : ''}
+                                        </div>
                                       </div>
                                     </div>
                                   </TableCell>
 
-                                  <TableCell className="py-3 px-3">
-                                    <span className={`px-2 py-0.5 rounded-[2px] text-xs font-bold font-title uppercase tracking-wider ${
+                                  {/* Project Committee / Role */}
+                                  <TableCell className="py-2.5 px-3 hidden md:table-cell">
+                                    {memberProjectCommittees.length > 0 ? (
+                                      <div className="flex flex-wrap gap-1">
+                                        {memberProjectCommittees.map(c => (
+                                          <span key={c.id} className="px-2 py-0.5 rounded-[2px] text-[10px] font-bold bg-sky-50 dark:bg-sky-950/50 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-800 font-title">
+                                            {c.name}
+                                          </span>
+                                        ))}
+                                      </div>
+                                    ) : (
+                                      <span className="text-[11px] text-slate-400 font-data">
+                                        {m.committee || 'General'}
+                                      </span>
+                                    )}
+                                  </TableCell>
+
+                                  {/* Current Status Badge */}
+                                  <TableCell className="py-2.5 px-3">
+                                    <span className={`px-2 py-0.5 rounded-[2px] text-[11px] font-bold font-title uppercase tracking-wider inline-flex items-center gap-1 ${
                                       status === 'present' ? 'bg-emerald-100 text-emerald-800 border border-emerald-300 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-800' :
                                       status === 'excused' ? 'bg-amber-100 text-amber-800 border border-amber-300 dark:bg-amber-950/60 dark:text-amber-300 dark:border-amber-800' :
-                                      status === 'absent' || status === 'unexcused' ? 'bg-rose-100 text-rose-800 border border-rose-300 dark:bg-rose-950/60 dark:text-rose-300 dark:border-rose-800' :
+                                      status === 'unexcused' ? 'bg-rose-100 text-rose-800 border border-rose-300 dark:bg-rose-950/60 dark:text-rose-300 dark:border-rose-800' :
                                       'bg-slate-100 text-slate-600 border border-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700'
                                     }`}>
+                                      {status === 'present' && <Check size={11} />}
+                                      {status === 'excused' && <Clock size={11} />}
+                                      {status === 'unexcused' && <UserX size={11} />}
                                       {status === 'present' ? 'Prezent' :
                                        status === 'excused' ? 'Motivat' :
-                                       status === 'absent' || status === 'unexcused' ? 'Absent' : 'Nespecificat'}
+                                       status === 'unexcused' ? 'Absent Nemotivat' : 'Nespecificat'}
                                     </span>
                                   </TableCell>
 
-                                  <TableCell className="py-3 px-3 text-right">
+                                  {/* Action Buttons: Prezent / Motivat / Absent Nemotivat */}
+                                  <TableCell className="py-2.5 px-3 text-right">
                                     <div className="flex items-center justify-end gap-1.5 font-title">
+                                      
+                                      {/* Prezent Button */}
                                       <button 
                                         disabled={isButtonLocked}
                                         onClick={() => handleMarkAttendance(m.id, 'present')}
                                         className={`px-2.5 py-1 rounded-[2px] text-xs font-bold uppercase tracking-wider transition-all cursor-pointer ${
                                           status === 'present' 
-                                            ? 'bg-emerald-600 text-white font-black shadow-xs ring-1 ring-emerald-700 border border-emerald-700' 
+                                            ? 'bg-emerald-600 text-white font-black shadow-xs ring-2 ring-emerald-700 border border-emerald-700' 
                                             : 'bg-emerald-50 text-emerald-800 hover:bg-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-300 dark:hover:bg-emerald-900/60 border border-emerald-300 dark:border-emerald-700/60'
                                         } disabled:opacity-50 disabled:cursor-not-allowed`}
+                                        title={status === 'present' ? 'Apasă din nou pentru a reseta' : 'Marchează ca Prezent'}
                                       >
                                         Prezent
                                       </button>
-                                      <button 
-                                        disabled={isButtonLocked}
-                                        onClick={() => handleMarkAttendance(m.id, 'absent')}
-                                        className={`px-2.5 py-1 rounded-[2px] text-xs font-bold uppercase tracking-wider transition-all cursor-pointer ${
-                                          status === 'absent' || status === 'unexcused' 
-                                            ? 'bg-rose-600 text-white font-black shadow-xs ring-1 ring-rose-700 border border-rose-700' 
-                                            : 'bg-rose-50 text-rose-800 hover:bg-rose-100 dark:bg-rose-950/40 dark:text-rose-300 dark:hover:bg-rose-900/60 border border-rose-300 dark:border-rose-700/60'
-                                        } disabled:opacity-50 disabled:cursor-not-allowed`}
-                                      >
-                                        Absent
-                                      </button>
+
+                                      {/* Motivat Button */}
                                       <button 
                                         disabled={isButtonLocked}
                                         onClick={() => handleMarkAttendance(m.id, 'excused')}
                                         className={`px-2.5 py-1 rounded-[2px] text-xs font-bold uppercase tracking-wider transition-all cursor-pointer ${
                                           status === 'excused' 
-                                            ? 'bg-amber-500 text-slate-950 font-black shadow-xs ring-1 ring-amber-600 border border-amber-600' 
+                                            ? 'bg-amber-500 text-slate-950 font-black shadow-xs ring-2 ring-amber-600 border border-amber-600' 
                                             : 'bg-amber-50 text-amber-800 hover:bg-amber-100 dark:bg-amber-950/40 dark:text-amber-300 dark:hover:bg-amber-900/60 border border-amber-300 dark:border-amber-700/60'
                                         } disabled:opacity-50 disabled:cursor-not-allowed`}
+                                        title={status === 'excused' ? 'Apasă din nou pentru a reseta' : 'Marchează ca Motivat (Învoit)'}
                                       >
                                         Motivat
+                                      </button>
+
+                                      {/* Absent Nemotivat Button */}
+                                      <button 
+                                        disabled={isButtonLocked}
+                                        onClick={() => handleMarkAttendance(m.id, 'unexcused')}
+                                        className={`px-2.5 py-1 rounded-[2px] text-xs font-bold uppercase tracking-wider transition-all cursor-pointer ${
+                                          status === 'unexcused' 
+                                            ? 'bg-rose-600 text-white font-black shadow-xs ring-2 ring-rose-700 border border-rose-700' 
+                                            : 'bg-rose-50 text-rose-800 hover:bg-rose-100 dark:bg-rose-950/40 dark:text-rose-300 dark:hover:bg-rose-900/60 border border-rose-300 dark:border-rose-700/60'
+                                        } disabled:opacity-50 disabled:cursor-not-allowed`}
+                                        title={status === 'unexcused' ? 'Apasă din nou pentru a reseta' : 'Marchează ca Absent Nemotivat'}
+                                      >
+                                        Absent Nemotivat
                                       </button>
                                     </div>
                                   </TableCell>
                                 </TableRow>
                               );
                             })}
-                        </TableBody>
-                      </Table>
-                    )}
+                          </TableBody>
+                        </Table>
+                      )}
+                    </div>
+
+                    {/* Table Footer Stats */}
+                    <div className="p-2.5 bg-slate-50 dark:bg-slate-800/40 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 font-data shrink-0">
+                      <div>Afișați: <strong>{filteredActiveVolunteers.length}</strong> din <strong>{activeVolunteers.length}</strong> voluntari</div>
+                      <div>Prezenți: <strong className="text-emerald-600 dark:text-emerald-400">{sessionStats.present}</strong> · Motivați: <strong className="text-amber-600 dark:text-amber-400">{sessionStats.excused}</strong> · Nemotivați: <strong className="text-rose-600 dark:text-rose-400">{sessionStats.unexcused}</strong> · Nespecificați: <strong>{sessionStats.unspecified}</strong></div>
+                    </div>
                   </div>
                 )}
 
@@ -1206,14 +1671,14 @@ export function AttendanceView({ members, onUpdateMember, isAdmin, currentUserId
       {/* ========================================================================= */}
       {viewMode === 'archive' && (
         <>
-          {archivedMeetings.length === 0 ? (
+          {archivedSessions.length === 0 ? (
             <div className="flex-1 flex flex-col items-center justify-center border border-dashed border-slate-200 dark:border-slate-800 rounded-[2px] p-8 sm:p-12 text-center bg-slate-50/50 dark:bg-slate-900/30 font-anthropic">
               <div className="w-14 h-14 rounded-[2px] bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400 flex items-center justify-center mb-3.5 border border-amber-200 dark:border-amber-800 shadow-xs">
                 <Archive size={30} />
               </div>
               <h3 className="text-lg font-bold font-anthropicSerif text-slate-900 dark:text-white mb-1">Arhiva este goală</h3>
               <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 max-w-md mb-5 font-anthropic">
-                Nu există încă nicio ședință finalizată și salvată în arhivă. Când finalizezi o prezență din catalogul activ, raportul complet va fi salvat automat aici.
+                Nu există încă nicio sesiune finalizată și salvată în arhivă. Când finalizezi o prezență din catalogul activ, raportul complet va fi salvat automat aici.
               </p>
               <button
                 type="button"
@@ -1229,7 +1694,7 @@ export function AttendanceView({ members, onUpdateMember, isAdmin, currentUserId
               <p className="text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider text-xs sm:text-sm font-title mb-2">
                 Selectează un raport încheiat din lista de mai sus
               </p>
-              <p className="text-xs text-slate-400 font-anthropic">Sunt disponibile {archivedMeetings.length} ședințe arhivate cu evidența completă.</p>
+              <p className="text-xs text-slate-400 font-anthropic">Sunt disponibile {archivedSessions.length} sesiuni arhivate cu evidența completă.</p>
             </div>
           ) : (
             <motion.div 
@@ -1583,9 +2048,24 @@ export function AttendanceView({ members, onUpdateMember, isAdmin, currentUserId
               <div className="p-4 bg-slate-50 dark:bg-slate-800/60 rounded-[2px] border border-slate-200 dark:border-slate-700 mb-4 font-anthropic">
                 <div className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 font-semibold mb-1">Membri marcați PREZENT:</div>
                 <div className="text-3xl font-extrabold text-emerald-600 dark:text-emerald-400 font-data">
-                  {members.filter(m => m.role !== 'admin' && selectedEvent.rsvps?.[m.id] === 'present').length} membri
+                  {sessionStats.present} membri
                 </div>
-                <div className="text-xs text-slate-500 dark:text-slate-400 mt-1.5 font-anthropic">
+                <div className="grid grid-cols-2 gap-2 mt-3 pt-3 border-t border-slate-200 dark:border-slate-700 text-xs">
+                  <div>
+                    <span className="text-slate-500">Motivați:</span>{' '}
+                    <strong className="text-amber-600 dark:text-amber-400 font-data">{sessionStats.excused}</strong>
+                  </div>
+                  <div>
+                    <span className="text-slate-500">Absenți Nemotivați:</span>{' '}
+                    <strong className="text-rose-600 dark:text-rose-400 font-data">{sessionStats.unexcused}</strong>
+                  </div>
+                </div>
+                {sessionStats.unspecified > 0 && (
+                  <div className="mt-2.5 p-2 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 rounded-[2px] text-[11px] text-amber-800 dark:text-amber-200">
+                    ℹ️ <strong>{sessionStats.unspecified}</strong> membri rămași nespecificați vor fi marcați automat ca <strong>Absent Nemotivat</strong>.
+                  </div>
+                )}
+                <div className="text-xs text-slate-500 dark:text-slate-400 mt-2 font-anthropic">
                   * Orele de voluntariat se vor adăuga automat în contul fiecărui voluntar prezent, iar sesiunea va fi mutată în Arhivă.
                 </div>
               </div>

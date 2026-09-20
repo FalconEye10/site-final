@@ -24,12 +24,19 @@ export const MemberActivityHub: React.FC<MemberActivityHubProps> = ({
   preselectedEventId,
 }) => {
   const [subtab, setSubtab] = useState<'prezenta' | 'calendar'>(initialSubtab);
+  const [activePreselectedEventId, setActivePreselectedEventId] = useState<string | undefined>(preselectedEventId);
 
   useEffect(() => {
     if (initialSubtab) {
       setSubtab(initialSubtab);
     }
   }, [initialSubtab]);
+
+  useEffect(() => {
+    if (preselectedEventId) {
+      setActivePreselectedEventId(preselectedEventId);
+    }
+  }, [preselectedEventId]);
 
   const tabs = [
     { id: 'prezenta', label: 'Prezență & Motivări', icon: CheckCircle, desc: 'Verifică prezențele și trimite cereri de motivare' },
@@ -76,7 +83,7 @@ export const MemberActivityHub: React.FC<MemberActivityHubProps> = ({
             isAdmin={isAdmin}
             currentUserId={currentUserId}
             currentUserObj={currentUserObj}
-            preselectedEventId={preselectedEventId}
+            preselectedEventId={activePreselectedEventId}
           />
         )}
         {subtab === 'calendar' && (
@@ -86,6 +93,10 @@ export const MemberActivityHub: React.FC<MemberActivityHubProps> = ({
             currentUserId={currentUserId}
             currentUserObj={currentUserObj}
             onUpdateMember={onUpdateMember}
+            onNavigateToAttendance={(eventId) => {
+              setActivePreselectedEventId(eventId);
+              setSubtab('prezenta');
+            }}
           />
         )}
       </Suspense>

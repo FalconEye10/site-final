@@ -7,7 +7,7 @@
  * - Z (Patch): Corecții rapide, bug-fixuri mici / rușinoase, alinieri sau mici ajustări
  */
 
-export const APP_VERSION = typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '9.6.1';
+export const APP_VERSION = typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '9.6.2';
 
 export interface VersionLog {
   version: string;
@@ -17,6 +17,12 @@ export interface VersionLog {
 }
 
 export const VERSION_HISTORY: VersionLog[] = [
+  {
+    version: '9.6.2',
+    type: 'minor',
+    description: 'Catalog de prezențe inteligent și rațional pentru proiecte și ședințe: deblocare completă a finalizării la proiecte (inclusiv fără voluntari alocați pe departamente), catalog universal accesibil cu toți cei 72 de voluntari, 3 statusuri distincte (Prezent, Motivat, Absent Nemotivat), auto-completare inteligentă la finalizare pentru membrii nespecificați, navigare directă „Prezență” de pe cardurile de eveniment, filtrare rapidă pe departamente și acțiuni în masă.',
+    timestamp: '2026-09-20'
+  },
   {
     version: '9.6.1',
     type: 'patch',
