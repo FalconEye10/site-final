@@ -51,7 +51,9 @@ Platforma **Interact Club Camena Piatra-Neamț** este un sistem organizațional 
 * **`MAINTENANCE_INFO`** (`object`): Conține `title`, `subtitle`, `message` și `notice` afișate în ecranul de mentenanță.
 
 ### 2.3. Constante Financiare & Parametri de Business (`src/utils/finance.ts`)
-* **`COTIZATIE_LUNARA`**: `15` (RON / lună)
+* **`COTIZATIE_LUNARA`**: `20` (RON / lună, standard curent începând cu 1 Octombrie 2026)
+* **`COTIZATIE_LUNARA_PRE_OCT`**: `15` (RON / lună pentru August și Septembrie 2026)
+* **`COTIZATIE_LUNARA_OCT_PLUS`**: `20` (RON / lună începând cu 1 Octombrie 2026 inclusiv)
 * **`INITIAL_COLLECTION_START`**: `"2026-08-01"` (Data de start a mandatului curent pe platformă)
 
 ---

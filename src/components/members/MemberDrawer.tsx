@@ -7,7 +7,7 @@ import {
   Edit3, PlusCircle, CreditCard, Sparkles
 } from 'lucide-react';
 import { toast } from '../ui/Toast';
-import { calculateDebt, calculateQualification, generateMemberLedger, COTIZATIE_LUNARA } from '../../utils/finance';
+import { calculateDebt, calculateQualification, generateMemberLedger, getFeeForMonth } from '../../utils/finance';
 import { computeMemberMilestones } from '../../utils/milestones';
 import { updateMemberFields, revertLatestTreasuryPayment, deleteMemberFromDB, TreasuryPayment, logScoreAudit } from '../../utils/supabaseService';
 import { formatRomaniaDate } from '../../utils/romaniaTime';
@@ -600,7 +600,7 @@ export function MemberDrawer({ member, onClose, onUpdateMember, isAdmin, current
                           {debt} Lei
                         </span>
                         <span className="block text-xs sm:text-sm text-slate-600 dark:text-slate-400 mt-1 font-anthropic">
-                          {isClear ? 'La zi cu plățile' : `${Math.floor(debt / COTIZATIE_LUNARA)} luni restante`}
+                          {isClear ? 'La zi cu plățile' : `${unpaidBreakdown.length} ${unpaidBreakdown.length === 1 ? 'lună restantă' : 'luni restante'}`}
                         </span>
                       </div>
                     </div>
@@ -644,7 +644,7 @@ export function MemberDrawer({ member, onClose, onUpdateMember, isAdmin, current
                       <div>
                         <h4 className="text-sm font-bold text-rose-900 dark:text-rose-200 font-title">Restanțe Cotizație Detectate</h4>
                         <p className="text-xs sm:text-sm text-rose-700 dark:text-rose-300 mt-1 font-anthropic">
-                          Luna restantă: <span className="font-bold">{unpaidBreakdown[0]?.name || ''} 2026</span> ({COTIZATIE_LUNARA} Lei)
+                          Luna restantă: <span className="font-bold">{unpaidBreakdown[0]?.name || ''} {unpaidBreakdown[0]?.year || 2026}</span> ({unpaidBreakdown[0]?.fee || getFeeForMonth(unpaidBreakdown[0]?.year || 2026, (unpaidBreakdown[0]?.monthIndex || 1) - 1)} Lei)
                         </p>
                       </div>
 

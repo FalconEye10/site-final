@@ -7,7 +7,7 @@
  * - Z (Patch): Corecții rapide, bug-fixuri mici / rușinoase, alinieri sau mici ajustări
  */
 
-export const APP_VERSION = typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '9.6.2';
+export const APP_VERSION = typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '9.7.0';
 
 export interface VersionLog {
   version: string;
@@ -17,6 +17,12 @@ export interface VersionLog {
 }
 
 export const VERSION_HISTORY: VersionLog[] = [
+  {
+    version: '9.7.0',
+    type: 'minor',
+    description: 'Actualizare a politicii financiare de cotizație: trecerea la 20 RON/lună începând cu 1 Octombrie 2026 (lunile August și Septembrie rămân la 15 RON/lună), calcul dinamic al restanțelor și datoriilor pe membru, actualizare automată în casierie (PaymentModal), export PDF personalizat pe valoarea lunii vizate și sincronizarea completă a datoriilor tuturor celor 72 de membri în Supabase.',
+    timestamp: '2026-10-01'
+  },
   {
     version: '9.6.2',
     type: 'minor',

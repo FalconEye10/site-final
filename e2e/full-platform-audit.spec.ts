@@ -29,7 +29,7 @@ const MEMBER_USER = {
   totalPaid: 100,
 };
 
-const APP_VERSION = '9.5.0';
+const APP_VERSION = '9.7.0';
 
 /**
  * Helper to inject member authentication session into localStorage before initial page navigation.

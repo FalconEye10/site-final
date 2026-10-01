@@ -123,9 +123,9 @@ export const QUARTERS = [
   { label: 'Q4', span: 'Mar–Mai', months: [9, 10, 11] },
 ] as const;
 
-/** Monthly dues rate; a full mandate is 12 × this. Mirrors utils/finance.ts. */
-export const MONTHLY_DUE = 15;
-export const FULL_MANDATE_DUE = MONTHLY_DUE * 12; // 180 RON
+/** Monthly dues rate; current rate is 20 RON/month (was 15 RON pre-Oct 2026). Full mandate is 15+15+(8*20) = 190 RON. */
+export const MONTHLY_DUE = 20;
+export const FULL_MANDATE_DUE = 15 + 15 + 8 * 20; // 190 RON (Aug-Sep @ 15 RON, Oct-Mai @ 20 RON)
 
 export const TX_STATUS_LABELS: Record<TxStatus, string> = {
   platit: 'Plătit / Încasat',

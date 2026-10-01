@@ -625,7 +625,7 @@ export async function processTreasuryPayment(
     if (fetchErr || !memberSnap) throw new Error("Membrul nu a fost găsit.");
 
     const currentTotalPaid = Number(memberSnap.totalPaid || 0);
-    const paymentAmount = Number(paymentDoc.amount || 15);
+    const paymentAmount = Number(paymentDoc.amount || 20);
     const newTotalPaid = currentTotalPaid + paymentAmount;
     
     // Recalculăm datoria rămasă pentru a actualiza statusul membrului
@@ -659,7 +659,7 @@ export async function processTreasuryPayment(
 
     const { error: memberErr } = await supabase
       .from('members')
-      .update({ totalPaid: newTotalPaid, status: updatedStatus })
+      .update({ totalPaid: newTotalPaid, totalDebt: remainingDebt, status: updatedStatus })
       .eq('id', memberId.toString());
 
     if (memberErr) throw memberErr;

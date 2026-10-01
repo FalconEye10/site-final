@@ -2,7 +2,7 @@ import React, { useRef, useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { X, CheckCircle, AlertTriangle, Eraser, Check } from 'lucide-react';
 import { TreasuryPayment, processTreasuryPayment } from '../../utils/supabaseService';
-import { getTargetMonthForPayment, generateSmartTransactionId } from '../../utils/finance';
+import { getTargetMonthForPayment, getTargetAmountForPayment, generateSmartTransactionId } from '../../utils/finance';
 import { toast } from '../ui/Toast';
 import { useBodyScrollLock } from '../../utils/useBodyScrollLock';
 
@@ -211,6 +211,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
   useBodyScrollLock(true);
 
   const targetMonth = getTargetMonthForPayment(joinDateStr, totalPaid);
+  const targetAmount = getTargetAmountForPayment(joinDateStr, totalPaid);
   const transactionId = generateSmartTransactionId(memberName, new Date());
 
   const handleSubmit = async () => {
@@ -232,7 +233,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
         id: transactionId,
         memberId,
         memberName,
-        amount: 15, // STRICT: mereu 15 RON
+        amount: targetAmount,
         month: targetMonth,
         date: new Date().toISOString(),
         memberSignature: memberSig,
@@ -243,7 +244,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
       };
 
       const result = await processTreasuryPayment(memberId, paymentDoc);
-      toast.success(`Cotizația pentru ${targetMonth} a fost înregistrată cu succes!`);
+      toast.success(`Cotizația pentru ${targetMonth} (${targetAmount} RON) a fost înregistrată cu succes!`);
       onSuccess(result.newTotalPaid, result.newStatus);
       onClose();
     } catch (e: any) {
@@ -297,13 +298,13 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
             </span>
             <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-[2px] px-4 py-1 shadow-xs flex items-center gap-2">
               <span className="text-xl sm:text-2xl font-black text-emerald-600 dark:text-emerald-400 font-data">
-                15 RON
+                {targetAmount} RON
               </span>
             </div>
             <div className="mt-2 flex items-start gap-2 text-xs text-slate-600 dark:text-slate-400 font-anthropic">
               <AlertTriangle size={13} className="text-amber-500 shrink-0 mt-0.5" />
               <p>
-                Conform regulamentului, plățile se fac strict per lună (15 RON). Sumele în avans sau parțiale nu sunt
+                Conform regulamentului, plățile se fac strict per lună ({targetAmount} RON). Sumele în avans sau parțiale nu sunt
                 permise.
               </p>
             </div>
@@ -325,7 +326,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
               <span className="animate-pulse">Se procesează tranzacția...</span>
             ) : (
               <>
-                <CheckCircle size={16} /> Confirmă Încasarea (15 RON)
+                <CheckCircle size={16} /> Confirmă Încasarea ({targetAmount} RON)
               </>
             )}
           </button>

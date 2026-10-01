@@ -18,7 +18,7 @@ test('smoke test - loads dashboard with session', async ({ page }) => {
   await page.addInitScript(({ member }) => {
     localStorage.setItem('active_member_session', JSON.stringify(member));
     localStorage.setItem(`tutorial_seen_v3_${member.username.toLowerCase()}`, 'true');
-    localStorage.setItem(`camena_update_seen_v_9.5.0_${member.username.toLowerCase()}`, 'true');
+    localStorage.setItem(`camena_update_seen_v_9.7.0_${member.username.toLowerCase()}`, 'true');
     localStorage.setItem('ui_experience_mode', 'advanced');
     localStorage.setItem('adminThemeMode', 'dark');
   }, { member: ADMIN_USER });

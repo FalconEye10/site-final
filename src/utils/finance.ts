@@ -1,6 +1,26 @@
 import { formatRomaniaDateTime, getRomaniaDateParts } from './romaniaTime';
 
-export const COTIZATIE_LUNARA = 15;
+export const COTIZATIE_LUNARA_PRE_OCT = 15;
+export const COTIZATIE_LUNARA_OCT_PLUS = 20;
+export const COTIZATIE_LUNARA = 20; // Cotizație standard curentă (începând cu Octombrie 2026)
+
+/**
+ * Returnează valoarea cotizației pentru o anumită lună:
+ * - Lunile de dinainte de 1 Octombrie 2026: 15 RON / lună
+ * - Începând cu 1 Octombrie 2026 inclusiv: 20 RON / lună
+ *
+ * @param year Anul (ex: 2026)
+ * @param monthIndex0Based Indexul lunii 0-indexed (0 = Ian, 7 = Aug, 8 = Sep, 9 = Oct, ...)
+ */
+export function getFeeForMonth(year: number, monthIndex0Based: number): number {
+  if (year < 2026) return COTIZATIE_LUNARA_PRE_OCT;
+  if (year === 2026 && monthIndex0Based < 9) return COTIZATIE_LUNARA_PRE_OCT;
+  return COTIZATIE_LUNARA_OCT_PLUS;
+}
+
+export function getFeeForMonth1Based(year: number, month1Based: number): number {
+  return getFeeForMonth(year, month1Based - 1);
+}
 
 export interface MemberMonth {
   monthIndex: number;
@@ -9,6 +29,7 @@ export interface MemberMonth {
   shortName: string;
   status: 'Achitat' | 'Neachitat' | 'Viitor' | 'Neaplicabil';
   amountPaid?: number;
+  fee?: number;
 }
 
 export interface PaymentReceipt {
@@ -52,7 +73,7 @@ export function getEffectiveStartDate(joinDateStr: string | undefined | null): D
 /**
  * Generează istoricul calendaristic al membrului de la startul colectării până în prezent.
  * Aplică automat plățile (totalPaid) peste cele mai vechi luni.
- * OPȚIUNEA B: Se plătește luna întreagă (15 RON) indiferent de ziua înscrierii în acea lună.
+ * Se plătește luna întreagă (15 RON Aug-Sep 2026, 20 RON din Oct 2026) indiferent de ziua înscrierii.
  */
 export function generateMemberLedger(joinDateStr: string | undefined | null, totalPaid: number = 0): MemberMonth[] {
   const startDate = getEffectiveStartDate(joinDateStr);
@@ -67,13 +88,14 @@ export function generateMemberLedger(joinDateStr: string | undefined | null, tot
   let remainingPaid = Math.max(0, Number(totalPaid) || 0);
 
   while (currentY < currentTargetY || (currentY === currentTargetY && currentM <= currentTargetM)) {
+    const feeForThisMonth = getFeeForMonth(currentY, currentM);
     let status: 'Achitat' | 'Neachitat' = 'Neachitat';
     let amountPaidForThisMonth = 0;
 
-    if (remainingPaid >= COTIZATIE_LUNARA) {
+    if (remainingPaid >= feeForThisMonth) {
       status = 'Achitat';
-      amountPaidForThisMonth = COTIZATIE_LUNARA;
-      remainingPaid -= COTIZATIE_LUNARA;
+      amountPaidForThisMonth = feeForThisMonth;
+      remainingPaid -= feeForThisMonth;
     }
 
     months.push({
@@ -82,7 +104,8 @@ export function generateMemberLedger(joinDateStr: string | undefined | null, tot
       name: MONTH_NAMES[currentM],
       shortName: SHORT_MONTHS[currentM],
       status,
-      amountPaid: amountPaidForThisMonth
+      amountPaid: amountPaidForThisMonth,
+      fee: feeForThisMonth
     });
 
     currentM++;
@@ -96,26 +119,32 @@ export function generateMemberLedger(joinDateStr: string | undefined | null, tot
 }
 
 /**
- * Calculează datoria totală (conform formulei stricte).
- * OPȚIUNEA B: Se plătește luna întreagă (15 RON) indiferent de ziua înscrierii.
+ * Calculează datoria totală (conform formulei stricte dinamice).
+ * Lunile dinainte de Octombrie 2026 (Aug, Sep): 15 RON/lună.
+ * Din 1 Octombrie 2026 inclusiv: 20 RON/lună.
  */
 export function calculateDebt(joinDateStr: string | undefined | null, totalPaid: number = 0): number {
   const startDate = getEffectiveStartDate(joinDateStr);
   const nowParts = getRomaniaDateParts(new Date());
   
-  const currentY = nowParts.year;
-  const currentM = nowParts.month; // 1-indexed (1-12)
+  const currentTargetY = nowParts.year;
+  const currentTargetM = nowParts.month - 1; // 0-indexed
   
-  const startY = startDate.getFullYear();
-  const startM = startDate.getMonth() + 1; // 1-indexed (1-12)
+  let currentY = startDate.getFullYear();
+  let currentM = startDate.getMonth(); // 0-indexed
   
-  if (currentY < startY || (currentY === startY && currentM < startM)) return 0;
+  if (currentTargetY < currentY || (currentTargetY === currentY && currentTargetM < currentM)) return 0;
   
-  // Math.max(0, ...) — guard defensiv contra joinDate eronate care ar putea produce valori negative
-  const totalMonths = Math.max(0, (currentY - startY) * 12 + (currentM - startM) + 1);
-  if (totalMonths <= 0) return 0;
+  let totalExpected = 0;
+  while (currentY < currentTargetY || (currentY === currentTargetY && currentM <= currentTargetM)) {
+    totalExpected += getFeeForMonth(currentY, currentM);
+    currentM++;
+    if (currentM > 11) {
+      currentM = 0;
+      currentY++;
+    }
+  }
   
-  const totalExpected = totalMonths * COTIZATIE_LUNARA;
   const safePaid = Math.max(0, Number(totalPaid) || 0);
   const debt = totalExpected - safePaid;
   return Math.max(0, debt);
@@ -124,14 +153,55 @@ export function calculateDebt(joinDateStr: string | undefined | null, totalPaid:
 export const calculateDynamicDebt = calculateDebt;
 
 /**
- * Determină următoarea lună calendaristică restantă (ex: "August 2026")
+ * Determină următoarea lună calendaristică restantă și suma datorată (ex: "Octombrie 2026", 20 RON)
+ */
+export function getTargetPaymentDetails(joinDateStr: string | undefined | null, totalPaid: number = 0): {
+  monthName: string;
+  year: number;
+  label: string;
+  amountDue: number;
+} {
+  const startDate = getEffectiveStartDate(joinDateStr);
+  let remainingPaid = Math.max(0, Number(totalPaid) || 0);
+  let currentY = startDate.getFullYear();
+  let currentM = startDate.getMonth(); // 0-indexed
+
+  while (true) {
+    const fee = getFeeForMonth(currentY, currentM);
+    if (remainingPaid >= fee) {
+      remainingPaid -= fee;
+      currentM++;
+      if (currentM > 11) {
+        currentM = 0;
+        currentY++;
+      }
+    } else {
+      break;
+    }
+  }
+
+  const fee = getFeeForMonth(currentY, currentM);
+  const monthName = MONTH_NAMES[currentM];
+  return {
+    monthName,
+    year: currentY,
+    label: `${monthName} ${currentY}`,
+    amountDue: fee
+  };
+}
+
+/**
+ * Determină următoarea lună calendaristică restantă (ex: "Octombrie 2026")
  */
 export function getTargetMonthForPayment(joinDateStr: string | undefined | null, totalPaid: number = 0): string {
-  const startDate = getEffectiveStartDate(joinDateStr);
-  const monthsPaid = Math.floor((totalPaid || 0) / COTIZATIE_LUNARA);
-  
-  const targetDate = new Date(startDate.getFullYear(), startDate.getMonth() + monthsPaid, 1);
-  return `${MONTH_NAMES[targetDate.getMonth()]} ${targetDate.getFullYear()}`;
+  return getTargetPaymentDetails(joinDateStr, totalPaid).label;
+}
+
+/**
+ * Determină valoarea cotizației pentru următoarea lună restantă (15 RON pt lunile pre-Octombrie, 20 RON din Octombrie 2026)
+ */
+export function getTargetAmountForPayment(joinDateStr: string | undefined | null, totalPaid: number = 0): number {
+  return getTargetPaymentDetails(joinDateStr, totalPaid).amountDue;
 }
 
 /**
@@ -232,9 +302,10 @@ export function processDynamicPayment(
   const monthsCovered: string[] = [];
   
   for (const m of unpaidMonths) {
-    if (tempAmount >= COTIZATIE_LUNARA) {
+    const fee = m.fee || getFeeForMonth(m.year, m.monthIndex - 1);
+    if (tempAmount >= fee) {
       monthsCovered.push(`${m.name} ${m.year}`);
-      tempAmount -= COTIZATIE_LUNARA;
+      tempAmount -= fee;
     } else {
       break;
     }

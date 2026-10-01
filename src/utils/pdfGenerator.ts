@@ -1,6 +1,7 @@
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { supabase } from '../supabase';
+import { getFeeForMonth } from './finance';
 
 export interface ExportMemberData {
   id: string;
@@ -165,6 +166,15 @@ export async function generateTreasuryPDF({ month, year, members }: PDFGeneratio
     const targetMonthNorm = normalizeStr(`${month} ${year}`);
     const targetMonthOnly = normalizeStr(month);
 
+    const ROMANIAN_MONTHS = [
+      'ianuarie', 'februarie', 'martie', 'aprilie', 'mai', 'iunie',
+      'iulie', 'august', 'septembrie', 'octombrie', 'noiembrie', 'decembrie'
+    ];
+    const foundMonthIdx = ROMANIAN_MONTHS.indexOf(targetMonthOnly);
+    const resolvedMonthIdx = foundMonthIdx !== -1 ? foundMonthIdx : 9;
+    const resolvedYear = Number(year) || 2026;
+    const dueAmountForMonth = getFeeForMonth(resolvedYear, resolvedMonthIdx);
+
     for (let i = 0; i < activeCotizanti.length; i++) {
       const member = activeCotizanti[i];
       let memberSig = '', treasSig = '';
@@ -192,7 +202,7 @@ export async function generateTreasuryPDF({ month, year, members }: PDFGeneratio
       tableData.push([
         (i + 1).toString(),
         n(member.name),
-        '15 RON',
+        `${dueAmountForMonth} RON`,
         // signatureToPng: PNG transparent (fara fundal alb)
         memberSig ? await signatureToPng(memberSig) : '',
         treasSig  ? await signatureToPng(treasSig)  : '',
