@@ -1050,27 +1050,315 @@ input:focus, textarea:focus, select:focus {
 }
 
 /* ============================================
-   PROJECT PHOTO CARDS
+   PROJECT POSTER SHOWCASE & STORYTELLING DRAWER
    ============================================ */
+.proj-filter-btn {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 0.6rem 1.25rem;
+    border-radius: 9999px;
+    border: 1px solid rgba(16, 29, 52, 0.15);
+    background: #ffffff;
+    color: #101D34;
+    cursor: pointer;
+    transition: all 0.25s cubic-bezier(0.23, 1, 0.32, 1);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+.proj-filter-btn:hover {
+    background: #101D34;
+    color: #ffffff;
+    border-color: #101D34;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(16, 29, 52, 0.15);
+}
+.proj-filter-btn.active {
+    background: #101D34;
+    color: #89CFF0;
+    border-color: #101D34;
+    box-shadow: 0 4px 16px rgba(16, 29, 52, 0.25);
+}
+
+.proj-poster-card {
+    position: relative;
+    border-radius: 6px;
+    overflow: hidden;
+    background: #0B132B;
+    border: 1px solid rgba(16, 29, 52, 0.12);
+    cursor: pointer;
+    transition: transform 0.35s cubic-bezier(0.23, 1, 0.32, 1), box-shadow 0.35s ease, border-color 0.35s ease;
+    display: flex;
+    flex-direction: column;
+}
+.proj-poster-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 18px 36px rgba(11, 19, 43, 0.22);
+    border-color: #89CFF0;
+}
+.proj-poster-card.is-active {
+    border-color: #89CFF0;
+    box-shadow: 0 0 0 2px #89CFF0, 0 18px 38px rgba(137, 207, 240, 0.35);
+}
+
+.proj-poster-frame {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 4 / 5;
+    background: #080E1E;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.proj-poster-img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    display: block;
+    transition: transform 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+}
+.proj-poster-card:hover .proj-poster-img {
+    transform: scale(1.03);
+}
+
+.proj-poster-badge {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    padding: 4px 8px;
+    border-radius: 3px;
+    font-size: 9.5px;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    background: rgba(11, 19, 43, 0.9);
+    backdrop-filter: blur(8px);
+    color: #89CFF0;
+    border: 1px solid rgba(137, 207, 240, 0.35);
+    z-index: 2;
+}
+
+.proj-poster-footer {
+    padding: 1rem 1.15rem;
+    background: #ffffff;
+    border-top: 1px solid rgba(16, 29, 52, 0.08);
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    transition: background 0.25s ease;
+}
+.proj-poster-card:hover .proj-poster-footer {
+    background: #FAF9F5;
+}
+.proj-poster-title {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.98rem;
+    font-weight: 800;
+    color: #101D34;
+    text-transform: uppercase;
+    letter-spacing: -0.01em;
+    line-height: 1.2;
+}
+.proj-poster-cta {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #101D34;
+    opacity: 0.65;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    transition: opacity 0.2s ease, color 0.2s ease;
+}
+.proj-poster-card:hover .proj-poster-cta {
+    opacity: 1;
+    color: #0071e3;
+}
+
+/* Accordion Story Drawer */
+.proj-story-drawer {
+    display: none;
+    margin-top: 2.5rem;
+    margin-bottom: 2.5rem;
+    background: #0B132B;
+    border: 1px solid rgba(137, 207, 240, 0.3);
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 25px 60px rgba(11, 19, 43, 0.45);
+    color: #FFFFFF;
+    transition: all 0.4s ease;
+}
+.proj-story-drawer.is-open {
+    display: block;
+    animation: drawerReveal 0.45s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+}
+@keyframes drawerReveal {
+    from {
+        opacity: 0;
+        transform: translateY(-16px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+.proj-drawer-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+}
+@media (min-width: 900px) {
+    .proj-drawer-grid {
+        grid-template-columns: 380px 1fr;
+    }
+}
+.proj-drawer-media {
+    background: #080E1E;
+    padding: 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+@media (min-width: 900px) {
+    .proj-drawer-media {
+        border-bottom: none;
+        border-right: 1px solid rgba(255, 255, 255, 0.08);
+    }
+}
+.proj-drawer-poster {
+    max-height: 480px;
+    width: auto;
+    max-width: 100%;
+    aspect-ratio: 4 / 5;
+    object-fit: contain;
+    border-radius: 6px;
+    box-shadow: 0 12px 35px rgba(0, 0, 0, 0.6);
+}
+.proj-drawer-content {
+    padding: 2.25rem 2.5rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+.proj-drawer-kicker {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 12px;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    background: rgba(137, 207, 240, 0.15);
+    color: #89CFF0;
+    border-radius: 4px;
+    margin-bottom: 0.85rem;
+    border: 1px solid rgba(137, 207, 240, 0.25);
+}
+.proj-drawer-title {
+    font-family: 'Inter', sans-serif;
+    font-size: clamp(1.6rem, 2.8vw, 2.4rem);
+    font-weight: 900;
+    color: #FFFFFF;
+    text-transform: uppercase;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+    margin-bottom: 0.5rem;
+}
+.proj-drawer-tagline {
+    font-size: 1.05rem;
+    font-weight: 500;
+    color: #A0D8EF;
+    margin-bottom: 1.5rem;
+    line-height: 1.45;
+}
+.proj-drawer-story {
+    font-size: 0.95rem;
+    color: rgba(255, 255, 255, 0.85);
+    line-height: 1.68;
+    margin-bottom: 2rem;
+    background: rgba(255, 255, 255, 0.03);
+    border-left: 2px solid #89CFF0;
+    padding: 1rem 1.25rem;
+    border-radius: 0 6px 6px 0;
+}
+.proj-drawer-metrics {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+.proj-metric-box {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
+    padding: 0.9rem;
+}
+.proj-metric-val {
+    font-family: 'Inter', sans-serif;
+    font-size: 1.25rem;
+    font-weight: 900;
+    color: #FFFFFF;
+    letter-spacing: -0.01em;
+}
+.proj-metric-lbl {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.6);
+    margin-top: 0.25rem;
+}
+.proj-drawer-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    padding-top: 1.5rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+.proj-drawer-close {
+    padding: 0.65rem 1.4rem;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #FFFFFF;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+.proj-drawer-close:hover {
+    background: #89CFF0;
+    color: #0B132B;
+    border-color: #89CFF0;
+}
+
+/* Legacy fallback support */
 .proj-photo-card {
     position: relative;
     overflow: hidden;
-    height: var(--proj-h, 380px);
+    aspect-ratio: 4 / 5;
     border: 1px solid rgba(16, 29, 52, 0.1);
     cursor: pointer;
-    background: #f5f0e8;
+    background: #0B132B;
 }
 .proj-photo-img {
     display: block;
     width: 100%;
     height: 100%;
-    object-fit: cover;
+    object-fit: contain;
     object-position: center;
     transition: transform 0.7s cubic-bezier(0.23, 1, 0.32, 1);
     will-change: transform;
 }
 .proj-photo-card:hover .proj-photo-img {
-    transform: scale(1.06);
+    transform: scale(1.04);
 }
 .proj-photo-overlay {
     position: absolute;
@@ -1078,21 +1366,21 @@ input:focus, textarea:focus, select:focus {
     display: flex;
     flex-direction: column;
     justify-content: flex-end;
-    padding: 1.75rem;
+    padding: 1.25rem;
     background: linear-gradient(
         to top,
-        rgba(16, 29, 52, 0.85) 0%,
-        rgba(16, 29, 52, 0.3) 40%,
-        transparent 70%
+        rgba(11, 19, 43, 0.95) 0%,
+        rgba(11, 19, 43, 0.4) 35%,
+        transparent 65%
     );
     transition: background 0.5s ease;
 }
 .proj-photo-card:hover .proj-photo-overlay {
     background: linear-gradient(
         to top,
-        rgba(16, 29, 52, 0.92) 0%,
-        rgba(16, 29, 52, 0.35) 45%,
-        transparent 75%
+        rgba(11, 19, 43, 0.98) 0%,
+        rgba(11, 19, 43, 0.5) 40%,
+        transparent 70%
     );
 }
 .proj-photo-tag {
@@ -1102,11 +1390,11 @@ input:focus, textarea:focus, select:focus {
     letter-spacing: 0.14em;
     text-transform: uppercase;
     color: #A0D8EF;
-    margin-bottom: 0.45rem;
+    margin-bottom: 0.35rem;
 }
 .proj-photo-name {
     font-family: 'Inter', sans-serif;
-    font-size: clamp(1.1rem, 2vw, 1.65rem);
+    font-size: clamp(1rem, 1.8vw, 1.45rem);
     font-weight: 800;
     color: #ffffff;
     text-transform: uppercase;

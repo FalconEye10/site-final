@@ -203,7 +203,7 @@
                             <div class="grid grid-cols-2 gap-6">
                                 <div class="border-l-2 border-text-executive_dark/10 pl-4">
                                     <div class="font-data text-[10px] uppercase text-text-executive_dark/60 tracking-widest font-bold">MEMBRI ACTIVI</div>
-                                    <div class="font-headings text-4xl font-black text-text-executive_dark mt-2"><span class="counter" data-count="30">0</span>+</div>
+                                    <div class="font-headings text-4xl font-black text-text-executive_dark mt-2"><span class="counter" data-count="60">0</span>+</div>
                                 </div>
                                 <div class="border-l-2 border-brand_signature-baby_blue pl-4">
                                     <div class="font-data text-[10px] uppercase text-text-executive_dark/60 tracking-widest font-bold">PORTOFOLIU PROIECTE</div>
@@ -257,7 +257,7 @@
                         <h3 class="story-title">Interact Camena</h3>
                         <p class="story-text">La poalele Pietricicăi scriem capitolul nostru: proiecte care pun orașul în mișcare, conduse integral de elevi. Motto-ul nostru — <em class="em-accent">Service Above Self</em>.</p>
                         <div class="story-stats">
-                            <div><span class="counter" data-count="30">0</span><span class="plus">+</span><em>voluntari activi</em></div>
+                            <div><span class="counter" data-count="60">0</span><span class="plus">+</span><em>voluntari activi</em></div>
                             <div><span class="counter" data-count="9">0</span><span class="plus">+</span><em>proiecte fanion</em></div>
                         </div>
                     </div>
@@ -318,7 +318,7 @@
                         <div class="stat-icon">
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
                         </div>
-                        <div class="stat-num"><span class="counter" data-count="30">0</span><span class="stat-plus">+</span></div>
+                        <div class="stat-num"><span class="counter" data-count="60">0</span><span class="stat-plus">+</span></div>
                         <div class="stat-label">Membri Activi</div>
                     </div>
                     <div class="stat-tile reveal-on-scroll" style="transition-delay: 80ms;">
@@ -357,86 +357,207 @@
                     <span class="font-display italic text-6xl text-text-executive_dark/10 hidden md:block" data-parallax="-40">02</span>
                 </div>
                 
-                <!-- PROJECT PHOTO GRID -->
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4" id="project-grid">
+                <!-- Category Filter Pills -->
+                <div class="flex flex-wrap items-center justify-between gap-4 mb-8 reveal-on-scroll">
+                    <div class="flex flex-wrap items-center gap-2" id="project-filters">
+                        <button type="button" class="proj-filter-btn active" data-filter="all">Toate (10)</button>
+                        <button type="button" class="proj-filter-btn" data-filter="sport">Sport &amp; Ecologie (4)</button>
+                        <button type="button" class="proj-filter-btn" data-filter="social">Social &amp; Dezvoltare (3)</button>
+                        <button type="button" class="proj-filter-btn" data-filter="traditie">Tradiție &amp; Comunitate (3)</button>
+                    </div>
+                    <div class="font-data text-xs text-text-executive_dark/60 font-semibold uppercase tracking-wider hidden sm:block">
+                        Format Nativ 4:5 &bull; Clic pe afiș pentru dosarul complet
+                    </div>
+                </div>
 
-                    <!-- Row 1: 2 + 1 -->
-                    <div class="proj-photo-card md:col-span-2 reveal-on-scroll" style="--proj-delay:0ms">
-                        <img src="/images/projects/rocking the court.jpg" alt="Rocking the Court" class="proj-photo-img" loading="lazy">
-                        <div class="proj-photo-overlay">
-                            <span class="proj-photo-tag">Sport & Ecologie</span>
-                            <h3 class="proj-photo-name">Rocking the Court</h3>
+                <!-- Story Accordion Drawer (Dynamically Expanded in Grid Flow) -->
+                <div id="project-story-drawer" class="proj-story-drawer" aria-live="polite">
+                    <div class="proj-drawer-grid">
+                        <div class="proj-drawer-media">
+                            <img id="drawer-poster-img" src="/images/projects/rocking the court.jpg" alt="Poster Proiect" class="proj-drawer-poster" />
                         </div>
-                    </div>
-                    <div class="proj-photo-card reveal-on-scroll" style="--proj-delay:80ms">
-                        <img src="/images/projects/futnet.jpg" alt="FUTNET" class="proj-photo-img" loading="lazy">
-                        <div class="proj-photo-overlay">
-                            <span class="proj-photo-tag">Sport & Ecologie</span>
-                            <h3 class="proj-photo-name">FUTNET</h3>
-                        </div>
-                    </div>
+                        <div class="proj-drawer-content">
+                            <div>
+                                <div class="flex flex-wrap items-center gap-2 mb-3">
+                                    <span id="drawer-cat-badge" class="proj-drawer-kicker">Sport &amp; Ecologie</span>
+                                    <span id="drawer-collab-badge" class="hidden px-2.5 py-1 text-[10.5px] font-bold uppercase tracking-wider bg-sky-500/20 text-sky-300 border border-sky-400/30 rounded"></span>
+                                </div>
+                                <h3 id="drawer-title" class="proj-drawer-title">Rocking the Court</h3>
+                                <p id="drawer-tagline" class="proj-drawer-tagline">Turneu caritabil de streetball &amp; modernizare terenuri de sport</p>
+                                
+                                <div class="mb-5">
+                                    <span class="font-data text-[10.5px] font-bold text-brand_signature-baby_blue uppercase tracking-widest block mb-2">// DOSAR &amp; POVESTEA DIN CULISE</span>
+                                    <p id="drawer-story" class="proj-drawer-story">
+                                        Descriere proiect...
+                                    </p>
+                                </div>
 
-                    <!-- Row 2: 1 + 2 -->
-                    <div class="proj-photo-card reveal-on-scroll" style="--proj-delay:120ms">
-                        <img src="/images/projects/ecoact.jpg" alt="ECOACT" class="proj-photo-img" loading="lazy">
-                        <div class="proj-photo-overlay">
-                            <span class="proj-photo-tag">Sport & Ecologie</span>
-                            <h3 class="proj-photo-name">ECOACT</h3>
-                        </div>
-                    </div>
-                    <div class="proj-photo-card md:col-span-2 reveal-on-scroll" style="--proj-delay:160ms">
-                        <img src="/images/projects/padelicious.jpg" alt="Padelicious" class="proj-photo-img" loading="lazy">
-                        <div class="proj-photo-overlay">
-                            <span class="proj-photo-tag">Sport & Ecologie</span>
-                            <h3 class="proj-photo-name">Padelicious</h3>
-                        </div>
-                    </div>
+                                <div class="mb-4">
+                                    <span class="font-data text-[10.5px] font-bold text-brand_signature-baby_blue uppercase tracking-widest block mb-2">// METRICI DE IMPACT</span>
+                                    <div id="drawer-metrics" class="proj-drawer-metrics">
+                                        <!-- populated dynamically -->
+                                    </div>
+                                </div>
+                            </div>
 
-                    <!-- Row 3: 3 even -->
-                    <div class="proj-photo-card reveal-on-scroll" style="--proj-delay:200ms">
-                        <img src="/images/projects/minte-ma frumos.jpg" alt="Minte-mă Frumos" class="proj-photo-img" loading="lazy">
-                        <div class="proj-photo-overlay">
-                            <span class="proj-photo-tag">Social & Dezvoltare</span>
-                            <h3 class="proj-photo-name">Minte-mă Frumos</h3>
+                            <div class="proj-drawer-actions">
+                                <span class="text-xs text-white/50 font-data uppercase tracking-wider">Interact Camena &bull; Service Above Self</span>
+                                <button type="button" class="proj-drawer-close" id="drawer-close-btn">Închide Dosarul &times;</button>
+                            </div>
                         </div>
                     </div>
-                    <div class="proj-photo-card reveal-on-scroll" style="--proj-delay:240ms">
-                        <img src="/images/projects/Date or mate.jpg" alt="Date or Mate" class="proj-photo-img" loading="lazy">
-                        <div class="proj-photo-overlay">
-                            <span class="proj-photo-tag">Social & Dezvoltare</span>
-                            <h3 class="proj-photo-name">Date or Mate</h3>
-                        </div>
-                    </div>
-                    <div class="proj-photo-card reveal-on-scroll" style="--proj-delay:280ms">
-                        <img src="/images/projects/la familia.jpg" alt="La Familia" class="proj-photo-img" loading="lazy">
-                        <div class="proj-photo-overlay">
-                            <span class="proj-photo-tag">Social & Dezvoltare</span>
-                            <h3 class="proj-photo-name">La Familia</h3>
-                        </div>
-                    </div>
+                </div>
 
-                    <!-- Row 4: 2 + 1 -->
-                    <div class="proj-photo-card md:col-span-2 reveal-on-scroll" style="--proj-delay:320ms">
-                        <img src="/images/projects/camena christmas tree.jpg" alt="Camena Christmas Tree" class="proj-photo-img" loading="lazy">
-                        <div class="proj-photo-overlay">
-                            <span class="proj-photo-tag">Tradiție & Comunitate</span>
-                            <h3 class="proj-photo-name">Camena Christmas Tree</h3>
+                <!-- 4:5 POSTER GRID (Zero Crop) -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6" id="project-grid">
+
+                    <!-- Project 1: Rocking the Court -->
+                    <div class="proj-poster-card reveal-on-scroll" data-proj-id="rocking-the-court" data-category="sport">
+                        <div class="proj-poster-frame">
+                            <span class="proj-poster-badge">Sport &amp; Ecologie</span>
+                            <img src="/images/projects/rocking the court.jpg" alt="Rocking the Court" class="proj-poster-img" loading="lazy">
                         </div>
-                    </div>
-                    <div class="proj-photo-card reveal-on-scroll" style="--proj-delay:360ms">
-                        <img src="/images/projects/summers last wish.jpg" alt="Summer's Last Wish" class="proj-photo-img" loading="lazy">
-                        <div class="proj-photo-overlay">
-                            <span class="proj-photo-tag">Tradiție & Comunitate</span>
-                            <h3 class="proj-photo-name">Summer's Last Wish</h3>
+                        <div class="proj-poster-footer">
+                            <h3 class="proj-poster-title">Rocking the Court</h3>
+                            <div class="proj-poster-cta">
+                                <span>Află povestea</span>
+                                <span class="font-bold text-sm">&darr;</span>
+                            </div>
                         </div>
                     </div>
 
-                    <!-- Row 5: full width -->
-                    <div class="proj-photo-card md:col-span-3 reveal-on-scroll" style="--proj-delay:400ms; --proj-h: 320px;">
-                        <img src="/images/projects/interact of crime.jpg" alt="Interact of Crime" class="proj-photo-img" loading="lazy">
-                        <div class="proj-photo-overlay">
-                            <span class="proj-photo-tag">Tradiție & Comunitate</span>
-                            <h3 class="proj-photo-name">Interact of Crime</h3>
+                    <!-- Project 2: FUTNET -->
+                    <div class="proj-poster-card reveal-on-scroll" data-proj-id="futnet" data-category="sport">
+                        <div class="proj-poster-frame">
+                            <span class="proj-poster-badge">Sport &amp; Ecologie</span>
+                            <img src="/images/projects/futnet.jpg" alt="FUTNET" class="proj-poster-img" loading="lazy">
+                        </div>
+                        <div class="proj-poster-footer">
+                            <h3 class="proj-poster-title">FUTNET</h3>
+                            <div class="proj-poster-cta">
+                                <span>Află povestea</span>
+                                <span class="font-bold text-sm">&darr;</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Project 3: ECOACT -->
+                    <div class="proj-poster-card reveal-on-scroll" data-proj-id="ecoact" data-category="sport">
+                        <div class="proj-poster-frame">
+                            <span class="proj-poster-badge">Sport &amp; Ecologie</span>
+                            <img src="/images/projects/ecoact.jpg" alt="ECOACT" class="proj-poster-img" loading="lazy">
+                        </div>
+                        <div class="proj-poster-footer">
+                            <h3 class="proj-poster-title">ECOACT</h3>
+                            <div class="proj-poster-cta">
+                                <span>Află povestea</span>
+                                <span class="font-bold text-sm">&darr;</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Project 4: Padelicious -->
+                    <div class="proj-poster-card reveal-on-scroll" data-proj-id="padelicious" data-category="sport">
+                        <div class="proj-poster-frame">
+                            <span class="proj-poster-badge">Sport &amp; Ecologie</span>
+                            <img src="/images/projects/padelicious.jpg" alt="Padelicious" class="proj-poster-img" loading="lazy">
+                        </div>
+                        <div class="proj-poster-footer">
+                            <h3 class="proj-poster-title">Padelicious</h3>
+                            <div class="proj-poster-cta">
+                                <span>Află povestea</span>
+                                <span class="font-bold text-sm">&darr;</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Project 5: Minte-mă Frumos -->
+                    <div class="proj-poster-card reveal-on-scroll" data-proj-id="minte-ma-frumos" data-category="social">
+                        <div class="proj-poster-frame">
+                            <span class="proj-poster-badge">Social &amp; Oratorie</span>
+                            <img src="/images/projects/minte-ma frumos.jpg" alt="Minte-mă Frumos" class="proj-poster-img" loading="lazy">
+                        </div>
+                        <div class="proj-poster-footer">
+                            <h3 class="proj-poster-title">Minte-mă Frumos</h3>
+                            <div class="proj-poster-cta">
+                                <span>Află povestea</span>
+                                <span class="font-bold text-sm">&darr;</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Project 6: Date or Mate -->
+                    <div class="proj-poster-card reveal-on-scroll" data-proj-id="date-or-mate" data-category="social">
+                        <div class="proj-poster-frame">
+                            <span class="proj-poster-badge">Valentine's Special</span>
+                            <img src="/images/projects/Date or mate.jpg" alt="Date or Mate" class="proj-poster-img" loading="lazy">
+                        </div>
+                        <div class="proj-poster-footer">
+                            <h3 class="proj-poster-title">Date or Mate</h3>
+                            <div class="proj-poster-cta">
+                                <span>Află povestea</span>
+                                <span class="font-bold text-sm">&darr;</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Project 7: La Familia -->
+                    <div class="proj-poster-card reveal-on-scroll" data-proj-id="la-familia" data-category="social">
+                        <div class="proj-poster-frame">
+                            <span class="proj-poster-badge">Solidaritate Socială</span>
+                            <img src="/images/projects/la familia.jpg" alt="La Familia" class="proj-poster-img" loading="lazy">
+                        </div>
+                        <div class="proj-poster-footer">
+                            <h3 class="proj-poster-title">La Familia</h3>
+                            <div class="proj-poster-cta">
+                                <span>Află povestea</span>
+                                <span class="font-bold text-sm">&darr;</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Project 8: Camena Christmas Tree -->
+                    <div class="proj-poster-card reveal-on-scroll" data-proj-id="camena-christmas-tree" data-category="traditie">
+                        <div class="proj-poster-frame">
+                            <span class="proj-poster-badge">Tradiție de Iarnă</span>
+                            <img src="/images/projects/camena christmas tree.jpg" alt="Camena Christmas Tree" class="proj-poster-img" loading="lazy">
+                        </div>
+                        <div class="proj-poster-footer">
+                            <h3 class="proj-poster-title">Camena Christmas Tree</h3>
+                            <div class="proj-poster-cta">
+                                <span>Află povestea</span>
+                                <span class="font-bold text-sm">&darr;</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Project 9: Summer's Last Wish -->
+                    <div class="proj-poster-card reveal-on-scroll" data-proj-id="summers-last-wish" data-category="traditie">
+                        <div class="proj-poster-frame">
+                            <span class="proj-poster-badge">Festival Comunitar</span>
+                            <img src="/images/projects/summers last wish.jpg" alt="Summer's Last Wish" class="proj-poster-img" loading="lazy">
+                        </div>
+                        <div class="proj-poster-footer">
+                            <h3 class="proj-poster-title">Summer's Last Wish</h3>
+                            <div class="proj-poster-cta">
+                                <span>Află povestea</span>
+                                <span class="font-bold text-sm">&darr;</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Project 10: Interact of Crime -->
+                    <div class="proj-poster-card reveal-on-scroll" data-proj-id="interact-of-crime" data-category="traditie">
+                        <div class="proj-poster-frame">
+                            <span class="proj-poster-badge">Parteneriat Oficial</span>
+                            <img src="/images/projects/interact of crime.jpg" alt="Interact of Crime" class="proj-poster-img" loading="lazy">
+                        </div>
+                        <div class="proj-poster-footer">
+                            <h3 class="proj-poster-title">Interact of Crime</h3>
+                            <div class="proj-poster-cta">
+                                <span>Află povestea</span>
+                                <span class="font-bold text-sm">&darr;</span>
+                            </div>
                         </div>
                     </div>
 
@@ -960,6 +1081,265 @@
                     }
                 });
             }
+        })();
+
+        /* ================================================================
+           PROJECT STORYTELLING SHOWCASE CONTROLLER (Zero Crop & Accordion)
+           ================================================================ */
+        (function initProjectShowcase() {
+            const PROJECTS_DATA = {
+                'rocking-the-court': {
+                    title: 'Rocking the Court',
+                    category: 'Sport & Ecologie',
+                    catKey: 'sport',
+                    image: '/images/projects/rocking the court.jpg',
+                    tagline: 'Turneu caritabil de streetball & modernizare terenuri de sport',
+                    story: 'O competiție energică de baschet 3x3 organizată pe terenurile din Piatra-Neamț, unde pasiunea pentru sport a fost transformată în acțiune comunitară pentru reabilitarea infrastructurii sportive locale și promovarea stilului de viață activ în rândul tinerilor.',
+                    collaboration: null,
+                    metrics: [
+                        { val: '120+', lbl: 'Tineri Sportivi' },
+                        { val: '80', lbl: 'Ore Voluntariat' },
+                        { val: '3x3', lbl: 'Format Streetball' }
+                    ]
+                },
+                'futnet': {
+                    title: 'FUTNET',
+                    category: 'Sport & Ecologie',
+                    catKey: 'sport',
+                    image: '/images/projects/futnet.jpg',
+                    tagline: 'Campionat de tenis cu piciorul pentru liceenii din oraș',
+                    story: 'Turneu antrenant care aduce laolaltă elevi din toate liceele din Piatra-Neamț, stimulând fair-play-ul, camaraderia și mișcarea în aer liber într-o atmosferă competitivă și pozitivă de echipă.',
+                    collaboration: null,
+                    metrics: [
+                        { val: '16', lbl: 'Echipe Înscrise' },
+                        { val: '64', lbl: 'Voluntari & Jucători' },
+                        { val: 'Anual', lbl: 'Ediție Tradițională' }
+                    ]
+                },
+                'ecoact': {
+                    title: 'ECOACT',
+                    category: 'Sport & Ecologie',
+                    catKey: 'sport',
+                    image: '/images/projects/ecoact.jpg',
+                    tagline: 'Igienizare montană & educație ecologică pe Cozla și Pietricica',
+                    story: 'Acțiune civică de mare anvergură pentru ecologizarea potecilor turistice și a zonelor de belvedere ce străjuiesc orașul Piatra-Neamț. Voluntarii au combinat curățarea traseelor cu ateliere de colectare selectivă și reciclare responsabilă.',
+                    collaboration: null,
+                    metrics: [
+                        { val: '3+ Tone', lbl: 'Deșeuri Colectate' },
+                        { val: '90+', lbl: 'Voluntari Mobilizați' },
+                        { val: '2 Munți', lbl: 'Cozla & Pietricica' }
+                    ]
+                },
+                'padelicious': {
+                    title: 'Padelicious',
+                    category: 'Sport & Ecologie',
+                    catKey: 'sport',
+                    image: '/images/projects/padelicious.jpg',
+                    tagline: 'Competiție de padel & fonduri pentru burse școlare',
+                    story: 'Un concept proaspăt și dinamic de turneu caritabil de padel, aducând comunitatea locală pe teren pentru a genera fonduri destinate burselor de studiu și sprijinirii elevilor merituoși din Neamț.',
+                    collaboration: null,
+                    metrics: [
+                        { val: '40+', lbl: 'Jucători Competiție' },
+                        { val: '4.500 RON', lbl: 'Fonduri Atrase' },
+                        { val: '100%', lbl: 'Dedicat Burselor' }
+                    ]
+                },
+                'minte-ma-frumos': {
+                    title: 'Minte-mă Frumos',
+                    category: 'Social & Oratorie',
+                    catKey: 'social',
+                    image: '/images/projects/minte-ma frumos.jpg',
+                    tagline: 'Joc de cacealma, persuasiune oratorică și deducție logică',
+                    story: 'Un joc interactiv captivant în care echipele prezintă povești sau ipoteze personale și trebuie să-i convingă pe adversari de autenticitatea lor, indiferent care este răspunsul fals. Echipa rivală dezbate, analizează argumentele și dă verdictul final. Proiectul dezvoltă gândirea critică, arta oratoriei și perspicacitatea.',
+                    collaboration: null,
+                    metrics: [
+                        { val: '100+', lbl: 'Liceeni Participanți' },
+                        { val: 'Debate', lbl: 'Format Interactiv' },
+                        { val: 'Verdict', lbl: 'Deducție & Logică' }
+                    ]
+                },
+                'date-or-mate': {
+                    title: 'Date or Mate',
+                    category: 'Social & Divertisment',
+                    catKey: 'social',
+                    image: '/images/projects/Date or mate.jpg',
+                    tagline: 'Minigame-uri caritabile de cupluri și prieteni de Valentine\'s Day',
+                    story: 'Eveniment plin de umor, energie și probe inedite organizat de Ziua Îndrăgostiților (Valentine\'s Day). Cuplurile și echipele de prieteni se întrec într-o serie de minigame-uri amuzante, îmbinând buna dispoziție cu strângerea de fonduri pentru cauze comunitare.',
+                    collaboration: null,
+                    metrics: [
+                        { val: '30+', lbl: 'Cupluri & Echipe' },
+                        { val: '14 Feb', lbl: 'Valentine\'s Special' },
+                        { val: 'Caritabil', lbl: 'Donații Comunitate' }
+                    ]
+                },
+                'la-familia': {
+                    title: 'La Familia',
+                    category: 'Solidaritate Socială',
+                    catKey: 'social',
+                    image: '/images/projects/la familia.jpg',
+                    tagline: 'Solidaritate socială & suport pentru familii defavorizate',
+                    story: 'Inițiativă dedicată apropierii și sprijinului direct pentru copiii și familiile aflate în situații vulnerabile. Voluntarii au organizat ateliere creative, colecte de rechizite și bunuri de primă necesitate, oferind căldură, atenție și solidaritate.',
+                    collaboration: null,
+                    metrics: [
+                        { val: '50+', lbl: 'Copii Beneficiari' },
+                        { val: '100%', lbl: 'Implicare Directă' },
+                        { val: 'Comunitar', lbl: 'Ajutor Social' }
+                    ]
+                },
+                'camena-christmas-tree': {
+                    title: 'Camena Christmas Tree',
+                    category: 'Tradiție de Iarnă',
+                    catKey: 'traditie',
+                    image: '/images/projects/camena christmas tree.jpg',
+                    tagline: 'Pomul dorințelor & daruri de Crăciun pentru copiii din mediul rural',
+                    story: 'Tradiția emblematică de iarnă a clubului Interact Camena. În fiecare an, scrisorile și dorințele copiilor din satele nemțene sunt preluate de voluntari și transformate în cadouri complete cu ghetuțe, hăinuțe, jucării și rechizite.',
+                    collaboration: null,
+                    metrics: [
+                        { val: '100+', lbl: 'Copii cu Cadouri' },
+                        { val: '15+', lbl: 'Spiriduși Voluntari' },
+                        { val: 'Tradiție', lbl: 'Ediție Anuală' }
+                    ]
+                },
+                'summers-last-wish': {
+                    title: 'Summer\'s Last Wish',
+                    category: 'Festival Comunitar',
+                    catKey: 'traditie',
+                    image: '/images/projects/summers last wish.jpg',
+                    tagline: 'Festival cultural, muzică live și celebrarea tinerilor la final de vară',
+                    story: 'Evenimentul de referință care marchează finalul vacanței mari pentru tinerii din Piatra-Neamț. O seară dedicată muzicii live susținute de trupe locale de adolescenți, artei vizuale și voluntariatului civic.',
+                    collaboration: null,
+                    metrics: [
+                        { val: '250+', lbl: 'Participanți' },
+                        { val: 'Live Music', lbl: 'Artiști Locali' },
+                        { val: 'Comunitate', lbl: 'Final de Sezon' }
+                    ]
+                },
+                'interact-of-crime': {
+                    title: 'Interact of Crime',
+                    category: 'Parteneriat Oficial',
+                    catKey: 'traditie',
+                    image: '/images/projects/interact of crime.jpg',
+                    tagline: 'Joc urban imersiv de anchetă polițistă în tot orașul Piatra-Neamț',
+                    story: 'Un proiect de mare anvergură organizat ca un joc captivant de investigație la scară reală pe străzile din Piatra-Neamț. Echipele au primit dosare criminalistice complexe, au descifrat indicii ascunse în puncte cheie din oraș și au interogat suspecți pentru a soluționa cazul.',
+                    collaboration: 'În parteneriat oficial cu clubul Interact Piatra-Neamț',
+                    metrics: [
+                        { val: 'Tot Orașul', lbl: 'Tablă de Joc' },
+                        { val: 'Parteneriat', lbl: 'Interact Piatra-Neamț' },
+                        { val: '80+', lbl: 'Detectivi Înscriși' }
+                    ]
+                }
+            };
+
+            const drawer = document.getElementById('project-story-drawer');
+            const drawerImg = document.getElementById('drawer-poster-img');
+            const drawerCat = document.getElementById('drawer-cat-badge');
+            const drawerCollab = document.getElementById('drawer-collab-badge');
+            const drawerTitle = document.getElementById('drawer-title');
+            const drawerTagline = document.getElementById('drawer-tagline');
+            const drawerStory = document.getElementById('drawer-story');
+            const drawerMetrics = document.getElementById('drawer-metrics');
+            const drawerCloseBtn = document.getElementById('drawer-close-btn');
+
+            let currentActiveId = null;
+
+            function openProject(id) {
+                const data = PROJECTS_DATA[id];
+                if (!data || !drawer) return;
+
+                if (currentActiveId === id && drawer.classList.contains('is-open')) {
+                    closeDrawer();
+                    return;
+                }
+
+                currentActiveId = id;
+
+                document.querySelectorAll('.proj-poster-card').forEach(c => {
+                    if (c.getAttribute('data-proj-id') === id) {
+                        c.classList.add('is-active');
+                    } else {
+                        c.classList.remove('is-active');
+                    }
+                });
+
+                drawerImg.src = data.image;
+                drawerImg.alt = data.title;
+                drawerCat.textContent = data.category;
+                drawerTitle.textContent = data.title;
+                drawerTagline.textContent = data.tagline;
+                drawerStory.textContent = data.story;
+
+                if (data.collaboration) {
+                    drawerCollab.textContent = data.collaboration;
+                    drawerCollab.classList.remove('hidden');
+                } else {
+                    drawerCollab.classList.add('hidden');
+                }
+
+                drawerMetrics.innerHTML = data.metrics.map(m => `
+                    <div class="proj-metric-box">
+                        <div class="proj-metric-val">${m.val}</div>
+                        <div class="proj-metric-lbl">${m.lbl}</div>
+                    </div>
+                `).join('');
+
+                drawer.classList.add('is-open');
+
+                setTimeout(() => {
+                    drawer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                }, 50);
+
+                if (window.ScrollTrigger) ScrollTrigger.refresh();
+            }
+
+            function closeDrawer() {
+                if (!drawer) return;
+                drawer.classList.remove('is-open');
+                document.querySelectorAll('.proj-poster-card').forEach(c => c.classList.remove('is-active'));
+                currentActiveId = null;
+                if (window.ScrollTrigger) ScrollTrigger.refresh();
+            }
+
+            if (drawerCloseBtn) {
+                drawerCloseBtn.addEventListener('click', closeDrawer);
+            }
+
+            document.querySelectorAll('.proj-poster-card').forEach(card => {
+                card.addEventListener('click', () => {
+                    const id = card.getAttribute('data-proj-id');
+                    if (id) openProject(id);
+                });
+            });
+
+            const filterButtons = document.querySelectorAll('.proj-filter-btn');
+            filterButtons.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    filterButtons.forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+
+                    const filter = btn.getAttribute('data-filter');
+                    const cards = document.querySelectorAll('.proj-poster-card');
+
+                    cards.forEach(card => {
+                        const cat = card.getAttribute('data-category');
+                        if (filter === 'all' || cat === filter) {
+                            card.style.display = 'flex';
+                        } else {
+                            card.style.display = 'none';
+                            if (card.getAttribute('data-proj-id') === currentActiveId) {
+                                closeDrawer();
+                            }
+                        }
+                    });
+
+                    if (window.ScrollTrigger) ScrollTrigger.refresh();
+                });
+            });
+
+            window.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && drawer && drawer.classList.contains('is-open')) {
+                    closeDrawer();
+                }
+            });
         })();
 
         /* ================================================================

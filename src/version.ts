@@ -7,7 +7,7 @@
  * - Z (Patch): Corecții rapide, bug-fixuri mici / rușinoase, alinieri sau mici ajustări
  */
 
-export const APP_VERSION = typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '9.7.0';
+export const APP_VERSION = typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '9.8.0';
 
 export interface VersionLog {
   version: string;
@@ -17,6 +17,12 @@ export interface VersionLog {
 }
 
 export const VERSION_HISTORY: VersionLog[] = [
+  {
+    version: '9.8.0',
+    type: 'minor',
+    description: 'Redefinire completă a secțiunii de Proiecte pe pagina de prezentare: eliminarea decupării afișelor prin adoptarea raportului nativ 4:5 (zero crop, integritate grafică 100%), adăugarea filtrării active pe categorii (Sport & Ecologie, Social & Dezvoltare, Tradiție & Comunitate), integrarea sertarului extensibil de storytelling direct în fluxul paginii (In-Grid Accordion Drawer) cu povestea autentică a fiecărui proiect (Minte-mă Frumos, Date or Mate, Interact of Crime în parteneriat cu Interact Piatra-Neamț etc.) și metrici reale de impact comunitar.',
+    timestamp: '2026-10-22'
+  },
   {
     version: '9.7.0',
     type: 'minor',
