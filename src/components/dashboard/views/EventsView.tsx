@@ -1250,11 +1250,11 @@ export function EventsView({ isAdmin, members = [], currentUserId, onUpdateMembe
                             ? 'bg-emerald-600 text-white'
                             : 'bg-slate-900 dark:bg-slate-700 text-white'
                         }`}>
-                          {isShiftBased ? '● ON / ACTIVAT' : '○ OFF / DEZACTIVAT'}
+                          {isShiftBased ? 'ACTIVAT' : 'DEZACTIVAT'}
                         </span>
                       </div>
                       <p className="text-xs text-slate-600 dark:text-slate-400">
-                        Activează pentru evenimente cu mai multe zile sau intervale orare diferite. Voluntarii aleg tura dorită, iar la prezențe vor fi evaluați doar cei repartizați.
+                        Pentru acțiuni cu mai multe zile sau intervale orare diferite.
                       </p>
                     </div>
 

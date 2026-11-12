@@ -35,6 +35,10 @@ export interface BudgetProject {
   status: ProjectStatus;
   estimatedIncome: number;
   estimatedExpense: number;
+  eventId?: string;
+  date?: string;
+  /** True when project is locked because the calendar event has passed and attendance is closed. */
+  isLocked?: boolean;
 }
 
 export interface BudgetLine {
@@ -127,6 +131,13 @@ export const QUARTERS = [
 export const MONTHLY_DUE = 20;
 export const FULL_MANDATE_DUE = 15 + 15 + 8 * 20; // 190 RON (Aug-Sep @ 15 RON, Oct-Mai @ 20 RON)
 
+/**
+ * Fond curent total în mapă / casierie de referință (cu tot cu cotizații): 5.663 LEI.
+ * Aceasta este suma totală fizică existentă în mapă în acest moment.
+ * Banii din mapă includ deja cotizațiile încasate până în prezent.
+ */
+export const INITIAL_TREASURY_BALANCE = 5663;
+
 export const TX_STATUS_LABELS: Record<TxStatus, string> = {
   platit: 'Plătit / Încasat',
   asteptare: 'În așteptare',
@@ -153,8 +164,50 @@ export function mandateMonthIndex(calendarMonth: number): number {
   return (calendarMonth + 7) % 12;
 }
 
-export function formatRON(value: number): string {
-  return new Intl.NumberFormat('ro-RO', { maximumFractionDigits: 2 }).format(value);
+/**
+ * Verifică dacă un proiect este blocat la editare/modificări financiare.
+ * Un proiect este considerat blocat (Locked) dacă:
+ * 1. Are status explicit 'finalizat', SAU
+ * 2. Are asociat un eveniment în calendar (`eventId`) care are prezența închisă (`attendanceClosed === true`)
+ *    și data lui a trecut față de data curentă a României.
+ */
+export function isProjectLocked(
+  project: { status: ProjectStatus; eventId?: string; date?: string; isLocked?: boolean },
+  events: { id: string; date?: string; time?: string; attendanceClosed?: boolean }[] = [],
+  todayStr?: string
+): boolean {
+  if (project.isLocked || project.status === 'finalizat') return true;
+  if (!project.eventId) return false;
+
+  const ev = events.find(e => e.id === project.eventId);
+  if (!ev) return false;
+
+  const isAttendanceClosed = Boolean(ev.attendanceClosed);
+  const evDate = ev.date || project.date;
+  const currentToday = todayStr || new Date().toISOString().slice(0, 10);
+
+  // Dacă prezența este închisă și data evenimentului a trecut (sau este astăzi cu prezență închisă)
+  if (isAttendanceClosed && evDate && evDate <= currentToday) {
+    return true;
+  }
+
+  return false;
+}
+
+export function roundRON(value: unknown): number {
+  if (value === null || value === undefined || value === '') return 0;
+  if (typeof value === 'string') {
+    const normalized = value.replace(',', '.').trim();
+    const parsed = Number(normalized);
+    return Math.round(Number.isNaN(parsed) ? 0 : parsed);
+  }
+  return Math.round(Number(value) || 0);
+}
+
+export function formatRON(value: number, includeCurrency = false): string {
+  const rounded = roundRON(value);
+  const formatted = rounded.toLocaleString('ro-RO');
+  return includeCurrency ? `${formatted} RON` : formatted;
 }
 
 /** Label for the current mandate, e.g. "2026 / 2027". Mandate flips in June. */

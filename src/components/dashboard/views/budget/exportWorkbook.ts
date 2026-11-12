@@ -48,6 +48,8 @@ export function buildBudgetSheets(input: WorkbookInput): SheetSpec[] {
     rows: [
       ['Mandat', mandate],
       ['Sold Curent (Disponibil)', kpis.currentBalance],
+      ['Fond Inițial Referință (Mapă / Casierie)', kpis.initialBalance],
+      ['Rezultat Net Mandat (Venituri - Cheltuieli)', kpis.mandateNet],
       ['Total Venituri Mandat', kpis.mandateIncome],
       ['Total Cheltuieli Mandat', kpis.mandateExpense],
       ['Venituri / Încasări Directe', kpis.directIncome],

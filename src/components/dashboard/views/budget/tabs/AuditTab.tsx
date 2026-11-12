@@ -129,7 +129,7 @@ export const AuditTab: React.FC<{ entries: AuditEntry[]; duesPayments: TreasuryP
       subtitle="Jurnal append-only al operațiunilor financiare și încasărilor de cotizații"
       bodyClassName="p-0"
       actions={
-        <span className="flex items-center gap-1.5 adm-meta-label">
+        <span className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider font-title text-slate-500">
           <Lock className="h-3 w-3" /> Imutabil
         </span>
       }
@@ -202,7 +202,7 @@ export const AuditTab: React.FC<{ entries: AuditEntry[]; duesPayments: TreasuryP
                     <Badge label={row.action} color={ACTION_COLORS[row.action] ?? 'var(--adm-ink-dim)'} />
                   </Td>
                   <Td>
-                    <span className="adm-meta-label" style={{ color: 'var(--adm-ink-dim)' }}>
+                    <span className="font-mono text-xs font-bold text-slate-700 dark:text-slate-300">
                       {row.txCode || '—'}
                     </span>
                   </Td>
@@ -229,7 +229,7 @@ export const AuditTab: React.FC<{ entries: AuditEntry[]; duesPayments: TreasuryP
                     <Badge label={DUES_ACTION_LABEL} color={DUES_ACTION_COLOR} />
                   </Td>
                   <Td>
-                    <span className="adm-meta-label" style={{ color: 'var(--adm-ink-dim)' }}>
+                    <span className="font-mono text-xs font-bold text-slate-700 dark:text-slate-300">
                       {row.id}
                     </span>
                   </Td>

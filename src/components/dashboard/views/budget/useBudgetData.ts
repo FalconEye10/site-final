@@ -10,7 +10,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { supabase } from '../../../../supabase';
-import { TreasuryPayment, subscribeToTable } from '../../../../utils/supabaseService';
+import { EventData, TreasuryPayment, subscribeToTable } from '../../../../utils/supabaseService';
 import {
   AuditAction,
   AuditEntry,
@@ -21,6 +21,8 @@ import {
   INCOME_CATEGORIES,
   Transaction,
   currentMandateLabel,
+  isProjectLocked,
+  roundRON,
 } from './types';
 
 const COLLECTIONS = {
@@ -74,6 +76,8 @@ export interface BudgetData {
   audit: AuditEntry[];
   /** Cotizație receipts with member/treasurer signatures, mirrored from "Istoric Plăți". */
   duesPayments: TreasuryPayment[];
+  /** Calendar events from public.events, used for linking projects. */
+  events: EventData[];
   loading: boolean;
   error: string | null;
 }
@@ -144,6 +148,9 @@ export function useBudgetData(currentUserName: string): BudgetData & Mutations {
   const [duesPayments, setDuesPayments] = useState<TreasuryPayment[]>(() =>
     getCached<TreasuryPayment[]>('duesPayments', [])
   );
+  const [events, setEvents] = useState<EventData[]>(() =>
+    getCached<EventData[]>('events', [])
+  );
 
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -157,13 +164,14 @@ export function useBudgetData(currentUserName: string): BudgetData & Mutations {
     isFetchingRef.current = true;
 
     try {
-      const [txRes, prjRes, linesRes, duesRes, auditRes, payRes] = await Promise.allSettled([
+      const [txRes, prjRes, linesRes, duesRes, auditRes, payRes, evRes] = await Promise.allSettled([
         supabase.from(COLLECTIONS.transactions).select('*').order('date', { ascending: false }),
         supabase.from(COLLECTIONS.projects).select('*'),
         supabase.from(COLLECTIONS.lines).select('*'),
         supabase.from(COLLECTIONS.dues).select('*'),
         supabase.from(COLLECTIONS.audit).select('*').order('timestamp', { ascending: false }),
         supabase.from('payments').select('*').order('date', { ascending: false }),
+        supabase.from('events').select('*').order('date', { ascending: false }),
       ]);
 
       if (txRes.status === 'fulfilled' && txRes.value.data) {
@@ -205,6 +213,10 @@ export function useBudgetData(currentUserName: string): BudgetData & Mutations {
         setDuesPayments(validPayments);
         setCached('duesPayments', validPayments);
       }
+      if (evRes.status === 'fulfilled' && evRes.value.data) {
+        setEvents(evRes.value.data);
+        setCached('events', evRes.value.data);
+      }
 
       setError(null);
     } catch (err: any) {
@@ -229,6 +241,7 @@ export function useBudgetData(currentUserName: string): BudgetData & Mutations {
     const unsubDues = subscribeToTable(COLLECTIONS.dues, () => fetchAll());
     const unsubAudit = subscribeToTable(COLLECTIONS.audit, () => fetchAll());
     const unsubPayments = subscribeToTable('payments', () => fetchAll());
+    const unsubEvents = subscribeToTable('events', () => fetchAll());
 
     // Local custom event listener
     const handleLocalSync = (evt: Event) => {
@@ -255,6 +268,7 @@ export function useBudgetData(currentUserName: string): BudgetData & Mutations {
       unsubDues();
       unsubAudit();
       unsubPayments();
+      unsubEvents();
       window.removeEventListener('cmn_budget_local_sync', handleLocalSync);
       if (bc) bc.close();
     };
@@ -311,7 +325,7 @@ export function useBudgetData(currentUserName: string): BudgetData & Mutations {
     async (tx: Transaction, previous?: Transaction) => {
       const normalized: Transaction = {
         ...tx,
-        amount: Number(tx.amount) || 0,
+        amount: roundRON(tx.amount),
         createdAt: previous?.createdAt ?? tx.createdAt ?? Date.now(),
       };
 
@@ -341,17 +355,25 @@ export function useBudgetData(currentUserName: string): BudgetData & Mutations {
 
       // 3. Supabase Upsert with resilient schema fallback
       try {
-        // Transmitem direct payload-ul compatibil cu tabela PostgreSQL pentru viteză maximă și 0 erori
         const cleanPayload = {
           id: normalized.id,
           type: normalized.type,
           category: normalized.category,
           amount: normalized.amount,
-          description: normalized.notes || (normalized as any).description || `${normalized.type.toUpperCase()}: ${normalized.category}`,
+          description: normalized.notes || `${normalized.type.toUpperCase()}: ${normalized.category}`,
+          notes: normalized.notes || '',
           date: normalized.date,
           mandate: (normalized as any).mandate || currentMandateLabel,
           projectId: normalized.projectId || null,
-          lineId: (normalized as any).lineId || null,
+          project: normalized.projectId || null,
+          code: normalized.code || '',
+          status: normalized.status || 'platit',
+          source: normalized.source || '',
+          documentUrl: normalized.documentUrl || '',
+          receiptImage: normalized.receiptImage || '',
+          receiptType: normalized.receiptType || 'url',
+          paymentMethod: normalized.paymentMethod || 'Transfer Bancar',
+          approvedBy: normalized.approvedBy || '',
           createdAt: normalized.createdAt || new Date().toISOString(),
         };
 
@@ -479,11 +501,18 @@ export function useBudgetData(currentUserName: string): BudgetData & Mutations {
   // --- 5. Budget Projects Mutations ---
   const saveProject = useCallback(
     async (project: BudgetProject, previous?: BudgetProject) => {
+      // Guard against modifying locked/closed projects
+      if (previous && isProjectLocked(previous, events)) {
+        throw new Error('Proiectul este încheiat și arhivat (prezența este închisă și data a trecut). Modificările sunt blocate.');
+      }
+
       const normalized: BudgetProject = {
         ...project,
         name: project.name.trim(),
-        estimatedIncome: Number(project.estimatedIncome) || 0,
-        estimatedExpense: Number(project.estimatedExpense) || 0,
+        estimatedIncome: roundRON(project.estimatedIncome),
+        estimatedExpense: roundRON(project.estimatedExpense),
+        eventId: project.eventId || undefined,
+        date: project.date || undefined,
       };
 
       // 1. Optimistic Update
@@ -515,17 +544,25 @@ export function useBudgetData(currentUserName: string): BudgetData & Mutations {
           status: normalized.status,
           estimatedIncome: normalized.estimatedIncome,
           estimatedExpense: normalized.estimatedExpense,
+          budget: normalized.estimatedExpense,
+          eventId: normalized.eventId || null,
+          date: normalized.date || null,
         });
         if (err) throw err;
       } catch (err: any) {
         console.warn('[budget] Supabase project save error:', err?.message || err);
       }
     },
-    [logAudit]
+    [logAudit, events]
   );
 
   const deleteProject = useCallback(
     async (project: BudgetProject) => {
+      // Guard against deleting locked/closed projects
+      if (isProjectLocked(project, events)) {
+        throw new Error('Proiectul este încheiat și arhivat. Nu poate fi șters din evidența financiară.');
+      }
+
       // 1. Optimistic Delete
       setProjects(prev => {
         const next = prev.filter(item => item.id !== project.id);
@@ -552,7 +589,7 @@ export function useBudgetData(currentUserName: string): BudgetData & Mutations {
         console.warn('[budget] Supabase project delete error:', err?.message || err);
       }
     },
-    [logAudit]
+    [logAudit, events]
   );
 
   // --- 6. Budget Lines Mutations ---
@@ -560,7 +597,7 @@ export function useBudgetData(currentUserName: string): BudgetData & Mutations {
     async (line: BudgetLine, previous?: BudgetLine) => {
       const normalized: BudgetLine = {
         ...line,
-        planned: Number(line.planned) || 0,
+        planned: roundRON(line.planned),
       };
 
       // 1. Optimistic Update
@@ -656,7 +693,7 @@ export function useBudgetData(currentUserName: string): BudgetData & Mutations {
 
   const saveDuesMonth = useCallback(
     async (record: DuesRecord, monthIndex: number, value: number) => {
-      const cleanValue = Math.max(0, Number(value) || 0);
+      const cleanValue = roundRON(value);
 
       // Optimistic update
       setDues(prev => {
@@ -761,6 +798,7 @@ export function useBudgetData(currentUserName: string): BudgetData & Mutations {
       dues,
       audit,
       duesPayments,
+      events,
       loading,
       error,
       saveTransaction,
@@ -783,6 +821,7 @@ export function useBudgetData(currentUserName: string): BudgetData & Mutations {
       dues,
       audit,
       duesPayments,
+      events,
       loading,
       error,
       saveTransaction,

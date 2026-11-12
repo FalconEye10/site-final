@@ -221,7 +221,7 @@ export function MasterAuditView({ currentUserObj }: MasterAuditViewProps) {
               </span>
             </div>
             <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mt-1">
-              Monitorizare 360° a tuturor evenimentelor din platformă (Cotizații, Membri, Învoiri, Proiecte, Sugestii, Kudos).
+              Registru de audit append-only pentru toate evenimentele administrative (cotizații, membri, învoiri, proiecte).
             </p>
           </div>
         </div>

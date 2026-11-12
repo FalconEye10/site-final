@@ -6,7 +6,6 @@ import {
   Check,
   Download,
   Eye,
-  FileCheck,
   FileText,
   Image as ImageIcon,
   Link as LinkIcon,
@@ -18,15 +17,14 @@ import {
   Search,
   Trash2,
   Upload,
-  Wallet,
   X,
 } from 'lucide-react';
 import {
   Badge,
   EmptyState,
   Field,
-  KpiCard,
   Modal,
+  MoneyInput,
   Panel,
   Select,
   TableWrap,
@@ -42,21 +40,24 @@ import {
   TX_STATUS_LABELS,
   TX_TYPE_LABELS,
   Transaction,
-  TreasuryPayment,
   TxStatus,
   TxType,
   categoriesFor,
   formatRON,
+  isProjectLocked,
+  roundRON,
 } from '../types';
 import { normalizeDiacritics } from '../../../../../utils/text';
-import { computeKpis, computeRunningBalances, nextTransactionCode, projectName } from '../selectors';
+import { computeRunningBalances, nextTransactionCode, projectName } from '../selectors';
+import { processReceiptFile } from '../receiptUtils';
+import { EventData } from '../../../../../utils/supabaseService';
 import { toast } from '../../../../ui/Toast';
 
 interface Props {
   transactions: Transaction[];
   projects: BudgetProject[];
+  events?: EventData[];
   currentUserName: string;
-  duesPayments?: TreasuryPayment[];
   onSave: (tx: Transaction, previous?: Transaction) => Promise<void>;
   onDelete: (tx: Transaction) => Promise<void>;
   onApprove: (tx: Transaction) => Promise<void>;
@@ -135,8 +136,8 @@ function exportTransactionsCSV(transactions: Transaction[], projects: BudgetProj
 export const TransactionsTab: React.FC<Props> = ({
   transactions,
   projects,
+  events = [],
   currentUserName,
-  duesPayments = [],
   onSave,
   onDelete,
   onApprove,
@@ -159,18 +160,21 @@ export const TransactionsTab: React.FC<Props> = ({
   const [isPhysicalReceipt, setIsPhysicalReceipt] = useState(false);
 
   // Modals state
+  const [lightboxTx, setLightboxTx] = useState<Transaction | null>(null);
   const [viewVoucher, setViewVoucher] = useState<Transaction | null>(null);
   const [pendingDelete, setPendingDelete] = useState<Transaction | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [pendingRevert, setPendingRevert] = useState<Transaction | null>(null);
   const [revertReason, setRevertReason] = useState('');
   const [reverting, setReverting] = useState(false);
+  const [uploadingReceipt, setUploadingReceipt] = useState(false);
+
+  // Quick Reassign Project from Lightbox
+  const [reassigningProjectId, setReassigningProjectId] = useState<string>('');
+  const [savingReassign, setSavingReassign] = useState(false);
 
   // Calculate live progressive running balance
   const runningBalances = useMemo(() => computeRunningBalances(transactions), [transactions]);
-
-  // Overall and current ledger KPIs
-  const kpis = useMemo(() => computeKpis(transactions, duesPayments), [transactions, duesPayments]);
 
   const knownCategories = useMemo(
     () =>
@@ -323,35 +327,45 @@ export const TransactionsTab: React.FC<Props> = ({
   };
 
   const openEdit = (tx: Transaction) => {
+    if (tx.projectId && tx.projectId !== GENERAL_PROJECT_ID) {
+      const parentPrj = projects.find(p => p.id === tx.projectId);
+      if (parentPrj && isProjectLocked(parentPrj, events)) {
+        toast.error('Proiectul asociat este încheiat și arhivat. Operațiunile financiare ale proiectului nu mai pot fi modificate.');
+        return;
+      }
+    }
     setOriginal(tx);
     setErrors({});
     setIsPhysicalReceipt(tx.receiptType === 'physical');
     setDraft({ ...tx });
   };
 
-  const handleReceiptFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleReceiptFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (file.size > 8 * 1024 * 1024) {
-      toast.error('Fișierul este prea mare (maxim 8MB).');
+    if (file.size > 15 * 1024 * 1024) {
+      toast.error('Fișierul este prea mare (maxim 15MB).');
       return;
     }
 
-    const reader = new FileReader();
-    reader.onload = () => {
-      const base64 = reader.result as string;
+    setUploadingReceipt(true);
+    try {
+      const processed = await processReceiptFile(file);
       if (draft) {
         setDraft({
           ...draft,
-          receiptImage: base64,
+          receiptImage: processed.receiptImage,
           receiptType: 'image',
-          documentUrl: draft.documentUrl || file.name,
+          documentUrl: processed.documentUrl,
         });
-        toast.success(`Dovada „${file.name}” a fost atașată cu succes.`);
+        toast.success(`Dovada a fost optimizată și atașată (${processed.sizeKb} KB).`);
       }
-    };
-    reader.readAsDataURL(file);
+    } catch (err) {
+      toast.error('A apărut o problemă la procesarea bonului.');
+    } finally {
+      setUploadingReceipt(false);
+    }
   };
 
   const validate = (tx: Transaction): Record<string, string> => {
@@ -359,7 +373,7 @@ export const TransactionsTab: React.FC<Props> = ({
 
     if (!tx.date) errs.date = 'Data este obligatorie.';
     if (!tx.category.trim()) errs.category = 'Alege o categorie.';
-    if (!Number.isFinite(tx.amount) || tx.amount <= 0)
+    if (!Number.isFinite(tx.amount) || roundRON(tx.amount) <= 0)
       errs.amount = 'Suma trebuie să fie mai mare decât 0 RON.';
     if (!tx.source.trim()) errs.source = 'Specifică membrul, sponsorul sau beneficiarul.';
 
@@ -382,7 +396,7 @@ export const TransactionsTab: React.FC<Props> = ({
 
     const normalized: Transaction = {
       ...draft,
-      amount: Number(draft.amount) || 0,
+      amount: roundRON(draft.amount),
       source: draft.source.trim(),
       documentUrl: isPhysicalReceipt ? 'Chitanță fizică la dosar' : draft.documentUrl.trim(),
       receiptType: isPhysicalReceipt ? 'physical' : draft.receiptImage ? 'image' : 'url',
@@ -412,6 +426,14 @@ export const TransactionsTab: React.FC<Props> = ({
 
   const handleDeleteConfirm = async () => {
     if (!pendingDelete) return;
+    if (pendingDelete.projectId && pendingDelete.projectId !== GENERAL_PROJECT_ID) {
+      const parentPrj = projects.find(p => p.id === pendingDelete.projectId);
+      if (parentPrj && isProjectLocked(parentPrj, events)) {
+        toast.error('Proiectul asociat este încheiat și arhivat. Operațiunile financiare ale proiectului nu pot fi șterse.');
+        setPendingDelete(null);
+        return;
+      }
+    }
     setDeleting(true);
     try {
       await onDelete(pendingDelete);
@@ -421,6 +443,46 @@ export const TransactionsTab: React.FC<Props> = ({
       toast.error('Eroare la ștergerea tranzacției.');
     } finally {
       setDeleting(false);
+    }
+  };
+
+  const handleReassignProject = async (tx: Transaction, targetProjectId: string) => {
+    if (tx.projectId === targetProjectId) return;
+
+    // Check if current project is locked
+    if (tx.projectId && tx.projectId !== GENERAL_PROJECT_ID) {
+      const currentPrj = projects.find(p => p.id === tx.projectId);
+      if (currentPrj && isProjectLocked(currentPrj, events)) {
+        toast.error('Proiectul curent este încheiat și arhivat. Bonul nu mai poate fi mutat.');
+        return;
+      }
+    }
+
+    // Check if target project is locked
+    if (targetProjectId && targetProjectId !== GENERAL_PROJECT_ID) {
+      const targetPrj = projects.find(p => p.id === targetProjectId);
+      if (targetPrj && isProjectLocked(targetPrj, events)) {
+        toast.error('Proiectul țintă este încheiat și arhivat. Nu se pot transfera bonuri către el.');
+        return;
+      }
+    }
+
+    setSavingReassign(true);
+    try {
+      const updatedTx: Transaction = {
+        ...tx,
+        projectId: targetProjectId,
+      };
+      await onSave(updatedTx, tx);
+      const targetName = projectName(projects, targetProjectId);
+      toast.success(`Bonul ${tx.code} a fost repartizat către: „${targetName}”!`);
+      if (lightboxTx && lightboxTx.id === tx.id) {
+        setLightboxTx(updatedTx);
+      }
+    } catch (err) {
+      toast.error('Eroare la repartizarea bonului.');
+    } finally {
+      setSavingReassign(false);
     }
   };
 
@@ -451,58 +513,7 @@ export const TransactionsTab: React.FC<Props> = ({
 
   return (
     <div className="space-y-4">
-      {/* Visual Workflow Guide Banner */}
-      <div className="p-3.5 sm:p-4 rounded-[2px] bg-emerald-50/80 dark:bg-emerald-950/30 border border-emerald-200/80 dark:border-emerald-800/60 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 font-anthropic">
-        <div className="flex items-start gap-3">
-          <div className="p-2 rounded-[2px] bg-emerald-600 text-white shrink-0 mt-0.5 sm:mt-0">
-            <Receipt className="h-5 w-5" />
-          </div>
-          <div>
-            <h4 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider font-title">
-              Registru Tranzacții, Încasări &amp; Deconturi
-            </h4>
-            <p className="text-xs text-slate-600 dark:text-slate-300 mt-0.5 leading-relaxed">
-              Evidența completă și directă a tuturor veniturilor (sponsorizări, donații, bilete) și cheltuielilor/deconturilor clubului, cu sold progresiv în timp real și documente justificative.
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* 1. Header KPIs strip */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <KpiCard
-          label="Sold Registru (Casierie / Cont)"
-          value={formatRON(kpis.currentBalance)}
-          emphasis
-          accent={kpis.currentBalance >= 0 ? 'var(--adm-acc-emerald)' : 'var(--adm-acc-rose)'}
-          icon={<Wallet className="h-5 w-5" />}
-          hint={`${transactions.filter(t => t.status === 'platit').length} tranzacții înregistrate`}
-        />
-        <KpiCard
-          label="Total Încasări"
-          value={`+${formatRON(kpis.settledIncome)}`}
-          accent="var(--adm-acc-blue)"
-          icon={<ArrowUpRight className="h-5 w-5" />}
-          hint={`Din care plătite: +${formatRON(kpis.settledIncome)} RON`}
-        />
-        <KpiCard
-          label="Total Plăți / Deconturi"
-          value={`−${formatRON(kpis.settledExpense)}`}
-          accent="var(--adm-acc-rose)"
-          icon={<ArrowDownRight className="h-5 w-5" />}
-          hint={`Din care plătite: −${formatRON(kpis.settledExpense)} RON`}
-        />
-        <KpiCard
-          label="Total Tranzacții Înregistrate"
-          value={`${transactions.length}`}
-          unit={transactions.length === 1 ? 'tranzacție' : 'tranzacții'}
-          accent="var(--adm-acc-emerald)"
-          icon={<FileCheck className="h-5 w-5" />}
-          hint="Toate plățile sunt confirmate și operate"
-        />
-      </div>
-
-      {/* 2. Main Register Panel */}
+      {/* Main Register Panel */}
       <Panel
         title="Registru Tranzacții & Deconturi"
         subtitle={`${filtered.length} din ${transactions.length} mișcări afișate · Sold selecție: ${formatRON(filteredStats.settledIncome - filteredStats.settledExpense)} RON`}
@@ -750,11 +761,12 @@ export const TransactionsTab: React.FC<Props> = ({
                       {hasProof ? (
                         <button
                           type="button"
-                          className="adm-icon-btn inline-flex text-sky-500 hover:text-sky-600"
-                          onClick={() => setViewVoucher(tx)}
-                          title="Vezi dovadă / document"
+                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-[2px] bg-sky-50 dark:bg-sky-950/40 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-800 text-xs font-bold font-title hover:brightness-105 transition-all cursor-pointer shadow-2xs"
+                          onClick={() => setLightboxTx(tx)}
+                          title="Vezi bonul fiscal / dovada justificativă"
                         >
-                          {tx.receiptImage ? <ImageIcon className="h-4 w-4" /> : <FileText className="h-4 w-4" />}
+                          {tx.receiptImage ? <ImageIcon className="h-3.5 w-3.5" /> : <FileText className="h-3.5 w-3.5" />}
+                          <span>Vezi Bon</span>
                         </button>
                       ) : (
                         <span style={{ color: 'var(--adm-ink-faint)' }}>—</span>
@@ -893,15 +905,11 @@ export const TransactionsTab: React.FC<Props> = ({
                 />
               </Field>
 
-              <Field label="Sumă (RON)" required error={errors.amount}>
-                <TextInput
-                  type="number"
-                  min="0.01"
-                  step="0.01"
-                  value={draft.amount || ''}
-                  onChange={event => setDraft({ ...draft, amount: Number(event.target.value) })}
-                  placeholder="0.00"
-                  className="font-bold text-base"
+              <Field label="Sumă (RON întregi)" required error={errors.amount}>
+                <MoneyInput
+                  value={draft.amount}
+                  onChangeValue={val => setDraft({ ...draft, amount: val })}
+                  placeholder="0"
                 />
               </Field>
 
@@ -927,11 +935,14 @@ export const TransactionsTab: React.FC<Props> = ({
                   onChange={event => setDraft({ ...draft, projectId: event.target.value })}
                 >
                   <option value={GENERAL_PROJECT_ID}>General (Fondul Clubului)</option>
-                  {projects.map(project => (
-                    <option key={project.id} value={project.id}>
-                      {project.name}
-                    </option>
-                  ))}
+                  {projects.map(project => {
+                    const locked = isProjectLocked(project, events);
+                    return (
+                      <option key={project.id} value={project.id} disabled={locked}>
+                        {project.name} {locked ? '• [Încheiat & Arhivat]' : ''}
+                      </option>
+                    );
+                  })}
                 </Select>
               </Field>
 
@@ -984,28 +995,44 @@ export const TransactionsTab: React.FC<Props> = ({
                       />
                     </Field>
 
-                    <Field label="Sau Încarcă Poză Chitanță" hint="PNG, JPG, PDF (max 8MB)">
-                      <label className="flex items-center justify-center gap-2 px-3 py-2 bg-white dark:bg-slate-800 border border-dashed border-slate-300 dark:border-slate-700 rounded-[2px] text-xs font-bold text-slate-600 dark:text-slate-300 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-700/50">
+                    <Field label="Sau Încarcă Bon / Factură" hint="Optimizat automat canvas la max 1200px JPEG">
+                      <label className="flex items-center justify-center gap-2 px-3 py-2 bg-white dark:bg-slate-800 border border-dashed border-slate-300 dark:border-slate-700 rounded-[2px] text-xs font-bold text-slate-600 dark:text-slate-300 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
                         <Upload className="h-4 w-4 text-sky-500" />
-                        <span>{draft.receiptImage ? 'Înlocuiește fișierul' : 'Alege fișier de pe dispozitiv'}</span>
-                        <input type="file" accept="image/*,.pdf" onChange={handleReceiptFileUpload} className="hidden" />
+                        <span>
+                          {uploadingReceipt
+                            ? 'Se optimizează bonul…'
+                            : draft.receiptImage
+                            ? 'Înlocuiește bonul'
+                            : 'Fă poză / Încarcă fișier'}
+                        </span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleReceiptFileUpload}
+                          disabled={uploadingReceipt}
+                          className="hidden"
+                        />
                       </label>
                     </Field>
                   </div>
                 )}
 
                 {draft.receiptImage && !isPhysicalReceipt && (
-                  <div className="relative inline-block mt-2">
+                  <div className="relative inline-flex items-center gap-3 p-2 bg-white dark:bg-slate-800 rounded-[2px] border border-slate-200 dark:border-slate-700">
                     <img
                       src={draft.receiptImage}
-                      alt="Preview Chitanță"
-                      className="h-20 w-auto max-w-xs object-cover rounded-[2px] border border-slate-200 dark:border-slate-700 shadow-xs"
+                      alt="Preview Bon"
+                      className="h-16 w-auto max-w-[120px] object-cover rounded-[2px] border border-slate-200 dark:border-slate-700"
                     />
+                    <div className="text-xs space-y-0.5">
+                      <span className="font-bold text-emerald-800 dark:text-emerald-300 block">Bon atașat cu succes</span>
+                      <span className="text-[11px] text-slate-500 block">Optimizat și gata de salvare</span>
+                    </div>
                     <button
                       type="button"
                       onClick={() => setDraft({ ...draft, receiptImage: '' })}
-                      className="absolute -top-2 -right-2 p-1 bg-rose-600 text-white rounded-full hover:bg-rose-700"
-                      title="Șterge poza atașată"
+                      className="p-1 bg-rose-600 hover:bg-rose-700 text-white rounded-full ml-2"
+                      title="Elimină bonul"
                     >
                       <X className="h-3 w-3" />
                     </button>
@@ -1046,6 +1073,145 @@ export const TransactionsTab: React.FC<Props> = ({
           </div>
         )}
       </Modal>
+
+      {/* ========================================================================= */}
+      {/* 3.5 Modal: Lightbox Bon Fiscal & Document Justificativ                    */}
+      {/* ========================================================================= */}
+      {lightboxTx && (
+        <Modal
+          open={Boolean(lightboxTx)}
+          title={`Bon Fiscal / Document Justificativ • ${lightboxTx.code}`}
+          subtitle={`${lightboxTx.type === 'venit' ? 'Venit' : 'Plată'} • ${formatRON(lightboxTx.amount)} RON • ${projectName(projects, lightboxTx.projectId)}`}
+          onClose={() => setLightboxTx(null)}
+          width="max-w-2xl"
+          footer={
+            <div className="flex flex-wrap items-center justify-between gap-3 w-full">
+              <span className="text-xs text-slate-500 font-data">
+                Dată: {lightboxTx.date} · Aprobator: {lightboxTx.approvedBy || 'Board'}
+              </span>
+              <div className="flex items-center gap-2">
+                {lightboxTx.receiptImage && (
+                  <button
+                    type="button"
+                    className="adm-btn-ghost text-xs font-bold uppercase tracking-wider flex items-center gap-1.5"
+                    onClick={() => {
+                      const link = document.createElement('a');
+                      link.href = lightboxTx.receiptImage!;
+                      link.download = `Bon_${lightboxTx.code}.jpg`;
+                      link.click();
+                    }}
+                  >
+                    <Download className="h-3.5 w-3.5" /> Descarcă Bonul
+                  </button>
+                )}
+                <button
+                  type="button"
+                  className="adm-btn-primary text-xs font-bold uppercase tracking-wider"
+                  onClick={() => setLightboxTx(null)}
+                >
+                  Închide
+                </button>
+              </div>
+            </div>
+          }
+        >
+          <div className="space-y-4 font-anthropic">
+            {lightboxTx.receiptImage ? (
+              <div className="flex flex-col items-center justify-center p-3 bg-slate-900/10 dark:bg-slate-950/50 rounded-[2px] border border-slate-200 dark:border-slate-800">
+                <img
+                  src={lightboxTx.receiptImage}
+                  alt={`Bon ${lightboxTx.code}`}
+                  className="max-h-[60vh] w-auto max-w-full object-contain rounded-[2px] shadow-sm cursor-zoom-in"
+                  onClick={() => window.open(lightboxTx.receiptImage, '_blank')}
+                  title="Fă clic pentru a deschide la rezoluție maximă"
+                />
+                <span className="mt-2 text-[11px] text-slate-400">
+                  Fă clic pe imagine pentru a o deschide separat
+                </span>
+              </div>
+            ) : isValidUrl(lightboxTx.documentUrl) ? (
+              <div className="p-6 text-center space-y-3 bg-slate-50 dark:bg-slate-900/50 rounded-[2px] border border-slate-200 dark:border-slate-800">
+                <FileText className="h-10 w-10 text-sky-500 mx-auto" />
+                <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                  Documentul justificativ este stocat pe un link extern (Google Drive / Cloud).
+                </p>
+                <a
+                  href={lightboxTx.documentUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="adm-btn-primary inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider"
+                >
+                  <LinkIcon className="h-4 w-4" /> Deschide Documentul în Tab Nou
+                </a>
+              </div>
+            ) : (
+              <div className="p-6 text-center text-slate-500 text-sm">
+                {lightboxTx.documentUrl || 'Chitanță fizică înregistrată la dosar.'}
+              </div>
+            )}
+
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 p-3 bg-slate-50 dark:bg-slate-900/60 rounded-[2px] border border-slate-200 dark:border-slate-800 text-xs font-data">
+              <div>
+                <span className="text-slate-500 block">Sumă</span>
+                <span className="font-bold text-slate-900 dark:text-white">{formatRON(lightboxTx.amount)} RON</span>
+              </div>
+              <div>
+                <span className="text-slate-500 block">Categorie</span>
+                <span className="font-bold text-slate-900 dark:text-white truncate block">{lightboxTx.category}</span>
+              </div>
+              <div>
+                <span className="text-slate-500 block">Metodă Plată</span>
+                <span className="font-bold text-slate-900 dark:text-white">{lightboxTx.paymentMethod || '—'}</span>
+              </div>
+              <div>
+                <span className="text-slate-500 block">Sursă / Beneficiar</span>
+                <span className="font-bold text-slate-900 dark:text-white truncate block">{lightboxTx.source || '—'}</span>
+              </div>
+            </div>
+
+            {lightboxTx.notes && (
+              <p className="text-xs text-slate-600 dark:text-slate-400 italic bg-slate-50/50 dark:bg-slate-900/30 p-2.5 rounded-[2px] border border-slate-200 dark:border-slate-800">
+                Observații: {lightboxTx.notes}
+              </p>
+            )}
+
+            {/* Quick Reallocate / Repartizează Proiect */}
+            <div className="p-3 bg-sky-50/60 dark:bg-sky-950/30 rounded-[2px] border border-sky-200 dark:border-sky-800/60 space-y-2">
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 font-title flex items-center justify-between">
+                <span>Repartizare Bon pe Buget de Proiect</span>
+                <span className="text-[11px] font-normal text-slate-500 font-data">
+                  Curent: <strong>{projectName(projects, lightboxTx.projectId)}</strong>
+                </span>
+              </span>
+              <div className="flex items-center gap-2">
+                <Select
+                  value={reassigningProjectId || lightboxTx.projectId || GENERAL_PROJECT_ID}
+                  onChange={e => setReassigningProjectId(e.target.value)}
+                  className="text-xs flex-1"
+                >
+                  <option value={GENERAL_PROJECT_ID}>General (Fondul Clubului - Fără proiect)</option>
+                  {projects.map(p => {
+                    const locked = isProjectLocked(p, events);
+                    return (
+                      <option key={p.id} value={p.id} disabled={locked}>
+                        {p.name} {locked ? '• [Încheiat & Arhivat]' : ''}
+                      </option>
+                    );
+                  })}
+                </Select>
+                <button
+                  type="button"
+                  onClick={() => handleReassignProject(lightboxTx, reassigningProjectId || lightboxTx.projectId || GENERAL_PROJECT_ID)}
+                  disabled={savingReassign || (reassigningProjectId === lightboxTx.projectId && !reassigningProjectId)}
+                  className="px-3 py-2 bg-sky-600 hover:bg-sky-700 disabled:opacity-50 text-white rounded-[2px] text-xs font-bold font-title uppercase tracking-wider cursor-pointer transition-colors shrink-0"
+                >
+                  {savingReassign ? 'Se mută…' : 'Repartizează'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </Modal>
+      )}
 
       {/* ========================================================================= */}
       {/* 4. Modal: View Digital Voucher / Fișă Tranzacție                         */}

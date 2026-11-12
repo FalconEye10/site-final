@@ -29,7 +29,7 @@ import { AdminTeamHub } from './hubs/AdminTeamHub';
 import { AdminFinanceHub } from './hubs/AdminFinanceHub';
 import { AdminCommunityHub } from './hubs/AdminCommunityHub';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
-import { ShieldAlert, Zap, Sparkles, History } from 'lucide-react';
+import { ShieldAlert, Zap, Sparkles } from 'lucide-react';
 
 // Lazy-loaded Views & Modals for optimum performance and minimal bundle footprint
 const MembersView = lazy(() => import('./views/MembersView').then(m => ({ default: m.MembersView })));
@@ -522,7 +522,7 @@ const ViewDashboard = ({ members, currentUserObj, isAdmin, onNavigateToSection, 
                 </div>
               </div>
               <div className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 mt-3 flex items-center justify-between border-t border-slate-100 dark:border-slate-800/80 pt-2">
-                <span>{personalDebt === 0 ? 'Fără restanțe financiare' : '15 Lei / lună calendaristică'}</span>
+                <span>{personalDebt === 0 ? 'Fără restanțe financiare' : 'Restanță cotizație'}</span>
                 <span className={`font-title font-bold group-hover:translate-x-0.5 transition-transform ${personalDebt === 0 ? 'text-emerald-700 dark:text-emerald-400' : 'text-rose-700 dark:text-rose-400'}`}>Fișă →</span>
               </div>
             </Card>
@@ -753,8 +753,7 @@ const ViewDashboard = ({ members, currentUserObj, isAdmin, onNavigateToSection, 
             </div>
 
             {!isAdmin && (
-              <div className="mt-4 border-t border-slate-100 dark:border-slate-800 pt-3 flex justify-between items-center text-xs sm:text-sm">
-                <span className="text-slate-600 dark:text-slate-300">Vrei să propui o inițiativă comunitară nouă?</span>
+              <div className="mt-4 border-t border-slate-100 dark:border-slate-800 pt-3 flex justify-end items-center text-xs sm:text-sm">
                 <button
                   onClick={() => onNavigateToSection('proiecte')}
                   className="text-blue-600 dark:text-blue-400 font-title font-bold hover:underline"
@@ -826,8 +825,7 @@ const ViewDashboard = ({ members, currentUserObj, isAdmin, onNavigateToSection, 
                     </div>
                   </div>
                 ) : nextEvent?.id ? (
-                  <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex justify-between items-center text-xs">
-                    <span className="text-slate-500 dark:text-slate-400">Nu poți ajunge la întâlnire?</span>
+                  <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex justify-end items-center text-xs">
                     <button
                       onClick={() => onRedirectToExcuse(nextEvent.id)}
                       className="font-title font-bold text-amber-600 dark:text-amber-400 hover:underline cursor-pointer"
@@ -874,9 +872,6 @@ const ViewDashboard = ({ members, currentUserObj, isAdmin, onNavigateToSection, 
                     <div className="text-rose-700 dark:text-rose-400 font-bold">{totalGlobalDebt} Lei restant</div>
                   </div>
                 </div>
-                <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 leading-relaxed font-anthropic">
-                  Calculat automat raportat la obligația de 15 Lei/lună pentru toți membrii activi.
-                </p>
               </div>
             </div>
             <button
@@ -908,10 +903,6 @@ const ViewDashboard = ({ members, currentUserObj, isAdmin, onNavigateToSection, 
                     {currentUserObj?.totalPaid || 0} Lei
                   </span>
                 </div>
-                <div className="text-xs sm:text-sm space-y-1 text-slate-500 dark:text-slate-400 font-anthropic">
-                  <p>• Cotizația regulamentară este de <strong>15 Lei/lună</strong>.</p>
-                  <p>• Datoriile se calculează de la data aderării în club.</p>
-                </div>
               </div>
             </div>
             <button
@@ -929,22 +920,18 @@ const ViewDashboard = ({ members, currentUserObj, isAdmin, onNavigateToSection, 
             <div className="flex justify-between items-center pb-3 border-b border-slate-100 dark:border-slate-800">
               <h3 className="font-anthropicSerif font-bold text-lg sm:text-xl flex items-center gap-2 text-slate-900 dark:text-slate-100">
                 <FileText size={20} className="text-blue-600 dark:text-blue-400" />
-                {isAdmin ? 'Propuneri de Proiecte Comunitare' : 'Ai o Inițiativă pentru Comunitate?'}
+                {isAdmin ? 'Propuneri de Proiecte Comunitare' : 'Propuneri de Proiecte'}
               </h3>
               <span className="text-xs font-title uppercase font-bold px-2.5 py-1 rounded-[2px] bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
                 {isAdmin ? 'Evaluare' : 'Inițiative'}
               </span>
             </div>
-            <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed font-anthropic">
-              {isAdmin
-                ? 'Membrii pot trimite fișe de proiect complete. Evaluează propunerile și alocă puncte bonus celor aprobate pentru implementare.'
-                : 'Trimite fișa de proiect (titlu, obiective, estimare buget) direct în registrul de proiecte. Inițiativele aprobate primesc punctaj bonus.'}
-            </p>
           </div>
           <button
             type="button"
             onClick={() => onNavigateToSection('proiecte')}
             className="w-full mt-4 py-3 btn-civic-primary text-xs sm:text-sm font-title uppercase tracking-wider flex items-center justify-center gap-2"
+            title={isAdmin ? 'Deschide registrul de evaluare propuneri' : 'Completează formularul de propunere proiect'}
           >
             {isAdmin ? 'Deschide Registrul de Propuneri' : 'Trimite o Propunere Nouă'}
             <Send size={15} />
@@ -2280,9 +2267,7 @@ export function Dashboard({ username, currentMember, currentMemberId, onLogout }
       return;
     }
 
-    // First login on this version: display What's New modal!
-    setUpdateModalInitialTab('current');
-    setIsUpdateModalOpen(true);
+    // Update modal disabled on login
     localStorage.setItem(versionSeenKey, 'true');
   }, [username, isTutorialOpen]);
 
@@ -2328,8 +2313,6 @@ export function Dashboard({ username, currentMember, currentMemberId, onLogout }
     const versionSeenKey = `camena_update_seen_v_${APP_VERSION}_${username.toLowerCase()}`;
     const alreadySeenThisVersion = localStorage.getItem(versionSeenKey) === 'true';
     if (!alreadySeenThisVersion) {
-      setUpdateModalInitialTab('current');
-      setIsUpdateModalOpen(true);
       localStorage.setItem(versionSeenKey, 'true');
     }
 
@@ -3004,12 +2987,6 @@ export function Dashboard({ username, currentMember, currentMemberId, onLogout }
     ...MENU_CATEGORIES.flatMap(cat =>
       cat.items.map(item => ({ ...item, category: cat.title }))
     ),
-    {
-      id: '__update_log',
-      label: `Jurnal Actualizări & Noutăți (v${APP_VERSION})`,
-      icon: History,
-      category: 'Sistem & Platformă'
-    }
   ];
 
   return (
@@ -3123,40 +3100,7 @@ export function Dashboard({ username, currentMember, currentMemberId, onLogout }
         </div>
 
         <div className="p-3 pb-[max(0.75rem,env(safe-area-inset-bottom,0.75rem))] border-t border-slate-200 dark:border-slate-800 shrink-0">
-           {!isSidebarCollapsed && (
-             <button
-               onClick={() => handleOpenUpdateLog('all')}
-               title="Apasă pentru a deschide Jurnalul de Actualizări (Update Log)"
-               className="w-full flex items-center justify-between px-3 py-2 mb-2 border border-emerald-300 dark:border-emerald-500/30 bg-emerald-50 hover:bg-emerald-100/70 dark:bg-emerald-950/40 dark:hover:bg-emerald-900/50 rounded-[2px] transition-all cursor-pointer group text-left shadow-xs"
-             >
-               <div className="flex items-center gap-2">
-                 <span className="relative flex h-1.5 w-1.5">
-                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-60" />
-                   <span className="relative inline-flex h-1.5 w-1.5 bg-emerald-400" />
-                 </span>
-                 <span className="adm-meta-label !text-emerald-800 dark:!text-emerald-300 font-bold font-title group-hover:underline">Sistem Operațional</span>
-               </div>
-               <span className="adm-meta-label !text-emerald-700 dark:!text-emerald-400 font-bold font-data flex items-center gap-1">
-                 v{APP_VERSION}
-                 <Sparkles size={11} className="text-emerald-600 dark:text-emerald-400 opacity-70 group-hover:opacity-100 transition-opacity" />
-               </span>
-             </button>
-           )}
-
-           <button
-             onClick={() => handleOpenUpdateLog('all')}
-             title={isSidebarCollapsed ? `Jurnal Actualizări (v${APP_VERSION})` : undefined}
-             className={`w-full flex items-center gap-3 py-2 rounded-[2px] text-slate-700 hover:text-slate-950 hover:bg-slate-100 dark:text-slate-300 dark:hover:text-slate-100 dark:hover:bg-slate-800/70 font-bold transition-all group cursor-pointer mb-1.5 ${isSidebarCollapsed ? 'justify-center px-0' : 'px-3'}`}
-           >
-             <History size={16} className="shrink-0 text-emerald-600 dark:text-emerald-400 group-hover:rotate-[-20deg] transition-transform" />
-             {!isSidebarCollapsed && (
-               <div className="flex items-center justify-between w-full">
-                 <span className="text-[13px] font-title">Jurnal Actualizări</span>
-                 <span className="text-[10px] px-1.5 py-0.5 rounded-[2px] bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 font-data font-bold border border-emerald-500/20">Log</span>
-               </div>
-             )}
-           </button>
-           <button
+          <button
             onClick={onLogout}
             title={isSidebarCollapsed ? 'Deconectare' : undefined}
             className={`w-full flex items-center gap-3 py-2.5 rounded-[2px] text-rose-700 hover:text-rose-800 hover:bg-rose-50 dark:text-rose-400 dark:hover:text-rose-300 dark:hover:bg-rose-950/40 font-bold transition-all group cursor-pointer ${isSidebarCollapsed ? 'justify-center px-0' : 'px-4'}`}
@@ -3353,17 +3297,6 @@ export function Dashboard({ username, currentMember, currentMemberId, onLogout }
                               className="w-full flex items-center gap-2.5 px-3.5 py-2.5 rounded-[2px] text-sm font-bold text-slate-700 hover:text-slate-950 hover:bg-slate-100 dark:text-slate-300 dark:hover:text-white dark:hover:bg-slate-800 text-left transition-colors cursor-pointer font-anthropic"
                             >
                               <Compass size={15} className="text-slate-500 dark:text-slate-400" /> Redeschide Turul
-                            </button>
-                            <button
-                              onClick={() => { handleOpenUpdateLog('all'); setIsUserMenuOpen(false); }}
-                              className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-[2px] text-sm font-bold text-slate-700 hover:text-slate-950 hover:bg-slate-100 dark:text-slate-300 dark:hover:text-white dark:hover:bg-slate-800 text-left transition-colors cursor-pointer font-anthropic"
-                            >
-                              <div className="flex items-center gap-2.5">
-                                <History size={15} className="text-emerald-600 dark:text-emerald-400" /> Jurnal Actualizări
-                              </div>
-                              <span className="text-[10px] font-data font-bold px-1.5 py-0.5 rounded-[2px] bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700">
-                                v{APP_VERSION}
-                              </span>
                             </button>
                             <button
                               onClick={onLogout}

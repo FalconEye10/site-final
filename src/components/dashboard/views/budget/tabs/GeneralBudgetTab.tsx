@@ -95,26 +95,9 @@ export const GeneralBudgetTab: React.FC<Props> = ({ lines, transactions, onSave,
 
   return (
     <div className="space-y-4">
-      {/* Visual Workflow Guide Banner */}
-      <div className="p-3.5 sm:p-4 rounded-[2px] bg-sky-50/80 dark:bg-sky-950/30 border border-sky-200/80 dark:border-sky-800/60 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 font-anthropic">
-        <div className="flex items-start gap-3">
-          <div className="p-2 rounded-[2px] bg-sky-500 text-white shrink-0 mt-0.5 sm:mt-0">
-            <Wallet className="h-5 w-5" />
-          </div>
-          <div>
-            <h4 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider font-title">
-              1. Buget General (Planificat vs. Realizat)
-            </h4>
-            <p className="text-xs text-slate-600 dark:text-slate-300 mt-0.5 leading-relaxed">
-              Stabilește plafoanele anuale de cheltuieli și țintele de venituri. Cifrele „Realizat” sunt calculate <strong>automat</strong> din toate tranzacțiile înregistrate în <em>Registrul de Tranzacții</em>.
-            </p>
-          </div>
-        </div>
-      </div>
-
       <Panel
         title="Buget General — Planificat vs. Realizat"
-        subtitle="Execuția bugetară pe fiecare linie a mandatului (Sumele realizate provin din Registrul de Tranzacții)"
+        subtitle="Execuția bugetară pe fiecare linie a mandatului (calculat automat din Registrul de Tranzacții)"
         bodyClassName="p-0"
         actions={
           <button type="button" className="adm-btn-primary" onClick={openCreate}>

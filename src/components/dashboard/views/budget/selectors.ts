@@ -18,11 +18,15 @@ import {
   FULL_MANDATE_DUE,
   GENERAL_PROJECT_ID,
   INCOME_CATEGORIES,
+  INITIAL_TREASURY_BALANCE,
+  MANDATE_MONTHS,
   QUARTERS,
   Transaction,
   TreasuryPayment,
   TxType,
+  isProjectLocked,
   mandateMonthIndex,
+  roundRON,
 } from './types';
 
 export const isSettled = (tx: Transaction) => tx.status === 'platit';
@@ -38,6 +42,8 @@ function sumWhere(transactions: Transaction[], predicate: (tx: Transaction) => b
 
 export interface BudgetKpis {
   currentBalance: number;
+  initialBalance: number;
+  mandateNet: number;
   settledIncome: number;
   settledExpense: number;
   mandateIncome: number;
@@ -51,31 +57,42 @@ export interface BudgetKpis {
 
 export function computeKpis(
   transactions: Transaction[],
-  duesPayments: TreasuryPayment[] = []
+  duesPayments: TreasuryPayment[] = [],
+  folderCashBalance: number = INITIAL_TREASURY_BALANCE
 ): BudgetKpis {
   const directIncome = sumWhere(transactions, tx => isSettled(tx) && tx.type === 'venit');
   const duesIncome = duesPayments
     .filter(p => p.status !== 'Anulat')
     .reduce((acc, p) => acc + (Number(p.amount) || 0), 0);
 
-  const settledIncome = directIncome + duesIncome;
-  const settledExpense = sumWhere(transactions, tx => isSettled(tx) && tx.type === 'cheltuiala');
+  const settledIncome = roundRON(directIncome + duesIncome);
+  const settledExpense = roundRON(sumWhere(transactions, tx => isSettled(tx) && tx.type === 'cheltuiala'));
+  const mandateNet = settledIncome - settledExpense;
+
+  // Banii din mapă (5.663 LEI) reprezintă totalul fizic actual existent în casierie (cu tot cu cotizațiile încasate).
+  // Pentru a evita dubla numărare (8.000+ RON dacă s-ar fi adăugat cotizațiile peste soldul total din mapă),
+  // soldul disponibil total reflectă exact numerarul din mapă ajustat cu intrările/ieșirile din registrul de tranzacții.
+  const currentBalance = roundRON(folderCashBalance + directIncome - settledExpense);
   const pending = transactions.filter(tx => tx.status === 'asteptare');
 
   return {
-    currentBalance: settledIncome - settledExpense,
+    currentBalance,
+    initialBalance: roundRON(folderCashBalance),
+    mandateNet,
     settledIncome,
     settledExpense,
-    directIncome,
-    duesIncome,
-    mandateIncome: sumWhere(transactions, tx => isCommitted(tx) && tx.type === 'venit') + duesIncome,
-    mandateExpense: sumWhere(transactions, tx => isCommitted(tx) && tx.type === 'cheltuiala'),
-    charityRedirected: sumWhere(
-      transactions,
-      tx => isSettled(tx) && tx.type === 'cheltuiala' && tx.category === CHARITY_CATEGORY
+    directIncome: roundRON(directIncome),
+    duesIncome: roundRON(duesIncome),
+    mandateIncome: roundRON(sumWhere(transactions, tx => isCommitted(tx) && tx.type === 'venit') + duesIncome),
+    mandateExpense: roundRON(sumWhere(transactions, tx => isCommitted(tx) && tx.type === 'cheltuiala')),
+    charityRedirected: roundRON(
+      sumWhere(
+        transactions,
+        tx => isSettled(tx) && tx.type === 'cheltuiala' && tx.category === CHARITY_CATEGORY
+      )
     ),
     pendingCount: pending.length,
-    pendingAmount: sum(pending.map(tx => Number(tx.amount) || 0)),
+    pendingAmount: roundRON(sum(pending.map(tx => Number(tx.amount) || 0))),
   };
 }
 
@@ -115,7 +132,7 @@ export function categoryBreakdown(
   }
 
   return [...totals.entries()]
-    .map(([label, value]) => ({ label, value }))
+    .map(([label, value]) => ({ label, value: roundRON(value) }))
     .filter(slice => slice.value > 0)
     .sort((a, b) => b.value - a.value);
 }
@@ -153,8 +170,95 @@ export function quarterlyCashflow(
     return {
       label: quarter.label,
       span: quarter.span,
-      income: txIncome + duesIncome,
-      expense: sumWhere(inQuarterTx, tx => tx.type === 'cheltuiala'),
+      income: roundRON(txIncome + duesIncome),
+      expense: roundRON(sumWhere(inQuarterTx, tx => tx.type === 'cheltuiala')),
+    };
+  });
+}
+
+export interface MonthCashflow {
+  key: string;
+  label: string;
+  shortLabel: string;
+  monthIndex: number;
+  income: number;
+  expense: number;
+  net: number;
+  runningBalance: number;
+  txCount: number;
+  savingsRate: number;
+}
+
+const MONTH_NAMES_RO = [
+  'Ianuarie', 'Februarie', 'Martie', 'Aprilie', 'Mai', 'Iunie',
+  'Iulie', 'August', 'Septembrie', 'Octombrie', 'Noiembrie', 'Decembrie'
+];
+
+/** Settled monthly cashflow across the whole mandate (June -> May). */
+export function monthlyCashflow(
+  transactions: Transaction[],
+  duesPayments: TreasuryPayment[] = [],
+  referenceDate: Date = new Date(),
+  initialBalance: number = INITIAL_TREASURY_BALANCE
+): MonthCashflow[] {
+  const refYear = referenceDate.getFullYear();
+  const startYear = referenceDate.getMonth() >= 5 ? refYear : refYear - 1;
+
+  const mandateKeys: { year: number; month: number; index: number }[] = [];
+  for (let i = 0; i < 12; i++) {
+    const m = (5 + i) % 12; // 5 = June
+    const y = i < 7 ? startYear : startYear + 1;
+    mandateKeys.push({ year: y, month: m, index: i });
+  }
+
+  let running = roundRON(initialBalance);
+
+  return mandateKeys.map(({ year, month, index }) => {
+    const monthKey = `${year}-${String(month + 1).padStart(2, '0')}`;
+    const monthName = MONTH_NAMES_RO[month];
+    const label = `${monthName} ${year}`;
+    const shortLabel = MANDATE_MONTHS[index];
+
+    const inMonthTx = transactions.filter(tx => {
+      if (!isSettled(tx) || !tx.date) return false;
+      return tx.date.startsWith(monthKey);
+    });
+
+    const inMonthDues = duesPayments.filter(p => {
+      if (p.status === 'Anulat') return false;
+      // Dues are assigned by their target membership month (e.g. 'August 2026')
+      // or fallback to receipt payment date if month is absent
+      if (p.month && p.month.toLowerCase().includes(monthName.toLowerCase()) && p.month.includes(String(year))) {
+        return true;
+      }
+      if (!p.month && p.date && p.date.startsWith(monthKey)) {
+        return true;
+      }
+      return false;
+    });
+
+    const txIncome = inMonthTx.filter(tx => tx.type === 'venit').reduce((sum, tx) => sum + (Number(tx.amount) || 0), 0);
+    const duesIncome = inMonthDues.reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
+    const income = roundRON(txIncome + duesIncome);
+    const expense = roundRON(
+      inMonthTx.filter(tx => tx.type === 'cheltuiala').reduce((sum, tx) => sum + (Number(tx.amount) || 0), 0)
+    );
+    const net = income - expense;
+    running += net;
+    const txCount = inMonthTx.length + inMonthDues.length;
+    const savingsRate = income > 0 ? Math.round((net / income) * 100) : 0;
+
+    return {
+      key: monthKey,
+      label,
+      shortLabel,
+      monthIndex: index,
+      income,
+      expense,
+      net,
+      runningBalance: running,
+      txCount,
+      savingsRate,
     };
   });
 }
@@ -169,15 +273,17 @@ export interface BudgetLineRow extends BudgetLine {
 
 export function budgetLineRows(lines: BudgetLine[], transactions: Transaction[]): BudgetLineRow[] {
   return lines.map(line => {
-    const realized = sumWhere(
+    const realized = roundRON(sumWhere(
       transactions,
       tx => isSettled(tx) && tx.type === line.type && tx.category === line.category
-    );
+    ));
+    const planned = roundRON(line.planned);
     return {
       ...line,
+      planned,
       realized,
-      difference: line.planned - realized,
-      execution: line.planned > 0 ? realized / line.planned : 0,
+      difference: planned - realized,
+      execution: planned > 0 ? realized / planned : 0,
     };
   });
 }
@@ -187,27 +293,42 @@ export interface ProjectRow extends BudgetProject {
   realizedExpense: number;
   /** Settled income minus settled expense — what the project freed up for charity. */
   netCharitable: number;
-  /** Realized income per unit of realized spend. null when nothing has been spent. */
+  /** Percentage ROI: ((realizedIncome - realizedExpense) / realizedExpense) * 100. null when 0 spend. */
   roi: number | null;
+  /** Whether the project is locked (attendance closed and date passed). */
+  isLocked: boolean;
 }
 
-export function projectRows(projects: BudgetProject[], transactions: Transaction[]): ProjectRow[] {
+export function projectRows(
+  projects: BudgetProject[],
+  transactions: Transaction[],
+  events: { id: string; date?: string; time?: string; attendanceClosed?: boolean }[] = [],
+  todayStr?: string
+): ProjectRow[] {
   return projects.map(project => {
-    const realizedIncome = sumWhere(
+    const realizedIncome = roundRON(sumWhere(
       transactions,
       tx => isSettled(tx) && tx.projectId === project.id && tx.type === 'venit'
-    );
-    const realizedExpense = sumWhere(
+    ));
+    const realizedExpense = roundRON(sumWhere(
       transactions,
       tx => isSettled(tx) && tx.projectId === project.id && tx.type === 'cheltuiala'
-    );
+    ));
+    const estimatedIncome = roundRON(project.estimatedIncome);
+    const estimatedExpense = roundRON(project.estimatedExpense);
+    const netCharitable = realizedIncome - realizedExpense;
+    const roi = realizedExpense > 0 ? Math.round((netCharitable / realizedExpense) * 100) : null;
+    const locked = isProjectLocked(project, events, todayStr);
 
     return {
       ...project,
+      estimatedIncome,
+      estimatedExpense,
       realizedIncome,
       realizedExpense,
-      netCharitable: realizedIncome - realizedExpense,
-      roi: realizedExpense > 0 ? realizedIncome / realizedExpense : null,
+      netCharitable,
+      roi,
+      isLocked: locked,
     };
   });
 }
@@ -241,16 +362,20 @@ export function nextTransactionCode(transactions: Transaction[]): string {
 
 /**
  * Calculates progressive running balance in chronological order (earliest to latest)
- * for all settled transactions ('platit'), returning a map of transaction ID -> running balance.
+ * for all settled transactions ('platit'), starting from the reference initial treasury fund
+ * (banii din mapă), returning a map of transaction ID -> running balance.
  */
-export function computeRunningBalances(transactions: Transaction[]): Map<string, number> {
+export function computeRunningBalances(
+  transactions: Transaction[],
+  initialBalance: number = INITIAL_TREASURY_BALANCE
+): Map<string, number> {
   const sorted = [...transactions].sort((a, b) => {
     if (a.date !== b.date) return a.date.localeCompare(b.date);
     return (a.createdAt || 0) - (b.createdAt || 0);
   });
 
   const balanceMap = new Map<string, number>();
-  let running = 0;
+  let running = roundRON(initialBalance);
 
   for (const tx of sorted) {
     if (tx.status === 'platit') {

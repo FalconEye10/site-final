@@ -37,14 +37,11 @@ const MemberAttendanceView = ({ member, events, currentUserId, preselectedEventI
     return (
       <div className="bg-white dark:bg-[#161B22] border border-slate-200 dark:border-slate-800 rounded-[2px] p-5 sm:p-6 shadow-sm space-y-6 font-anthropic">
         <h2 className="text-2xl font-bold font-anthropicSerif text-slate-900 dark:text-white">Situație Prezențe</h2>
-        <div className="p-5 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 rounded-[2px] text-amber-900 dark:text-amber-200 shadow-xs">
-          <div className="flex items-center gap-2.5 mb-2">
-            <span className="px-2.5 py-0.5 rounded-[2px] bg-amber-200 dark:bg-amber-900 text-amber-950 dark:text-amber-200 font-bold text-xs uppercase font-title">Statut Board / Admin</span>
-            <span className="font-bold text-sm font-title">Exonerat de la evidența prezențelor</span>
+        <div className="p-4 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 rounded-[2px] text-amber-900 dark:text-amber-200 shadow-xs flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <span className="px-2.5 py-0.5 rounded-[2px] bg-amber-200 dark:bg-amber-900 text-amber-950 dark:text-amber-200 font-bold text-xs uppercase font-title">Board / Admin</span>
+            <span className="font-bold text-xs sm:text-sm font-title">Statut exonerat de la evidența orelor și prezențelor de voluntariat.</span>
           </div>
-          <p className="text-xs text-amber-800 dark:text-amber-300 leading-relaxed font-anthropic">
-            Ca membru în Board-ul de conducere sau Administrator, activitatea ta este orientată pe decizii de guvernanță și organizare. Nu ești contorizat pentru rata de prezență, absențe sau ore de voluntariat competitive.
-          </p>
         </div>
       </div>
     );
@@ -1034,17 +1031,12 @@ export function AttendanceView({ members, onUpdateMember, isAdmin, currentUserId
       {/* Top Header & Mode Navigation Toggle */}
       <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-6 pb-5 border-b border-slate-200 dark:border-slate-800">
         <div>
-          <div className="flex items-center gap-2.5 mb-1">
+          <div className="flex items-center gap-2.5">
             <h2 className="text-2xl font-bold font-anthropicSerif text-slate-900 dark:text-white">Gestionare Prezențe</h2>
             <span className="px-2.5 py-0.5 rounded-[2px] bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold text-xs uppercase font-title border border-slate-200 dark:border-slate-700">
               {viewMode === 'active' ? 'Catalog Activ' : 'Arhivă Încheiate'}
             </span>
           </div>
-          <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 font-semibold font-anthropic">
-            {viewMode === 'active' 
-              ? 'Catalogul sesiunilor deschise pentru marcat prezențe, cereri de învoire și finalizare.' 
-              : 'Evidența completă a ședințelor încheiate: cine a venit, cine a fost învoit și de ce.'}
-          </p>
         </div>
 
         {/* Section Switcher Tabs: Active vs Archive */}

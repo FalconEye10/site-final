@@ -7,6 +7,7 @@ import {
   MANDATE_MONTHS,
   MONTHLY_DUE,
   formatRON,
+  roundRON,
 } from '../types';
 import { duesRows } from '../selectors';
 import { normalizeDiacritics } from '../../../../../utils/text';
@@ -60,9 +61,9 @@ export const DuesTab: React.FC<Props> = ({ dues, onSaveMonth }) => {
   }, [dues]);
 
   const commit = async (record: DuesRecord, month: number, raw: string) => {
-    const value = Math.max(0, Number(raw) || 0);
+    const value = Math.max(0, roundRON(raw));
     const months = record.months || [];
-    if ((Number(months[month]) || 0) === value) return;
+    if (roundRON(months[month]) === value) return;
     await onSaveMonth(record, month, value);
   };
 

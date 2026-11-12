@@ -7,7 +7,7 @@
  * - Z (Patch): Corecții rapide, bug-fixuri mici / rușinoase, alinieri sau mici ajustări
  */
 
-export const APP_VERSION = typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '9.8.0';
+export const APP_VERSION = typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '9.10.0';
 
 export interface VersionLog {
   version: string;
@@ -17,6 +17,12 @@ export interface VersionLog {
 }
 
 export const VERSION_HISTORY: VersionLog[] = [
+  {
+    version: '9.10.0',
+    type: 'minor',
+    description: 'Actualizare buget de referință la 5.663 LEI (fondul curent existent în mapă/casierie cu cotizațiile incluse) și compactare inteligentă a modulului de Buget în 3 tab-uri clare: Buget & Proiecte (KPIs, cashflow lunar/trimestrial, dinamica financiară și proiecte), Registru Plăți & Bonuri (evidență tranzacții, deconturi și bonuri) și Jurnal Audit (păstrat dedicat).',
+    timestamp: '2026-11-12'
+  },
   {
     version: '9.8.0',
     type: 'minor',
